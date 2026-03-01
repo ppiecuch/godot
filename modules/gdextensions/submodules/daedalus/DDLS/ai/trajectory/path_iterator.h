@@ -28,126 +28,44 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-class DDLSPathIterator {
-	var _entity : DDLSEntityAI;
-	var _currentX : Number;
-	var _currentY : Number;
-	var _hasPrev : Boolean;
-	var _hasNext : Boolean;
+#pragma once
 
-	var _path : Vector.<Number>;
-	var _count : int;
-	var _countMax : int;
+#include "core/math/vector2.h"
+#include "core/reference.h"
+#include "core/vector.h"
 
-	function updateEntity() :
-			void {
-		if (!_entity)
-			return;
+#include "ddls_fwd.h"
 
-		_entity.x = _currentX;
-		_entity.y = _currentY;
-	}
+class DDLS_PathIterator : public Reference {
+	GDCLASS(DDLS_PathIterator, Reference);
+
+	DDLSEntityAI entity;
+	Point2 current_pos;
+	bool has_prev;
+	bool has_next;
+	Vector<Point2> path;
+	int count;
+	int count_max;
+
+	void update_entity();
 
 public:
-	function get entity() :
-			DDLSEntityAI {
-		return _entity;
-	}
+	DDLSEntityAI get_entity() const { return entity; }
+	void set_entity(DDLSEntityAI p_entity) { entity = p_entity; }
 
-	function set entity(value
-						: DDLSEntityAI) :
-			void {
-		_entity = value;
-	}
+	real_t get_x() const { return current_pos.x; }
+	real_t get_y() const { return current_pos.y; }
 
-	function get x() :
-			Number {
-		return _currentX;
-	}
+	bool get_has_prev() const { return has_prev; }
+	bool get_has_next() const { return has_next; }
 
-	function get y() :
-			Number {
-		return _currentY;
-	}
+	int get_count() const { return count; }
+	int get_count_max() const { return count_max; }
 
-	function get hasPrev() :
-			Boolean {
-		return _hasPrev;
-	}
+	void set_path(const Vector<Point2> &p_path);
+	void reset();
+	bool prev();
+	bool next();
 
-	function get hasNext() :
-			Boolean {
-		return _hasNext;
-	}
-
-	function get count() :
-			int {
-		return _count;
-	}
-
-	function get countMax() :
-			int {
-		return _countMax;
-	}
-
-	function set path(value
-					  : Vector.<Number>) :
-			void {
-		_path = value;
-		_countMax = _path.length / 2;
-		reset();
-	}
-
-	function reset() :
-			void {
-		_count = 0;
-		_currentX = _path[_count];
-		_currentY = _path[_count + 1];
-		updateEntity();
-
-		_hasPrev = false;
-		if (_path.length > 2)
-			_hasNext = true;
-		else
-			_hasNext = false;
-	}
-
-	function prev() :
-			Boolean {
-		if (!_hasPrev)
-			return false;
-		_hasNext = true;
-
-		_count--;
-		_currentX = _path[_count * 2];
-		_currentY = _path[_count * 2 + 1];
-
-		updateEntity();
-
-		if (_count == 0)
-			_hasPrev = false;
-
-		return true;
-	}
-
-	function next() :
-			Boolean {
-		if (!_hasNext)
-			return false;
-		_hasPrev = true;
-
-		_count++;
-		_currentX = _path[_count * 2];
-		_currentY = _path[_count * 2 + 1];
-
-		updateEntity();
-
-		if ((_count + 1) * 2 == _path.length)
-			_hasNext = false;
-
-		return true;
-	}
-
-	function DDLSPathIterator() {
-	}
+	DDLS_PathIterator();
 };

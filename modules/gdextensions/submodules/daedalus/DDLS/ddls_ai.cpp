@@ -38,14 +38,19 @@
 #include "ai/ai_entity_ai.h"
 #include "ai/ai_funnel.h"
 #include "ai/ai_path_finder.h"
+#include "ai/field_of_view.h"
+#include "ai/trajectory/linear_path_sampler.h"
+#include "ai/trajectory/path_iterator.h"
 #include "data/ddls_face.h"
 #include "data/ddls_object.h"
 #include "data/ddls_vertex.h"
 #include "data/math/ddls_geom2d.h"
 
 #include "core/error_macros.h"
+#include "core/map.h"
 #include "core/math/math_funcs.h"
 #include "core/vector.h"
+#include "data/ddls_constants.h"
 #include "ddls_fwd.h"
 
 /// DDLS_EntityAI
@@ -990,6 +995,461 @@ DDLS_Funnel::DDLS_Funnel() {
 	debug_surface = nullptr;
 }
 
+/// DDLS_PathIterator
+
+void DDLS_PathIterator::update_entity() {
+	if (entity.is_null()) {
+		return;
+	}
+	entity->set_pos(current_pos);
+}
+
+void DDLS_PathIterator::set_path(const Vector<Point2> &p_path) {
+	path = p_path;
+	count_max = path.size();
+	reset();
+}
+
+void DDLS_PathIterator::reset() {
+	count = 0;
+	current_pos = path[0];
+	update_entity();
+
+	has_prev = false;
+	has_next = path.size() > 1;
+}
+
+bool DDLS_PathIterator::prev() {
+	if (!has_prev) {
+		return false;
+	}
+	has_next = true;
+
+	count--;
+	current_pos = path[count];
+
+	update_entity();
+
+	if (count == 0) {
+		has_prev = false;
+	}
+
+	return true;
+}
+
+bool DDLS_PathIterator::next() {
+	if (!has_next) {
+		return false;
+	}
+	has_prev = true;
+
+	count++;
+	current_pos = path[count];
+
+	update_entity();
+
+	if (count + 1 == path.size()) {
+		has_next = false;
+	}
+
+	return true;
+}
+
+DDLS_PathIterator::DDLS_PathIterator() {
+	has_prev = false;
+	has_next = false;
+	count = 0;
+	count_max = 0;
+}
+
+/// DDLS_LinearPathSampler
+
+void DDLS_LinearPathSampler::update_entity() {
+	if (entity.is_null()) {
+		return;
+	}
+	entity->set_pos(current_pos);
+}
+
+void DDLS_LinearPathSampler::dispose() {
+	entity = nullptr;
+	path.clear();
+	pre_comp.clear();
+}
+
+void DDLS_LinearPathSampler::set_sampling_distance(real_t p_dist) {
+	sampling_distance = p_dist;
+	sampling_distance_squared = sampling_distance * sampling_distance;
+}
+
+void DDLS_LinearPathSampler::set_count(int p_count) {
+	count = p_count;
+	int cm = get_count_max();
+	if (count < 0) {
+		count = 0;
+	}
+	if (count > cm - 1) {
+		count = cm - 1;
+	}
+
+	has_prev = count != 0;
+	has_next = count != cm - 1;
+
+	current_pos = pre_comp[count];
+	update_entity();
+}
+
+void DDLS_LinearPathSampler::set_path(const Vector<Point2> &p_path) {
+	path = p_path;
+	pre_computed = false;
+	reset();
+}
+
+void DDLS_LinearPathSampler::reset() {
+	if (path.size() > 0) {
+		current_pos = path[0];
+		i_prev = 0;
+		i_next = 1;
+		has_prev = false;
+		has_next = true;
+		count = 0;
+		update_entity();
+	} else {
+		has_prev = false;
+		has_next = false;
+		count = 0;
+	}
+}
+
+void DDLS_LinearPathSampler::pre_compute() {
+	pre_comp.clear();
+	count = 0;
+
+	pre_comp.push_back(current_pos);
+	pre_computed = false;
+	while (next()) {
+		pre_comp.push_back(current_pos);
+	}
+	reset();
+	pre_computed = true;
+}
+
+bool DDLS_LinearPathSampler::prev() {
+	if (!has_prev) {
+		return false;
+	}
+	has_next = true;
+
+	if (pre_computed) {
+		count--;
+		if (count == 0) {
+			has_prev = false;
+		}
+		current_pos = pre_comp[count];
+		update_entity();
+		return true;
+	}
+
+	real_t remaining_dist = sampling_distance;
+	real_t dist;
+
+	while (true) {
+		dist = current_pos.distance_to(path[i_prev]);
+		if (dist < remaining_dist) {
+			remaining_dist -= dist;
+			i_prev--;
+			i_next--;
+
+			if (i_next == 0) {
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+
+	if (i_next == 0) {
+		current_pos = path[0];
+		has_prev = false;
+		i_next = 1;
+		i_prev = 0;
+		update_entity();
+		return true;
+	} else {
+		current_pos = current_pos + (path[i_prev] - current_pos) * remaining_dist / dist;
+		update_entity();
+		return true;
+	}
+}
+
+bool DDLS_LinearPathSampler::next() {
+	if (!has_next) {
+		return false;
+	}
+	has_prev = true;
+
+	if (pre_computed) {
+		count++;
+		if (count == pre_comp.size() - 1) {
+			has_next = false;
+		}
+		current_pos = pre_comp[count];
+		update_entity();
+		return true;
+	}
+
+	real_t remaining_dist = sampling_distance;
+	real_t dist;
+
+	while (true) {
+		dist = current_pos.distance_to(path[i_next]);
+		if (dist < remaining_dist) {
+			remaining_dist -= dist;
+			current_pos = path[i_next];
+			i_prev++;
+			i_next++;
+
+			if (i_next == path.size()) {
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+
+	if (i_next == path.size()) {
+		current_pos = path[i_prev];
+		has_next = false;
+		i_next = path.size() - 1;
+		i_prev = i_next - 1;
+		update_entity();
+		return true;
+	} else {
+		current_pos = current_pos + (path[i_next] - current_pos) * remaining_dist / dist;
+		update_entity();
+		return true;
+	}
+}
+
+DDLS_LinearPathSampler::DDLS_LinearPathSampler() {
+	sampling_distance = 1;
+	sampling_distance_squared = 1;
+	has_prev = false;
+	has_next = false;
+	pre_computed = false;
+	count = 0;
+	i_prev = 0;
+	i_next = 0;
+}
+
+/// DDLS_FieldOfView
+
+bool DDLS_FieldOfView::is_in_field(DDLSEntityAI p_target_entity) {
+	ERR_FAIL_NULL_V(mesh, false);
+	ERR_FAIL_NULL_V(from_entity, false);
+
+	const Point2 pos = from_entity->get_pos();
+	const Vector2 dir_norm = from_entity->get_dir_norm();
+	const real_t radius = from_entity->get_radius_fov();
+	const real_t angle = from_entity->get_angle_fov();
+
+	const Point2 target = p_target_entity->get_pos();
+	const real_t target_radius = p_target_entity->get_radius();
+
+	const real_t dist_squared = (pos - target).length_squared();
+
+	// if target is completely outside field radius
+	if (dist_squared >= (radius + target_radius) * (radius + target_radius)) {
+		return false;
+	}
+
+	// degenerate case: field center is inside the target
+	if (dist_squared < target_radius * target_radius) {
+		return true;
+	}
+
+	Point2 left_target;
+	Point2 right_target;
+	bool left_target_in_field;
+	bool right_target_in_field;
+
+	// try circle-circle intersections first
+	Vector<Point2> result;
+	if (DDLSGeom2D::intersections2circles(pos, radius, target, target_radius, &result)) {
+		left_target = result[0];
+		right_target = result[1];
+	}
+
+	Point2 mid = 0.5 * (pos + target);
+	if (result.empty() || (mid - target).length_squared() < (mid - left_target).length_squared()) {
+		// fall back to tangent points
+		result.clear();
+		DDLSGeom2D::tangents_point_to_circle(pos, target, target_radius, &result);
+		left_target = result[0];
+		right_target = result[1];
+	}
+
+	const real_t dot_prod_min = Math::cos(angle / 2);
+
+	// check left point
+	Vector2 left_dir = left_target - pos;
+	real_t length_left = left_dir.length();
+	real_t dot_left = (left_dir / length_left).dot(dir_norm);
+	left_target_in_field = dot_left > dot_prod_min;
+
+	// check right point
+	Vector2 right_dir = right_target - pos;
+	real_t length_right = right_dir.length();
+	real_t dot_right = (right_dir / length_right).dot(dir_norm);
+	right_target_in_field = dot_right > dot_prod_min;
+
+	// if both points are outside field
+	if (!left_target_in_field && !right_target_in_field) {
+		// check if left/right points are on different sides
+		if (DDLSGeom2D::get_direction(pos, pos + dir_norm, left_target) == 1 &&
+				DDLSGeom2D::get_direction(pos, pos + dir_norm, right_target) == -1) {
+			// on different sides, continue
+		} else {
+			return false;
+		}
+	}
+
+	// clip the window if one point is outside
+	if (!left_target_in_field || !right_target_in_field) {
+		real_t dir_angle = Math::atan2(dir_norm.y, dir_norm.x);
+		if (!left_target_in_field) {
+			Point2 left_field = Point2(Math::cos(dir_angle - angle / 2), Math::sin(dir_angle - angle / 2));
+			Point2 p;
+			DDLSGeom2D::intersections2segments(pos, pos + left_field, left_target, right_target, &p, nullptr, true);
+			left_target = p;
+		}
+		if (!right_target_in_field) {
+			Point2 right_field = Point2(Math::cos(dir_angle + angle / 2), Math::sin(dir_angle + angle / 2));
+			Point2 p;
+			DDLSGeom2D::intersections2segments(pos, pos + right_field, left_target, right_target, &p, nullptr, true);
+			right_target = p;
+		}
+	}
+
+	// now we have a triangle window: pos, right_target, left_target
+
+	Map<DDLSFace, bool> faces_done;
+	Map<DDLSEdge, bool> edges_done;
+	Vector<real_t> wall;
+
+	// locate the field center
+	Variant start_obj = DDLSGeom2D::locate_position(pos, mesh);
+	DDLSFace start_face;
+	if (DDLSFace loc_face = start_obj) {
+		start_face = loc_face;
+	} else if (DDLSEdge loc_edge = start_obj) {
+		start_face = loc_edge->get_left_face();
+	} else if (DDLSVertex loc_vertex = start_obj) {
+		start_face = loc_vertex->get_edge()->get_left_face();
+	}
+
+	Vector<DDLSFace> open_faces_list;
+	Map<DDLSFace, bool> open_faces;
+	open_faces_list.push_back(start_face);
+	open_faces[start_face] = true;
+
+	Vector<DDLSEdge> edges;
+
+	while (open_faces_list.size() > 0) {
+		DDLSFace current_face = open_faces_list.shift();
+		open_faces[current_face] = false;
+		faces_done[current_face] = true;
+
+		// collect non-done edges from the current face
+		DDLSEdge current_edge = current_face->get_edge();
+		if (!edges_done[current_edge] && !edges_done[current_edge->get_opposite_edge()]) {
+			edges.push_back(current_edge);
+			edges_done[current_edge] = true;
+		}
+		current_edge = current_edge->get_next_left_edge();
+		if (!edges_done[current_edge] && !edges_done[current_edge->get_opposite_edge()]) {
+			edges.push_back(current_edge);
+			edges_done[current_edge] = true;
+		}
+		current_edge = current_edge->get_next_left_edge();
+		if (!edges_done[current_edge] && !edges_done[current_edge->get_opposite_edge()]) {
+			edges.push_back(current_edge);
+			edges_done[current_edge] = true;
+		}
+
+		while (edges.size() > 0) {
+			current_edge = edges.pop();
+
+			// check if the edge overlaps the window
+			Point2 s1 = current_edge->get_origin_vertex()->get_pos();
+			Point2 s2 = current_edge->get_destination_vertex()->get_pos();
+			Point2 p1, p2;
+			if (DDLSGeom2D::clip_segment_by_triangle(s1, s2, pos, right_target, left_target, p1, p2)) {
+				// if the edge is constrained
+				if (current_edge->if_is_constrained()) {
+					// project the constrained edge onto the wall
+					Vector<real_t> params;
+					DDLSGeom2D::intersections2segments(pos, p1, left_target, right_target, nullptr, &params, true);
+					DDLSGeom2D::intersections2segments(pos, p2, left_target, right_target, nullptr, &params, true);
+					real_t param1 = params[1];
+					real_t param2 = params[3];
+					if (param2 < param1) {
+						real_t tmp = param1;
+						param1 = param2;
+						param2 = tmp;
+					}
+
+					// sum it to the window wall
+					int i;
+					for (i = wall.size() - 1; i >= 0; i--) {
+						if (param2 >= wall[i]) {
+							break;
+						}
+					}
+					int index2 = i + 1;
+					if (index2 % 2 == 0) {
+						wall.insert(index2, param2);
+					}
+
+					for (i = 0; i < wall.size(); i++) {
+						if (param1 <= wall[i]) {
+							break;
+						}
+					}
+					int index1 = i;
+					if (index1 % 2 == 0) {
+						wall.insert(index1, param1);
+						index2++;
+					} else {
+						index1--;
+					}
+
+					wall.remove(index1 + 1, index2 - index1 - 1);
+
+					// if the window is totally covered, return false
+					if (wall.size() == 2 &&
+							-DDLS::EPSILON < wall[0] && wall[0] < DDLS::EPSILON &&
+							1 - DDLS::EPSILON < wall[1] && wall[1] < 1 + DDLS::EPSILON) {
+						return false;
+					}
+				}
+
+				// add adjacent face to open list if not already processed
+				DDLSFace adj_face = current_edge->get_right_face();
+				if (!open_faces[adj_face] && !faces_done[adj_face]) {
+					open_faces_list.push_back(adj_face);
+					open_faces[adj_face] = true;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+DDLS_FieldOfView::DDLS_FieldOfView() {
+}
+
 #ifdef DOCTEST
 
 #include "data/ddls_mesh.h"
@@ -1086,6 +1546,241 @@ TEST_CASE("[DDLS] Pathfinding") {
 			funnel->find_path(from, to, list_faces, list_edges, path);
 			CHECK(path.size() >= 2);
 		}
+	}
+}
+
+TEST_CASE("[DDLS] PathIterator") {
+	SUBCASE("iterate forward and backward through path") {
+		DDLSPathIterator iter;
+		iter.instance();
+
+		Vector<Point2> path;
+		path.push_back(Point2(0, 0));
+		path.push_back(Point2(10, 0));
+		path.push_back(Point2(20, 5));
+		path.push_back(Point2(30, 10));
+		iter->set_path(path);
+
+		CHECK(iter->get_x() == 0);
+		CHECK(iter->get_y() == 0);
+		CHECK(iter->get_has_next() == true);
+		CHECK(iter->get_has_prev() == false);
+
+		CHECK(iter->next() == true);
+		CHECK(iter->get_x() == 10);
+		CHECK(iter->get_y() == 0);
+
+		CHECK(iter->next() == true);
+		CHECK(iter->get_x() == 20);
+		CHECK(iter->get_y() == 5);
+
+		CHECK(iter->next() == true);
+		CHECK(iter->get_x() == 30);
+		CHECK(iter->get_y() == 10);
+		CHECK(iter->get_has_next() == false);
+
+		CHECK(iter->next() == false);
+
+		CHECK(iter->prev() == true);
+		CHECK(iter->get_x() == 20);
+		CHECK(iter->get_y() == 5);
+		CHECK(iter->get_has_prev() == true);
+
+		CHECK(iter->prev() == true);
+		CHECK(iter->get_x() == 10);
+
+		CHECK(iter->prev() == true);
+		CHECK(iter->get_x() == 0);
+		CHECK(iter->get_has_prev() == false);
+
+		CHECK(iter->prev() == false);
+	}
+
+	SUBCASE("count and countMax") {
+		DDLSPathIterator iter;
+		iter.instance();
+
+		Vector<Point2> path;
+		path.push_back(Point2(0, 0));
+		path.push_back(Point2(5, 5));
+		path.push_back(Point2(10, 10));
+		iter->set_path(path);
+
+		CHECK(iter->get_count() == 0);
+		CHECK(iter->get_count_max() == 3);
+
+		iter->next();
+		CHECK(iter->get_count() == 1);
+
+		iter->next();
+		CHECK(iter->get_count() == 2);
+	}
+
+	SUBCASE("entity position updates") {
+		DDLSPathIterator iter;
+		iter.instance();
+
+		DDLSEntityAI entity;
+		entity.instance();
+		iter->set_entity(entity);
+
+		Vector<Point2> path;
+		path.push_back(Point2(100, 200));
+		path.push_back(Point2(300, 400));
+		iter->set_path(path);
+
+		CHECK(entity->get_pos().x == doctest::Approx(100));
+		CHECK(entity->get_pos().y == doctest::Approx(200));
+
+		iter->next();
+		CHECK(entity->get_pos().x == doctest::Approx(300));
+		CHECK(entity->get_pos().y == doctest::Approx(400));
+	}
+}
+
+TEST_CASE("[DDLS] LinearPathSampler") {
+	SUBCASE("sample straight line at fixed intervals") {
+		DDLSLinearPathSampler sampler;
+		sampler.instance();
+		sampler->set_sampling_distance(5);
+
+		// straight horizontal line: (0,0) -> (20,0)
+		Vector<Point2> path;
+		path.push_back(Point2(0, 0));
+		path.push_back(Point2(20, 0));
+		sampler->set_path(path);
+
+		CHECK(sampler->get_x() == doctest::Approx(0));
+
+		CHECK(sampler->next() == true);
+		CHECK(sampler->get_x() == doctest::Approx(5));
+		CHECK(sampler->get_y() == doctest::Approx(0));
+
+		CHECK(sampler->next() == true);
+		CHECK(sampler->get_x() == doctest::Approx(10));
+
+		CHECK(sampler->next() == true);
+		CHECK(sampler->get_x() == doctest::Approx(15));
+
+		CHECK(sampler->next() == true);
+		CHECK(sampler->get_x() == doctest::Approx(20));
+		CHECK(sampler->get_has_next() == false);
+	}
+
+	SUBCASE("pre-compute matches dynamic") {
+		DDLSLinearPathSampler sampler;
+		sampler.instance();
+		sampler->set_sampling_distance(3);
+
+		Vector<Point2> path;
+		path.push_back(Point2(0, 0));
+		path.push_back(Point2(10, 0));
+		path.push_back(Point2(10, 10));
+		sampler->set_path(path);
+
+		// collect dynamic samples
+		Vector<Point2> dynamic_samples;
+		dynamic_samples.push_back(Point2(sampler->get_x(), sampler->get_y()));
+		while (sampler->next()) {
+			dynamic_samples.push_back(Point2(sampler->get_x(), sampler->get_y()));
+		}
+
+		// reset and pre-compute
+		sampler->set_path(path);
+		sampler->pre_compute();
+
+		// collect pre-computed samples
+		Vector<Point2> precomp_samples;
+		precomp_samples.push_back(Point2(sampler->get_x(), sampler->get_y()));
+		while (sampler->next()) {
+			precomp_samples.push_back(Point2(sampler->get_x(), sampler->get_y()));
+		}
+
+		CHECK(dynamic_samples.size() == precomp_samples.size());
+		for (int i = 0; i < dynamic_samples.size(); i++) {
+			CHECK(dynamic_samples[i].x == doctest::Approx(precomp_samples[i].x).epsilon(0.001));
+			CHECK(dynamic_samples[i].y == doctest::Approx(precomp_samples[i].y).epsilon(0.001));
+		}
+	}
+
+	SUBCASE("prev reverses next") {
+		DDLSLinearPathSampler sampler;
+		sampler.instance();
+		sampler->set_sampling_distance(4);
+
+		Vector<Point2> path;
+		path.push_back(Point2(0, 0));
+		path.push_back(Point2(12, 0));
+		sampler->set_path(path);
+
+		sampler->next(); // at 4
+		real_t x_after_next = sampler->get_x();
+		real_t y_after_next = sampler->get_y();
+
+		sampler->next(); // at 8
+		sampler->prev(); // back to ~4
+
+		CHECK(sampler->get_x() == doctest::Approx(x_after_next).epsilon(0.01));
+		CHECK(sampler->get_y() == doctest::Approx(y_after_next).epsilon(0.01));
+	}
+}
+
+TEST_CASE("[DDLS] FieldOfView") {
+	DDLSMesh mesh = DDLSRectMeshFactory::build_rectangle(800, 600);
+	REQUIRE(mesh.is_valid());
+
+	SUBCASE("target visible in open mesh") {
+		DDLSFieldOfView fov;
+		fov.instance();
+		fov->set_mesh(mesh);
+
+		DDLSEntityAI observer;
+		observer.instance();
+		observer->set_pos(Point2(400, 300));
+		observer->set_dir_norm(Vector2(1, 0));
+		observer->set_angle_fov(Math_PI / 2); // 90 degrees
+		observer->set_radius_fov(500);
+		fov->set_from_entity(observer);
+
+		DDLSEntityAI target;
+		target.instance();
+		target->set_pos(Point2(500, 300)); // directly ahead
+		target->set_radius(10);
+
+		CHECK(fov->is_in_field(target) == true);
+	}
+
+	SUBCASE("target behind obstacle is not visible") {
+		// Insert a wall between observer and target
+		Vector<Point2> wall_coords;
+		wall_coords.push_back(Point2(445, 200));
+		wall_coords.push_back(Point2(455, 200));
+		wall_coords.push_back(Point2(455, 200));
+		wall_coords.push_back(Point2(455, 400));
+		wall_coords.push_back(Point2(455, 400));
+		wall_coords.push_back(Point2(445, 400));
+		wall_coords.push_back(Point2(445, 400));
+		wall_coords.push_back(Point2(445, 200));
+		mesh->insert_constraint_shape(wall_coords);
+
+		DDLSFieldOfView fov;
+		fov.instance();
+		fov->set_mesh(mesh);
+
+		DDLSEntityAI observer;
+		observer.instance();
+		observer->set_pos(Point2(400, 300));
+		observer->set_dir_norm(Vector2(1, 0));
+		observer->set_angle_fov(Math_PI / 6); // 30 degrees narrow beam
+		observer->set_radius_fov(500);
+		fov->set_from_entity(observer);
+
+		DDLSEntityAI target;
+		target.instance();
+		target->set_pos(Point2(600, 300)); // behind the wall
+		target->set_radius(10);
+
+		CHECK(fov->is_in_field(target) == false);
 	}
 }
 
