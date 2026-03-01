@@ -28,7 +28,51 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#pragma once
+
+#include "data/ddls_edge.h"
+
 class IteratorFromEdgeToRotatedEdges {
+	DDLSEdge from_edge;
+	DDLSEdge next_edge;
+
+	DDLSEdge result_edge;
+
+	bool real_edges_only = true;
+
 public:
+	bool is_real_edges_only() const { return real_edges_only; }
+	void set_real_edges_only(bool p_state) { real_edges_only = p_state; }
+
+	// can be chained, eg.: it = ...set_from_edge()
+	IteratorFromEdgeToRotatedEdges &set_from_edge(DDLSEdge p_edge) {
+		from_edge = p_edge;
+		next_edge = from_edge->get_rot_left_edge();
+		while (real_edges_only && next_edge && !next_edge->if_is_real()) {
+			next_edge = next_edge->get_rot_left_edge();
+			if (next_edge == from_edge) {
+				next_edge = nullptr;
+				break;
+			}
+		}
+		return *this;
+	}
+
+	DDLSEdge next() {
+		if (next_edge) {
+			result_edge = next_edge;
+			do {
+				next_edge = next_edge->get_rot_left_edge();
+				if (next_edge == from_edge) {
+					next_edge = nullptr;
+					break;
+				}
+			} while (real_edges_only && !next_edge->if_is_real());
+		} else {
+			result_edge = nullptr;
+		}
+		return result_edge;
+	}
+
 	IteratorFromEdgeToRotatedEdges() {}
 };

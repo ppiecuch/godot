@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "ai/ai_astar.h"
 #include "ai/ai_entity_ai.h"
 #include "ai/ai_funnel.h"
@@ -983,3 +989,104 @@ DDLS_Funnel::DDLS_Funnel() {
 	num_samples_circle = 16;
 	debug_surface = nullptr;
 }
+
+#ifdef DOCTEST
+
+#include "data/ddls_mesh.h"
+#include "factories/ddls_rect_mesh_factory.h"
+
+TEST_CASE("[DDLS] Pathfinding") {
+	DDLSMesh mesh = DDLSRectMeshFactory::build_rectangle(800, 600);
+	REQUIRE(mesh.is_valid());
+
+	SUBCASE("A* finds path in open mesh") {
+		DDLSAStar astar;
+		astar.instance();
+		astar->set_mesh(mesh);
+		astar->set_radius(0);
+
+		DDLSFunnel funnel;
+		funnel.instance();
+		funnel->set_radius(0);
+
+		Point2 from(50, 50);
+		Point2 to(750, 550);
+
+		Vector<DDLSFace> list_faces;
+		Vector<DDLSEdge> list_edges;
+		astar->find_path(from, to, list_faces, list_edges);
+		CHECK(list_faces.size() > 0);
+
+		if (list_faces.size() > 0) {
+			Vector<Point2> path;
+			funnel->find_path(from, to, list_faces, list_edges, path);
+			CHECK(path.size() >= 2);
+		}
+	}
+
+	SUBCASE("path avoids obstacle") {
+		// Insert a wall obstacle in the middle
+		Vector<Point2> wall_coords;
+		wall_coords.push_back(Point2(395, 100));
+		wall_coords.push_back(Point2(405, 100));
+		wall_coords.push_back(Point2(405, 100));
+		wall_coords.push_back(Point2(405, 500));
+		wall_coords.push_back(Point2(405, 500));
+		wall_coords.push_back(Point2(395, 500));
+		wall_coords.push_back(Point2(395, 500));
+		wall_coords.push_back(Point2(395, 100));
+		mesh->insert_constraint_shape(wall_coords);
+
+		DDLSAStar astar;
+		astar.instance();
+		astar->set_mesh(mesh);
+		astar->set_radius(0);
+
+		DDLSFunnel funnel;
+		funnel.instance();
+		funnel->set_radius(0);
+
+		Point2 from(200, 300);
+		Point2 to(600, 300);
+
+		Vector<DDLSFace> list_faces;
+		Vector<DDLSEdge> list_edges;
+		astar->find_path(from, to, list_faces, list_edges);
+		CHECK(list_faces.size() > 0);
+
+		if (list_faces.size() > 0) {
+			Vector<Point2> path;
+			funnel->find_path(from, to, list_faces, list_edges, path);
+			CHECK(path.size() >= 2);
+			// Path should go around the wall, so it should have more than 2 points
+			CHECK(path.size() > 2);
+		}
+	}
+
+	SUBCASE("A* + Funnel end-to-end with radius") {
+		DDLSAStar astar;
+		astar.instance();
+		astar->set_mesh(mesh);
+		astar->set_radius(4);
+
+		DDLSFunnel funnel;
+		funnel.instance();
+		funnel->set_radius(4);
+
+		Point2 from(100, 100);
+		Point2 to(700, 500);
+
+		Vector<DDLSFace> list_faces;
+		Vector<DDLSEdge> list_edges;
+		astar->find_path(from, to, list_faces, list_edges);
+		CHECK(list_faces.size() > 0);
+
+		if (list_faces.size() > 0) {
+			Vector<Point2> path;
+			funnel->find_path(from, to, list_faces, list_edges, path);
+			CHECK(path.size() >= 2);
+		}
+	}
+}
+
+#endif

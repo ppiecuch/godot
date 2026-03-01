@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#pragma once
+
 #include "data/ddls_edge.h"
 #include "data/ddls_vertex.h"
 
@@ -42,6 +44,7 @@ public:
 	IteratorFromVertexToNeighbourVertices &set_from_vertex(DDLSVertex p_vertex) {
 		from_vertex = p_vertex;
 		next_edge = from_vertex->get_edge();
+		return *this;
 	}
 
 	DDLSVertex next() {

@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#pragma once
+
 #include "data/ddls_face.h"
 #include "data/ddls_mesh.h"
 
@@ -55,7 +57,7 @@ public:
 				result_face = nullptr;
 				break;
 			}
-		} while (!result_face.if_is_real());
+		} while (!result_face->if_is_real());
 		return result_face;
 	}
 

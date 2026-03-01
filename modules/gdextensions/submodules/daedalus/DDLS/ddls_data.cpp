@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "data/ddls_constants.h"
 #include "data/ddls_constraint_segment.h"
 #include "data/ddls_constraint_shape.h"
@@ -248,29 +254,29 @@ void DDLS_Mesh::add_vertex(DDLSVertex p_vertex1, DDLSVertex p_vertex2, DDLSVerte
 
 void DDLS_Mesh::add_edge(DDLSEdge p_edge1, DDLSEdge p_edge2, DDLSEdge p_edge3, DDLSEdge p_edge4) {
 	ERR_FAIL_NULL(p_edge1);
-	vertices.push_back(p_edge1);
+	edges.push_back(p_edge1);
 	if (p_edge2) {
-		vertices.push_back(p_edge2);
+		edges.push_back(p_edge2);
 	}
 	if (p_edge3) {
-		vertices.push_back(p_edge3);
+		edges.push_back(p_edge3);
 	}
 	if (p_edge4) {
-		vertices.push_back(p_edge4);
+		edges.push_back(p_edge4);
 	}
 }
 
 void DDLS_Mesh::add_face(DDLSFace p_face1, DDLSFace p_face2, DDLSFace p_face3, DDLSFace p_face4) {
 	ERR_FAIL_NULL(p_face1);
-	vertices.push_back(p_face1);
+	faces.push_back(p_face1);
 	if (p_face2) {
-		vertices.push_back(p_face2);
+		faces.push_back(p_face2);
 	}
 	if (p_face3) {
-		vertices.push_back(p_face3);
+		faces.push_back(p_face3);
 	}
 	if (p_face4) {
-		vertices.push_back(p_face4);
+		faces.push_back(p_face4);
 	}
 }
 
@@ -1467,3 +1473,141 @@ DDLS_Graph::~DDLS_Graph() {
 
 DDLS_Graph::DDLS_Graph() :
 		id(GRAPH_COUNTER++) {}
+
+#ifdef DOCTEST
+
+#include "factories/ddls_rect_mesh_factory.h"
+#include "iterators/iterator_from_edge_to_rotated_edges.h"
+#include "iterators/iterator_from_face_to_inner_edges.h"
+#include "iterators/iterator_from_mesh_to_faces.h"
+#include "iterators/iterator_from_mesh_to_vertices.h"
+#include "iterators/iterator_from_vertex_to_neighbour_vertices.h"
+
+TEST_CASE("[DDLS] Mesh construction") {
+	DDLSMesh mesh = DDLSRectMeshFactory::build_rectangle(800, 600);
+	REQUIRE(mesh.is_valid());
+
+	SUBCASE("rectangular mesh topology") {
+		// A rectangular mesh has 4 corner vertices + additional from security rect
+		Vector<DDLSVertex> vertices = mesh->get_vertices();
+		Vector<DDLSEdge> edges = mesh->get_edges();
+		Vector<DDLSFace> faces = mesh->get_faces();
+		CHECK(vertices.size() > 0);
+		CHECK(edges.size() > 0);
+		CHECK(faces.size() > 0);
+	}
+
+	SUBCASE("add_edge stores in edges") {
+		// Validates bug fix #1: add_edge was pushing into vertices instead of edges
+		int old_edge_count = mesh->get_edges().size();
+		int old_vert_count = mesh->get_vertices().size();
+		DDLSEdge e;
+		e.instance();
+		mesh->add_edge(e);
+		CHECK(mesh->get_edges().size() == old_edge_count + 1);
+		CHECK(mesh->get_vertices().size() == old_vert_count);
+	}
+
+	SUBCASE("add_face stores in faces") {
+		// Validates bug fix #2: add_face was pushing into vertices instead of faces
+		int old_face_count = mesh->get_faces().size();
+		int old_vert_count = mesh->get_vertices().size();
+		DDLSFace f;
+		f.instance();
+		mesh->add_face(f);
+		CHECK(mesh->get_faces().size() == old_face_count + 1);
+		CHECK(mesh->get_vertices().size() == old_vert_count);
+	}
+}
+
+TEST_CASE("[DDLS] Mesh iterators") {
+	DDLSMesh mesh = DDLSRectMeshFactory::build_rectangle(800, 600);
+	REQUIRE(mesh.is_valid());
+
+	SUBCASE("mesh to vertices iterator") {
+		IteratorFromMeshToVertices iter = IteratorFromMeshToVertices().set_from_mesh(mesh);
+		int count = 0;
+		while (DDLSVertex v = iter.next()) {
+			CHECK(v->if_is_real());
+			count++;
+		}
+		// Count of real vertices from iterator should be <= total vertices
+		CHECK(count > 0);
+		CHECK(count <= mesh->get_vertices().size());
+	}
+
+	SUBCASE("mesh to faces iterator") {
+		// Validates bug fix #3: dot vs arrow on Ref<> in iterator
+		IteratorFromMeshToFaces iter = IteratorFromMeshToFaces().set_from_mesh(mesh);
+		int count = 0;
+		while (DDLSFace f = iter.next()) {
+			CHECK(f->if_is_real());
+			count++;
+		}
+		CHECK(count > 0);
+	}
+
+	SUBCASE("face to inner edges") {
+		// Each face (triangle) should have exactly 3 edges
+		IteratorFromMeshToFaces face_iter = IteratorFromMeshToFaces().set_from_mesh(mesh);
+		DDLSFace face = face_iter.next();
+		REQUIRE(face.is_valid());
+
+		IteratorFromFaceToInnerEdges edge_iter = IteratorFromFaceToInnerEdges().set_from_face(face);
+		int edge_count = 0;
+		while (DDLSEdge e = edge_iter.next()) {
+			edge_count++;
+		}
+		CHECK(edge_count == 3);
+	}
+
+	SUBCASE("vertex to outgoing edges") {
+		// All outgoing edges from a vertex should have that vertex as origin
+		IteratorFromMeshToVertices vert_iter = IteratorFromMeshToVertices().set_from_mesh(mesh);
+		DDLSVertex vertex = vert_iter.next();
+		REQUIRE(vertex.is_valid());
+
+		IteratorFromVertexToOutgoingEdges edge_iter = IteratorFromVertexToOutgoingEdges().set_from_vertex(vertex);
+		int count = 0;
+		while (DDLSEdge e = edge_iter.next()) {
+			CHECK(e->get_origin_vertex() == vertex);
+			count++;
+		}
+		CHECK(count > 0);
+	}
+
+	SUBCASE("vertex to neighbour vertices") {
+		// Validates bug fix #7: missing return in set_from_vertex
+		IteratorFromMeshToVertices vert_iter = IteratorFromMeshToVertices().set_from_mesh(mesh);
+		DDLSVertex vertex = vert_iter.next();
+		REQUIRE(vertex.is_valid());
+
+		IteratorFromVertexToNeighbourVertices neigh_iter = IteratorFromVertexToNeighbourVertices().set_from_vertex(vertex);
+		int count = 0;
+		while (DDLSVertex v = neigh_iter.next()) {
+			CHECK(v != vertex);
+			count++;
+		}
+		CHECK(count > 0);
+	}
+
+	SUBCASE("edge to rotated edges") {
+		// Validates the new iterator implementation
+		IteratorFromMeshToVertices vert_iter = IteratorFromMeshToVertices().set_from_mesh(mesh);
+		DDLSVertex vertex = vert_iter.next();
+		REQUIRE(vertex.is_valid());
+
+		DDLSEdge start_edge = vertex->get_edge();
+		REQUIRE(start_edge.is_valid());
+
+		IteratorFromEdgeToRotatedEdges rot_iter = IteratorFromEdgeToRotatedEdges().set_from_edge(start_edge);
+		int count = 0;
+		while (DDLSEdge e = rot_iter.next()) {
+			CHECK(e != start_edge);
+			count++;
+		}
+		CHECK(count > 0);
+	}
+}
+
+#endif

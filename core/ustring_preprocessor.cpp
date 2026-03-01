@@ -556,7 +556,7 @@ bool StringProcessor::test_condition() {
 		}
 	}
 
-	DEV_ASSERT(conditions.size() != 1); // now there should only be 1 condition left
+	DEV_ASSERT(conditions.size() == 1); // now there should only be 1 condition left
 
 	if (conditions.size() != 1) {
 		return false;

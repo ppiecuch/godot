@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "ai/ai_entity_ai.h"
 #include "data/ddls_constants.h"
 #include "data/ddls_mesh.h"
@@ -592,7 +598,7 @@ Variant is_in_face(const Point2 &p_pos, DDLSFace p_polygon) {
 		const Point2 p3 = v3->get_pos();
 
 		const real_t v_v1squared_length = (p1 - p_pos).length_squared();
-		const real_t v_v2squared_length = (p1 - p_pos).length_squared();
+		const real_t v_v2squared_length = (p2 - p_pos).length_squared();
 		const real_t v_v3squared_length = (p3 - p_pos).length_squared();
 		const real_t v1_v2squared_length = (p2 - p1).length_squared();
 		const real_t v2_v3squared_length = (p3 - p2).length_squared();
@@ -854,8 +860,8 @@ bool is_segment_intersecting_triangle(const Point2 &s1, const Point2 &s2, const 
 	if (side1_1 == 1 && side2_1 == 1 && side3_1 == 1) {
 		return true; // if 1st segment point is inside triangle
 	}
-	if (side1_1 == 1 && side2_1 == 1 && side3_1 == 1) {
-		return true; // if 2st segment point is inside triangle
+	if (side1_2 == 1 && side2_2 == 1 && side3_2 == 1) {
+		return true; // if 2nd segment point is inside triangle
 	}
 	// if both segment points are on different sides of the 1st triangle side
 	if ((side1_1 == 1 && side1_2 <= 0) || (side1_1 <= 0 && side1_2 == 1)) {
@@ -1195,7 +1201,7 @@ bool tangents_point_to_circle(const Point2 &p, const Point2 &cc, real_t r, Vecto
 
 // <!!!> CIRCLES MUST HAVE SAME RADIUS
 bool tangents_cross_circle_to_circle(real_t r, const Point2 &c1, const Point2 &c2, Vector<real_t> *r_result) {
-	DEV_ASSERT(sizeof(Vector2) != sizeof(real_t) * 2);
+	DEV_ASSERT(sizeof(Vector2) == sizeof(real_t) * 2);
 	return tangents_cross_circle_to_circle(r, c1, c2, (Vector<Point2> *)r_result);
 }
 
@@ -1607,3 +1613,83 @@ void DDLSSimpleView::_bind_methods() {
 DDLSSimpleView::DDLSSimpleView() {
 	_show_vertices_indices = false;
 }
+
+#ifdef DOCTEST
+
+#include "iterators/iterator_from_mesh_to_faces.h"
+
+TEST_CASE("[DDLS] DDLSGeom2D utilities") {
+	SUBCASE("point in face detection") {
+		// Validates bug fix #4: v_v2squared_length was using p1 instead of p2
+		DDLSMesh mesh = DDLSRectMeshFactory::build_rectangle(800, 600);
+		REQUIRE(mesh.is_valid());
+
+		// Locate a point known to be inside the mesh
+		Variant loc = DDLSGeom2D::locate_position(Point2(400, 300), mesh);
+		CHECK(loc.get_type() != Variant::NIL);
+
+		// Locate a point at a vertex
+		loc = DDLSGeom2D::locate_position(Point2(1, 1), mesh);
+		CHECK(loc.get_type() != Variant::NIL);
+	}
+
+	SUBCASE("get_direction orientation") {
+		// Collinear points
+		CHECK(DDLSGeom2D::get_direction(Point2(0, 0), Point2(10, 0), Point2(5, 0)) == 0);
+		// Left (counter-clockwise)
+		CHECK(DDLSGeom2D::get_direction(Point2(0, 0), Point2(10, 0), Point2(5, 5)) == 1);
+		// Right (clockwise)
+		CHECK(DDLSGeom2D::get_direction(Point2(0, 0), Point2(10, 0), Point2(5, -5)) == -1);
+	}
+
+	SUBCASE("segment intersection") {
+		Point2 intersection;
+		// Intersecting segments
+		bool result = DDLSGeom2D::intersections2segments(
+				Point2(0, 0), Point2(10, 10),
+				Point2(10, 0), Point2(0, 10),
+				&intersection);
+		CHECK(result == true);
+		CHECK(intersection.x == doctest::Approx(5.0));
+		CHECK(intersection.y == doctest::Approx(5.0));
+
+		// Non-intersecting parallel segments
+		result = DDLSGeom2D::intersections2segments(
+				Point2(0, 0), Point2(10, 0),
+				Point2(0, 5), Point2(10, 5),
+				&intersection);
+		CHECK(result == false);
+
+		// Non-intersecting (would intersect if extended)
+		result = DDLSGeom2D::intersections2segments(
+				Point2(0, 0), Point2(1, 1),
+				Point2(10, 0), Point2(0, 10),
+				&intersection);
+		CHECK(result == false);
+	}
+
+	SUBCASE("segment intersecting triangle") {
+		// Validates bug fix #6: duplicate condition check
+		// Segment inside triangle
+		CHECK(DDLSGeom2D::is_segment_intersecting_triangle(
+				Point2(2, 2), Point2(3, 3),
+				Point2(0, 0), Point2(10, 0), Point2(5, 10)));
+
+		// Segment outside triangle
+		CHECK_FALSE(DDLSGeom2D::is_segment_intersecting_triangle(
+				Point2(20, 20), Point2(30, 30),
+				Point2(0, 0), Point2(10, 0), Point2(5, 10)));
+
+		// Segment crossing triangle edge
+		CHECK(DDLSGeom2D::is_segment_intersecting_triangle(
+				Point2(-5, 5), Point2(15, 5),
+				Point2(0, 0), Point2(10, 0), Point2(5, 10)));
+
+		// 2nd point inside, 1st outside — specifically tests the fixed condition
+		CHECK(DDLSGeom2D::is_segment_intersecting_triangle(
+				Point2(-5, -5), Point2(3, 3),
+				Point2(0, 0), Point2(10, 0), Point2(5, 10)));
+	}
+}
+
+#endif
