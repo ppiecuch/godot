@@ -46,7 +46,7 @@ _run_in_docker () {
 # The newest copy wins on each pair. Current machine may be one of the hosts or a third machine.
 sync_extra () {
 	local REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-	local FILES=("CLAUDE.md" "CLAUDE-NOTES.md" "modules/gdextensions/submodules/daedalus/README.md")
+	local FILES=("CLAUDE.md" "CLAUDE-NOTES.md" "modules/gdextensions/submodules/daedalus/README.md" "modules/gdextensions/submodules/silentwolf/README.md")
 
 	# host:path pairs for sync targets
 	local TARGETS=(
