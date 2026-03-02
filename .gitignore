@@ -24,6 +24,8 @@
 
 /custom.py
 misc/hooks/pre-commit-custom-*
+*.yml
+*.pdf
 
 #############################
 ### Godot generated files ###
