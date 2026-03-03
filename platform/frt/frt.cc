@@ -31,7 +31,7 @@
 // frt.cc
 /*
   FRT - A Godot platform targeting single board computers
-  Copyright (c) 2017-2023  Emanuele Fornara
+  Copyright (c) 2017-2025  Emanuele Fornara
   SPDX-License-Identifier: MIT
  */
 
@@ -42,8 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FRT_VERSION "2.1.0"
-#define FRT_STATUS "stable"
+#define FRT_VERSION "3.6.2-1"
 
 static void print_msg(const char *format, va_list ap) {
 	fprintf(stderr, "frt: ");
@@ -68,7 +67,6 @@ void fatal(const char *format, ...) {
 	exit(1);
 }
 
-extern const char *commit_id;
 extern const char *license;
 
 } // namespace frt
@@ -93,7 +91,7 @@ extern "C" void frt_parse_frt_args(int argc, char *argv[]) {
 	for (int i = 1; i < argc; i++) {
 		const char *s = argv[i];
 		if (!strcmp(s, "-v")) {
-			printf("%s.%s.%s\n", FRT_VERSION, FRT_STATUS, frt::commit_id);
+			printf("%s\n", FRT_VERSION);
 			exit(0);
 		} else if (!strcmp(s, "-l")) {
 			puts(frt::license);

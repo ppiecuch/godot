@@ -1,88 +1,97 @@
 FRT
 ===
 
-FRT is a Godot "platform" targeting single board computers. In plain English,
+[Godot](https://godotengine.org) is a full 2D and 3D game engine with editor.
+
+FRT is a Godot 3 "platform" targeting single board computers. In plain English,
 you can export a Godot game to most of them by using FRT binaries, *as long as
 the game has been designed with the limitation of the hardware in mind*.
 
 ## When to use FRT
 
-Godot comes with a generic X11 platform that works very well on most
-modern single board computer. So, if you are using X11, it is probably
-better to compile the official engine for ARM and use that.
+The latest versions of Godot 3 come with official export templates for
+arm32 / arm64 architectures.
+*Using the official export templates should be your first choice*.
 
-If your distro uses something other than X11, you can try if FRT works
-for you. KMS/DRM and FBDEV are common display technologies, but Wayland
-is also slowly becoming more popular.
+The main difference is that FRT uses SDL2 under the hood, so, if your distro
+uses something other than X11, you can try if FRT works better for you.
+KMS/DRM and FBDEV are sometimes used, but Wayland has become more and more
+popular, and it might be interesting to see if your game runs better
+without going through xwayland.
 
 ## How to use FRT
 
-First, you need to export a game from the official Godot editor.
-The platform where you run the editor doesn't matter.
+Download the custom FRT templates from
+[Releases](https://github.com/efornara/frt/releases)
+and export to arm32 / arm64 as usual, selecting the FRT binaries in the
+Custom Templates fields of the Options tab.
 
-One option is to use precompiled binaries from here:
+You can also export a pck / zip file and manually use the FRT template
+to run it. This has the advantage that you only need to upload the FRT
+binaries once.
+
+Details vary depending on your target board, but the end result is usually
+(a script with) a command that looks something like this:
+
+    frt_3.6.1-1_arm64_release --main-pack MyGame.pck
+
+FRT tracks the latest stable version of Godot 3. Older versions of FRT
+can still be found here:
 
 <https://sourceforge.net/projects/frt/files/>
 
-as custom templates. Another option is to export a .PCK file and use
-the FRT binary to run it. Details vary, but the end result is usually
-a script with a command that looks something like this:
+## How to compile FRT yourself
 
-    ./frt_200_342_arm64v8.bin --main-pack MyGame.pck
+The easiest way to compile FRT is to use docker.
 
-There are some guides and posts around describing the process for FRT 1.0.
-The process is pretty much the same for FRT 2.0.
+Download [Dockerfile](https://raw.githubusercontent.com/efornara/frt/refs/heads/master/scripts/Dockerfile) and create a new docker image.
 
-### Which version?
+Start a new container and run:
 
-FRT binary releases follow the following naming convention:
+    $ frt-pull
 
-frt\_*frt-version*\_*godot-version*\_*arch-tag*.bin
+to clone (or pull) the right branches from <https://github.com/efornara/godot3>
+and <https://github.com/efornara/frt>.
 
-For example:
+Then run:
 
-frt\_200\_342\_arm32v7.bin
+    $ frt-compile
 
-is FRT 2.0.0 compiled against Godot 3.4.2-stable. It is compiled for
-a 32-bit distro. While:
+to generate the templates.
 
-frt\_200\_342\_arm64v8.bin
+## Changes from upstream FRT
 
-is compiled for a 64-bit distro.
-The arm32v6 ones are there mainly to support older Pis.
+This version is synced with [upstream FRT](https://github.com/efornara/frt)
+v3.6.2-1, with the following additions for this Godot 3.x fork:
 
-My policy is to publish binaries for the latest release from upstream
-plus 2.1.6 and the ones that were/are in debian stable (currenty 3.0.6
-and 3.2.3). You are encouraged to compile any version you need yourself.
-See [Compile](doc/Compile.md) for more info.
+- **Architecture selection** (`frt_arch`): choose target architecture
+  directly via `frt_arch=arm32v6/arm32v7/arm64v8/amd64` instead of
+  specifying compiler flags manually.
+- **Cross-compilation helper** (`frt_cross`): set `frt_cross=auto` to
+  automatically derive the toolchain triple from `frt_arch`, or pass
+  a custom triple directly (e.g. `frt_cross=aarch64-linux-gnu`).
+- **pkg-config for cross builds** (`FRT_PKG_CONFIG`): SCsub uses a
+  per-target pkg-config (e.g. `aarch64-linux-gnu-pkg-config`) so SDL2
+  flags resolve correctly when cross-compiling.
+- **GLES2/GLES3 build flags**: `GLES2_ENABLED` is always set (needed by
+  the Godot 3.x GLES2 driver); `GLES3_DISABLED` is set when `disable_3d`
+  is enabled.
+- **Atomic library for arm32v6**: linked automatically on Godot >= 3.4.
+- **Godot engine copyright headers**: all source files carry both the
+  Godot engine MIT header and the FRT MIT header, following the
+  convention for in-tree platform code.
 
-Ideally the codebase should be able to support building against any
-upstream stable version since 2.1.6, but this is rarely tested.
+Example cross-compilation:
 
-## SDL2
+    scons platform=frt tools=no target=release \
+        frt_arch=arm64v8 frt_cross=auto use_static_cpp=yes
 
-Starting from version 2.0, FRT uses and dynamically links the SDL2 library,
-so you can leverage a custom version of SDL2 patched for your board and
-distro.
+## Known issues
 
-Keep in mind that SDL2 is a fairly complex library, and you can customize
-its behaviour using environment variables. Before looking for alternatives
-to the version of SDL2 already installed, it is probably worth spending some
-time testing different drivers and options.
+The arm32 templates terminate with "Illegal instruction" on some older boards.
+The official templates behave the same way.
+See <https://github.com/godotengine/godot/issues/112189> for more info.
 
-### Example: Pi Zero (older model)
-
-In my (limited) experience, an exception is older Pis (the ones best used
-with legacy drivers), where the SDL that you get out of the box is not
-that great.
-
-This would also serve as an example of how to use a custom SDL library.
-
-Download a binary archive from here:
-
-<https://github.com/efornara/sdl2/releases>
-
-uncompress it somewhere, and run the FRT binary like this:
-
-    export LD_LIBRARY_PATH=~/local/sdl/linux-arm32v6
-    ./frt_200_216_arm32v6.bin -path ~/games/mygame
+If you are running a recent distro (e.g. trixie-based armbian),
+as a stopgap you can try the armhf binaries from these experimental
+[trixie](https://github.com/efornara/frt/releases/tag/3.6.2-1-trixie) builds.

@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  sdl2_godot_map_2_3.h                                                  */
+/*  sdl2_godot_map.h                                                      */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,10 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-// sdl2_godot_map_2_3.h
+// sdl2_godot_map.h
 /*
   FRT - A Godot platform targeting single board computers
-  Copyright (c) 2017-2023  Emanuele Fornara
+  Copyright (c) 2017-2025  Emanuele Fornara
   SPDX-License-Identifier: MIT
  */
 
@@ -83,9 +83,7 @@ MouseMode map_mouse_mode(OS::MouseMode mode) {
 		case OS::MOUSE_MODE_HIDDEN:
 			return MouseHidden;
 		case OS::MOUSE_MODE_CAPTURED:
-#if FRT_GODOT_VERSION >= 30000
 		case OS::MOUSE_MODE_CONFINED:
-#endif
 			return MouseCaptured;
 		default: // NOT REACHED
 			return MouseVisible;
@@ -170,11 +168,7 @@ struct KeyMap {
 	{ SDLK_END, KEY_END },
 	{ SDLK_PAGEUP, KEY_PAGEUP },
 	{ SDLK_PAGEDOWN, KEY_PAGEDOWN },
-#if FRT_GODOT_VERSION >= 30000
 	{ SDLK_RETURN, KEY_ENTER },
-#else
-	{ SDLK_RETURN, KEY_RETURN },
-#endif
 	{ SDLK_ESCAPE, KEY_ESCAPE },
 	{ SDLK_LCTRL, KEY_CONTROL },
 	{ SDLK_RCTRL, KEY_CONTROL },
