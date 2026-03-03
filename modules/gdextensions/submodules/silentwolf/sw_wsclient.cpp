@@ -32,7 +32,6 @@
 
 #include "common/gd_core.h"
 #include "core/io/json.h"
-#include <_types/_uint8_t.h>
 
 void SW_WSClient::_ready() {
 	sw_debug("Entering SW_WSClient _ready function");

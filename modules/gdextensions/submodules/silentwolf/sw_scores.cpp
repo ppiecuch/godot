@@ -36,7 +36,7 @@ void SW_Scores::sw_notification(int what) {
 	if (what == SW_NOTIFICATION_PROCESS) {
 		if (requesting) {
 			int check = 0;
-			for (auto &http_req : make_vector(ScorePosition, ScoresAround, HighScores, ScoresByPlayer, WipeLeaderboard, PostScore, DeleteScore)) {
+			for (auto &http_req : make_vector(ScorePosition, ScoresAround, HighScores, ScoresByPlayer, TopScoreByPlayer, WipeLeaderboard, PostScore, DeleteScore)) {
 				if (http_req) {
 					check += !http_req->poll();
 				}
@@ -243,7 +243,7 @@ SW_Scores *SW_Scores::delete_score(const String &score_id) {
 		DeleteScore = newref(BasicHTTPRequest);
 		DeleteScore->connect("request_completed", this, "_on_DeleteScore_request_completed");
 	}
-	ERR_FAIL_COND_V(HighScores->is_active_request(), this);
+	ERR_FAIL_COND_V(DeleteScore->is_active_request(), this);
 	sw_info("Calling SilentWolf to delete a score");
 	String game_id = SilentWolf::config["game_id"];
 	String game_version = SilentWolf::config["game_version"];
@@ -300,7 +300,7 @@ void SW_Scores::_on_GetTopScoreByPlayer_request_completed(int result, int respon
 		} else {
 			sw_info("SilentWolf get top score by player success");
 			if (response.has("top_score")) {
-				Dictionary top_score = response["top_scores"];
+				Dictionary top_score = response["top_score"];
 				sw_debug("top score from response: ", top_score);
 				if (top_score.empty()) {
 					player_top_score = Dictionary();
@@ -511,6 +511,7 @@ void SW_Scores::send_post_request(Ref<BasicHTTPRequest> http_req, const String &
 void SW_Scores::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_GetScoresByPlayer_request_completed"), &SW_Scores::_on_GetScoresByPlayer_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_GetHighScores_request_completed"), &SW_Scores::_on_GetHighScores_request_completed);
+	ClassDB::bind_method(D_METHOD("_on_GetTopScoreByPlayer_request_completed"), &SW_Scores::_on_GetTopScoreByPlayer_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_DeleteScore_request_completed"), &SW_Scores::_on_DeleteScore_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_PostNewScore_request_completed"), &SW_Scores::_on_PostNewScore_request_completed);
 	ClassDB::bind_method(D_METHOD("_on_GetScorePosition_request_completed"), &SW_Scores::_on_GetScorePosition_request_completed);
@@ -521,6 +522,7 @@ void SW_Scores::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_scores_around", "score", "scores_to_fetch", "ldboard_name"), &SW_Scores::get_scores_around, DEFVAL(3), DEFVAL("main"));
 	ClassDB::bind_method(D_METHOD("get_high_scores", "maximum", "ldboard_name", "period_offset"), &SW_Scores::get_high_scores, DEFVAL(10), DEFVAL("main"), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("get_scores_by_player", "player_name", "maximum", "ldboard_name", "period_offset"), &SW_Scores::get_scores_by_player, DEFVAL(10), DEFVAL("main"), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("get_top_score_by_player", "player_name", "maximum", "ldboard_name", "period_offset"), &SW_Scores::get_top_score_by_player, DEFVAL(10), DEFVAL("main"), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("wipe_leaderboard", "ldboard_name"), &SW_Scores::wipe_leaderboard, DEFVAL("main"));
 	ClassDB::bind_method(D_METHOD("persist_score", "player_name", "score", "ldboard_name", "metadata"), &SW_Scores::persist_score, DEFVAL("main"), DEFVAL(Dictionary()));
 	ClassDB::bind_method(D_METHOD("delete_score", "score_id"), &SW_Scores::delete_score);
@@ -545,15 +547,17 @@ void SW_Scores::_bind_methods() {
 	BIND_ENUM_CONSTANT(SW_SCORES_BELOW);
 
 	ADD_SIGNAL(MethodInfo("sw_data_requested"));
-	ADD_SIGNAL(MethodInfo("sw_scores_received"));
-	ADD_SIGNAL(MethodInfo("sw_player_scores_received"));
-	ADD_SIGNAL(MethodInfo("sw_top_player_score_received"));
-	ADD_SIGNAL(MethodInfo("sw_position_received"));
+	ADD_SIGNAL(MethodInfo("sw_scores_received", PropertyInfo(Variant::ARRAY, "result")));
+	ADD_SIGNAL(MethodInfo("sw_player_scores_received", PropertyInfo(Variant::ARRAY, "player_scores")));
+	ADD_SIGNAL(MethodInfo("sw_top_player_score_received", PropertyInfo(Variant::DICTIONARY, "top_score")));
+	ADD_SIGNAL(MethodInfo("sw_position_received", PropertyInfo(Variant::INT, "position")));
 	ADD_SIGNAL(MethodInfo("sw_scores_around_received", PropertyInfo(Variant::ARRAY, "scores_above"), PropertyInfo(Variant::ARRAY, "scores_below"), PropertyInfo(Variant::INT, "position")));
-	ADD_SIGNAL(MethodInfo("sw_score_posted"));
+	ADD_SIGNAL(MethodInfo("sw_score_posted", PropertyInfo(Variant::STRING, "score_id")));
 	ADD_SIGNAL(MethodInfo("sw_score_deleted"));
 	ADD_SIGNAL(MethodInfo("sw_local_scores_changed"));
 	ADD_SIGNAL(MethodInfo("sw_leaderboard_wiped"));
+	ADD_SIGNAL(MethodInfo("scores_received", PropertyInfo(Variant::ARRAY, "scores")));
+	ADD_SIGNAL(MethodInfo("position_received", PropertyInfo(Variant::INT, "position")));
 }
 
 SW_Scores::SW_Scores() {

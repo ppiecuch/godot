@@ -651,18 +651,18 @@ void SW_Auth::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("sw_login_failed", PropertyInfo(Variant::STRING, "error")));
 	ADD_SIGNAL(MethodInfo("sw_logout_succeeded"));
 	ADD_SIGNAL(MethodInfo("sw_registration_succeeded"));
-	ADD_SIGNAL(MethodInfo("sw_registration_user_pwd_succeeded"));
-	ADD_SIGNAL(MethodInfo("sw_registration_failed"));
+	ADD_SIGNAL(MethodInfo("sw_registration_user_pwd_succeeded", PropertyInfo(Variant::BOOL, "email_conf_enabled")));
+	ADD_SIGNAL(MethodInfo("sw_registration_failed", PropertyInfo(Variant::STRING, "error")));
 	ADD_SIGNAL(MethodInfo("sw_email_verif_succeeded"));
-	ADD_SIGNAL(MethodInfo("sw_email_verif_failed"));
+	ADD_SIGNAL(MethodInfo("sw_email_verif_failed", PropertyInfo(Variant::STRING, "error")));
 	ADD_SIGNAL(MethodInfo("sw_resend_conf_code_succeeded"));
-	ADD_SIGNAL(MethodInfo("sw_resend_conf_code_failed"));
-	ADD_SIGNAL(MethodInfo("sw_session_check_complete"));
+	ADD_SIGNAL(MethodInfo("sw_resend_conf_code_failed", PropertyInfo(Variant::STRING, "error")));
+	ADD_SIGNAL(MethodInfo("sw_session_check_complete", PropertyInfo(Variant::STRING, "result")));
 	ADD_SIGNAL(MethodInfo("sw_request_password_reset_succeeded"));
 	ADD_SIGNAL(MethodInfo("sw_request_password_reset_failed", PropertyInfo(Variant::STRING, "error")));
 	ADD_SIGNAL(MethodInfo("sw_reset_password_succeeded"));
-	ADD_SIGNAL(MethodInfo("sw_reset_password_failed"));
-	ADD_SIGNAL(MethodInfo("sw_get_player_details_succeeded"));
+	ADD_SIGNAL(MethodInfo("sw_reset_password_failed", PropertyInfo(Variant::STRING, "error")));
+	ADD_SIGNAL(MethodInfo("sw_get_player_details_succeeded", PropertyInfo(Variant::DICTIONARY, "player_details")));
 	ADD_SIGNAL(MethodInfo("sw_get_player_details_failed"));
 }
 

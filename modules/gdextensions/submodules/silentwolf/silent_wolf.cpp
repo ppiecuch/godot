@@ -30,6 +30,12 @@
 
 #include "silent_wolf.h"
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "common/device_id.h"
 #include "core/io/json.h"
 #include "core/variant.h"
@@ -496,3 +502,174 @@ SilentWolfInstance::SilentWolfInstance() {
 	server_active = false;
 	instance = SilentWolf::get_singleton();
 }
+
+#ifdef DOCTEST
+
+TEST_CASE("[SilentWolf] UUID generation") {
+	SUBCASE("generate_uuid_v4 produces valid format") {
+		String uuid = generate_uuid_v4();
+		CHECK(uuid.length() == 36);
+		CHECK(uuid.count("-") == 4);
+		// Format: 8-4-4-4-12
+		CHECK(uuid[8] == '-');
+		CHECK(uuid[13] == '-');
+		CHECK(uuid[18] == '-');
+		CHECK(uuid[23] == '-');
+	}
+
+	SUBCASE("UUID v4 version and variant bits") {
+		// Generate several UUIDs and check version/variant
+		for (int i = 0; i < 10; i++) {
+			String uuid = generate_uuid_v4();
+			// Version 4: character at position 14 should be '4'
+			CHECK(uuid[14] == '4');
+			// Variant 1: character at position 19 should be 8, 9, a, or b
+			char c = uuid[19];
+			CHECK((c == '8' || c == '9' || c == 'a' || c == 'b'));
+		}
+	}
+
+	SUBCASE("is_uuid validates correctly") {
+		CHECK(is_uuid("550e8400-e29b-41d4-a716-446655440000"));
+		CHECK(is_uuid(generate_uuid_v4()));
+		CHECK_FALSE(is_uuid("not-a-uuid"));
+		CHECK_FALSE(is_uuid(""));
+		CHECK_FALSE(is_uuid("550e8400e29b41d4a716446655440000")); // no dashes
+		CHECK_FALSE(is_uuid("550e8400-e29b-41d4-a716-44665544000")); // too short
+	}
+
+	SUBCASE("generated UUIDs are unique") {
+		String uuid1 = generate_uuid_v4();
+		String uuid2 = generate_uuid_v4();
+		String uuid3 = generate_uuid_v4();
+		CHECK(uuid1 != uuid2);
+		CHECK(uuid2 != uuid3);
+		CHECK(uuid1 != uuid3);
+	}
+}
+
+TEST_CASE("[SilentWolf] Hashing") {
+	SUBCASE("sw_hash_values produces MD5 hash") {
+		Array values = array("player1", "100", "1234567890");
+		String hash = sw_hash_values(values);
+		// MD5 produces 32 hex characters
+		CHECK(hash.length() == 32);
+		// Should be deterministic
+		CHECK(hash == sw_hash_values(values));
+	}
+
+	SUBCASE("different values produce different hashes") {
+		Array values1 = array("player1", "100");
+		Array values2 = array("player2", "100");
+		Array values3 = array("player1", "200");
+		CHECK(sw_hash_values(values1) != sw_hash_values(values2));
+		CHECK(sw_hash_values(values1) != sw_hash_values(values3));
+	}
+
+	SUBCASE("empty array produces hash of empty string") {
+		Array empty;
+		String hash = sw_hash_values(empty);
+		CHECK(hash.length() == 32);
+		CHECK(hash == String("").md5_text());
+	}
+}
+
+TEST_CASE("[SilentWolf] Status code checking") {
+	SUBCASE("zero status code indicates connection failure") {
+		CHECK_FALSE(sw_check_status_code(0));
+	}
+
+	SUBCASE("non-zero status codes pass") {
+		CHECK(sw_check_status_code(200));
+		CHECK(sw_check_status_code(201));
+		CHECK(sw_check_status_code(400));
+		CHECK(sw_check_status_code(403));
+		CHECK(sw_check_status_code(404));
+		CHECK(sw_check_status_code(500));
+	}
+}
+
+TEST_CASE("[SilentWolf] JSON utilities") {
+	SUBCASE("parse_json_from_string parses valid JSON") {
+		Dictionary result = parse_json_from_string("{\"key\": \"value\", \"num\": 42}");
+		CHECK_FALSE(result.empty());
+		CHECK(String(result["key"]) == "value");
+		CHECK(int(result["num"]) == 42);
+	}
+
+	SUBCASE("parse_json_from_string handles empty object") {
+		Dictionary result = parse_json_from_string("{}");
+		CHECK(result.empty());
+	}
+
+	SUBCASE("get_string_from_utf8 handles empty data") {
+		PoolByteArray empty;
+		String result = get_string_from_utf8(empty);
+		CHECK(result.empty());
+	}
+
+	SUBCASE("get_string_from_utf8 decodes UTF-8") {
+		String original = "Hello, World!";
+		CharString utf8 = original.utf8();
+		PoolByteArray data;
+		data.resize(utf8.length());
+		for (int i = 0; i < utf8.length(); i++) {
+			data.write()[i] = utf8[i];
+		}
+		String result = get_string_from_utf8(data);
+		CHECK(result == original);
+	}
+}
+
+TEST_CASE("[SilentWolf] Configuration") {
+	SUBCASE("default config has required keys") {
+		CHECK(SilentWolf::config.has("api_key"));
+		CHECK(SilentWolf::config.has("game_id"));
+		CHECK(SilentWolf::config.has("game_version"));
+		CHECK(SilentWolf::config.has("use_ssl"));
+		CHECK(SilentWolf::config.has("log_level"));
+	}
+
+	SUBCASE("default auth config has required keys") {
+		CHECK(SilentWolf::auth_config.has("session_duration_seconds"));
+		CHECK(SilentWolf::auth_config.has("saved_session_expiration_days"));
+	}
+
+	SUBCASE("version string is set") {
+		CHECK(SilentWolf::version == "0.6.20");
+	}
+}
+
+TEST_CASE("[SilentWolf] Local file storage") {
+	const String test_path = "user://sw_doctest_temp.json";
+
+	SUBCASE("save and load data round-trip") {
+		Dictionary data = make_dict("player", "test_player", "score", 42);
+		sw_save_data(test_path, data, "");
+
+		CHECK(sw_does_file_exist(test_path));
+
+		Dictionary loaded = sw_get_data(test_path);
+		CHECK(String(loaded["player"]) == "test_player");
+		CHECK(int(loaded["score"]) == 42);
+
+		// Cleanup
+		sw_remove_data(test_path, "");
+	}
+
+	SUBCASE("remove_data clears file contents") {
+		Dictionary data = make_dict("key", "value");
+		sw_save_data(test_path, data, "");
+		sw_remove_data(test_path, "");
+
+		Dictionary loaded = sw_get_data(test_path);
+		CHECK(loaded.empty());
+	}
+
+	SUBCASE("get_data returns empty for nonexistent file") {
+		Dictionary result = sw_get_data("user://sw_nonexistent_doctest.json");
+		CHECK(result.empty());
+	}
+}
+
+#endif // DOCTEST
