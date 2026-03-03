@@ -8,6 +8,15 @@ set -e
 # SPDX-License-Identifier: MIT
 #
 
+# Detect if FRT is already part of the Godot tree
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+GODOT_ROOT="$(cd "${SCRIPT_DIR}/../../.." 2>/dev/null && pwd)"
+if [ -f "${GODOT_ROOT}/platform/frt/README.md" ]; then
+	echo "FRT is already embedded in the Godot tree at: ${GODOT_ROOT}"
+	echo "No need to clone — skipping."
+	exit 0
+fi
+
 if [ -d godot3 ]
 then
 	cd godot3

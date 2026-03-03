@@ -24,17 +24,21 @@ PRODUCTION_OPTIONS="
 # Options above are manually kept in sync with compile.sh.
 # If they differ, the ones in compile.sh are the right ones.
 
-if [ ! -f godot3/platform/frt/README.md ]
+# Determine Godot root from script location
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+GODOT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+
+if [ ! -f "${GODOT_ROOT}/platform/frt/README.md" ]
 then
 	echo
-	echo "File godot3/platform/frt/README.md does not exist!"
+	echo "File ${GODOT_ROOT}/platform/frt/README.md does not exist!"
 	echo
 	echo "Have you cloned the repository with frt-pull?"
-	echo "Are you in the right directory? (ls should show godot3)"
+	echo "Are you in the right directory?"
 	echo
 	exit 1
 fi
-cd godot3
+cd "${GODOT_ROOT}"
 
 if [ -z "${GODOT_SDK_LINUX_ARM64}" ]
 then
