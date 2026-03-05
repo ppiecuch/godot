@@ -542,9 +542,9 @@ void _physics_interpolation_warning(const char *p_function, const char *p_file, 
 		((void)0)
 #else
 #define DEV_ASSERT(m_cond) \
-	{ (void)(m_cond) }
+	((void)0)
 #define DEV_ASSERT_MSG(m_cond, m_msg) \
-	{ (void)(m_cond) }
+	((void)0)
 #endif
 
 /**
