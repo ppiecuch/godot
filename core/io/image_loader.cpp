@@ -45,7 +45,7 @@ bool ImageFormatLoader::recognize(const String &p_extension) const {
 }
 
 Error ImageLoader::load_image(String p_file, Ref<Image> p_image, FileAccess *p_custom, bool p_force_linear, float p_scale) {
-	ERR_FAIL_COND_V_MSG(p_image.is_null(), ERR_INVALID_PARAMETER, "It's not a reference to a valid Image object.");
+	ERR_FAIL_COND_V_MSG(p_image.is_null(), ERR_INVALID_PARAMETER, vformat("It's not a reference to a valid Image object (loading '%s').", p_file));
 
 	FileAccess *f = p_custom;
 	if (!f) {

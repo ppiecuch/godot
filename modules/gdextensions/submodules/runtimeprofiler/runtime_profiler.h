@@ -63,7 +63,7 @@ public:
 		struct Category {
 			StringName signature;
 			String name;
-			float total_time; //total for category
+			float total_time;
 
 			struct Item {
 				StringName signature;
@@ -86,6 +86,10 @@ public:
 		Metric() {
 			valid = false;
 			frame_number = 0;
+			frame_time = 0;
+			process_time = 0;
+			physics_time = 0;
+			physics_frame_time = 0;
 		}
 	};
 
@@ -117,14 +121,11 @@ private:
 
 	SpinBox *cursor_metric_edit;
 
-	struct FrameData {
-		StringName name;
-		Array data;
-	};
+	Label *frame_time_label;
+	Label *status_label;
 
 	bool profiling;
 	int max_frame_functions;
-	Vector<FrameData> profile_frame_data;
 	float frame_time, process_time, physics_time, physics_frame_time;
 	Vector<ScriptLanguage::ProfilingInfo> profile_info;
 	Vector<ScriptLanguage::ProfilingInfo *> profile_info_ptrs;
@@ -136,15 +137,19 @@ private:
 
 	bool updating_frame;
 
-	// int cursor_metric;
 	int hover_metric;
 
 	float graph_height;
+	float ui_scale;
 
 	bool seeking;
 
 	Timer *frame_delay;
 	Timer *plot_delay;
+
+	Color color_bg;
+	Color color_plot_base;
+	Color color_accent;
 
 	void _update_frame();
 
@@ -153,7 +158,7 @@ private:
 
 	String _get_time_as_text(const Metric &m, float p_time, int p_calls);
 
-	void _send_profiling_data(bool p_for_frame);
+	void _collect_metric(bool p_for_frame);
 
 	void _make_metric_ptrs(Metric &m);
 	void _item_edited();
@@ -173,6 +178,10 @@ private:
 
 	void _combo_changed(int);
 
+	static String _capitalize_name(const String &p_name);
+
+	void _update_status_label();
+
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
@@ -180,15 +189,13 @@ protected:
 public:
 	void add_frame_metric(const Metric &p_metric, bool p_final = false);
 	void set_enabled(bool p_enable);
-	bool is_profiling();
-	bool is_seeking() { return seeking; }
+	bool is_profiling() const;
 	void disable_seeking();
 
 	void clear();
 
-	void start_profiling(int p_max_frame_functions);
+	void start_profiling(int p_max_frame_functions = 512);
 	void stop_profiling();
-	bool is_profiling() const;
 
 	Vector<Vector<String>> get_data_as_csv() const;
 
