@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import re
+import sys
 import version
 import platform
 import binascii
@@ -511,6 +512,14 @@ if is_enabled("flexbuffers") or is_enabled("nakama1"):
         thirdparty_sources += ["thirdparty/flatbuffers/src/util.cpp"]
     if is_enabled("nakama1"):
         sources += Glob("submodules/nakama1/client/*.cpp")
+
+if is_enabled("symbolfonts"):
+    import subprocess
+    gen_script = os.path.join("submodules", "symbolfonts", "gen_icon_tables.py")
+    gen_output = os.path.join("submodules", "symbolfonts", "icon_tables.gen.h")
+    if not os.path.exists(gen_output):
+        print("(GDextensions) Generating icon_tables.gen.h ...")
+        subprocess.check_call([sys.executable, gen_script])
 
 if is_enabled("geomfonts"):
     env_module.Prepend(CPPPATH="submodules/geomfonts/polyfonts")
