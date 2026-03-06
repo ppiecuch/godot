@@ -3206,6 +3206,133 @@ void EditorNode::_update_file_menu_closed() {
 	pop->set_item_disabled(pop->get_item_index(FILE_OPEN_PREV), false);
 }
 
+void EditorNode::_copy_popup_menu_items(PopupMenu *p_src, PopupMenu *p_dst) {
+	for (int i = 0; i < p_src->get_item_count(); i++) {
+		if (p_src->is_item_separator(i)) {
+			p_dst->add_separator(p_src->get_item_text(i), p_src->get_item_id(i));
+			continue;
+		}
+
+		String submenu_name = p_src->get_item_submenu(i);
+		if (!submenu_name.empty()) {
+			Node *src_child = p_src->get_node_or_null(submenu_name);
+			PopupMenu *src_pm = src_child ? Object::cast_to<PopupMenu>(src_child) : nullptr;
+			if (src_pm) {
+				PopupMenu *dst_pm = memnew(PopupMenu);
+				dst_pm->set_name(submenu_name);
+				p_dst->add_child(dst_pm);
+				_copy_popup_menu_items(src_pm, dst_pm);
+			}
+			p_dst->add_submenu_item(p_src->get_item_text(i), submenu_name, p_src->get_item_id(i));
+			continue;
+		}
+
+		// Determine accelerator (from shortcut or direct accel).
+		uint32_t accel = p_src->get_item_accelerator(i);
+		if (accel == 0) {
+			Ref<ShortCut> sc = p_src->get_item_shortcut(i);
+			if (sc.is_valid() && sc->is_valid()) {
+				Ref<InputEventKey> ie = sc->get_shortcut();
+				if (ie.is_valid()) {
+					accel = ie->get_scancode_with_modifiers();
+				}
+			}
+		}
+
+		Ref<Texture> icon = p_src->get_item_icon(i);
+		if (p_src->is_item_radio_checkable(i)) {
+			if (icon.is_valid()) {
+				p_dst->add_icon_radio_check_item(icon, p_src->get_item_text(i), p_src->get_item_id(i), accel);
+			} else {
+				p_dst->add_radio_check_item(p_src->get_item_text(i), p_src->get_item_id(i), accel);
+			}
+		} else if (p_src->is_item_checkable(i)) {
+			if (icon.is_valid()) {
+				p_dst->add_icon_check_item(icon, p_src->get_item_text(i), p_src->get_item_id(i), accel);
+			} else {
+				p_dst->add_check_item(p_src->get_item_text(i), p_src->get_item_id(i), accel);
+			}
+		} else {
+			if (icon.is_valid()) {
+				p_dst->add_icon_item(icon, p_src->get_item_text(i), p_src->get_item_id(i), accel);
+			} else {
+				p_dst->add_item(p_src->get_item_text(i), p_src->get_item_id(i), accel);
+			}
+		}
+
+		int last = p_dst->get_item_count() - 1;
+		p_dst->set_item_checked(last, p_src->is_item_checked(i));
+		p_dst->set_item_disabled(last, p_src->is_item_disabled(i));
+		String tooltip = p_src->get_item_tooltip(i);
+		if (!tooltip.empty()) {
+			p_dst->set_item_tooltip(last, tooltip);
+		}
+	}
+}
+
+void EditorNode::_setup_native_menus() {
+	if (!main_menu->is_native_menu()) {
+		return;
+	}
+
+	struct MenuDef {
+		String name;
+		MenuButton *button;
+	};
+	MenuDef menus[] = {
+		{ TTR("Scene"), file_menu },
+		{ TTR("Project"), project_menu },
+		{ TTR("Debug"), debug_menu },
+		{ TTR("Editor"), settings_menu },
+		{ TTR("Help"), help_menu },
+	};
+
+	for (int m = 0; m < 5; m++) {
+		PopupMenu *src = menus[m].button->get_popup();
+		PopupMenu *dst = memnew(PopupMenu);
+		dst->set_name(menus[m].name);
+		main_menu->add_child(dst);
+		_copy_popup_menu_items(src, dst);
+		dst->connect("id_pressed", this, "_menu_option");
+	}
+
+	// Connect signals for copied submenus.
+	PopupMenu *native_scene = Object::cast_to<PopupMenu>(main_menu->get_node(NodePath(TTR("Scene"))));
+	if (native_scene) {
+		PopupMenu *pm_recent = Object::cast_to<PopupMenu>(native_scene->get_node_or_null(NodePath("RecentScenes")));
+		if (pm_recent) {
+			pm_recent->connect("id_pressed", this, "_open_recent_scene");
+		}
+		PopupMenu *pm_export = Object::cast_to<PopupMenu>(native_scene->get_node_or_null(NodePath("Export")));
+		if (pm_export) {
+			pm_export->connect("id_pressed", this, "_menu_option");
+		}
+	}
+
+	PopupMenu *native_project = Object::cast_to<PopupMenu>(main_menu->get_node(NodePath(TTR("Project"))));
+	if (native_project) {
+		PopupMenu *pm_vcs = Object::cast_to<PopupMenu>(native_project->get_node_or_null(NodePath("Version Control")));
+		if (pm_vcs) {
+			pm_vcs->connect("index_pressed", this, "_version_control_menu_option");
+		}
+		PopupMenu *pm_tools = Object::cast_to<PopupMenu>(native_project->get_node_or_null(NodePath("Tools")));
+		if (pm_tools) {
+			pm_tools->connect("index_pressed", this, "_tool_menu_option");
+		}
+	}
+
+	PopupMenu *native_editor = Object::cast_to<PopupMenu>(main_menu->get_node(NodePath(TTR("Editor"))));
+	if (native_editor) {
+		PopupMenu *pm_layouts = Object::cast_to<PopupMenu>(native_editor->get_node_or_null(NodePath("Layouts")));
+		if (pm_layouts) {
+			pm_layouts->connect("id_pressed", this, "_layout_menu_option");
+		}
+	}
+
+	// Hide embedded menu buttons since we're using native menus.
+	left_menu_hb->hide();
+}
+
 Control *EditorNode::get_viewport() {
 	return viewport;
 }
@@ -6419,10 +6546,12 @@ EditorNode::EditorNode() {
 	viewport->add_constant_override("separation", 0);
 	scene_root_parent->add_child(viewport);
 
-	HBoxContainer *left_menu_hb = memnew(HBoxContainer);
+	left_menu_hb = memnew(HBoxContainer);
 	menu_hb->add_child(left_menu_hb);
 
 	main_menu = memnew(MenuBar);
+	main_menu->set_prefer_global_menu(true);
+	menu_hb->add_child(main_menu);
 
 	file_menu = memnew(MenuButton);
 	file_menu->set_flat(false);
@@ -7339,6 +7468,8 @@ EditorNode::EditorNode() {
 	String exec = OS::get_singleton()->get_executable_path();
 	EditorSettings::get_singleton()->set_project_metadata("editor_metadata", "executable_path", exec); // Save editor executable path for third-party tools
 
+	_setup_native_menus();
+
 	OS::get_singleton()->benchmark_end_measure("editor");
 }
 
@@ -7353,7 +7484,6 @@ EditorNode::~EditorNode() {
 	memdelete(editor_plugins_force_input_forwarding);
 	memdelete(file_server);
 	memdelete(progress_hb);
-	memdelete(main_menu);
 
 	EditorSettings::destroy();
 }

@@ -33,6 +33,18 @@
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
 
+void PopupMenu::_emit_menu_changed() {
+	if (!menu_changed_dirty) {
+		menu_changed_dirty = true;
+		call_deferred("_emit_menu_changed_deferred");
+	}
+}
+
+void PopupMenu::_emit_menu_changed_deferred() {
+	menu_changed_dirty = false;
+	emit_signal("menu_changed");
+}
+
 String PopupMenu::_get_accel_text(int p_item) const {
 	ERR_FAIL_INDEX_V(p_item, items.size(), String());
 
@@ -690,6 +702,7 @@ void PopupMenu::add_item(const String &p_label, int p_id, uint32_t p_accel) {
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_icon_item(const Ref<Texture> &p_icon, const String &p_label, int p_id, uint32_t p_accel) {
@@ -699,6 +712,7 @@ void PopupMenu::add_icon_item(const Ref<Texture> &p_icon, const String &p_label,
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_check_item(const String &p_label, int p_id, uint32_t p_accel) {
@@ -708,6 +722,7 @@ void PopupMenu::add_check_item(const String &p_label, int p_id, uint32_t p_accel
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_icon_check_item(const Ref<Texture> &p_icon, const String &p_label, int p_id, uint32_t p_accel) {
@@ -718,6 +733,7 @@ void PopupMenu::add_icon_check_item(const Ref<Texture> &p_icon, const String &p_
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_radio_check_item(const String &p_label, int p_id, uint32_t p_accel) {
@@ -727,6 +743,7 @@ void PopupMenu::add_radio_check_item(const String &p_label, int p_id, uint32_t p
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_icon_radio_check_item(const Ref<Texture> &p_icon, const String &p_label, int p_id, uint32_t p_accel) {
@@ -737,6 +754,7 @@ void PopupMenu::add_icon_radio_check_item(const Ref<Texture> &p_icon, const Stri
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_multistate_item(const String &p_label, int p_max_states, int p_default_state, int p_id, uint32_t p_accel) {
@@ -747,6 +765,7 @@ void PopupMenu::add_multistate_item(const String &p_label, int p_max_states, int
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 #define ITEM_SETUP_WITH_SHORTCUT(p_shortcut, p_id, p_global)                           \
@@ -764,6 +783,7 @@ void PopupMenu::add_shortcut(const Ref<ShortCut> &p_shortcut, int p_id, bool p_g
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_icon_shortcut(const Ref<Texture> &p_icon, const Ref<ShortCut> &p_shortcut, int p_id, bool p_global) {
@@ -773,6 +793,7 @@ void PopupMenu::add_icon_shortcut(const Ref<Texture> &p_icon, const Ref<ShortCut
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_check_shortcut(const Ref<ShortCut> &p_shortcut, int p_id, bool p_global) {
@@ -782,6 +803,7 @@ void PopupMenu::add_check_shortcut(const Ref<ShortCut> &p_shortcut, int p_id, bo
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_icon_check_shortcut(const Ref<Texture> &p_icon, const Ref<ShortCut> &p_shortcut, int p_id, bool p_global) {
@@ -792,6 +814,7 @@ void PopupMenu::add_icon_check_shortcut(const Ref<Texture> &p_icon, const Ref<Sh
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_radio_check_shortcut(const Ref<ShortCut> &p_shortcut, int p_id, bool p_global) {
@@ -801,6 +824,7 @@ void PopupMenu::add_radio_check_shortcut(const Ref<ShortCut> &p_shortcut, int p_
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_icon_radio_check_shortcut(const Ref<Texture> &p_icon, const Ref<ShortCut> &p_shortcut, int p_id, bool p_global) {
@@ -811,6 +835,7 @@ void PopupMenu::add_icon_radio_check_shortcut(const Ref<Texture> &p_icon, const 
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_submenu_item(const String &p_label, const String &p_submenu, int p_id) {
@@ -822,6 +847,7 @@ void PopupMenu::add_submenu_item(const String &p_label, const String &p_submenu,
 	items.push_back(item);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 #undef ITEM_SETUP_WITH_ACCEL
@@ -836,6 +862,7 @@ void PopupMenu::set_item_text(int p_idx, const String &p_text) {
 
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 void PopupMenu::set_item_icon(int p_idx, const Ref<Texture> &p_icon) {
 	ERR_FAIL_INDEX(p_idx, items.size());
@@ -851,6 +878,7 @@ void PopupMenu::set_item_checked(int p_idx, bool p_checked) {
 
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 void PopupMenu::set_item_id(int p_idx, int p_id) {
 	ERR_FAIL_INDEX(p_idx, items.size());
@@ -880,6 +908,7 @@ void PopupMenu::set_item_disabled(int p_idx, bool p_disabled) {
 	items.write[p_idx].disabled = p_disabled;
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::set_item_submenu(int p_idx, const String &p_submenu) {
@@ -894,6 +923,7 @@ void PopupMenu::toggle_item_checked(int p_idx) {
 	items.write[p_idx].checked = !items[p_idx].checked;
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 String PopupMenu::get_item_text(int p_idx) const {
@@ -1215,6 +1245,7 @@ void PopupMenu::remove_item(int p_idx) {
 	items.remove(p_idx);
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 void PopupMenu::add_separator(const String &p_text, int p_id) {
@@ -1227,6 +1258,7 @@ void PopupMenu::add_separator(const String &p_text, int p_id) {
 	}
 	items.push_back(sep);
 	control->update();
+	_emit_menu_changed();
 }
 
 void PopupMenu::clear() {
@@ -1239,6 +1271,7 @@ void PopupMenu::clear() {
 	mouse_over = -1;
 	control->update();
 	minimum_size_changed();
+	_emit_menu_changed();
 }
 
 Array PopupMenu::_get_items() const {
@@ -1496,6 +1529,7 @@ void PopupMenu::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_allow_search"), &PopupMenu::get_allow_search);
 
 	ClassDB::bind_method(D_METHOD("_submenu_timeout"), &PopupMenu::_submenu_timeout);
+	ClassDB::bind_method(D_METHOD("_emit_menu_changed_deferred"), &PopupMenu::_emit_menu_changed_deferred);
 
 	ClassDB::bind_method(D_METHOD("_draw_items"), &PopupMenu::_draw_items);
 	ClassDB::bind_method(D_METHOD("_draw_background"), &PopupMenu::_draw_background);
@@ -1514,6 +1548,7 @@ void PopupMenu::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("id_pressed", PropertyInfo(Variant::INT, "id")));
 	ADD_SIGNAL(MethodInfo("id_focused", PropertyInfo(Variant::INT, "id")));
 	ADD_SIGNAL(MethodInfo("index_pressed", PropertyInfo(Variant::INT, "index")));
+	ADD_SIGNAL(MethodInfo("menu_changed"));
 }
 
 void PopupMenu::popup(const Rect2 &p_bounds) {
@@ -1557,6 +1592,7 @@ PopupMenu::PopupMenu() {
 	allow_search = false;
 	search_time_msec = 0;
 	search_string = "";
+	menu_changed_dirty = false;
 
 	max_height = 0;
 

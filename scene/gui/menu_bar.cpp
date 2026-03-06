@@ -233,6 +233,10 @@ void MenuBar::_clear_menu() {
 }
 
 void MenuBar::_update_menu() {
+	if (!is_inside_tree()) {
+		return;
+	}
+
 	_clear_menu();
 
 	if (!is_visible_in_tree()) {
@@ -455,7 +459,7 @@ void MenuBar::add_child_notify(Node *p_child) {
 	menu_cache.push_back(menu);
 	p_child->connect("renamed", this, "_refresh_menu_names");
 	p_child->connect("menu_changed", this, "_update_menu");
-	p_child->connect("about_to_popup", this, "_popup_visibility_changed", varray(true));
+	p_child->connect("about_to_show", this, "_popup_visibility_changed", varray(true));
 	p_child->connect("popup_hide", this, "_popup_visibility_changed", varray(false));
 
 	_update_menu();
@@ -502,7 +506,7 @@ void MenuBar::remove_child_notify(Node *p_child) {
 
 	p_child->disconnect("renamed", this, "_refresh_menu_names");
 	p_child->disconnect("menu_changed", this, "_update_menu");
-	p_child->disconnect("about_to_popup", this, "_popup_visibility_changed");
+	p_child->disconnect("about_to_show", this, "_popup_visibility_changed");
 	p_child->disconnect("popup_hide", this, "_popup_visibility_changed");
 
 	_update_menu();

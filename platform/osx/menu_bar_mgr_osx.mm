@@ -46,10 +46,29 @@
 	Ref<Image> img;
 }
 
+- (void)invoke:(id)sender;
+
 @end
 
 @implementation GodotMenuItem
+
+- (void)invoke:(id)sender {
+	if (callback) {
+		callback(meta);
+	}
+}
+
 @end
+
+MenuBarDisplayMgrOSX::MenuBarDisplayMgrOSX() {
+	NSMenu *main_menu = [NSApp mainMenu];
+	if (main_menu && [main_menu numberOfItems] > 0) {
+		NSMenuItem *first = [main_menu itemAtIndex:0];
+		if (first) {
+			apple_menu = [first submenu];
+		}
+	}
+}
 
 NSImage *MenuBarDisplayMgrOSX::_convert_to_nsimg(Ref<Image> &p_image) const {
 	p_image->convert(Image::FORMAT_RGBA8);
@@ -162,7 +181,7 @@ NSMenuItem *MenuBarDisplayMgrOSX::_menu_add_item(const String &p_menu_root, cons
 			}
 			p_index = CLAMP(p_index, 0, item_count);
 		}
-		menu_item = [menu insertItemWithTitle:[NSString stringWithUTF8String:p_label.utf8().get_data()] action:@selector(globalMenuCallback:) keyEquivalent:[NSString stringWithUTF8String:keycode.utf8().get_data()] atIndex:p_index];
+		menu_item = [menu insertItemWithTitle:[NSString stringWithUTF8String:p_label.utf8().get_data()] action:nil keyEquivalent:[NSString stringWithUTF8String:keycode.utf8().get_data()] atIndex:p_index];
 		*r_out = (menu == [NSApp mainMenu]) ? p_index - 1 : p_index;
 		return menu_item;
 	}
@@ -183,6 +202,8 @@ int MenuBarDisplayMgrOSX::global_menu_add_item(const String &p_menu_root, const 
 		obj->state = 0;
 		[menu_item setKeyEquivalentModifierMask:KeyMappingMacOS::keycode_get_native_mask(p_accel)];
 		[menu_item setRepresentedObject:obj];
+		[menu_item setTarget:obj];
+		[menu_item setAction:@selector(invoke:)];
 	}
 	return out;
 }
@@ -199,7 +220,6 @@ int MenuBarDisplayMgrOSX::global_menu_add_submenu_item(const String &p_menu_root
 			return -1;
 		}
 		if ([sub_menu supermenu]) {
-			ERR_PRINT("Can't set submenu to menu that is already a submenu of some other menu!");
 			return -1;
 		}
 		NSMenuItem *menu_item;
@@ -263,6 +283,8 @@ int MenuBarDisplayMgrOSX::global_menu_add_check_item(const String &p_menu_root, 
 		obj->state = 0;
 		[menu_item setKeyEquivalentModifierMask:KeyMappingMacOS::keycode_get_native_mask(p_accel)];
 		[menu_item setRepresentedObject:obj];
+		[menu_item setTarget:obj];
+		[menu_item setAction:@selector(invoke:)];
 	}
 	return out;
 }

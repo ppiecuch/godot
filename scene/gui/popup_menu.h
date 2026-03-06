@@ -128,6 +128,10 @@ class PopupMenu : public Popup {
 	uint64_t search_time_msec;
 	String search_string;
 
+	bool menu_changed_dirty;
+	void _emit_menu_changed();
+	void _emit_menu_changed_deferred();
+
 	MarginContainer *margin_container;
 	ScrollContainer *scroll_container;
 	Control *control;

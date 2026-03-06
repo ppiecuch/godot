@@ -277,6 +277,7 @@ private:
 	PaneDrag *pd;
 
 	HBoxContainer *menu_hb;
+	HBoxContainer *left_menu_hb;
 	Control *viewport;
 	MenuBar *main_menu;
 	MenuButton *file_menu;
@@ -482,6 +483,9 @@ private:
 	void _update_debug_options();
 	void _update_file_menu_opened();
 	void _update_file_menu_closed();
+
+	void _setup_native_menus();
+	void _copy_popup_menu_items(PopupMenu *p_src, PopupMenu *p_dst);
 
 	void _on_plugin_ready(Object *p_script, const String &p_activate_name);
 	void _remove_plugin_from_enabled(const String &p_name);

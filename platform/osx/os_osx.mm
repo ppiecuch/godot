@@ -1681,6 +1681,10 @@ inline void sendPanEvent(double dx, double dy, int modifierFlags) {
 @end
 
 void OS_OSX::_update_global_menu() {
+	if (global_menus_order.empty()) {
+		return; // No old-style (non-dock) menus to update, don't touch main menu bar.
+	}
+
 	NSMenu *main_menu = [NSApp mainMenu];
 
 	for (int i = [main_menu numberOfItems] - 1; i > 0; i--) {
