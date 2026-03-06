@@ -96,7 +96,7 @@ public class GodotView extends GLSurfaceView {
 			boolean p_use_depth32_bits, boolean p_use_debug_opengl, boolean p_translucent) {
 		super(context);
 		GLUtils.use_gl3 = p_use_gl3;
-		GLUtils.use_depth32 = p_use_depth_32_bits;
+		GLUtils.use_depth32 = p_use_depth32_bits;
 		GLUtils.use_debug_opengl = p_use_debug_opengl;
 
 		this.godot = godot;

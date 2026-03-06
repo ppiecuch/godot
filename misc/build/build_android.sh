@@ -21,6 +21,16 @@ fi
 export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 export ANDROID_NDK_ROOT=$HOME/Library/Android/ndk
 
+# Godot gradle builds require JDK 17
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	export JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null)
+	if [ -z "$JAVA_HOME" ]; then
+		echo "Error: JDK 17 is required but not installed."
+		echo "Install it from https://adoptium.net/ or via: brew install openjdk@17"
+		exit 1
+	fi
+fi
+
 export SCONS="scons -j$CPU verbose=yes warnings=no progress=no"
 export OPTIONS="debug_symbols=no debug_experimental=no"
 
@@ -67,8 +77,8 @@ rm -rfv \
 
 echo_header "*** Starting classical build for Android..."
 
-if [ -x /usr/libexec/java_home ]; then
-	echo_bold "JAVA home at: $(/usr/libexec/java_home)"
+if [ -n "$JAVA_HOME" ]; then
+	echo_bold "JAVA home at: ${JAVA_HOME}"
 fi
 
 $SCONS $* platform=android android_arch=armv7 $OPTIONS tools=no target=release_debug

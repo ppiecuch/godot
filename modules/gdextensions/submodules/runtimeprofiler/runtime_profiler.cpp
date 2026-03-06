@@ -31,11 +31,27 @@
 #include "runtime_profiler.h"
 
 #include "core/os/os.h"
+
+#ifdef TOOLS_ENABLED
 #include "editor/editor_property_name_processor.h"
 #include "editor/editor_scale.h"
 #include "editor/editor_settings.h"
+#endif
 
-void RuntimeProfiler::_send_profiling_data(bool p_for_frame) {
+String RuntimeProfiler::_capitalize_name(const String &p_name) {
+#ifdef TOOLS_ENABLED
+	if (EditorPropertyNameProcessor::get_singleton()) {
+		return EditorPropertyNameProcessor::get_singleton()->process_name(p_name, EditorPropertyNameProcessor::STYLE_CAPITALIZED);
+	}
+#endif
+	Vector<String> parts = p_name.split("_", false);
+	for (int i = 0; i < parts.size(); i++) {
+		parts.write[i] = parts[i].capitalize();
+	}
+	return String(" ").join(parts);
+}
+
+void RuntimeProfiler::_collect_metric(bool p_for_frame) {
 	int ofs = 0;
 
 	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
@@ -57,20 +73,18 @@ void RuntimeProfiler::_send_profiling_data(bool p_for_frame) {
 
 	Metric metric;
 	metric.valid = true;
-
 	metric.frame_number = Engine::get_singleton()->get_idle_frames();
 	metric.frame_time = frame_time;
 	metric.process_time = process_time;
 	metric.physics_time = physics_time;
 	metric.physics_frame_time = physics_frame_time;
-	const int frame_data_amount = p_for_frame ? profile_frame_data.size() : 0;
-	const int frame_function_amount = to_send;
 
-	if (frame_data_amount) {
-		Metric::Category frame_time;
-		frame_time.signature = "category_frame_time";
-		frame_time.name = "Frame Time";
-		frame_time.total_time = metric.frame_time;
+	// Built-in frame time category
+	{
+		Metric::Category frame_cat;
+		frame_cat.signature = "category_frame_time";
+		frame_cat.name = "Frame Time";
+		frame_cat.total_time = metric.frame_time;
 
 		Metric::Category::Item item;
 		item.calls = 1;
@@ -80,68 +94,34 @@ void RuntimeProfiler::_send_profiling_data(bool p_for_frame) {
 		item.total = metric.physics_time;
 		item.self = item.total;
 		item.signature = "physics_time";
-
-		frame_time.items.push_back(item);
+		frame_cat.items.push_back(item);
 
 		item.name = "Process Time";
 		item.total = metric.process_time;
 		item.self = item.total;
 		item.signature = "process_time";
-
-		frame_time.items.push_back(item);
+		frame_cat.items.push_back(item);
 
 		item.name = "Physics Frame Time";
 		item.total = metric.physics_frame_time;
 		item.self = item.total;
 		item.signature = "physics_frame_time";
+		frame_cat.items.push_back(item);
 
-		frame_time.items.push_back(item);
-
-		metric.categories.push_back(frame_time);
+		metric.categories.push_back(frame_cat);
 	}
 
-	for (int i = 0; i < frame_data_amount; i++) {
-		Metric::Category c;
-		String name = profile_frame_data[i].name;
-		Array values = profile_frame_data[i].data;
-#if TOOLS_ENABLED
-		c.name = EditorPropertyNameProcessor::get_singleton()->process_name(name, EditorPropertyNameProcessor::STYLE_CAPITALIZED);
-#else
-		Vector<String> parts = name.split("_", false);
-		for (int i = 0; i < parts.size(); i++) {
-			parts.write[i] = parts[i].capitalize();
-		}
-		const String capitalized = String(" ").join(parts);
-		c.name = capitalized;
-#endif
-		c.items.resize(values.size() / 2);
-		c.total_time = 0;
-		c.signature = "categ::" + name;
-		for (int j = 0; j < values.size(); j += 2) {
-			Metric::Category::Item item;
-			item.calls = 1;
-			item.line = 0;
-			item.name = values[j];
-			item.self = values[j + 1];
-			item.total = item.self;
-			item.signature = "categ::" + name + "::" + item.name;
-			item.name = item.name.capitalize();
-			c.total_time += item.total;
-			c.items.write[j / 2] = item;
-		}
-		metric.categories.push_back(c);
-	}
-
+	// Script functions category
 	uint64_t total_script_time = 0;
 
 	Metric::Category funcs;
-	funcs.items.resize(frame_function_amount);
+	funcs.items.resize(to_send);
 	funcs.name = "Script Functions";
 	funcs.signature = "script_functions";
-	for (int i = 0; i < frame_function_amount; i++) {
+	for (int i = 0; i < to_send; i++) {
 		const int calls = profile_info_ptrs[i]->call_count;
-		const float total = profile_info_ptrs[i]->total_time / 1000000.0;
-		const float self = profile_info_ptrs[i]->self_time / 1000000.0;
+		const float total = profile_info_ptrs[i]->total_time / 1000000.0f;
+		const float self = profile_info_ptrs[i]->self_time / 1000000.0f;
 
 		Metric::Category::Item item;
 		item.signature = profile_info_ptrs[i]->signature;
@@ -151,7 +131,8 @@ void RuntimeProfiler::_send_profiling_data(bool p_for_frame) {
 			item.name = strings[2];
 			item.script = strings[0];
 			item.line = strings[1].to_int();
-		} else if (strings.size() == 4) { //Built-in scripts have an :: in their name
+		} else if (strings.size() == 4) {
+			// Built-in scripts have an :: in their name
 			item.name = strings[3];
 			item.script = strings[0] + "::" + strings[1];
 			item.line = strings[2].to_int();
@@ -164,13 +145,11 @@ void RuntimeProfiler::_send_profiling_data(bool p_for_frame) {
 
 		total_script_time += profile_info_ptrs[i]->self_time;
 	}
-	funcs.total_time = USEC_TO_SEC(total_script_time); //stotal script execution time
+	funcs.total_time = USEC_TO_SEC(total_script_time);
 
 	metric.categories.push_back(funcs);
 
-	if (p_for_frame) {
-		profile_frame_data.clear();
-	}
+	add_frame_metric(metric, !p_for_frame);
 }
 
 void RuntimeProfiler::_make_metric_ptrs(Metric &m) {
@@ -206,6 +185,8 @@ void RuntimeProfiler::add_frame_metric(const Metric &p_metric, bool p_final) {
 	}
 	updating_frame = false;
 
+	_update_status_label();
+
 	if (frame_delay->is_stopped()) {
 		frame_delay->set_wait_time(p_final ? 0.1 : 1);
 		frame_delay->start();
@@ -218,7 +199,7 @@ void RuntimeProfiler::add_frame_metric(const Metric &p_metric, bool p_final) {
 }
 
 void RuntimeProfiler::clear() {
-	int metric_size = EditorSettings::get_singleton()->get("debugger/profiler_frame_history_size");
+	int metric_size = int(GLOBAL_GET("runtime_profiler/profiler_frame_history_size"));
 	metric_size = CLAMP(metric_size, 60, 10000);
 	frame_metrics.clear();
 	frame_metrics.resize(metric_size);
@@ -230,18 +211,19 @@ void RuntimeProfiler::clear() {
 
 	updating_frame = true;
 	cursor_metric_edit->set_min(0);
-	cursor_metric_edit->set_max(100); // Doesn't make much sense, but we can't have min == max. Doesn't hurt.
+	cursor_metric_edit->set_max(100);
 	cursor_metric_edit->set_value(0);
 	updating_frame = false;
 	hover_metric = -1;
 	seeking = false;
+
+	_update_status_label();
 }
 
 static String _get_percent_txt(float p_value, float p_total) {
 	if (p_total == 0) {
-		p_total = 0.00001;
+		p_total = 0.00001f;
 	}
-
 	return String::num((p_value / p_total) * 100, 1) + "%";
 }
 
@@ -266,11 +248,10 @@ String RuntimeProfiler::_get_time_as_text(const Metric &m, float p_time, int p_c
 }
 
 Color RuntimeProfiler::_get_color_from_signature(const StringName &p_signature) const {
-	Color bc = get_color("error_color", "Editor");
 	double rot = ABS(double(p_signature.hash()) / double(0x7FFFFFFF));
 	Color c;
-	c.set_hsv(rot, bc.get_s(), bc.get_v());
-	return c.linear_interpolate(get_color("base_color", "Editor"), 0.07);
+	c.set_hsv(rot, color_plot_base.get_s(), color_plot_base.get_v());
+	return c.linear_interpolate(color_bg, 0.07);
 }
 
 void RuntimeProfiler::_item_edited() {
@@ -302,6 +283,11 @@ void RuntimeProfiler::_item_edited() {
 void RuntimeProfiler::_update_plot() {
 	const int w = graph->get_size().width;
 	const int h = graph->get_size().height;
+
+	if (w <= 0 || h <= 0) {
+		return;
+	}
+
 	bool reset_texture = false;
 	const int desired_len = w * h * 4;
 
@@ -311,17 +297,14 @@ void RuntimeProfiler::_update_plot() {
 	}
 
 	PoolVector<uint8_t>::Write wr = graph_image.write();
-	const Color background_color = get_color("dark_color_2", "Editor");
 
-	// Clear the previous frame and set the background color.
+	// Clear to background
 	for (int i = 0; i < desired_len; i += 4) {
-		wr[i + 0] = Math::fast_ftoi(background_color.r * 255);
-		wr[i + 1] = Math::fast_ftoi(background_color.g * 255);
-		wr[i + 2] = Math::fast_ftoi(background_color.b * 255);
+		wr[i + 0] = Math::fast_ftoi(color_bg.r * 255);
+		wr[i + 1] = Math::fast_ftoi(color_bg.g * 255);
+		wr[i + 2] = Math::fast_ftoi(color_bg.b * 255);
 		wr[i + 3] = 255;
 	}
-
-	//find highest value
 
 	const bool use_self = display_time->get_selected() == DISPLAY_SELF_TIME;
 	float highest = 0;
@@ -350,17 +333,14 @@ void RuntimeProfiler::_update_plot() {
 	}
 
 	if (highest > 0) {
-		//means some data exists..
-		highest *= 1.2; //leave some upper room
+		highest *= 1.2f;
 		graph_height = highest;
 
 		Vector<int> columnv;
 		columnv.resize(h * 4);
-
 		int *column = columnv.ptrw();
 
 		Map<StringName, int> plot_prev;
-		//Map<StringName,int> plot_max;
 
 		for (int i = 0; i < w; i++) {
 			for (int j = 0; j < h * 4; j++) {
@@ -373,23 +353,21 @@ void RuntimeProfiler::_update_plot() {
 				next = frame_metrics.size();
 			}
 			if (next == current) {
-				next = current + 1; //just because for loop must work
+				next = current + 1;
 			}
 
 			for (Set<StringName>::Element *E = plot_sigs.front(); E; E = E->next()) {
 				int plot_pos = -1;
 
 				for (int j = current; j < next; j++) {
-					//wrap
 					int idx = last_metric + 1 + j;
 					while (idx >= frame_metrics.size()) {
 						idx -= frame_metrics.size();
 					}
 
-					//get
 					const Metric &m = frame_metrics[idx];
 					if (!m.valid) {
-						continue; //skip because invalid
+						continue;
 					}
 
 					float value = 0;
@@ -421,7 +399,7 @@ void RuntimeProfiler::_update_plot() {
 				}
 
 				if (plot_pos == -1 && prev_plot == -1) {
-					continue; //don't bother drawing
+					continue;
 				}
 
 				if (prev_plot != -1 && plot_pos == -1) {
@@ -442,9 +420,9 @@ void RuntimeProfiler::_update_plot() {
 				Color col = _get_color_from_signature(E->get());
 
 				for (int j = prev_plot; j <= plot_pos; j++) {
-					column[j * 4 + 0] += Math::fast_ftoi(CLAMP(col.r * 255, 0, 255));
-					column[j * 4 + 1] += Math::fast_ftoi(CLAMP(col.g * 255, 0, 255));
-					column[j * 4 + 2] += Math::fast_ftoi(CLAMP(col.b * 255, 0, 255));
+					column[j * 4 + 0] += Math::fast_ftoi(CLAMP(col.r * 255, 0.f, 255.f));
+					column[j * 4 + 1] += Math::fast_ftoi(CLAMP(col.g * 255, 0.f, 255.f));
+					column[j * 4 + 2] += Math::fast_ftoi(CLAMP(col.b * 255, 0.f, 255.f));
 					column[j * 4 + 3] += 1;
 				}
 			}
@@ -463,10 +441,9 @@ void RuntimeProfiler::_update_plot() {
 				const bool is_filled = red >= 1 || green >= 1 || blue >= 1;
 				const int widx = ((j >> 2) * w + i) * 4;
 
-				// If the pixel isn't filled by any profiler line, apply the background color instead.
-				wr[widx + 0] = is_filled ? red : Math::fast_ftoi(background_color.r * 255);
-				wr[widx + 1] = is_filled ? green : Math::fast_ftoi(background_color.g * 255);
-				wr[widx + 2] = is_filled ? blue : Math::fast_ftoi(background_color.b * 255);
+				wr[widx + 0] = is_filled ? red : Math::fast_ftoi(color_bg.r * 255);
+				wr[widx + 1] = is_filled ? green : Math::fast_ftoi(color_bg.g * 255);
+				wr[widx + 2] = is_filled ? blue : Math::fast_ftoi(color_bg.b * 255);
 				wr[widx + 3] = 255;
 			}
 		}
@@ -533,7 +510,6 @@ void RuntimeProfiler::_update_frame() {
 			float time = dtime == DISPLAY_SELF_TIME ? it.self : it.total;
 
 			item->set_text(1, _get_time_as_text(m, time, it.calls));
-
 			item->set_text(2, itos(it.calls));
 
 			if (plot_sigs.has(it.signature)) {
@@ -548,13 +524,12 @@ void RuntimeProfiler::_update_frame() {
 
 void RuntimeProfiler::_activate_pressed() {
 	if (activate->is_pressed()) {
-		activate->set_icon(get_icon("Stop", "EditorIcons"));
+		start_profiling(int(GLOBAL_GET("runtime_profiler/profiler_frame_max_functions")));
 		activate->set_text(TTR("Stop"));
 	} else {
-		activate->set_icon(get_icon("Play", "EditorIcons"));
+		stop_profiling();
 		activate->set_text(TTR("Start"));
 	}
-	emit_signal("enable_profiling", activate->is_pressed());
 }
 
 void RuntimeProfiler::_clear_pressed() {
@@ -562,12 +537,51 @@ void RuntimeProfiler::_clear_pressed() {
 	_update_plot();
 }
 
+void RuntimeProfiler::_update_status_label() {
+	if (!status_label) {
+		return;
+	}
+
+	if (!profiling) {
+		status_label->set_text(TTR("Idle"));
+		return;
+	}
+
+	int valid_frames = 0;
+	for (int i = 0; i < frame_metrics.size(); i++) {
+		if (frame_metrics[i].valid) {
+			valid_frames++;
+		}
+	}
+
+	if (last_metric >= 0 && frame_metrics[last_metric].valid) {
+		const Metric &m = frame_metrics[last_metric];
+		status_label->set_text(vformat(TTR("Frame #%d | %s ms | %d samples"),
+				m.frame_number,
+				rtos(m.frame_time * 1000).pad_decimals(1),
+				valid_frames));
+	} else {
+		status_label->set_text(vformat(TTR("Collecting... (%d samples)"), valid_frames));
+	}
+}
+
 void RuntimeProfiler::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE:
 		case NOTIFICATION_THEME_CHANGED: {
-			activate->set_icon(get_icon("Play", "EditorIcons"));
-			clear_button->set_icon(get_icon("Clear", "EditorIcons"));
+			// Resolve colors that work in both editor and game
+			color_bg = has_color("dark_color_2", "Editor") ? get_color("dark_color_2", "Editor") : Color(0.13, 0.14, 0.17);
+			color_plot_base = has_color("error_color", "Editor") ? get_color("error_color", "Editor") : Color(0.8, 0.3, 0.3);
+			color_accent = has_color("accent_color", "Editor") ? get_color("accent_color", "Editor") : Color(0.4, 0.7, 1.0);
+		} break;
+		case NOTIFICATION_PROCESS: {
+			if (profiling) {
+				frame_time = get_process_delta_time();
+				process_time = frame_time; // In-game: process time ≈ frame time
+				physics_frame_time = Engine::get_singleton()->get_physics_jitter_fix() > 0 ? (1.0f / Engine::get_singleton()->get_iterations_per_second()) : 0;
+				physics_time = physics_frame_time;
+				_collect_metric(true);
+			}
 		} break;
 	}
 }
@@ -648,16 +662,14 @@ void RuntimeProfiler::_graph_tex_input(const Ref<InputEvent> &p_ev) {
 
 		if (show_hover) {
 			hover_metric = metric;
-
 		} else {
 			hover_metric = -1;
 		}
 
 		if (mb.is_valid() || mm->get_button_mask() & BUTTON_MASK_LEFT) {
-			//cursor_metric = x;
 			updating_frame = true;
 
-			//metric may be invalid, so look for closest metric that is valid, this makes snap feel better
+			// Find closest valid metric for better snap feel
 			bool valid = false;
 			for (int i = 0; i < frame_metrics.size(); i++) {
 				if (frame_metrics[metric].valid) {
@@ -676,12 +688,6 @@ void RuntimeProfiler::_graph_tex_input(const Ref<InputEvent> &p_ev) {
 			}
 
 			updating_frame = false;
-
-			if (activate->is_pressed()) {
-				if (!seeking) {
-					emit_signal("break_request");
-				}
-			}
 
 			seeking = true;
 
@@ -733,8 +739,16 @@ void RuntimeProfiler::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_graph_tex_mouse_exit"), &RuntimeProfiler::_graph_tex_mouse_exit);
 	ClassDB::bind_method(D_METHOD("_cursor_metric_changed"), &RuntimeProfiler::_cursor_metric_changed);
 	ClassDB::bind_method(D_METHOD("_combo_changed"), &RuntimeProfiler::_combo_changed);
-
 	ClassDB::bind_method(D_METHOD("_item_edited"), &RuntimeProfiler::_item_edited);
+
+	// GDScript-accessible API
+	ClassDB::bind_method(D_METHOD("start_profiling", "max_frame_functions"), &RuntimeProfiler::start_profiling, DEFVAL(512));
+	ClassDB::bind_method(D_METHOD("stop_profiling"), &RuntimeProfiler::stop_profiling);
+	ClassDB::bind_method(D_METHOD("is_profiling"), &RuntimeProfiler::is_profiling);
+	ClassDB::bind_method(D_METHOD("clear"), &RuntimeProfiler::clear);
+	ClassDB::bind_method(D_METHOD("set_enabled", "enable"), &RuntimeProfiler::set_enabled);
+	ClassDB::bind_method(D_METHOD("disable_seeking"), &RuntimeProfiler::disable_seeking);
+
 	ADD_SIGNAL(MethodInfo("enable_profiling", PropertyInfo(Variant::BOOL, "enable")));
 	ADD_SIGNAL(MethodInfo("break_request"));
 }
@@ -743,8 +757,8 @@ void RuntimeProfiler::set_enabled(bool p_enable) {
 	activate->set_disabled(!p_enable);
 }
 
-bool RuntimeProfiler::is_profiling() {
-	return activate->is_pressed();
+bool RuntimeProfiler::is_profiling() const {
+	return profiling;
 }
 
 Vector<Vector<String>> RuntimeProfiler::get_data_as_csv() const {
@@ -781,7 +795,7 @@ Vector<Vector<String>> RuntimeProfiler::get_data_as_csv() const {
 	}
 	res.push_back(signatures);
 
-	// values
+	// Values
 	Vector<String> values;
 
 	int index = last_metric;
@@ -799,7 +813,6 @@ Vector<Vector<String>> RuntimeProfiler::get_data_as_csv() const {
 			continue;
 		}
 
-		// Don't keep old values since there may be empty cells.
 		values.clear();
 		values.resize(possible_signatures.size());
 
@@ -817,34 +830,61 @@ Vector<Vector<String>> RuntimeProfiler::get_data_as_csv() const {
 }
 
 void RuntimeProfiler::start_profiling(int p_max_frame_functions) {
+	if (profiling) {
+		return;
+	}
+
 	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
 		ScriptServer::get_language(i)->profiling_start();
 	}
 
-	max_frame_functions = p_max_frame_functions;
+	max_frame_functions = CLAMP(p_max_frame_functions, 16, 4096);
+	profile_info.resize(max_frame_functions);
+	profile_info_ptrs.resize(max_frame_functions);
 	profiling = true;
 	frame_time = 0;
 	process_time = 0;
 	physics_time = 0;
 	physics_frame_time = 0;
 
-	print_verbose("Starting profiling.");
+	set_process(true);
+
+	print_verbose("RuntimeProfiler: started (max_functions=" + itos(max_frame_functions) + ")");
 }
 
 void RuntimeProfiler::stop_profiling() {
+	if (!profiling) {
+		return;
+	}
+
 	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
 		ScriptServer::get_language(i)->profiling_stop();
 	}
 	profiling = false;
-	_send_profiling_data(false);
-	print_verbose("Ending profiling.");
-}
 
-bool RuntimeProfiler::is_profiling() const {
-	return profiling;
+	set_process(false);
+
+	// Collect final accumulated data
+	_collect_metric(false);
+
+	_update_status_label();
+
+	print_verbose("RuntimeProfiler: stopped");
 }
 
 RuntimeProfiler::RuntimeProfiler() {
+#ifdef TOOLS_ENABLED
+	ui_scale = EDSCALE;
+#else
+	ui_scale = 1.0f;
+#endif
+
+	// Defaults (updated in NOTIFICATION_ENTER_TREE)
+	color_bg = Color(0.13, 0.14, 0.17);
+	color_plot_base = Color(0.8, 0.3, 0.3);
+	color_accent = Color(0.4, 0.7, 1.0);
+
+	// Toolbar
 	HBoxContainer *hb = memnew(HBoxContainer);
 	add_child(hb);
 	activate = memnew(Button);
@@ -866,7 +906,6 @@ RuntimeProfiler::RuntimeProfiler() {
 	display_mode->add_item(TTR("Frame %"));
 	display_mode->add_item(TTR("Physics Frame %"));
 	display_mode->connect("item_selected", this, "_combo_changed");
-
 	hb->add_child(display_mode);
 
 	hb->add_child(memnew(Label(TTR("Time:"))));
@@ -876,10 +915,15 @@ RuntimeProfiler::RuntimeProfiler() {
 	display_time->add_item(TTR("Self"));
 	display_time->set_tooltip(TTR("Inclusive: Includes time from other functions called by this function.\nUse this to spot bottlenecks.\n\nSelf: Only count the time spent in the function itself, not in other functions called by that function.\nUse this to find individual functions to optimize."));
 	display_time->connect("item_selected", this, "_combo_changed");
-
 	hb->add_child(display_time);
 
 	hb->add_spacer();
+
+	status_label = memnew(Label);
+	status_label->set_text(TTR("Idle"));
+	status_label->set_align(Label::ALIGN_RIGHT);
+	status_label->set_h_size_flags(SIZE_EXPAND_FILL);
+	hb->add_child(status_label);
 
 	hb->add_child(memnew(Label(TTR("Frame #:"))));
 
@@ -888,14 +932,15 @@ RuntimeProfiler::RuntimeProfiler() {
 	hb->add_child(cursor_metric_edit);
 	cursor_metric_edit->connect("value_changed", this, "_cursor_metric_changed");
 
-	hb->add_constant_override("separation", 8 * EDSCALE);
+	hb->add_constant_override("separation", int(8 * ui_scale));
 
+	// Main content
 	h_split = memnew(HSplitContainer);
 	add_child(h_split);
 	h_split->set_v_size_flags(SIZE_EXPAND_FILL);
 
 	variables = memnew(Tree);
-	variables->set_custom_minimum_size(Size2(320, 0) * EDSCALE);
+	variables->set_custom_minimum_size(Size2(320, 0) * ui_scale);
 	variables->set_hide_folding(true);
 	h_split->add_child(variables);
 	variables->set_hide_root(true);
@@ -903,13 +948,13 @@ RuntimeProfiler::RuntimeProfiler() {
 	variables->set_column_titles_visible(true);
 	variables->set_column_title(0, TTR("Name"));
 	variables->set_column_expand(0, true);
-	variables->set_column_min_width(0, 60 * EDSCALE);
+	variables->set_column_min_width(0, int(60 * ui_scale));
 	variables->set_column_title(1, TTR("Time"));
 	variables->set_column_expand(1, false);
-	variables->set_column_min_width(1, 100 * EDSCALE);
+	variables->set_column_min_width(1, int(100 * ui_scale));
 	variables->set_column_title(2, TTR("Calls"));
 	variables->set_column_expand(2, false);
-	variables->set_column_min_width(2, 60 * EDSCALE);
+	variables->set_column_min_width(2, int(60 * ui_scale));
 	variables->connect("item_edited", this, "_item_edited");
 
 	graph = memnew(TextureRect);
@@ -922,6 +967,9 @@ RuntimeProfiler::RuntimeProfiler() {
 	h_split->add_child(graph);
 	graph->set_h_size_flags(SIZE_EXPAND_FILL);
 
+	frame_time_label = nullptr;
+
+	// Frame history
 	const int metric_size = CLAMP(int(GLOBAL_DEF("runtime_profiler/profiler_frame_history_size", 1800)), 60, 10000);
 	frame_metrics.resize(metric_size);
 	last_metric = -1;
@@ -929,6 +977,7 @@ RuntimeProfiler::RuntimeProfiler() {
 
 	GLOBAL_DEF("runtime_profiler/profiler_frame_max_functions", 512);
 
+	// Timers for deferred updates
 	frame_delay = memnew(Timer);
 	frame_delay->set_wait_time(0.1);
 	frame_delay->set_one_shot(true);
@@ -948,4 +997,11 @@ RuntimeProfiler::RuntimeProfiler() {
 	graph_height = 1;
 
 	profiling = false;
+	max_frame_functions = 512;
+	frame_time = 0;
+	process_time = 0;
+	physics_time = 0;
+	physics_frame_time = 0;
+
+	set_process(false);
 }

@@ -488,7 +488,7 @@ String JavaJniObject::toString() const {
 	if (!isValid()) {
 		return String();
 	}
-	JavaJniObject string = callObjectMethod<jstring>("toString");
+	JavaJniObject string = callObjectMethod("toString");
 	return jstring_to_string(static_cast<jstring>(string.object()));
 }
 
