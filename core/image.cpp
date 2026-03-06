@@ -937,7 +937,9 @@ void Image::expand_to_po2(bool p_square) {
 
 void Image::expand(int p_width, int p_height, Color p_padding_color) {
 	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
-	copy_internals_from(expanded(p_width, p_height, p_padding_color));
+	Ref<Image> result = expanded(p_width, p_height, p_padding_color);
+	ERR_FAIL_COND_MSG(result.is_null(), vformat("Failed to expand image from %dx%d to %dx%d (format %d).", width, height, p_width, p_height, format));
+	copy_internals_from(result);
 }
 
 Ref<Image> Image::expanded(int p_width, int p_height, Color p_padding_color) const {
@@ -1003,7 +1005,9 @@ void Image::resize_to_po2(bool p_square, Interpolation p_interpolation) {
 }
 
 void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
-	copy_internals_from(resized(p_width, p_height));
+	Ref<Image> result = resized(p_width, p_height, p_interpolation);
+	ERR_FAIL_COND_MSG(result.is_null(), vformat("Failed to resize image from %dx%d to %dx%d (format %d).", width, height, p_width, p_height, format));
+	copy_internals_from(result);
 }
 
 Ref<Image> Image::resized(int p_width, int p_height, Interpolation p_interpolation) const {
@@ -2378,7 +2382,7 @@ void Image::blit_image(const Ref<Image> &p_src, const Point2 &p_dest) {
 }
 
 void Image::blit_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Point2 &p_dest) {
-	ERR_FAIL_COND_MSG(p_src.is_null(), "It's not a reference to a valid Image object.");
+	ERR_FAIL_COND_MSG(p_src.is_null(), vformat("It's not a reference to a valid Image object (blit_rect to %dx%d image at %d,%d).", width, height, (int)p_dest.x, (int)p_dest.y));
 	const int dsize = data.size();
 	const int srcdsize = p_src->data.size();
 	ERR_FAIL_COND(dsize == 0);
@@ -2420,8 +2424,8 @@ void Image::blit_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Po
 }
 
 void Image::blit_rect_mask(const Ref<Image> &p_src, const Ref<Image> &p_mask, const Rect2 &p_src_rect, const Point2 &p_dest) {
-	ERR_FAIL_COND_MSG(p_src.is_null(), "It's not a reference to a valid Image object.");
-	ERR_FAIL_COND_MSG(p_mask.is_null(), "It's not a reference to a valid Image object.");
+	ERR_FAIL_COND_MSG(p_src.is_null(), vformat("It's not a reference to a valid Image object (blit_rect_mask: source image is null, dest %dx%d at %d,%d).", width, height, (int)p_dest.x, (int)p_dest.y));
+	ERR_FAIL_COND_MSG(p_mask.is_null(), vformat("It's not a reference to a valid Image object (blit_rect_mask: mask image is null, dest %dx%d at %d,%d).", width, height, (int)p_dest.x, (int)p_dest.y));
 	int dsize = data.size();
 	int srcdsize = p_src->data.size();
 	int maskdsize = p_mask->data.size();
@@ -2473,7 +2477,7 @@ void Image::blit_rect_mask(const Ref<Image> &p_src, const Ref<Image> &p_mask, co
 }
 
 void Image::blend_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Point2 &p_dest) {
-	ERR_FAIL_COND_MSG(p_src.is_null(), "It's not a reference to a valid Image object.");
+	ERR_FAIL_COND_MSG(p_src.is_null(), vformat("It's not a reference to a valid Image object (blend_rect: source image is null, dest %dx%d at %d,%d).", width, height, (int)p_dest.x, (int)p_dest.y));
 	int dsize = data.size();
 	int srcdsize = p_src->data.size();
 	ERR_FAIL_COND(dsize == 0);
@@ -2513,8 +2517,8 @@ void Image::blend_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const P
 }
 
 void Image::blend_rect_mask(const Ref<Image> &p_src, const Ref<Image> &p_mask, const Rect2 &p_src_rect, const Point2 &p_dest) {
-	ERR_FAIL_COND_MSG(p_src.is_null(), "It's not a reference to a valid Image object.");
-	ERR_FAIL_COND_MSG(p_mask.is_null(), "It's not a reference to a valid Image object.");
+	ERR_FAIL_COND_MSG(p_src.is_null(), vformat("It's not a reference to a valid Image object (blend_rect_mask: source image is null, dest %dx%d at %d,%d).", width, height, (int)p_dest.x, (int)p_dest.y));
+	ERR_FAIL_COND_MSG(p_mask.is_null(), vformat("It's not a reference to a valid Image object (blend_rect_mask: mask image is null, dest %dx%d at %d,%d).", width, height, (int)p_dest.x, (int)p_dest.y));
 	int dsize = data.size();
 	int srcdsize = p_src->data.size();
 	int maskdsize = p_mask->data.size();
@@ -3666,11 +3670,17 @@ Image::Image(const uint8_t *p_mem_png_jpg, int p_len) {
 	format = FORMAT_L8;
 
 	if (_png_mem_loader_func) {
-		copy_internals_from(_png_mem_loader_func(p_mem_png_jpg, p_len));
+		Ref<Image> png = _png_mem_loader_func(p_mem_png_jpg, p_len);
+		if (png.is_valid()) {
+			copy_internals_from(png);
+		}
 	}
 
 	if (empty() && _jpg_mem_loader_func) {
-		copy_internals_from(_jpg_mem_loader_func(p_mem_png_jpg, p_len));
+		Ref<Image> jpg = _jpg_mem_loader_func(p_mem_png_jpg, p_len);
+		if (jpg.is_valid()) {
+			copy_internals_from(jpg);
+		}
 	}
 }
 

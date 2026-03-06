@@ -414,7 +414,7 @@ public:
 	}
 
 	void copy_internals_from(const Ref<Image> &p_image) {
-		ERR_FAIL_COND_MSG(p_image.is_null(), "It's not a reference to a valid Image object.");
+		ERR_FAIL_COND_MSG(p_image.is_null(), vformat("It's not a reference to a valid Image object (copy_internals_from called on %dx%d image, format %d).", width, height, format));
 		format = p_image->format;
 		width = p_image->width;
 		height = p_image->height;
