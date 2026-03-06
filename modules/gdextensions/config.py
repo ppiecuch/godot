@@ -81,6 +81,7 @@ def configure(env):
         "cyberelements",
         "flowed",
         "geomfonts",
+        "symbolfonts",
         "generator",
         "goxel",
         "fontengine3d",

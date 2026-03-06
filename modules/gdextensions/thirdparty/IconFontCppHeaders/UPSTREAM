@@ -1,0 +1,7 @@
+Repository: https://github.com/juliettef/IconFontCppHeaders
+Commit: 507684a (Font Awesome 7 free release 7.2.0)
+License: zlib (licence.txt)
+Updated: 2026-03-06
+
+Only .h header files and licence.txt are kept from the upstream repository.
+The .cs, .py, .go, .rs, and generator script files are excluded.
