@@ -34,33 +34,54 @@
 #include "core/reference.h"
 #include "core/variant.h"
 
-class GdSymbolFont : public Reference {
-	GDCLASS(GdSymbolFont, Reference);
-
-public:
-	enum {
-		FONT_AWESOME4,
-		FONT_AWESOME5,
-		FONT_AWESOME5BRANDS,
-		FONT_KENNEY,
-		FONT_AUDIO,
-		FONT_MATERIAL,
-	};
-};
-
-class GdSymbolFontIcon : public Reference {
-	GDCLASS(GdSymbolFontIcon, Reference);
+class GdSymbolFonts : public Reference {
+	GDCLASS(GdSymbolFonts, Reference);
 
 protected:
 	static void _bind_methods();
 
 public:
-	Ref<Image> get_image(int glyph);
-	Ref<Image> get_image(const String &glyph_name);
-	Char get_char(int glyph);
-	Char get_char(const String &glyph_name);
+	enum FontType {
+		FONT_AWESOME6,
+		FONT_AWESOME6_BRANDS,
+		FONT_AWESOME5,
+		FONT_AWESOME5_BRANDS,
+		FONT_AWESOME4,
+		FONT_AWESOME7,
+		FONT_AWESOME7_BRANDS,
+		FONT_KENNEY,
+		FONT_FONTAUDIO,
+		FONT_MATERIAL_DESIGN,
+		FONT_MATERIAL_DESIGN_ICONS,
+		FONT_FORK_AWESOME,
+		FONT_CODICONS,
+		FONT_LUCIDE,
+		FONT_MATERIAL_SYMBOLS,
+		FONT_TYPE_COUNT,
+	};
 
-	GdSymbolFontIcon();
+	// Icon lookup by name (returns UTF-8 string for use with DynamicFont)
+	String get_icon(int font_type, const String &icon_name) const;
+
+	// Check if icon name exists in the specified font
+	bool has_icon(int font_type, const String &icon_name) const;
+
+	// Get all icon names for a font
+	PoolStringArray get_icon_names(int font_type) const;
+
+	// Get number of icons in a font
+	int get_icon_count(int font_type) const;
+
+	// Get font TTF/OTF filename(s)
+	String get_font_filename(int font_type) const;
+
+	// Get codepoint range
+	int get_icon_min(int font_type) const;
+	int get_icon_max(int font_type) const;
+
+	GdSymbolFonts();
 };
+
+VARIANT_ENUM_CAST(GdSymbolFonts::FontType);
 
 #endif // GD_SYMFONTS_H

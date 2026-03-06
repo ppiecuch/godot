@@ -208,6 +208,7 @@
 #include "noise/noise.h"
 
 #include "geomfonts//gd_geomfonts.h"
+#include "symbolfonts/gdsymfonts.h"
 
 #ifdef GDEXT_IAP_ENABLED
 #include "iap/gd_iap.h"
@@ -429,6 +430,10 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_GEOMFONTS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
+#endif
+
+#ifdef GDEXT_SYMBOLFONTS_ENABLED
+	ClassDB::register_class<GdSymbolFonts>();
 #endif
 
 #ifdef GDEXT_GENERATOR_ENABLED
