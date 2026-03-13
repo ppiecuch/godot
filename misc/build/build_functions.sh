@@ -46,13 +46,47 @@ _run_in_docker () {
 # The newest copy wins on each pair. Current machine may be one of the hosts or a third machine.
 sync_extra () {
 	local REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-	local FILES=("CLAUDE.md" "CLAUDE-NOTES.md" "modules/gdextensions/submodules/albmpgfx/NOTES.md" "modules/gdextensions/submodules/daedalus/README.md" "modules/gdextensions/submodules/silentwolf/README.md")
+	local CONFIG="${REPO_ROOT}/build_info.config"
 
-	# host:path pairs for sync targets
-	local TARGETS=(
-		"192.168.1.17:~/Private/Software/GodotEngine/godot"
-		"192.168.1.199:/Volumes/WORKSPACE/build-private/GodotEngine/godot-3.x"
-	)
+	if [[ ! -f "$CONFIG" ]]; then
+		echo "*** sync_extra: ${CONFIG} not found, skipping."
+		return
+	fi
+
+	# Read SYNC_FILES array from config
+	local FILES=()
+	local in_files=false
+	while IFS= read -r line; do
+		line="${line%%#*}"          # strip comments
+		line="${line#"${line%%[![:space:]]*}"}"  # trim leading whitespace
+		line="${line%"${line##*[![:space:]]}"}"  # trim trailing whitespace
+		[[ -z "$line" ]] && continue
+		if [[ "$line" == "SYNC_FILES=(" ]]; then in_files=true; continue; fi
+		if $in_files; then
+			if [[ "$line" == ")" ]]; then in_files=false; continue; fi
+			FILES+=("$line")
+		fi
+	done < "$CONFIG"
+
+	# Read SYNC_TARGETS array from config
+	local TARGETS=()
+	local in_targets=false
+	while IFS= read -r line; do
+		line="${line%%#*}"
+		line="${line#"${line%%[![:space:]]*}"}"
+		line="${line%"${line##*[![:space:]]}"}"
+		[[ -z "$line" ]] && continue
+		if [[ "$line" == "SYNC_TARGETS=(" ]]; then in_targets=true; continue; fi
+		if $in_targets; then
+			if [[ "$line" == ")" ]]; then in_targets=false; continue; fi
+			TARGETS+=("$line")
+		fi
+	done < "$CONFIG"
+
+	if [[ ${#FILES[@]} -eq 0 || ${#TARGETS[@]} -eq 0 ]]; then
+		echo "*** sync_extra: no SYNC_FILES or SYNC_TARGETS in ${CONFIG}, skipping."
+		return
+	fi
 
 	# Get local IPs to avoid rsyncing to ourselves
 	local LOCAL_IPS
