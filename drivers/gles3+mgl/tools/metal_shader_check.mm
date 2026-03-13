@@ -321,6 +321,20 @@ static std::string mtlDataTypeToString(MTLDataType mtlType) {
 			return "IndirectCommandBuffer";
 		case MTLDataTypeRenderPipeline:
 			return "RenderPipeline";
+
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 140000
+		case MTLDataTypeBFloat:
+			return "BFloat";
+		case MTLDataTypeBFloat2:
+			return "BFloat2";
+		case MTLDataTypeBFloat3:
+			return "BFloat3";
+		case MTLDataTypeBFloat4:
+			return "BFloat4";
+#endif
+
+		default:
+			break;
 	}
 	return "<unknown>";
 }

@@ -31,14 +31,22 @@
 #ifndef RESOURCES_H
 #define RESOURCES_H
 
+#include "core/ordered_hash_map.h"
 #include "core/reference.h"
 #include "core/resource.h"
 #include "core/variant.h"
 
-#include <map>
-
+// ObjectNode represents a single entry in the config tree.
+//
+// - `name`:    the key that identifies this node within its parent section
+// - `value`:   for leaf nodes — the assigned value string;
+//              for section nodes — the type label (e.g. "Section", "Sprite");
+//              in Resources::get_resource(), if no "file" attribute exists,
+//              `name` is used as the fallback resource path and `value` as
+//              the resource type hint for ResourceLoader.
+// - `attribs`: child nodes (sub-keys or nested sections), ordered by insertion
 struct ObjectNode {
-	typedef std::map<String, ObjectNode> Attribs;
+	typedef OrderedHashMap<String, ObjectNode> Attribs;
 
 	String name;
 	String value;
@@ -46,13 +54,14 @@ struct ObjectNode {
 
 	ObjectNode(const String &p_name = "", const String &p_value = "", const Attribs &p_attribs = Attribs()) :
 			name(p_name), value(p_value), attribs(p_attribs) {}
-	const ObjectNode &get(const String &p_res_name);
+	const ObjectNode &get(const String &p_res_name) const;
 };
 
 struct ObjectConfig {
 	static ObjectNode load_config_file(const String &p_file, String &error_string);
+	static ObjectNode load_config_string(const String &p_content, String &error_string);
 	static Variant load_json_file(const String &p_file);
-	static void _dump(const ObjectNode &p_node, int level = 0);
+	static void print_tree(const ObjectNode &p_node, int level = 0);
 };
 
 class Resources : public Object {
@@ -61,16 +70,18 @@ class Resources : public Object {
 	ObjectNode config_root;
 	bool loaded;
 
-	std::map<String, std::pair<String, String>> _resources_loaded;
+	OrderedHashMap<String, Pair<String, String>> _resources_loaded;
 
 	void load_config();
 
 protected:
 	static Resources *instance;
+	static void _bind_methods();
 
 public:
 	static Resources *get_singleton();
 	RES get_resource(const String &p_res_name);
+	void reload_config();
 
 	Resources();
 	~Resources();

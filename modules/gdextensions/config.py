@@ -66,6 +66,7 @@ def configure(env):
         "multipeer",
         "iap",
         # rendering extensions
+        "albmpgfx",
         "polyvector",
         "vaserenderer",
         "lsystem",

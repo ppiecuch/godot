@@ -139,6 +139,7 @@ sources = Glob("*.cpp") + Glob("common/*.cpp")  # Always build common
 
 modules = [
     # A
+    "albmpgfx",
     "anttweakbar",
     # B
     "behaviornode",
@@ -452,6 +453,9 @@ if is_enabled("playfab"):
     env_module.Append(CPPDEFINES=["PLAYFAB_PLATFORM_GODOT"])
     sources += Glob("submodules/playfab/PlayFabSDK/*.cpp")
     thirdparty_sources += Glob("thirdparty/xplatcppsdk/code/source/playfab/*.cpp")
+
+if is_enabled("albmpgfx"):
+    thirdparty_sources += ["thirdparty/al_gfx/al_gfx.c", "thirdparty/al_gfx/al_gfx_extra.c"]
 
 if env["platform"] == "psvita" and is_enabled("swsurface"):
     sources += Glob("submodules/swsurface/armasm/*.S")

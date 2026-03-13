@@ -59,4 +59,8 @@ extern void print_line(String p_string);
 extern void print_error(String p_string);
 extern void print_verbose(String p_string);
 
+// Quiet capture: when stdout is disabled, redirect to a log file
+void set_quiet_capture_log(const String &p_path);
+void close_quiet_capture_log();
+
 #endif // PRINT_STRING_H

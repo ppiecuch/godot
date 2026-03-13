@@ -1327,7 +1327,10 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 		}
 	}
 
-	Vector<String> translations = ProjectSettings::get_singleton()->get("locale/translations");
+	Vector<String> translations;
+	if (ProjectSettings::get_singleton()->has_setting("locale/translations")) {
+		translations = ProjectSettings::get_singleton()->get("locale/translations");
+	}
 	if (translations.size() > 0) {
 		{
 			String fname = tmp_app_path_name + "/Contents/Resources/en.lproj";

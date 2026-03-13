@@ -2484,10 +2484,12 @@ ScriptEditorDebugger::ScriptEditorDebugger(EditorNode *p_editor) {
 		stack_dump->set_column_title(0, TTR("Stack Frames"));
 		stack_dump->set_h_size_flags(SIZE_EXPAND_FILL);
 		stack_dump->set_hide_root(true);
+		stack_dump->set_custom_minimum_size(Size2(150 * EDSCALE, 0));
 		stack_dump->connect("cell_selected", this, "_stack_dump_frame_selected");
 		sc->add_child(stack_dump);
 
 		VBoxContainer *inspector_vbox = memnew(VBoxContainer);
+		inspector_vbox->set_custom_minimum_size(Size2(200 * EDSCALE, 0));
 		sc->add_child(inspector_vbox);
 
 		HBoxContainer *tools_hb = memnew(HBoxContainer);

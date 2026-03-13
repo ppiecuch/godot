@@ -1005,6 +1005,9 @@ void Image::resize_to_po2(bool p_square, Interpolation p_interpolation) {
 }
 
 void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
+	if (p_width == width && p_height == height) {
+		return;
+	}
 	Ref<Image> result = resized(p_width, p_height, p_interpolation);
 	ERR_FAIL_COND_MSG(result.is_null(), vformat("Failed to resize image from %dx%d to %dx%d (format %d).", width, height, p_width, p_height, format));
 	copy_internals_from(result);

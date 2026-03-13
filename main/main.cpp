@@ -40,6 +40,7 @@
 #include "core/io/resource_loader.h"
 #include "core/message_queue.h"
 #include "core/os/dir_access.h"
+#include "core/os/keyboard.h"
 #include "core/os/os.h"
 #include "core/os/time.h"
 #include "core/project_settings.h"
@@ -392,7 +393,8 @@ void Main::print_help(const char *p_binary) {
 #endif
 #ifdef TOOLS_ENABLED
 #ifdef DOCTEST
-	OS::get_singleton()->print("  --doctest                        Run embedded tests from doctest.\n");
+	OS::get_singleton()->print("  --doctest-run                    Run embedded tests from doctest.\n");
+	OS::get_singleton()->print("  --doctest-<opt>                  Forward option to doctest (e.g. --doctest-list-test-cases).\n");
 #endif
 	OS::get_singleton()->print("  --test <test>                    Run a unit test (");
 	const char **test_names = tests_get_names();
@@ -1181,6 +1183,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	};
 
 	if (quiet_stdout) {
+		OS::Date date = OS::get_singleton()->get_date();
+		String quiet_log = ProjectSettings::get_singleton()->get_resource_path().plus_file(vformat("quiet_capture_%02d-%02d.log", date.day, date.month));
+		set_quiet_capture_log(quiet_log);
 		_print_line_enabled = false;
 	}
 
@@ -1824,13 +1829,41 @@ bool Main::start() {
 				i++;
 			}
 #ifdef DOCTEST
-		} else if (args[i] == "--doctest") {
-			const char *argv[] = {
-				"godot",
-				nullptr
-			};
+		} else if (args[i].begins_with("--doctest-")) {
+			// Forward --doctest-<opt> args to doctest as --<opt>.
+			// --doctest-run: run all tests (no extra flags)
+			// --doctest-list-test-cases: list matching tests
+			// --doctest-test-case="pattern": filter by test case name
+			// --doctest-test-suite="name": filter by test suite
+			// Multiple --doctest-* args can be combined.
+			Vector<String> dt_args;
+			dt_args.push_back("godot");
+			// Include the triggering arg (skip --doctest-run which is just "enter doctest")
+			if (args[i] != "--doctest-run") {
+				dt_args.push_back("--" + args[i].substr(10));
+			}
+			for (int j = i + 1; j < args.size(); j++) {
+				String a = args[j];
+				if (a.begins_with("--doctest-")) {
+					if (a != "--doctest-run") {
+						a = "--" + a.substr(10);
+					} else {
+						continue; // --doctest-run is just a trigger, skip it
+					}
+				}
+				dt_args.push_back(a);
+			}
+			Vector<CharString> dt_utf8;
+			Vector<const char *> dt_argv;
+			dt_utf8.resize(dt_args.size());
+			dt_argv.resize(dt_args.size() + 1);
+			for (int j = 0; j < dt_args.size(); j++) {
+				dt_utf8.write[j] = dt_args[j].utf8();
+				dt_argv.write[j] = dt_utf8[j].get_data();
+			}
+			dt_argv.write[dt_args.size()] = nullptr;
 			printf("\n");
-			return doctest::Context(1, argv).run();
+			return doctest::Context(dt_args.size(), dt_argv.ptr()).run();
 #endif
 		} else if (args[i] == "--doctool") {
 			// Handle case where no path is given to --doctool.
@@ -2320,6 +2353,65 @@ bool Main::start() {
 
 #ifdef TOOLS_ENABLED
 		if (project_manager || (script == "" && test == "" && game_path == "" && !editor)) {
+			// Option/Alt key held at startup: skip project manager and open
+			// the most recently modified project directly in the editor.
+			if (!project_manager && Input::get_singleton()->is_key_pressed(KEY_ALT)) {
+				if (!EditorSettings::get_singleton()) {
+					EditorSettings::create();
+				}
+
+				String best_path;
+				uint64_t best_time = 0;
+
+				List<PropertyInfo> properties;
+				EditorSettings::get_singleton()->get_property_list(&properties);
+				for (List<PropertyInfo>::Element *E = properties.front(); E; E = E->next()) {
+					String prop_key = E->get().name;
+					if (!prop_key.begins_with("projects/")) {
+						continue;
+					}
+					String path = EditorSettings::get_singleton()->get(prop_key);
+					String conf = path.plus_file("project.godot");
+					if (FileAccess::exists(conf)) {
+						uint64_t mtime = FileAccess::get_modified_time(conf);
+						String fscache = path.plus_file(".fscache");
+						if (FileAccess::exists(fscache)) {
+							uint64_t cache_time = FileAccess::get_modified_time(fscache);
+							if (cache_time > mtime) {
+								mtime = cache_time;
+							}
+						}
+						if (mtime > best_time) {
+							best_time = mtime;
+							best_path = path;
+						}
+					}
+				}
+
+				if (best_path != "") {
+					print_line("Option key held — opening most recent project: " + best_path);
+
+					List<String> args;
+					const Vector<String> &forwardable_args = Main::get_forwardable_cli_arguments(Main::CLI_SCOPE_TOOL);
+					for (int i = 0; i < forwardable_args.size(); i++) {
+						args.push_back(forwardable_args[i]);
+					}
+					args.push_back("--path");
+					args.push_back(best_path);
+					args.push_back("--editor");
+
+					String exec = OS::get_singleton()->get_executable_path();
+					OS::ProcessID pid = 0;
+					Error err = OS::get_singleton()->execute(exec, args, false, &pid);
+					if (err == OK) {
+						OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
+						return false;
+					}
+					// If execute failed, fall through to project manager
+					WARN_PRINT("Failed to launch editor for last project, showing project manager.");
+				}
+			}
+
 			Engine::get_singleton()->set_editor_hint(true);
 			ProjectManager *pmanager = memnew(ProjectManager);
 			ProgressDialog *progress_dialog = memnew(ProgressDialog);
@@ -2755,6 +2847,8 @@ void Main::cleanup(bool p_force) {
 
 	unregister_core_driver_types();
 	unregister_core_types();
+
+	close_quiet_capture_log();
 
 	OS::get_singleton()->benchmark_end_measure("Main::cleanup");
 	OS::get_singleton()->benchmark_dump();

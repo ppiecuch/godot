@@ -23,16 +23,40 @@ export ANDROID_NDK_ROOT=$HOME/Library/Android/ndk
 
 # Godot gradle builds require JDK 17
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	export JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null)
-	if [ -z "$JAVA_HOME" ]; then
-		echo "Error: JDK 17 is required but not installed."
-		echo "Install it from https://adoptium.net/ or via: brew install openjdk@17"
+	JAVA17=$(/usr/libexec/java_home -v 17 2>/dev/null)
+	if [ -z "$JAVA17" ] || [ ! -d "$JAVA17" ]; then
+		echo ""
+		echo "ERROR: JDK 17 is required for Godot gradle builds but was not found."
+		echo ""
+		echo "  Installed JDKs:"
+		/usr/libexec/java_home -V 2>&1 | grep -v "^$" | sed 's/^/    /'
+		echo ""
+		echo "  Install JDK 17 via one of:"
+		echo "    brew install openjdk@17"
+		echo "    https://adoptium.net/"
+		echo ""
 		exit 1
 	fi
+	export JAVA_HOME="$JAVA17"
+	echo "Using JDK 17: $JAVA_HOME"
+elif [[ "$OSTYPE" == "linux"* ]]; then
+	if [ -z "$JAVA_HOME" ]; then
+		for jdk in /usr/lib/jvm/java-17-* /usr/lib/jvm/temurin-17-*; do
+			if [ -d "$jdk" ]; then
+				export JAVA_HOME="$jdk"
+				break
+			fi
+		done
+	fi
+	if [ -z "$JAVA_HOME" ] || ! "$JAVA_HOME/bin/java" -version 2>&1 | grep -q '"17\.'; then
+		echo "ERROR: JDK 17 is required. Set JAVA_HOME to a JDK 17 installation."
+		exit 1
+	fi
+	echo "Using JDK 17: $JAVA_HOME"
 fi
 
 export SCONS="scons -j$CPU verbose=yes warnings=no progress=no"
-export OPTIONS="debug_symbols=no debug_experimental=no"
+export OPTIONS="debug_symbols=yes debug_experimental=no"
 
 # Utilities
 # ---------

@@ -71,6 +71,7 @@
 #include "editor/explodomatica_plugin.h"
 #endif
 
+#include "albmpgfx/gdal_bitmap_gfx.h"
 #include "swsurface/gd_bitblit.h"
 
 #include "bulletkit/register.h"
@@ -311,6 +312,12 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_QUROBULLET_ENABLED
 	register_qurobullet();
+#endif
+#ifdef GDEXT_ALBMPGFX_ENABLED
+	ClassDB::register_class<GdAlRleSprite>();
+	ClassDB::register_class<GdAlBitmapGfx>();
+	ClassDB::register_class<AlBitmapGfxNode>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("AlBitmapGfx", memnew(AlBitmapGfx)));
 #endif
 #ifdef GDEXT_BLITTER_ENABLED
 	ClassDB::register_virtual_class<BlitSurface>();
@@ -703,6 +710,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_QUROBULLET_ENABLED
 	unregister_qurobullet();
+#endif
+#ifdef GDEXT_ALBMPGFX_ENABLED
+	RemoveSingleton(AlBitmapGfx);
 #endif
 #ifdef GDEXT_BLITTER_ENABLED
 	RemoveSingleton(BitBlit);

@@ -140,13 +140,65 @@ if [ ! -z "$EDITOR_BUNDLE_ID" ]; then
 	/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $EDITOR_BUNDLE_ID" "$GODOT_DIR/bin/Godot-master.app/Contents/Info.plist"
 fi
 
-codesign_args=""
+codesign_identity="-"
 if [ ! -z "$EDITOR_CODESIGN_IDENTITY" ]; then
-	log_info "Codesign identity: $EDITOR_CODESIGN_IDENTITY"
-	codesign_args="$codesign_args -s "$EDITOR_CODESIGN_IDENTITY""
+	# Resolve the signing identity — may be a direct certificate name or an identity preference (alias)
+	resolved_identity="$EDITOR_CODESIGN_IDENTITY"
+	if ! security find-identity -v -p codesigning | grep -q "$EDITOR_CODESIGN_IDENTITY"; then
+		# Not a direct certificate name — check if it's an identity preference
+		pref_alias=$(security get-identity-preference -s "$EDITOR_CODESIGN_IDENTITY" 2>/dev/null \
+			| grep '"alis"' | sed 's/.*<blob>="\(.*\)"/\1/')
+		if [ -n "$pref_alias" ]; then
+			log_info "Resolved identity preference '$EDITOR_CODESIGN_IDENTITY' -> '$pref_alias'"
+			resolved_identity="$pref_alias"
+		else
+			log_error "WARNING: Signing identity '$EDITOR_CODESIGN_IDENTITY' not found as certificate or identity preference"
+			log_info "Falling back to ad-hoc signature"
+			resolved_identity=""
+		fi
+	fi
+
+	if [ -n "$resolved_identity" ]; then
+		# Check if the resolved certificate is still valid
+		cert_line=$(security find-identity -v -p codesigning | grep "$resolved_identity" | head -1)
+		cert_hash=$(echo "$cert_line" | awk '{print $2}')
+		if [ -n "$cert_hash" ]; then
+			expiry=$(security find-certificate -c "$resolved_identity" -p 2>/dev/null \
+				| openssl x509 -noout -enddate 2>/dev/null \
+				| sed 's/notAfter=//')
+			if [ -n "$expiry" ]; then
+				expiry_epoch=$(date -j -f "%b %d %T %Y %Z" "$expiry" +%s 2>/dev/null || echo 0)
+				now_epoch=$(date +%s)
+				if [ "$expiry_epoch" -gt 0 ] && [ "$now_epoch" -gt "$expiry_epoch" ]; then
+					log_error "WARNING: Signing certificate '$resolved_identity' has expired ($expiry)"
+					log_info "Falling back to ad-hoc signature"
+				else
+					codesign_identity="$EDITOR_CODESIGN_IDENTITY"
+					log_info "Codesign identity: $EDITOR_CODESIGN_IDENTITY"
+				fi
+			else
+				codesign_identity="$EDITOR_CODESIGN_IDENTITY"
+				log_info "Codesign identity: $EDITOR_CODESIGN_IDENTITY (could not verify expiry)"
+			fi
+		else
+			log_error "WARNING: Resolved certificate '$resolved_identity' not valid for codesigning"
+			log_info "Falling back to ad-hoc signature"
+		fi
+	fi
 fi
 log_step "Signing executable for debugger"
-codesign --verbose --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" $codesign_args "$GODOT_DIR/bin/Godot-master.app"
+codesign --force --deep --sign "$codesign_identity" --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
+
+# Verify signature is valid
+if ! codesign --verify --deep --strict "$GODOT_DIR/bin/Godot-master.app" 2>/dev/null; then
+	verify_err=$(codesign --verify --deep --strict "$GODOT_DIR/bin/Godot-master.app" 2>&1 || true)
+	if echo "$verify_err" | grep -q "CSSMERR_TP_CERT_EXPIRED"; then
+		log_error "WARNING: Code signature uses an expired certificate — re-signing with ad-hoc"
+		codesign --force --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
+	else
+		log_error "WARNING: Code signature verification failed: $verify_err"
+	fi
+fi
 
 log_success "Finished building editor for macOS ($(date +'%h/%d %H:%M'))"
 

@@ -38,6 +38,20 @@ static PrintHandlerList *print_handler_list = nullptr;
 bool _print_line_enabled = true;
 bool _print_error_enabled = true;
 
+static FILE *_quiet_capture_file = nullptr;
+
+void set_quiet_capture_log(const String &p_path) {
+	close_quiet_capture_log();
+	_quiet_capture_file = fopen(p_path.utf8().get_data(), "w");
+}
+
+void close_quiet_capture_log() {
+	if (_quiet_capture_file) {
+		fclose(_quiet_capture_file);
+		_quiet_capture_file = nullptr;
+	}
+}
+
 void add_print_handler(PrintHandlerList *p_handler) {
 	_global_lock();
 	p_handler->next = print_handler_list;
@@ -71,6 +85,10 @@ void remove_print_handler(PrintHandlerList *p_handler) {
 
 void print_line(String p_string) {
 	if (!_print_line_enabled) {
+		if (_quiet_capture_file) {
+			fprintf(_quiet_capture_file, "%s\n", p_string.utf8().get_data());
+			fflush(_quiet_capture_file);
+		}
 		return;
 	}
 
@@ -87,6 +105,11 @@ void print_line(String p_string) {
 }
 
 void print_error(String p_string) {
+	if (_quiet_capture_file) {
+		fprintf(_quiet_capture_file, "ERROR: %s\n", p_string.utf8().get_data());
+		fflush(_quiet_capture_file);
+	}
+
 	if (!_print_error_enabled) {
 		return;
 	}
@@ -106,5 +129,8 @@ void print_error(String p_string) {
 void print_verbose(String p_string) {
 	if (OS::get_singleton()->is_stdout_verbose()) {
 		print_line(p_string);
+	} else if (_quiet_capture_file) {
+		fprintf(_quiet_capture_file, "%s\n", p_string.utf8().get_data());
+		fflush(_quiet_capture_file);
 	}
 }
