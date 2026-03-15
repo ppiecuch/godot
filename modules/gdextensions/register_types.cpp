@@ -68,7 +68,9 @@
 #include "core/voronoi.h"
 
 #ifdef TOOLS_ENABLED
+#include "editor/editor_icon_preview.h"
 #include "editor/explodomatica_plugin.h"
+#include "editor/power_station_plugin.h"
 #endif
 
 #include "albmpgfx/gdal_bitmap_gfx.h"
@@ -709,6 +711,12 @@ void register_gdextensions_types() {
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<ExplodomaticaGenerator>();
 	EditorPlugins::add_by_type<ExplodomaticaEditorPlugin>();
+
+	ClassDB::register_class<PowerStationGenerator>();
+	EditorPlugins::add_by_type<PowerStationEditorPlugin>();
+
+	ClassDB::register_class<EditorIconPreviewDialog>();
+	EditorPlugins::add_by_type<EditorIconPreview>();
 #endif
 
 #ifdef TOOLS_ENABLED

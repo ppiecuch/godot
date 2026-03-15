@@ -240,7 +240,7 @@ size_flags_vertical = 3
 [connection signal="value_changed" from="body/controls/revlaterefls_value" to="." method="_on_value_changed" binds= [ "revlaterefls" ]]
 [connection signal="pressed" from="body/progress_body/generate" to="." method="_on_generate_pressed"]
 [connection signal="pressed" from="body/progress_body/copyparams" to="." method="_on_copyparams_pressed"]
-[connection signal="pressed" from="body/progress_body/save" to="." method="_on_save_pressed"]
+[connection signal="pressed" from="body/output_body/save" to="." method="_on_save_pressed"]
 )";
 
 static struct explosion_def explodomatica_defaults = {
@@ -825,6 +825,13 @@ int ExplodomaticaGenerator::get_sound_quality() const {
 }
 
 void ExplodomaticaGenerator::set_sound_duration(real_t p_duration) {
+	ERR_FAIL_COND(p_duration <= 0);
+	if (defs.duration != p_duration) {
+		defs.duration = p_duration;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 real_t ExplodomaticaGenerator::get_sound_duration() const {
@@ -832,6 +839,13 @@ real_t ExplodomaticaGenerator::get_sound_duration() const {
 }
 
 void ExplodomaticaGenerator::set_num_preexplosions(int p_num) {
+	ERR_FAIL_COND(p_num < 0);
+	if (defs.preexplosions != p_num) {
+		defs.preexplosions = p_num;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 int ExplodomaticaGenerator::get_num_preexplosions() const {
@@ -839,6 +853,13 @@ int ExplodomaticaGenerator::get_num_preexplosions() const {
 }
 
 void ExplodomaticaGenerator::set_preexplosion_delay(real_t p_delay) {
+	ERR_FAIL_COND(p_delay < 0);
+	if (defs.preexplosion_delay != p_delay) {
+		defs.preexplosion_delay = p_delay;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 real_t ExplodomaticaGenerator::get_preexplosion_delay() const {
@@ -846,6 +867,13 @@ real_t ExplodomaticaGenerator::get_preexplosion_delay() const {
 }
 
 void ExplodomaticaGenerator::set_preexplosion_low_pass_factor(real_t p_factor) {
+	ERR_FAIL_COND(p_factor < 0.2 || p_factor > 0.9);
+	if (defs.preexplosion_low_pass_factor != p_factor) {
+		defs.preexplosion_low_pass_factor = p_factor;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 real_t ExplodomaticaGenerator::get_preexplosion_low_pass_factor() const {
@@ -853,6 +881,13 @@ real_t ExplodomaticaGenerator::get_preexplosion_low_pass_factor() const {
 }
 
 void ExplodomaticaGenerator::set_preexplosion_lp_iters(int p_iters) {
+	ERR_FAIL_COND(p_iters < 0);
+	if (defs.preexplosion_lp_iters != p_iters) {
+		defs.preexplosion_lp_iters = p_iters;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 int ExplodomaticaGenerator::get_preexplosion_lp_iters() const {
@@ -860,6 +895,13 @@ int ExplodomaticaGenerator::get_preexplosion_lp_iters() const {
 }
 
 void ExplodomaticaGenerator::set_final_speed_factor(real_t p_factor) {
+	ERR_FAIL_COND(p_factor <= 0);
+	if (defs.final_speed_factor != p_factor) {
+		defs.final_speed_factor = p_factor;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 real_t ExplodomaticaGenerator::get_final_speed_factor() const {
@@ -867,6 +909,13 @@ real_t ExplodomaticaGenerator::get_final_speed_factor() const {
 }
 
 void ExplodomaticaGenerator::set_reverb_early_refls(int p_reverb_early) {
+	ERR_FAIL_COND(p_reverb_early < 1);
+	if (defs.reverb_early_refls != p_reverb_early) {
+		defs.reverb_early_refls = p_reverb_early;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 int ExplodomaticaGenerator::get_reverb_early_refls() const {
@@ -874,6 +923,13 @@ int ExplodomaticaGenerator::get_reverb_early_refls() const {
 }
 
 void ExplodomaticaGenerator::set_reverb_late_refls(int p_reverb_late) {
+	ERR_FAIL_COND(p_reverb_late < 1);
+	if (defs.reverb_late_refls != p_reverb_late) {
+		defs.reverb_late_refls = p_reverb_late;
+		if (auto_generate) {
+			call_deferred("generate");
+		}
+	}
 }
 
 int ExplodomaticaGenerator::get_reverb_late_refls() const {
@@ -884,7 +940,7 @@ void ExplodomaticaGenerator::set_reverb(bool p_state) {
 	if (defs.reverb != p_state) {
 		defs.reverb = p_state;
 		if (auto_generate) {
-			call_deferred("generate()");
+			call_deferred("generate");
 		}
 	}
 }
@@ -898,7 +954,7 @@ void ExplodomaticaGenerator::set_silence_threshold(real_t p_threshold) {
 	if (defs.silence_threshold != p_threshold) {
 		defs.silence_threshold = p_threshold;
 		if (auto_generate) {
-			call_deferred("generate()");
+			call_deferred("generate");
 		}
 	}
 }
@@ -908,6 +964,7 @@ real_t ExplodomaticaGenerator::get_silence_threshold() const {
 }
 
 void ExplodomaticaGenerator::set_output_file(const String &p_path) {
+	output_file = p_path;
 }
 
 String ExplodomaticaGenerator::get_output_file() const {
@@ -915,6 +972,7 @@ String ExplodomaticaGenerator::get_output_file() const {
 }
 
 void ExplodomaticaGenerator::set_auto_generate(bool p_state) {
+	auto_generate = p_state;
 }
 
 bool ExplodomaticaGenerator::is_auto_generate() const {
@@ -968,14 +1026,14 @@ void ExplodomaticaGenerator::open_ui() {
 
 void ExplodomaticaGenerator::_cleanup_ui() {
 	ERR_FAIL_NULL(dlg);
-	if (ProgressBar *bar = cast_to<ProgressBar>(dlg->get_node_or_null(String("body/controls/progress")))) {
+	if (ProgressBar *bar = cast_to<ProgressBar>(dlg->get_node_or_null(String("body/progress_body/progress")))) {
 		bar->set_value(0);
 	}
 }
 
 void ExplodomaticaGenerator::_on_sound_progress(real_t p_progress) {
 	ERR_FAIL_NULL(dlg);
-	if (ProgressBar *bar = cast_to<ProgressBar>(dlg->get_node_or_null(String("body/controls/progress")))) {
+	if (ProgressBar *bar = cast_to<ProgressBar>(dlg->get_node_or_null(String("body/progress_body/progress")))) {
 		bar->set_value(p_progress * 100);
 	}
 }
@@ -1002,7 +1060,7 @@ void ExplodomaticaGenerator::_on_copyparams_pressed() {
 	params += "preexplosion_delay: " + String::num(defs.preexplosion_delay, 2) + "\n";
 	params += "preexplosion_low_pass_factor: " + String::num(defs.preexplosion_low_pass_factor, 2) + "\n";
 	params += "preexplosion_lp_iters: " + itos(defs.preexplosion_lp_iters) + "\n";
-	params += "final_speed_factor: " + String::num(defs.preexplosion_low_pass_factor, 2) + "\n";
+	params += "final_speed_factor: " + String::num(defs.final_speed_factor, 2) + "\n";
 	params += "reverb_early_refls: " + itos(defs.reverb_early_refls) + "\n";
 	params += "reverb_late_refls: " + itos(defs.reverb_late_refls) + "\n";
 	params += "reverb: " + itos(defs.reverb) + "\n";
@@ -1011,7 +1069,7 @@ void ExplodomaticaGenerator::_on_copyparams_pressed() {
 }
 
 void ExplodomaticaGenerator::_on_save_pressed() {
-	if (LineEdit *edt = cast_to<LineEdit>(dlg->get_node_or_null(String("body/controls/outputfile_value")))) {
+	if (LineEdit *edt = cast_to<LineEdit>(dlg->get_node_or_null(String("body/output_body/outputfile_value")))) {
 		if (!edt->get_text().empty()) {
 			get_samples()->save_to_wav(edt->get_text());
 		}
@@ -1039,7 +1097,7 @@ void ExplodomaticaGenerator::_on_value_changed(float value, String node) {
 				defs.preexplosion_delay = value;
 			} else if (node == "prelowpassfactor") {
 				defs.preexplosion_low_pass_factor = value;
-			} else if (node == "prelpiters") {
+			} else if (node == "prelowpassiters") {
 				defs.preexplosion_lp_iters = value;
 			} else if (node == "speedfactor") {
 				defs.final_speed_factor = value;
@@ -1095,6 +1153,7 @@ void ExplodomaticaGenerator::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_output_file"), &ExplodomaticaGenerator::get_output_file);
 	ClassDB::bind_method(D_METHOD("set_auto_generate", "enable"), &ExplodomaticaGenerator::set_auto_generate);
 	ClassDB::bind_method(D_METHOD("is_auto_generate"), &ExplodomaticaGenerator::is_auto_generate);
+	ClassDB::bind_method(D_METHOD("generate"), &ExplodomaticaGenerator::generate);
 
 #ifdef TOOLS_ENABLED
 	ClassDB::bind_method(D_METHOD("_cleanup_ui"), &ExplodomaticaGenerator::_cleanup_ui);

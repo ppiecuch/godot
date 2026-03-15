@@ -28,8 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifndef PAINT_EDITOR_PLUGIN_H
+#define PAINT_EDITOR_PLUGIN_H
+
 #include "core/image.h"
 #include "editor/editor_plugin.h"
+#include "mypaint/mypaint-brush.h"
 
 class MPBrush;
 class MPTile;
@@ -78,3 +82,5 @@ public:
 	PaintEditorPlugin(EditorNode *p_node);
 	~PaintEditorPlugin();
 };
+
+#endif // PAINT_EDITOR_PLUGIN_H
