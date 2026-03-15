@@ -31,7 +31,7 @@
 #ifndef IMAGE_LOADER_THOR_SVG_H
 #define IMAGE_LOADER_THOR_SVG_H
 
-#include "core/image_loader.h"
+#include "core/io/image_loader.h"
 
 class ImageLoaderThorSVG : public ImageFormatLoader {
 	static HashMap<Color, Color> forced_color_map;
@@ -41,10 +41,10 @@ class ImageLoaderThorSVG : public ImageFormatLoader {
 public:
 	static void set_forced_color_map(const HashMap<Color, Color> &p_color_map);
 
-	Error create_image_from_utf8_buffer(Ref<Image> p_image, const PackedByteArray &p_buffer, float p_scale, bool p_upsample);
+	Error create_image_from_utf8_buffer(Ref<Image> p_image, const uint8_t *p_data, int p_size, float p_scale, bool p_upsample);
 	Error create_image_from_string(Ref<Image> p_image, String p_string, float p_scale, bool p_upsample, const HashMap<Color, Color> &p_color_map);
 
-	virtual Error load_image(Ref<Image> p_image, Ref<FileAccess> p_fileaccess, BitField<ImageFormatLoader::LoaderFlags> p_flags, float p_scale) override;
+	virtual Error load_image(Ref<Image> p_image, FileAccess *p_fileaccess, bool p_force_linear, float p_scale) override;
 	virtual void get_recognized_extensions(List<String> *p_extensions) const override;
 };
 

@@ -117,6 +117,7 @@ private:
 	String settings_dir;
 	String data_dir;
 	String cache_dir;
+	String temp_dir;
 	String config_file_path;
 	String project_config_dir;
 
@@ -185,6 +186,7 @@ public:
 	String get_script_templates_dir() const;
 	String get_project_script_templates_dir() const;
 	String get_cache_dir() const;
+	String get_temp_dir() const;
 	String get_feature_profiles_dir() const;
 
 	void set_project_metadata(const String &p_section, const String &p_key, Variant p_data);

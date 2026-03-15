@@ -48,7 +48,9 @@ public:
 	static Settings *get_singleton();
 
 	void setv(const String &p_key, const Variant &p_value);
-	Variant getv(const String &p_key);
+	Variant getv(const String &p_key, const Variant &p_default = Variant());
+	bool has_key(const String &p_key);
+	void remove(const String &p_key);
 
 	Settings();
 	~Settings();

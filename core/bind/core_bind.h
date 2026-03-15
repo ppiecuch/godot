@@ -326,6 +326,10 @@ public:
 	void print_all_textures_by_size();
 	void print_resources_by_type(const Vector<String> &p_types);
 
+	Dictionary dump_objectdb_snapshot() const;
+	Error save_objectdb_snapshot(const String &p_path) const;
+	void print_objectdb_summary() const;
+
 	bool has_touchscreen_ui_hint() const;
 
 	bool is_debug_build() const;
@@ -403,6 +407,7 @@ public:
 	String get_config_dir() const;
 	String get_data_dir() const;
 	String get_cache_dir() const;
+	String get_temp_dir() const;
 
 	void alert(const String &p_alert, const String &p_title = "ALERT!");
 	void crash(const String &p_message);

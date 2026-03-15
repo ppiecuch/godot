@@ -2905,7 +2905,7 @@ void Node::_set_tree(SceneTree *p_tree) {
 }
 
 #ifdef DEBUG_ENABLED
-static void _Node_debug_sn(Object *p_obj) {
+static void _Node_debug_sn(Object *p_obj, void *) {
 	Node *n = Object::cast_to<Node>(p_obj);
 	if (!n) {
 		return;

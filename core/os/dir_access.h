@@ -52,6 +52,11 @@ private:
 
 	Error _copy_dir(DirAccess *p_target_da, String p_to, int p_chmod_flags, bool p_copy_links);
 
+	bool _is_temp = false;
+	bool _temp_keep = false;
+	String _temp_path;
+	void _delete_temp();
+
 protected:
 	String _get_root_path() const;
 	virtual String _get_root_string() const;
@@ -152,6 +157,7 @@ public:
 	}
 
 	static DirAccess *open(const String &p_path, Error *r_error = nullptr);
+	static DirAccess *create_temp(const String &p_prefix = "", bool p_keep = false, Error *r_error = nullptr);
 
 	DirAccess();
 	virtual ~DirAccess();

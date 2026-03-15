@@ -41,6 +41,7 @@
 #include "core/message_queue.h"
 #include "core/os/dir_access.h"
 #include "core/os/keyboard.h"
+#include "core/os/object_db_snapshot.h"
 #include "core/os/os.h"
 #include "core/os/time.h"
 #include "core/project_settings.h"
@@ -78,6 +79,7 @@
 #ifdef TOOLS_ENABLED
 #include "editor/doc/doc_data.h"
 #include "editor/doc/doc_data_class_path.gen.h"
+#include "editor/editor_file_system.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_translation.h"
@@ -102,6 +104,15 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#endif
+
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+#include <CoreGraphics/CGEvent.h>
+#include <CoreGraphics/CGEventSource.h>
+#endif
+
+#ifndef WINDOWS_ENABLED
+#include <unistd.h> // _exit()
 #endif
 
 // Singletons
@@ -146,6 +157,7 @@ static bool project_manager = false;
 static String locale;
 static bool show_help = false;
 static bool auto_quit = false;
+static bool wait_for_import = false;
 static OS::ProcessID allow_focus_steal_pid = 0;
 static bool delta_sync_after_draw = false;
 #ifdef TOOLS_ENABLED
@@ -375,6 +387,7 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  -s, --script <script>            Run a script.\n");
 	OS::get_singleton()->print("  --check-only                     Only parse for errors and quit (use with --script).\n");
 #ifdef TOOLS_ENABLED
+	OS::get_singleton()->print("  --import                         Starts the editor, waits for any resources to be imported, and then quits.\n");
 	OS::get_singleton()->print("  --export <preset> <path>         Export the project using the given preset and matching release template. The preset name should match one defined in export_presets.cfg.\n");
 	OS::get_singleton()->print("                                   <path> should be absolute or relative to the project directory, and include the filename for the binary (e.g. 'builds/game.exe'). The target directory should exist.\n");
 	OS::get_singleton()->print("  --export-debug <preset> <path>   Same as --export, but using the debug template.\n");
@@ -851,9 +864,14 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			// We still pass it to the main arguments since the argument handling itself is not done in this function
 			main_args.push_back(I->get());
 #endif
+		} else if (I->get() == "--import") {
+			editor = true;
+			wait_for_import = true;
+			auto_quit = true;
 		} else if (I->get() == "--export" || I->get() == "--export-debug" || I->get() == "--export-pack" || I->get() == "--install-android-export") { // Export project
 
 			editor = true;
+			wait_for_import = true;
 			main_args.push_back(I->get());
 #endif
 		} else if (I->get() == "--path") { // set path of project to start or edit
@@ -1128,6 +1146,73 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	if (!project_manager && !editor) {
 		// Determine if the project manager should be requested
 		project_manager = main_args.size() == 0 && !found_project;
+	}
+
+	// Shift key held at startup: skip project manager and open the last
+	// opened project directly in the editor.
+	if (project_manager) {
+		bool shift_held = false;
+#if defined(OSX_ENABLED) || defined(IOS_ENABLED)
+		{
+			CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
+			shift_held = (flags & kCGEventFlagMaskShift) != 0;
+		}
+#elif defined(WINDOWS_ENABLED)
+		shift_held = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+#elif defined(X11_ENABLED)
+		{
+			Display *display = XOpenDisplay(nullptr);
+			if (display) {
+				char keys[32];
+				XQueryKeymap(display, keys);
+				KeyCode kc = XKeysymToKeycode(display, XK_Shift_L);
+				shift_held = (keys[kc / 8] & (1 << (kc % 8))) != 0;
+				if (!shift_held) {
+					kc = XKeysymToKeycode(display, XK_Shift_R);
+					shift_held = (keys[kc / 8] & (1 << (kc % 8))) != 0;
+				}
+				XCloseDisplay(display);
+			}
+		}
+#endif
+		if (shift_held) {
+			// Read last_opened_project directly from the editor settings file
+			// to avoid creating an EditorSettings singleton (which can wipe
+			// project entries if saved later by the normal flow).
+			String config_dir = OS::get_singleton()->get_config_path().plus_file(OS::get_singleton()->get_godot_dir_name());
+			String config_file = config_dir.plus_file("editor_settings-" + itos(VERSION_MAJOR) + ".tres");
+			String last_project;
+			FileAccess *f = FileAccess::open(config_file, FileAccess::READ);
+			if (f) {
+				while (!f->eof_reached()) {
+					String line = f->get_line().strip_edges();
+					if (line.begins_with("last_opened_project")) {
+						int eq = line.find("=");
+						if (eq >= 0) {
+							last_project = line.substr(eq + 1).strip_edges().trim_prefix("\"").trim_suffix("\"");
+						}
+						break;
+					}
+				}
+				f->close();
+				memdelete(f);
+			}
+			print_verbose(vformat("Shift held — last opened project: '%s'", last_project));
+			if (last_project != "" && FileAccess::exists(last_project.plus_file("project.godot"))) {
+				print_verbose("Shift key held — launching editor for: " + last_project);
+				List<String> args;
+				args.push_back("--path");
+				args.push_back(last_project);
+				args.push_back("--editor");
+				String exec = OS::get_singleton()->get_executable_path();
+				OS::ProcessID pid = 0;
+				Error err = OS::get_singleton()->execute(exec, args, false, &pid);
+				if (err == OK) {
+					_exit(EXIT_SUCCESS); // Terminate immediately — engine is partially initialized, normal exit() would crash in static destructors.
+				}
+				WARN_PRINT("Failed to launch editor for last project, showing project manager.");
+			}
+		}
 	}
 #endif
 
@@ -2353,65 +2438,6 @@ bool Main::start() {
 
 #ifdef TOOLS_ENABLED
 		if (project_manager || (script == "" && test == "" && game_path == "" && !editor)) {
-			// Option/Alt key held at startup: skip project manager and open
-			// the most recently modified project directly in the editor.
-			if (!project_manager && Input::get_singleton()->is_key_pressed(KEY_ALT)) {
-				if (!EditorSettings::get_singleton()) {
-					EditorSettings::create();
-				}
-
-				String best_path;
-				uint64_t best_time = 0;
-
-				List<PropertyInfo> properties;
-				EditorSettings::get_singleton()->get_property_list(&properties);
-				for (List<PropertyInfo>::Element *E = properties.front(); E; E = E->next()) {
-					String prop_key = E->get().name;
-					if (!prop_key.begins_with("projects/")) {
-						continue;
-					}
-					String path = EditorSettings::get_singleton()->get(prop_key);
-					String conf = path.plus_file("project.godot");
-					if (FileAccess::exists(conf)) {
-						uint64_t mtime = FileAccess::get_modified_time(conf);
-						String fscache = path.plus_file(".fscache");
-						if (FileAccess::exists(fscache)) {
-							uint64_t cache_time = FileAccess::get_modified_time(fscache);
-							if (cache_time > mtime) {
-								mtime = cache_time;
-							}
-						}
-						if (mtime > best_time) {
-							best_time = mtime;
-							best_path = path;
-						}
-					}
-				}
-
-				if (best_path != "") {
-					print_line("Option key held — opening most recent project: " + best_path);
-
-					List<String> args;
-					const Vector<String> &forwardable_args = Main::get_forwardable_cli_arguments(Main::CLI_SCOPE_TOOL);
-					for (int i = 0; i < forwardable_args.size(); i++) {
-						args.push_back(forwardable_args[i]);
-					}
-					args.push_back("--path");
-					args.push_back(best_path);
-					args.push_back("--editor");
-
-					String exec = OS::get_singleton()->get_executable_path();
-					OS::ProcessID pid = 0;
-					Error err = OS::get_singleton()->execute(exec, args, false, &pid);
-					if (err == OK) {
-						OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-						return false;
-					}
-					// If execute failed, fall through to project manager
-					WARN_PRINT("Failed to launch editor for last project, showing project manager.");
-				}
-			}
-
 			Engine::get_singleton()->set_editor_hint(true);
 			ProjectManager *pmanager = memnew(ProjectManager);
 			ProgressDialog *progress_dialog = memnew(ProgressDialog);
@@ -2438,11 +2464,18 @@ bool Main::start() {
 	OS::get_singleton()->set_main_loop(main_loop);
 
 	if (minimum_time_msec) {
-		uint64_t minimum_time = 1000 * minimum_time_msec;
-		uint64_t elapsed_time = OS::get_singleton()->get_ticks_usec();
-		if (elapsed_time < minimum_time) {
-			OS::get_singleton()->delay_usec(minimum_time - elapsed_time);
+		int64_t minimum_time = 1000 * minimum_time_msec;
+		uint64_t prev_time = OS::get_singleton()->get_ticks_usec();
+		while (minimum_time > 0) {
+			OS::get_singleton()->process_and_drop_events();
+			OS::get_singleton()->delay_usec(100);
+
+			uint64_t next_time = OS::get_singleton()->get_ticks_usec();
+			minimum_time -= (next_time - prev_time);
+			prev_time = next_time;
 		}
+	} else {
+		OS::get_singleton()->process_and_drop_events();
 	}
 
 	OS::get_singleton()->benchmark_end_measure("startup_begin");
@@ -2714,6 +2747,12 @@ bool Main::iteration() {
 	}
 #endif
 
+#ifdef TOOLS_ENABLED
+	if (wait_for_import && EditorFileSystem::get_singleton() && EditorFileSystem::get_singleton()->doing_first_scan()) {
+		return false; // Keep running until first scan completes
+	}
+#endif
+
 	return exit || auto_quit;
 }
 
@@ -2731,6 +2770,20 @@ void Main::cleanup(bool p_force) {
 	OS::get_singleton()->benchmark_begin_measure("Main::cleanup");
 	if (!p_force) {
 		ERR_FAIL_COND(!_start_success);
+	}
+
+	// Auto-save ObjectDB snapshot in verbose mode.
+	if (OS::get_singleton()->is_stdout_verbose()) {
+		OS::Date date = OS::get_singleton()->get_date(true);
+		String filename = "res://objectsdb_" +
+				String::num_int64(date.day).pad_zeros(2) +
+				String::num_int64((int)date.month).pad_zeros(2) +
+				String::num_int64(date.year % 100).pad_zeros(2) +
+				".json";
+		Error err = ObjectDBSnapshot::save_to_file(filename);
+		if (err == OK) {
+			print_line("ObjectDB snapshot saved to: " + filename);
+		}
 	}
 
 #ifdef RID_HANDLES_ENABLED

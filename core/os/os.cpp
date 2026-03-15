@@ -30,6 +30,7 @@
 
 #include "os.h"
 
+#include "core/engine.h"
 #include "core/io/json.h"
 #include "core/os/dir_access.h"
 #include "core/os/file_access.h"
@@ -201,7 +202,7 @@ void OS::dump_memory_to_file(const char *p_file) {
 
 static FileAccess *_OSPRF = nullptr;
 
-static void _OS_printres(Object *p_obj) {
+static void _OS_printres(Object *p_obj, void *) {
 	Resource *res = Object::cast_to<Resource>(p_obj);
 	if (!res) {
 		return;
@@ -344,6 +345,10 @@ String OS::get_config_path() const {
 
 // OS equivalent of XDG_CACHE_HOME
 String OS::get_cache_path() const {
+	return ".";
+}
+
+String OS::get_temp_path() const {
 	return ".";
 }
 
@@ -722,8 +727,25 @@ bool OS::has_feature(const String &p_feature) {
 	if (p_feature == "editor") {
 		return true;
 	}
+	// Backported from Godot 4: distinguish editor UI vs running project from editor.
+	if (p_feature == "editor_hint" && Engine::get_singleton()->is_editor_hint()) {
+		return true;
+	}
+	if (p_feature == "editor_runtime" && !Engine::get_singleton()->is_editor_hint()) {
+		return true;
+	}
 #else
 	if (p_feature == "standalone") {
+		return true;
+	}
+#endif
+
+#ifdef REAL_T_IS_DOUBLE
+	if (p_feature == "double") {
+		return true;
+	}
+#else
+	if (p_feature == "single") {
 		return true;
 	}
 #endif
@@ -738,6 +760,9 @@ bool OS::has_feature(const String &p_feature) {
 	if (p_feature == "x86_64") {
 		return true;
 	}
+	if (p_feature == "x86") {
+		return true;
+	}
 #elif defined(__i386) || defined(__i386__) || defined(_M_IX86)
 	if (p_feature == "x86_32") {
 		return true;
@@ -749,15 +774,13 @@ bool OS::has_feature(const String &p_feature) {
 	if (p_feature == "arm64") {
 		return true;
 	}
+	if (p_feature == "arm") {
+		return true;
+	}
 #elif defined(__arm__) || defined(_M_ARM)
 	if (p_feature == "arm32") {
 		return true;
 	}
-#if defined(__ARM_ARCH_7A__)
-	if (p_feature == "armv7a" || p_feature == "armv7") {
-		return true;
-	}
-#endif
 #if defined(__ARM_ARCH_7A__)
 	if (p_feature == "armv7a" || p_feature == "armv7") {
 		return true;
@@ -772,7 +795,7 @@ bool OS::has_feature(const String &p_feature) {
 		return true;
 	}
 #elif defined(__riscv)
-#if __riscv_xlen == 8
+#if __riscv_xlen == 64
 	if (p_feature == "rv64") {
 		return true;
 	}

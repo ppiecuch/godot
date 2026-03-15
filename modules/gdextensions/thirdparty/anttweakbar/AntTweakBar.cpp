@@ -6,7 +6,10 @@
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
 #include "core/reference.h"
+#include "core/image.h"
+#include "core/os/input.h"
 #include "scene/2d/canvas_item.h"
+#include "scene/resources/texture.h"
 
 #ifdef __APPLE__
 #ifndef GL_SILENCE_DEPRECATION
@@ -17205,6 +17208,47 @@ color32 ColorBlend(color32 _Color1, color32 _Color2, float _S) {
 }
 
 //  ---------------------------------------------------------------------------
+//  Godot cursor stub — AntTweakBar uses this for resize/move cursor changes.
+//  On Godot, we use Input.set_custom_mouse_cursor or OS cursor shape.
+
+void CTwMgr::SetCursor(CCursor _Cursor) {
+	// Map AntTweakBar cursors to Godot OS cursor shapes
+	Input::CursorShape shape = Input::CURSOR_ARROW;
+	switch (_Cursor) {
+		case CursorArrow:
+			shape = Input::CURSOR_ARROW;
+			break;
+		case CursorMove:
+			shape = Input::CURSOR_MOVE;
+			break;
+		case CursorWE:
+			shape = Input::CURSOR_HSIZE;
+			break;
+		case CursorNS:
+			shape = Input::CURSOR_VSIZE;
+			break;
+		case CursorTopLeft:
+		case CursorBottomRight:
+			shape = Input::CURSOR_FDIAGSIZE;
+			break;
+		case CursorTopRight:
+		case CursorBottomLeft:
+			shape = Input::CURSOR_BDIAGSIZE;
+			break;
+		case CursorHelp:
+			shape = Input::CURSOR_HELP;
+			break;
+		case CursorCenter:
+		case CursorPoint:
+			shape = Input::CURSOR_POINTING_HAND;
+			break;
+		default:
+			break;
+	}
+	Input::get_singleton()->set_default_cursor_shape(shape);
+}
+
+//  ---------------------------------------------------------------------------
 //  @file       TwGodotEvents.h
 //  @brief      Godot Engine events, mapping and integration functions.
 //  @author     Pawel Piecuch
@@ -17332,6 +17376,15 @@ int TwEventGodot(const Ref<InputEvent> &ev) {
 //              For conditions of distribution and use, see License.txt
 //  ---------------------------------------------------------------------------
 
+// Helper: convert AntTweakBar color32 (ARGB) to Godot Color
+static inline Color _tw_c32(color32 c) {
+	return Color(
+			((c >> 16) & 0xFF) / 255.0f,
+			((c >> 8) & 0xFF) / 255.0f,
+			(c & 0xFF) / 255.0f,
+			((c >> 24) & 0xFF) / 255.0f);
+}
+
 class CTwGraphGodot : public ITwGraph {
 public:
 	virtual int Init();
@@ -17355,53 +17408,26 @@ public:
 	virtual void RestoreViewport();
 	virtual void SetScissor(int _X0, int _Y0, int _Width, int _Height);
 
+	// Replay buffered draw commands through a Godot CanvasItem
+	void Replay(CanvasItem *ci);
+
 protected:
 	bool m_Drawing;
-	unsigned m_FontTexID;
-	const CTexFont *m_FontTex;
-	float m_PrevLineWidth;
-	int m_PrevTexEnv;
-	int m_PrevPolygonMode[2];
-	int m_MaxClipPlanes;
-	int m_PrevTexture;
-	int m_PrevArrayBufferARB;
-	int m_PrevElementArrayBufferARB;
-	bool m_PrevVertexProgramARB;
-	bool m_PrevFragmentProgramARB;
-	unsigned m_PrevProgramObjectARB;
-	bool m_PrevTexture3D;
-	enum EMaxTextures { MAX_TEXTURES = 128 };
-	bool m_PrevActiveTexture1D[MAX_TEXTURES];
-	bool m_PrevActiveTexture2D[MAX_TEXTURES];
-	bool m_PrevActiveTexture3D[MAX_TEXTURES];
-	bool m_PrevClientTexCoordArray[MAX_TEXTURES];
-	int m_PrevActiveTextureARB;
-	int m_PrevClientActiveTextureARB;
-	bool m_SupportTexRect;
-	bool m_PrevTexRectARB;
-	int m_PrevBlendEquation;
-	int m_PrevBlendEquationRGB;
-	int m_PrevBlendEquationAlpha;
-	int m_PrevBlendSrcRGB;
-	int m_PrevBlendDstRGB;
-	int m_PrevBlendSrcAlpha;
-	int m_PrevBlendDstAlpha;
-	unsigned m_PrevVertexArray;
-	int m_ViewportInit[4];
-	float m_ProjMatrixInit[16];
-	enum EMaxVtxAttribs { MAX_VERTEX_ATTRIBS = 128 };
-	int m_PrevEnabledVertexAttrib[MAX_VERTEX_ATTRIBS];
 	int m_WndWidth;
 	int m_WndHeight;
+	const CTexFont *m_FontTex;
+	Ref<ImageTexture> m_FontTexture;
 
 	struct vec2 {
-		real_t x, y;
-		vec2() {}
+		float x, y;
+		vec2() :
+				x(0), y(0) {}
 		vec2(float _X, float _Y) :
 				x(_X), y(_Y) {}
 		vec2(int _X, int _Y) :
 				x(float(_X)), y(float(_Y)) {}
 	};
+
 	struct CTextObj {
 		std::vector<vec2> m_TextVerts;
 		std::vector<vec2> m_TextUVs;
@@ -17409,10 +17435,450 @@ protected:
 		std::vector<color32> m_Colors;
 		std::vector<color32> m_BgColors;
 	};
+
+	// Command buffer
+	struct DrawCmd {
+		enum Type {
+			CMD_LINE,
+			CMD_RECT,
+			CMD_TRIS,
+			CMD_TEXT,
+			CMD_SCISSOR_ON,
+			CMD_SCISSOR_OFF,
+			CMD_VIEWPORT,
+			CMD_RESTORE_VIEWPORT
+		} type;
+		union {
+			struct {
+				float x0, y0, x1, y1;
+				color32 c0, c1;
+				int aa;
+			} line;
+			struct {
+				float x0, y0, x1, y1;
+				color32 c00, c10, c01, c11;
+			} rect;
+			struct {
+				int offset, count;
+			} tris;
+			struct {
+				int fg_offset, fg_count, bg_offset, bg_count;
+				float x, y;
+				color32 fg_color, bg_color;
+				int has_fg_colors, has_bg_colors;
+			} text;
+			struct {
+				int x, y, w, h;
+			} scissor;
+			struct {
+				float x0, y0;
+				int offset_x, offset_y;
+			} viewport;
+		};
+	};
+
+	std::vector<DrawCmd> m_Commands;
+	std::vector<vec2> m_TriVerts;
+	std::vector<color32> m_TriColors;
+	std::vector<vec2> m_TextFgVerts;
+	std::vector<vec2> m_TextFgUVs;
+	std::vector<color32> m_TextFgColors;
+	std::vector<vec2> m_TextBgVerts;
+	std::vector<color32> m_TextBgColors;
+
+	void _UpdateFontTexture(const CTexFont *font);
 };
 
+//  ---------------------------------------------------------------------------
+
+int CTwGraphGodot::Init() {
+	m_Drawing = false;
+	m_FontTex = NULL;
+	return 1;
+}
+
+int CTwGraphGodot::Shut() {
+	m_FontTexture.unref();
+	m_FontTex = NULL;
+	return 1;
+}
+
+void CTwGraphGodot::BeginDraw(int _WndWidth, int _WndHeight) {
+	m_Drawing = true;
+	m_WndWidth = _WndWidth;
+	m_WndHeight = _WndHeight;
+	m_Commands.clear();
+	m_TriVerts.clear();
+	m_TriColors.clear();
+	m_TextFgVerts.clear();
+	m_TextFgUVs.clear();
+	m_TextFgColors.clear();
+	m_TextBgVerts.clear();
+	m_TextBgColors.clear();
+}
+
+void CTwGraphGodot::EndDraw() {
+	m_Drawing = false;
+}
+
+bool CTwGraphGodot::IsDrawing() {
+	return m_Drawing;
+}
+
+void CTwGraphGodot::Restore() {
+	m_FontTexture.unref();
+	m_FontTex = NULL;
+}
+
+void CTwGraphGodot::DrawLine(int _X0, int _Y0, int _X1, int _Y1, color32 _Color0, color32 _Color1, bool _AntiAliased) {
+	DrawCmd cmd;
+	cmd.type = DrawCmd::CMD_LINE;
+	cmd.line.x0 = _X0 + 0.5f;
+	cmd.line.y0 = _Y0 - 0.5f;
+	cmd.line.x1 = _X1 + 0.5f;
+	cmd.line.y1 = _Y1 - 0.5f;
+	cmd.line.c0 = _Color0;
+	cmd.line.c1 = _Color1;
+	cmd.line.aa = _AntiAliased ? 1 : 0;
+	m_Commands.push_back(cmd);
+}
+
+void CTwGraphGodot::DrawRect(int _X0, int _Y0, int _X1, int _Y1, color32 _Color00, color32 _Color10, color32 _Color01, color32 _Color11) {
+	// Border adjustment (matches OpenGL renderer)
+	if (_X0 < _X1)
+		++_X1;
+	else if (_X0 > _X1)
+		++_X0;
+	if (_Y0 < _Y1)
+		--_Y0;
+	else if (_Y0 > _Y1)
+		--_Y1;
+
+	DrawCmd cmd;
+	cmd.type = DrawCmd::CMD_RECT;
+	cmd.rect.x0 = _X0;
+	cmd.rect.y0 = _Y0;
+	cmd.rect.x1 = _X1;
+	cmd.rect.y1 = _Y1;
+	cmd.rect.c00 = _Color00;
+	cmd.rect.c10 = _Color10;
+	cmd.rect.c01 = _Color01;
+	cmd.rect.c11 = _Color11;
+	m_Commands.push_back(cmd);
+}
+
+void CTwGraphGodot::DrawTriangles(int _NumTriangles, int *_Vertices, color32 *_Colors, Cull _CullMode) {
+	DrawCmd cmd;
+	cmd.type = DrawCmd::CMD_TRIS;
+	cmd.tris.offset = m_TriVerts.size();
+	cmd.tris.count = _NumTriangles * 3;
+
+	for (int i = 0; i < _NumTriangles * 3; i++) {
+		m_TriVerts.push_back(vec2(_Vertices[2 * i], _Vertices[2 * i + 1]));
+		m_TriColors.push_back(_Colors[i]);
+	}
+
+	m_Commands.push_back(cmd);
+}
+
+void *CTwGraphGodot::NewTextObj() {
+	return new CTextObj;
+}
+
+void CTwGraphGodot::DeleteTextObj(void *_TextObj) {
+	DEV_ASSERT(_TextObj != NULL);
+	delete static_cast<CTextObj *>(_TextObj);
+}
+
+void CTwGraphGodot::BuildText(void *_TextObj, const std::string *_TextLines, color32 *_LineColors, color32 *_LineBgColors, int _NbLines, const CTexFont *_Font, int _Sep, int _BgWidth) {
+	DEV_ASSERT(_TextObj != NULL);
+	DEV_ASSERT(_Font != NULL);
+
+	_UpdateFontTexture(_Font);
+
+	CTextObj *TextObj = static_cast<CTextObj *>(_TextObj);
+	TextObj->m_TextVerts.clear();
+	TextObj->m_TextUVs.clear();
+	TextObj->m_BgVerts.clear();
+	TextObj->m_Colors.clear();
+	TextObj->m_BgColors.clear();
+
+	int x, x1, y, y1, i, Len;
+	unsigned char ch;
+	const unsigned char *Text;
+	color32 LineColor = 0xffffffff;
+
+	for (int Line = 0; Line < _NbLines; ++Line) {
+		x = 0;
+		y = Line * (_Font->m_CharHeight + _Sep);
+		y1 = y + _Font->m_CharHeight;
+		Len = (int)_TextLines[Line].length();
+		Text = (const unsigned char *)(_TextLines[Line].c_str());
+		if (_LineColors != NULL)
+			LineColor = _LineColors[Line];
+
+		for (i = 0; i < Len; ++i) {
+			ch = Text[i];
+			x1 = x + _Font->m_CharWidth[ch];
+
+			TextObj->m_TextVerts.push_back(vec2(x, y));
+			TextObj->m_TextVerts.push_back(vec2(x1, y));
+			TextObj->m_TextVerts.push_back(vec2(x, y1));
+			TextObj->m_TextVerts.push_back(vec2(x1, y));
+			TextObj->m_TextVerts.push_back(vec2(x1, y1));
+			TextObj->m_TextVerts.push_back(vec2(x, y1));
+
+			TextObj->m_TextUVs.push_back(vec2(_Font->m_CharU0[ch], _Font->m_CharV0[ch]));
+			TextObj->m_TextUVs.push_back(vec2(_Font->m_CharU1[ch], _Font->m_CharV0[ch]));
+			TextObj->m_TextUVs.push_back(vec2(_Font->m_CharU0[ch], _Font->m_CharV1[ch]));
+			TextObj->m_TextUVs.push_back(vec2(_Font->m_CharU1[ch], _Font->m_CharV0[ch]));
+			TextObj->m_TextUVs.push_back(vec2(_Font->m_CharU1[ch], _Font->m_CharV1[ch]));
+			TextObj->m_TextUVs.push_back(vec2(_Font->m_CharU0[ch], _Font->m_CharV1[ch]));
+
+			if (_LineColors != NULL) {
+				for (int j = 0; j < 6; j++)
+					TextObj->m_Colors.push_back(LineColor);
+			}
+
+			x = x1;
+		}
+
+		if (_BgWidth > 0) {
+			TextObj->m_BgVerts.push_back(vec2(-1, y));
+			TextObj->m_BgVerts.push_back(vec2(_BgWidth + 1, y));
+			TextObj->m_BgVerts.push_back(vec2(-1, y1));
+			TextObj->m_BgVerts.push_back(vec2(_BgWidth + 1, y));
+			TextObj->m_BgVerts.push_back(vec2(_BgWidth + 1, y1));
+			TextObj->m_BgVerts.push_back(vec2(-1, y1));
+
+			if (_LineBgColors != NULL) {
+				for (int j = 0; j < 6; j++)
+					TextObj->m_BgColors.push_back(_LineBgColors[Line]);
+			}
+		}
+	}
+}
+
+void CTwGraphGodot::DrawText(void *_TextObj, int _X, int _Y, color32 _Color, color32 _BgColor) {
+	DEV_ASSERT(_TextObj != NULL);
+	CTextObj *TextObj = static_cast<CTextObj *>(_TextObj);
+
+	if (TextObj->m_TextVerts.size() < 4 && TextObj->m_BgVerts.size() < 4)
+		return;
+
+	DrawCmd cmd;
+	cmd.type = DrawCmd::CMD_TEXT;
+	cmd.text.x = _X;
+	cmd.text.y = _Y;
+	cmd.text.fg_color = _Color;
+	cmd.text.bg_color = _BgColor;
+
+	// Copy foreground text data
+	cmd.text.fg_offset = m_TextFgVerts.size();
+	cmd.text.fg_count = TextObj->m_TextVerts.size();
+	cmd.text.has_fg_colors = (TextObj->m_Colors.size() == TextObj->m_TextVerts.size() && _Color == 0) ? 1 : 0;
+	m_TextFgVerts.insert(m_TextFgVerts.end(), TextObj->m_TextVerts.begin(), TextObj->m_TextVerts.end());
+	m_TextFgUVs.insert(m_TextFgUVs.end(), TextObj->m_TextUVs.begin(), TextObj->m_TextUVs.end());
+	if (cmd.text.has_fg_colors) {
+		m_TextFgColors.insert(m_TextFgColors.end(), TextObj->m_Colors.begin(), TextObj->m_Colors.end());
+	}
+
+	// Copy background data
+	cmd.text.bg_offset = m_TextBgVerts.size();
+	cmd.text.bg_count = 0;
+	cmd.text.has_bg_colors = (TextObj->m_BgColors.size() == TextObj->m_BgVerts.size() && _BgColor == 0) ? 1 : 0;
+	if ((_BgColor != 0 || cmd.text.has_bg_colors) && TextObj->m_BgVerts.size() >= 4) {
+		cmd.text.bg_count = TextObj->m_BgVerts.size();
+		m_TextBgVerts.insert(m_TextBgVerts.end(), TextObj->m_BgVerts.begin(), TextObj->m_BgVerts.end());
+		if (cmd.text.has_bg_colors) {
+			m_TextBgColors.insert(m_TextBgColors.end(), TextObj->m_BgColors.begin(), TextObj->m_BgColors.end());
+		}
+	}
+
+	m_Commands.push_back(cmd);
+}
+
+void CTwGraphGodot::ChangeViewport(int _X0, int _Y0, int _Width, int _Height, int _OffsetX, int _OffsetY) {
+	if (_Width > 0 && _Height > 0) {
+		DrawCmd cmd;
+		cmd.type = DrawCmd::CMD_VIEWPORT;
+		cmd.viewport.x0 = _X0;
+		cmd.viewport.y0 = _Y0;
+		cmd.viewport.offset_x = _OffsetX;
+		cmd.viewport.offset_y = _OffsetY;
+		m_Commands.push_back(cmd);
+	}
+}
+
+void CTwGraphGodot::RestoreViewport() {
+	DrawCmd cmd;
+	cmd.type = DrawCmd::CMD_RESTORE_VIEWPORT;
+	m_Commands.push_back(cmd);
+}
+
+void CTwGraphGodot::SetScissor(int _X0, int _Y0, int _Width, int _Height) {
+	DrawCmd cmd;
+	if (_Width > 0 && _Height > 0) {
+		cmd.type = DrawCmd::CMD_SCISSOR_ON;
+		cmd.scissor.x = _X0;
+		cmd.scissor.y = _Y0;
+		cmd.scissor.w = _Width;
+		cmd.scissor.h = _Height;
+	} else {
+		cmd.type = DrawCmd::CMD_SCISSOR_OFF;
+	}
+	m_Commands.push_back(cmd);
+}
+
+void CTwGraphGodot::_UpdateFontTexture(const CTexFont *font) {
+	if (font == m_FontTex && m_FontTexture.is_valid())
+		return;
+	m_FontTex = font;
+
+	int w = font->m_TexWidth;
+	int h = font->m_TexHeight;
+
+	PoolByteArray data;
+	data.resize(w * h * 4);
+	{
+		PoolByteArray::Write wd = data.write();
+		for (int i = 0; i < w * h; i++) {
+			wd[i * 4 + 0] = 255;
+			wd[i * 4 + 1] = 255;
+			wd[i * 4 + 2] = 255;
+			wd[i * 4 + 3] = font->m_TexBytes[i];
+		}
+	}
+
+	Ref<Image> img;
+	img.instance();
+	img->create(w, h, false, Image::FORMAT_RGBA8, data);
+
+	m_FontTexture.instance();
+	m_FontTexture->create_from_image(img, 0);
+}
+
+void CTwGraphGodot::Replay(CanvasItem *ci) {
+	for (size_t c = 0; c < m_Commands.size(); c++) {
+		const DrawCmd &cmd = m_Commands[c];
+		switch (cmd.type) {
+			case DrawCmd::CMD_LINE: {
+				Color c0 = _tw_c32(cmd.line.c0);
+				Color c1 = _tw_c32(cmd.line.c1);
+				ci->draw_line(
+						Vector2(cmd.line.x0, cmd.line.y0),
+						Vector2(cmd.line.x1, cmd.line.y1),
+						c0.linear_interpolate(c1, 0.5f), 1.0f, cmd.line.aa != 0);
+			} break;
+
+			case DrawCmd::CMD_RECT: {
+				Vector<Point2> pts;
+				Vector<Color> cols;
+				pts.push_back(Vector2(cmd.rect.x0, cmd.rect.y0));
+				pts.push_back(Vector2(cmd.rect.x1, cmd.rect.y0));
+				pts.push_back(Vector2(cmd.rect.x1, cmd.rect.y1));
+				pts.push_back(Vector2(cmd.rect.x0, cmd.rect.y1));
+				cols.push_back(_tw_c32(cmd.rect.c00));
+				cols.push_back(_tw_c32(cmd.rect.c10));
+				cols.push_back(_tw_c32(cmd.rect.c11));
+				cols.push_back(_tw_c32(cmd.rect.c01));
+				ci->draw_polygon(pts, cols);
+			} break;
+
+			case DrawCmd::CMD_TRIS: {
+				for (int i = cmd.tris.offset; i < cmd.tris.offset + cmd.tris.count; i += 3) {
+					Vector<Point2> pts;
+					Vector<Color> cols;
+					for (int j = 0; j < 3; j++) {
+						pts.push_back(Vector2(m_TriVerts[i + j].x, m_TriVerts[i + j].y));
+						cols.push_back(_tw_c32(m_TriColors[i + j]));
+					}
+					ci->draw_polygon(pts, cols);
+				}
+			} break;
+
+			case DrawCmd::CMD_TEXT: {
+				// Draw background quads
+				if (cmd.text.bg_count >= 6) {
+					for (int i = cmd.text.bg_offset; i < cmd.text.bg_offset + cmd.text.bg_count; i += 6) {
+						Vector<Point2> pts;
+						Vector<Color> cols;
+						pts.push_back(Vector2(m_TextBgVerts[i].x + cmd.text.x, m_TextBgVerts[i].y + cmd.text.y));
+						pts.push_back(Vector2(m_TextBgVerts[i + 1].x + cmd.text.x, m_TextBgVerts[i + 1].y + cmd.text.y));
+						pts.push_back(Vector2(m_TextBgVerts[i + 4].x + cmd.text.x, m_TextBgVerts[i + 4].y + cmd.text.y));
+						pts.push_back(Vector2(m_TextBgVerts[i + 2].x + cmd.text.x, m_TextBgVerts[i + 2].y + cmd.text.y));
+						Color bg_col;
+						if (cmd.text.has_bg_colors && (size_t)(i - cmd.text.bg_offset) < m_TextBgColors.size()) {
+							bg_col = _tw_c32(m_TextBgColors[i]);
+						} else {
+							bg_col = _tw_c32(cmd.text.bg_color);
+						}
+						cols.push_back(bg_col);
+						cols.push_back(bg_col);
+						cols.push_back(bg_col);
+						cols.push_back(bg_col);
+						ci->draw_polygon(pts, cols);
+					}
+				}
+
+				// Draw text quads (textured with font)
+				if (m_FontTexture.is_valid() && cmd.text.fg_count >= 6) {
+					int fw = m_FontTexture->get_width();
+					int fh = m_FontTexture->get_height();
+
+					for (int i = cmd.text.fg_offset; i < cmd.text.fg_offset + cmd.text.fg_count; i += 6) {
+						float qx0 = m_TextFgVerts[i].x + cmd.text.x;
+						float qy0 = m_TextFgVerts[i].y + cmd.text.y;
+						float qx1 = m_TextFgVerts[i + 1].x + cmd.text.x;
+						float qy1 = m_TextFgVerts[i + 4].y + cmd.text.y;
+
+						float u0 = m_TextFgUVs[i].x;
+						float v0 = m_TextFgUVs[i].y;
+						float u1 = m_TextFgUVs[i + 1].x;
+						float v1 = m_TextFgUVs[i + 4].y;
+
+						Rect2 dst(qx0, qy0, qx1 - qx0, qy1 - qy0);
+						Rect2 src(u0 * fw, v0 * fh, (u1 - u0) * fw, (v1 - v0) * fh);
+
+						Color fg;
+						if (cmd.text.has_fg_colors && (size_t)(i - cmd.text.fg_offset) < m_TextFgColors.size()) {
+							fg = _tw_c32(m_TextFgColors[i]);
+						} else {
+							fg = _tw_c32(cmd.text.fg_color);
+						}
+
+						ci->draw_texture_rect_region(m_FontTexture, dst, src, fg);
+					}
+				}
+			} break;
+
+			case DrawCmd::CMD_SCISSOR_ON:
+			case DrawCmd::CMD_SCISSOR_OFF:
+				// CanvasItem doesn't expose direct scissor; bars render correctly without it
+				break;
+
+			case DrawCmd::CMD_VIEWPORT: {
+				Transform2D xf;
+				xf.elements[2] = Vector2(cmd.viewport.x0 - cmd.viewport.offset_x, cmd.viewport.y0 + cmd.viewport.offset_y);
+				ci->draw_set_transform_matrix(xf);
+			} break;
+
+			case DrawCmd::CMD_RESTORE_VIEWPORT: {
+				ci->draw_set_transform_matrix(Transform2D());
+			} break;
+		}
+	}
+}
+
+//  ---------------------------------------------------------------------------
+
 ITwGraph *TwCreateRenderer(void *_Device) {
-	ITwGraph *rendr;
-	CanvasItem *canvas = (CanvasItem *)_Device;
-	return rendr;
+	return new CTwGraphGodot;
+}
+
+// External function for the GDScript wrapper to replay buffered draw commands
+void TwReplayDrawCommands(CanvasItem *ci) {
+	if (g_TwMgr && g_TwMgr->m_Graph) {
+		static_cast<CTwGraphGodot *>(g_TwMgr->m_Graph)->Replay(ci);
+	}
 }

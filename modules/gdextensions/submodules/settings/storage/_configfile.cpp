@@ -47,7 +47,9 @@ private:
 
 public:
 	void set(const String &key, const Variant &value);
-	Variant get(const String &key) const;
+	Variant get(const String &key, const Variant &default_val = Variant()) const;
+	bool has_key(const String &key) const;
+	void remove(const String &key);
 
 	SettingsStorage();
 	~SettingsStorage();
@@ -58,8 +60,22 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 	_sync();
 }
 
-Variant SettingsStorage::get(const String &key) const {
+Variant SettingsStorage::get(const String &key, const Variant &default_val) const {
+	if (!cache.has_section_key(section, key)) {
+		return default_val;
+	}
 	return cache.get_value(section, key);
+}
+
+bool SettingsStorage::has_key(const String &key) const {
+	return cache.has_section_key(section, key);
+}
+
+void SettingsStorage::remove(const String &key) {
+	if (cache.has_section_key(section, key)) {
+		cache.erase_section_key(section, key);
+		_sync();
+	}
 }
 
 String SettingsStorage::_config_location() {

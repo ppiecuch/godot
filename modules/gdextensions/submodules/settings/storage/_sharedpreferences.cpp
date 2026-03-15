@@ -76,6 +76,7 @@ public:
 		jmPutInt = env->GetMethodID(jcSharedPreferences_Editor, "putInt", "(Ljava/lang/String;I)Landroid/content/SharedPreferences$Editor;");
 		jmPutFloat = env->GetMethodID(jcSharedPreferences_Editor, "putFloat", "(Ljava/lang/String;F)Landroid/content/SharedPreferences$Editor;");
 		jmPutString = env->GetMethodID(jcSharedPreferences_Editor, "putString", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
+		jmRemove = env->GetMethodID(jcSharedPreferences_Editor, "remove", "(Ljava/lang/String;)Landroid/content/SharedPreferences$Editor;");
 		jmCommit = env->GetMethodID(jcSharedPreferences_Editor, "commit", "()Z");
 	}
 	//return itself for method chaining
@@ -95,6 +96,10 @@ public:
 		env->CallObjectMethod(joSharedPreferences, jmPutString, env->NewStringUTF(key), env->NewStringUTF(value));
 		return *this;
 	}
+	const SharedPreferences_Editor &remove(const char *key) const {
+		env->CallObjectMethod(joSharedPreferences, jmRemove, env->NewStringUTF(key));
+		return *this;
+	}
 	bool commit() const {
 		return (bool)env->CallBooleanMethod(joSharedPreferences, jmCommit);
 	}
@@ -106,6 +111,7 @@ private:
 	jmethodID jmPutInt;
 	jmethodID jmPutFloat;
 	jmethodID jmPutString;
+	jmethodID jmRemove;
 	jmethodID jmCommit;
 };
 
@@ -208,10 +214,17 @@ public:
 		return ret;
 	}
 	SharedPreferences_Editor edit() const {
-		//create a instance of SharedPreferences.Editor and store it in @joSharedPreferences
-		jobject joSharedPreferences = env->CallObjectMethod(joSharedPreferences, jmEdit);
-		SharedPreferences_Editor editor(env, joSharedPreferences);
+		jobject joEditor = env->CallObjectMethod(joSharedPreferences, jmEdit);
+		SharedPreferences_Editor editor(env, joEditor);
 		return editor;
+	}
+	bool contains(const char *id) {
+		if (jobject map = env->CallObjectMethod(joSharedPreferences, jmGetAll)) {
+			jclass mapClass = env->GetObjectClass(map);
+			jmethodID jmContainsKey = env->GetMethodID(mapClass, "containsKey", "(Ljava/lang/Object;)Z");
+			return (bool)env->CallBooleanMethod(map, jmContainsKey, env->NewStringUTF(id));
+		}
+		return false;
 	}
 
 private:
@@ -226,7 +239,9 @@ private:
 
 public:
 	void set(const String &key, const Variant &value);
-	Variant get(const String &key);
+	Variant get(const String &key, const Variant &default_val = Variant());
+	bool has_key(const String &key);
+	void remove(const String &key);
 
 	SettingsStorage();
 	~SettingsStorage();
@@ -244,30 +259,46 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 		case Variant::BOOL: {
 			prefs.edit().putBoolean(key.utf8().c_str(), bool(value));
 			_sync();
+			break;
 		}
 		case Variant::INT: {
 			prefs.edit().putInt(key.utf8().c_str(), int(value));
 			_sync();
+			break;
 		}
 		case Variant::REAL: {
 			prefs.edit().putFloat(key.utf8().c_str(), float(value));
 			_sync();
+			break;
 		}
 		case Variant::STRING: {
 			prefs.edit().putString(key.utf8().c_str(), String(value).utf8().c_str());
 			_sync();
+			break;
 		}
-		default:
+		default: {
 			String payload = _Marshalls::get_singleton()->variant_to_base64(value);
 			String val = "V;" + payload.md5_text() + ";" + payload;
-			prefs.edit().putString(key.utf8().c_str(), String(value).utf8().c_str());
+			prefs.edit().putString(key.utf8().c_str(), val.utf8().c_str());
 			_sync();
 			break;
+		}
 	}
 }
 
-Variant SettingsStorage::get(const String &key) {
+Variant SettingsStorage::get(const String &key, const Variant &default_val) {
+	if (!prefs.contains(key.utf8().c_str())) {
+		return default_val;
+	}
 	return prefs.getValue(key.utf8().c_str());
+}
+
+bool SettingsStorage::has_key(const String &key) {
+	return prefs.contains(key.utf8().c_str());
+}
+
+void SettingsStorage::remove(const String &key) {
+	prefs.edit().remove(key.utf8().c_str()).commit();
 }
 
 SettingsStorage::SettingsStorage() :

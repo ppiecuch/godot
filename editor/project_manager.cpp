@@ -460,7 +460,7 @@ private:
 
 			} else {
 				if (mode == MODE_NEW) {
-					// (PP) copy default addons from the 
+					// (PP) copy default addons from the
 					String addons_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("godot-addons");
 #ifdef __APPLE__
 					if (!DirAccess::exists(addons_path))
@@ -2080,6 +2080,10 @@ void ProjectManager::_open_selected_projects() {
 		}
 
 		print_line("Editing project: " + path + " (" + selected + ")");
+
+		// Save last opened project for Shift+launch feature
+		EditorSettings::get_singleton()->set("last_opened_project", path);
+		EditorSettings::get_singleton()->save();
 
 		List<String> args;
 

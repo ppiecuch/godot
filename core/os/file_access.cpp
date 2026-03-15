@@ -33,6 +33,7 @@
 #include "core/crypto/crypto_core.h"
 #include "core/io/file_access_pack.h"
 #include "core/io/marshalls.h"
+#include "core/os/dir_access.h"
 #include "core/os/os.h"
 #include "core/project_settings.h"
 
@@ -677,8 +678,58 @@ String FileAccess::get_sha256(const String &p_file) {
 	return String::hex_encode_buffer(hash, 32);
 }
 
+FileAccess *FileAccess::create_temp(int p_mode_flags, const String &p_prefix, const String &p_extension, bool p_keep, Error *r_error) {
+	String temp_path = OS::get_singleton()->get_temp_path();
+
+	// Generate a unique filename using ticks and date.
+	OS::Date date = OS::get_singleton()->get_date();
+	OS::Time time = OS::get_singleton()->get_time();
+	uint64_t ticks = OS::get_singleton()->get_ticks_usec();
+
+	String prefix = p_prefix.empty() ? "tmp" : p_prefix;
+	String timestamp = itos(date.year) + itos(date.month).pad_zeros(2) + itos(date.day).pad_zeros(2) +
+			itos(time.hour).pad_zeros(2) + itos(time.min).pad_zeros(2) + itos(time.sec).pad_zeros(2);
+	String unique = prefix + "_" + timestamp + "_" + itos(ticks);
+
+	if (!p_extension.empty()) {
+		unique += "." + p_extension;
+	}
+
+	String file_path = temp_path.plus_file(unique);
+
+	// Ensure temp directory exists.
+	DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+	if (da) {
+		if (!da->dir_exists(temp_path)) {
+			da->make_dir_recursive(temp_path);
+		}
+		memdelete(da);
+	}
+
+	FileAccess *fa = open(file_path, p_mode_flags, r_error);
+	if (!fa) {
+		return nullptr;
+	}
+
+	fa->_is_temp_file = true;
+	fa->_temp_keep = p_keep;
+	fa->_temp_path = file_path;
+
+	return fa;
+}
+
+void FileAccess::_delete_temp() {
+	if (_is_temp_file && !_temp_keep && !_temp_path.empty()) {
+		DirAccess::remove_file_or_error(_temp_path);
+	}
+}
+
 FileAccess::FileAccess() {
 	endian_swap = false;
 	real_is_double = false;
 	_access_type = ACCESS_FILESYSTEM;
-};
+}
+
+FileAccess::~FileAccess() {
+	_delete_temp();
+}

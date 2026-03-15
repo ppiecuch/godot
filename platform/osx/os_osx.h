@@ -243,6 +243,7 @@ public:
 	virtual String get_config_path() const;
 	virtual String get_data_path() const;
 	virtual String get_cache_path() const;
+	virtual String get_temp_path() const;
 	virtual String get_bundle_resource_dir() const;
 	virtual String get_bundle_icon_path() const;
 	virtual String get_godot_dir_name() const;
@@ -348,6 +349,7 @@ public:
 	virtual Error move_to_trash(const String &p_path);
 
 	void force_process_input();
+	virtual void process_and_drop_events();
 
 	OS_OSX();
 

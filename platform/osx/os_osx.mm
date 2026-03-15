@@ -2618,6 +2618,10 @@ String OS_OSX::get_cache_path() const {
 	return get_config_path();
 }
 
+String OS_OSX::get_temp_path() const {
+	return String([NSTemporaryDirectory() UTF8String]).rstrip("/");
+}
+
 String OS_OSX::get_bundle_resource_dir() const {
 	String ret;
 
@@ -3689,6 +3693,10 @@ void OS_OSX::push_input(const Ref<InputEvent> &p_event) {
 void OS_OSX::force_process_input() {
 	process_events(); // get rid of pending events
 	joypad_osx->process_joypads();
+}
+
+void OS_OSX::process_and_drop_events() {
+	process_events();
 }
 
 void OS_OSX::pre_wait_observer_cb(CFRunLoopObserverRef p_observer, CFRunLoopActivity p_activiy, void *p_context) {

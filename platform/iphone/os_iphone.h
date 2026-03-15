@@ -130,6 +130,7 @@ public:
 
 	String get_user_data_dir() const;
 	String get_cache_path() const;
+	String get_temp_path() const;
 
 	String get_locale() const;
 

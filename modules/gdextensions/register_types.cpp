@@ -72,6 +72,10 @@
 #endif
 
 #include "albmpgfx/gdal_bitmap_gfx.h"
+
+#ifdef GDEXT_ANTTWEAKBAR_ENABLED
+#include "anttweakbar/tweak_bar.h"
+#endif
 #include "swsurface/gd_bitblit.h"
 
 #include "bulletkit/register.h"
@@ -178,6 +182,7 @@
 
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 #include "runtimeprofiler/runtime_profiler.h"
+#include "runtimeprofiler/runtime_profiler_overlay.h"
 #endif
 
 #ifdef GDEXT_BENCHMARK_ENABLED
@@ -219,6 +224,10 @@
 #include "qrcodetexture/qrcodetexture.h"
 #endif
 
+#ifdef GDEXT_CANVASRASTER_ENABLED
+#include "canvasraster/canvas_raster.h"
+#endif
+
 #ifdef GDEXT_CCD_ENABLED
 #include "ccd/gd_ccd.h"
 #endif
@@ -240,9 +249,10 @@ static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
 
 #ifdef GDEXT_THORVG_ENABLED
 #include "thorvg/image_loader_thor_svg.h"
+#include "thorvg/svg_texture.h"
 #include <thorvg.h>
 
-static Ref<ImageLoaderThorSVG> image_loader_tsvg;
+static Ref<ImageLoaderThorSVG> image_loader_thor_svg;
 #endif
 
 #ifdef GDEXT_MESHLOD_ENABLED
@@ -314,10 +324,14 @@ void register_gdextensions_types() {
 	register_qurobullet();
 #endif
 #ifdef GDEXT_ALBMPGFX_ENABLED
+	ClassDB::register_class<GdAlFont>();
 	ClassDB::register_class<GdAlRleSprite>();
 	ClassDB::register_class<GdAlBitmapGfx>();
 	ClassDB::register_class<AlBitmapGfxNode>();
 	Engine::get_singleton()->add_singleton(Engine::Singleton("AlBitmapGfx", memnew(AlBitmapGfx)));
+#endif
+#ifdef GDEXT_ANTTWEAKBAR_ENABLED
+	ClassDB::register_class<TweakBar>();
 #endif
 #ifdef GDEXT_BLITTER_ENABLED
 	ClassDB::register_virtual_class<BlitSurface>();
@@ -567,6 +581,8 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 	ClassDB::register_class<RuntimeProfiler>();
+	ClassDB::register_class<RuntimeProfilerOverlay>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("RuntimeProfilerOverlay", memnew(RuntimeProfilerOverlay)));
 #endif
 
 #ifdef GDEXT_BENCHMARK_ENABLED
@@ -620,6 +636,11 @@ void register_gdextensions_types() {
 	ClassDB::register_class<QRCodeTexture>();
 #endif // GDEXT_QRCODETEXTURE_ENABLED
 
+#ifdef GDEXT_CANVASRASTER_ENABLED
+	ClassDB::register_class<CanvasIty>();
+	ClassDB::register_class<CanvasIty2D>();
+#endif // GDEXT_CANVASRASTER_ENABLED
+
 #ifdef GDEXT_CCD_ENABLED
 	ClassDB::register_class<CCDBox>();
 	ClassDB::register_class<CCDSphere>();
@@ -648,9 +669,10 @@ void register_gdextensions_types() {
 	if (tvg::Initializer::init(tvgEngine, 1) != tvg::Result::Success) {
 		return;
 	}
-	image_loader_thor_svg.instantiate();
+	image_loader_thor_svg.instance();
 	ImageLoader::add_image_format_loader(image_loader_thor_svg);
 #endif
+	ClassDB::register_class<SVGTexture>();
 #endif
 
 #ifdef GDEXT_MESHLOD_ENABLED
@@ -729,6 +751,9 @@ void unregister_gdextensions_types() {
 #endif // GDEXT_CORE_ENABLED
 #ifdef GDEXT_DEBUGDRAW_ENABLED
 	RemoveSingleton(DebugDraw);
+#endif
+#ifdef GDEXT_RUNTIMEPROFILER_ENABLED
+	RemoveSingleton(RuntimeProfilerOverlay);
 #endif
 #ifdef GDEXT_POLYVECTOR_ENABLED
 	ResourceLoader::remove_resource_format_loader(resource_loader_jsonvector);

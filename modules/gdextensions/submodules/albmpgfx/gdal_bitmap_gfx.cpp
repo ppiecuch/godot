@@ -94,6 +94,58 @@ void GdAlRleSprite::_bind_methods() {
 }
 
 // ============================================================================
+// GdAlFont
+// ============================================================================
+
+GdAlFont::GdAlFont() :
+		fnt(nullptr) {}
+
+GdAlFont::~GdAlFont() {
+	if (fnt) {
+		::destroy_font(fnt);
+		fnt = nullptr;
+	}
+}
+
+void GdAlFont::_init_from_font(FONT *p_font) {
+	if (fnt) {
+		::destroy_font(fnt);
+	}
+	fnt = p_font;
+}
+
+int GdAlFont::get_height() const {
+	return fnt ? ::text_height(fnt) : 0;
+}
+
+int GdAlFont::get_length(const String &str) const {
+	if (!fnt)
+		return 0;
+	CharString cs = str.ascii();
+	return ::text_length(fnt, cs.get_data());
+}
+
+bool GdAlFont::is_valid() const {
+	return fnt != nullptr;
+}
+
+bool GdAlFont::is_mono() const {
+	return fnt ? ::is_mono_font(fnt) : false;
+}
+
+bool GdAlFont::is_color() const {
+	return fnt ? ::is_color_font(fnt) : false;
+}
+
+void GdAlFont::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_height"), &GdAlFont::get_height);
+	ClassDB::bind_method(D_METHOD("get_length", "str"), &GdAlFont::get_length);
+	ClassDB::bind_method(D_METHOD("is_valid"), &GdAlFont::is_valid);
+	ClassDB::bind_method(D_METHOD("is_mono"), &GdAlFont::is_mono);
+	ClassDB::bind_method(D_METHOD("is_color"), &GdAlFont::is_color);
+}
+
+// ============================================================================
 // GdAlBitmapGfx
 // ============================================================================
 
@@ -237,35 +289,50 @@ void GdAlBitmapGfx::spline(const PoolVector2Array &points, const Color &color) {
 	::spline(bmp, pts, _color_from_godot(color));
 }
 
+FONT *GdAlBitmapGfx::_active_font() const {
+	if (current_font.is_valid() && current_font->_get_font()) {
+		return current_font->_get_font();
+	}
+	return font; // built-in 8x8
+}
+
+void GdAlBitmapGfx::set_font(Ref<GdAlFont> p_font) {
+	current_font = p_font;
+}
+
+Ref<GdAlFont> GdAlBitmapGfx::get_font() const {
+	return current_font;
+}
+
 void GdAlBitmapGfx::text(const String &str, int x, int y, const Color &fg, const Color &bg) {
 	ERR_FAIL_COND(!bmp);
 	int bg_col = (bg.r < 0) ? -1 : _color_from_godot(bg);
 	CharString cs = str.ascii();
-	textout_ex(bmp, font, cs.get_data(), x, y, _color_from_godot(fg), bg_col);
+	textout_ex(bmp, _active_font(), cs.get_data(), x, y, _color_from_godot(fg), bg_col);
 }
 
 void GdAlBitmapGfx::text_centered(const String &str, int x, int y, const Color &fg, const Color &bg) {
 	ERR_FAIL_COND(!bmp);
 	int bg_col = (bg.r < 0) ? -1 : _color_from_godot(bg);
 	CharString cs = str.ascii();
-	textout_centre_ex(bmp, font, cs.get_data(), x, y, _color_from_godot(fg), bg_col);
+	textout_centre_ex(bmp, _active_font(), cs.get_data(), x, y, _color_from_godot(fg), bg_col);
 }
 
 void GdAlBitmapGfx::text_right(const String &str, int x, int y, const Color &fg, const Color &bg) {
 	ERR_FAIL_COND(!bmp);
 	int bg_col = (bg.r < 0) ? -1 : _color_from_godot(bg);
 	CharString cs = str.ascii();
-	textout_right_ex(bmp, font, cs.get_data(), x, y, _color_from_godot(fg), bg_col);
+	textout_right_ex(bmp, _active_font(), cs.get_data(), x, y, _color_from_godot(fg), bg_col);
 }
 
 int GdAlBitmapGfx::get_text_length(const String &str) const {
 	ERR_FAIL_COND_V(!bmp, 0);
 	CharString cs = str.ascii();
-	return text_length(font, cs.get_data());
+	return ::text_length(_active_font(), cs.get_data());
 }
 
 int GdAlBitmapGfx::get_text_height() const {
-	return text_height(font);
+	return ::text_height(_active_font());
 }
 
 void GdAlBitmapGfx::blit_from(Ref<GdAlBitmapGfx> source, const Rect2 &src_rect, const Vector2 &dest_pos) {
@@ -387,6 +454,16 @@ void GdAlBitmapGfx::pivot_scaled_sprite_v_flip(Ref<GdAlBitmapGfx> sprite, const 
 	::pivot_scaled_sprite_v_flip(bmp, sprite->bmp, (int)pos.x, (int)pos.y, (int)pivot.x, (int)pivot.y, angle, fscale);
 }
 
+void GdAlBitmapGfx::set_drawing_mode(int mode, Ref<GdAlBitmapGfx> pattern, int x_anchor, int y_anchor) {
+	BITMAP *pat = (pattern.is_valid() && pattern->bmp) ? pattern->bmp : nullptr;
+	ERR_FAIL_COND(mode >= DRAW_MODE_COPY_PATTERN && mode <= DRAW_MODE_MASKED_PATTERN && !pat);
+	::drawing_mode(mode, pat, x_anchor, y_anchor);
+}
+
+void GdAlBitmapGfx::solid_mode() {
+	::solid_mode();
+}
+
 void GdAlBitmapGfx::set_xor_mode(bool enabled) {
 	xor_mode(enabled ? TRUE : FALSE);
 }
@@ -498,48 +575,228 @@ Ref<Image> GdAlBitmapGfx::get_image() const {
 	return img;
 }
 
-void GdAlBitmapGfx::triangle3d_flat(const Vector2 &v1, const Vector2 &v2, const Vector2 &v3, const Color &color) {
+void GdAlBitmapGfx::triangle3d_flat(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3, const Color &color) {
 	ERR_FAIL_COND(!bmp);
 	int c = _color_from_godot(color);
+	int type = POLYTYPE_FLAT;
+	if (zbuf) {
+		type |= POLYTYPE_ZBUF;
+		::set_zbuffer(zbuf);
+	}
 
 	V3D_f a, b, d;
 	a.x = v1.x;
 	a.y = v1.y;
-	a.z = 0;
+	a.z = v1.z;
+	a.u = 0;
+	a.v = 0;
 	a.c = c;
 	b.x = v2.x;
 	b.y = v2.y;
-	b.z = 0;
+	b.z = v2.z;
+	b.u = 0;
+	b.v = 0;
 	b.c = c;
 	d.x = v3.x;
 	d.y = v3.y;
-	d.z = 0;
+	d.z = v3.z;
+	d.u = 0;
+	d.v = 0;
 	d.c = c;
-	triangle3d_f(bmp, POLYTYPE_FLAT, nullptr, &a, &b, &d);
+	triangle3d_f(bmp, type, nullptr, &a, &b, &d);
 }
 
-void GdAlBitmapGfx::triangle3d_gouraud(const PoolVector2Array &vertices, const PoolColorArray &colors) {
+void GdAlBitmapGfx::triangle3d_gouraud(const PoolVector3Array &vertices, const PoolColorArray &colors) {
 	ERR_FAIL_COND(!bmp);
 	ERR_FAIL_COND(vertices.size() != 3);
 	ERR_FAIL_COND(colors.size() != 3);
+	int type = POLYTYPE_GCOL;
+	if (zbuf) {
+		type |= POLYTYPE_ZBUF;
+		::set_zbuffer(zbuf);
+	}
 
-	PoolVector2Array::Read vr = vertices.read();
+	PoolVector3Array::Read vr = vertices.read();
 	PoolColorArray::Read cr = colors.read();
 
 	V3D_f a, b, d;
 	a.x = vr[0].x;
 	a.y = vr[0].y;
-	a.z = 0;
+	a.z = vr[0].z;
+	a.u = 0;
+	a.v = 0;
 	a.c = _color_from_godot(cr[0]);
 	b.x = vr[1].x;
 	b.y = vr[1].y;
-	b.z = 0;
+	b.z = vr[1].z;
+	b.u = 0;
+	b.v = 0;
 	b.c = _color_from_godot(cr[1]);
 	d.x = vr[2].x;
 	d.y = vr[2].y;
-	d.z = 0;
+	d.z = vr[2].z;
+	d.u = 0;
+	d.v = 0;
 	d.c = _color_from_godot(cr[2]);
-	triangle3d_f(bmp, POLYTYPE_GCOL, nullptr, &a, &b, &d);
+	triangle3d_f(bmp, type, nullptr, &a, &b, &d);
+}
+
+void GdAlBitmapGfx::triangle3d(int polytype, const PoolVector3Array &vertices, const PoolColorArray &colors,
+		Ref<GdAlBitmapGfx> texture) {
+	ERR_FAIL_COND(!bmp);
+	ERR_FAIL_COND(vertices.size() != 3);
+	ERR_FAIL_COND(colors.size() != 3);
+	int type = CLAMP(polytype, 0, POLYTYPE_MAX - 1);
+	if (zbuf) {
+		type |= POLYTYPE_ZBUF;
+		::set_zbuffer(zbuf);
+	}
+
+	BITMAP *tex = texture.is_valid() ? texture->_get_bitmap() : nullptr;
+
+	PoolVector3Array::Read vr = vertices.read();
+	PoolColorArray::Read cr = colors.read();
+
+	V3D_f a, b, d;
+	a.x = vr[0].x;
+	a.y = vr[0].y;
+	a.z = vr[0].z;
+	a.u = 0;
+	a.v = 0;
+	a.c = _color_from_godot(cr[0]);
+	b.x = vr[1].x;
+	b.y = vr[1].y;
+	b.z = vr[1].z;
+	b.u = 0;
+	b.v = 0;
+	b.c = _color_from_godot(cr[1]);
+	d.x = vr[2].x;
+	d.y = vr[2].y;
+	d.z = vr[2].z;
+	d.u = 0;
+	d.v = 0;
+	d.c = _color_from_godot(cr[2]);
+	triangle3d_f(bmp, type, tex, &a, &b, &d);
+}
+
+void GdAlBitmapGfx::quad3d_flat(const PoolVector3Array &vertices, const Color &color) {
+	ERR_FAIL_COND(!bmp);
+	ERR_FAIL_COND(vertices.size() != 4);
+	int c = _color_from_godot(color);
+	int type = POLYTYPE_FLAT;
+	if (zbuf) {
+		type |= POLYTYPE_ZBUF;
+		::set_zbuffer(zbuf);
+	}
+
+	PoolVector3Array::Read vr = vertices.read();
+
+	V3D_f a, b, d, e;
+	a.x = vr[0].x;
+	a.y = vr[0].y;
+	a.z = vr[0].z;
+	a.u = 0;
+	a.v = 0;
+	a.c = c;
+	b.x = vr[1].x;
+	b.y = vr[1].y;
+	b.z = vr[1].z;
+	b.u = 0;
+	b.v = 0;
+	b.c = c;
+	d.x = vr[2].x;
+	d.y = vr[2].y;
+	d.z = vr[2].z;
+	d.u = 0;
+	d.v = 0;
+	d.c = c;
+	e.x = vr[3].x;
+	e.y = vr[3].y;
+	e.z = vr[3].z;
+	e.u = 0;
+	e.v = 0;
+	e.c = c;
+	quad3d_f(bmp, type, nullptr, &a, &b, &d, &e);
+}
+
+void GdAlBitmapGfx::quad3d_gouraud(const PoolVector3Array &vertices, const PoolColorArray &colors) {
+	ERR_FAIL_COND(!bmp);
+	ERR_FAIL_COND(vertices.size() != 4);
+	ERR_FAIL_COND(colors.size() != 4);
+	int type = POLYTYPE_GCOL;
+	if (zbuf) {
+		type |= POLYTYPE_ZBUF;
+		::set_zbuffer(zbuf);
+	}
+
+	PoolVector3Array::Read vr = vertices.read();
+	PoolColorArray::Read cr = colors.read();
+
+	V3D_f a, b, d, e;
+	a.x = vr[0].x;
+	a.y = vr[0].y;
+	a.z = vr[0].z;
+	a.u = 0;
+	a.v = 0;
+	a.c = _color_from_godot(cr[0]);
+	b.x = vr[1].x;
+	b.y = vr[1].y;
+	b.z = vr[1].z;
+	b.u = 0;
+	b.v = 0;
+	b.c = _color_from_godot(cr[1]);
+	d.x = vr[2].x;
+	d.y = vr[2].y;
+	d.z = vr[2].z;
+	d.u = 0;
+	d.v = 0;
+	d.c = _color_from_godot(cr[2]);
+	e.x = vr[3].x;
+	e.y = vr[3].y;
+	e.z = vr[3].z;
+	e.u = 0;
+	e.v = 0;
+	e.c = _color_from_godot(cr[3]);
+	quad3d_f(bmp, type, nullptr, &a, &b, &d, &e);
+}
+
+// Z-buffer management
+
+void GdAlBitmapGfx::create_zbuffer() {
+	ERR_FAIL_COND(!bmp);
+	if (zbuf) {
+		::destroy_zbuffer(zbuf);
+	}
+	zbuf = ::create_zbuffer(bmp);
+	ERR_FAIL_COND_MSG(!zbuf, "Failed to create Z-buffer");
+	::set_zbuffer(zbuf);
+}
+
+void GdAlBitmapGfx::clear_zbuffer(float z) {
+	ERR_FAIL_COND(!zbuf);
+	::clear_zbuffer(zbuf, z);
+}
+
+void GdAlBitmapGfx::enable_zbuffer() {
+	ERR_FAIL_COND(!zbuf);
+	::set_zbuffer(zbuf);
+}
+
+void GdAlBitmapGfx::disable_zbuffer() {
+	// Set global _zbuffer to NULL — disables Z-buffer testing in polygon rasterizer.
+	// Can't use set_zbuffer(NULL) because it has ASSERT(zbuf).
+	_zbuffer = nullptr;
+}
+
+bool GdAlBitmapGfx::has_zbuffer() const {
+	return zbuf != nullptr;
+}
+
+void GdAlBitmapGfx::destroy_zbuffer() {
+	if (zbuf) {
+		::destroy_zbuffer(zbuf);
+		zbuf = nullptr;
+	}
 }
 
 // ============================================================================
@@ -984,6 +1241,10 @@ void GdAlBitmapGfx::render_demo() {
 // ============================================================================
 
 void GdAlBitmapGfx::_init_from_bitmap(BITMAP *p_bmp, bool p_owns) {
+	if (zbuf) {
+		::destroy_zbuffer(zbuf);
+		zbuf = nullptr;
+	}
 	if (bmp && owns_bitmap) {
 		destroy_bitmap(bmp);
 	}
@@ -994,9 +1255,14 @@ void GdAlBitmapGfx::_init_from_bitmap(BITMAP *p_bmp, bool p_owns) {
 GdAlBitmapGfx::GdAlBitmapGfx() {
 	bmp = nullptr;
 	owns_bitmap = false;
+	zbuf = nullptr;
 }
 
 GdAlBitmapGfx::~GdAlBitmapGfx() {
+	if (zbuf) {
+		::destroy_zbuffer(zbuf);
+		zbuf = nullptr;
+	}
 	if (bmp && owns_bitmap) {
 		destroy_bitmap(bmp);
 	}
@@ -1046,7 +1312,9 @@ void GdAlBitmapGfx::_bind_methods() {
 	// Spline
 	ClassDB::bind_method(D_METHOD("spline", "points", "color"), &GdAlBitmapGfx::spline);
 
-	// Text
+	// Text / font
+	ClassDB::bind_method(D_METHOD("set_font", "font"), &GdAlBitmapGfx::set_font);
+	ClassDB::bind_method(D_METHOD("get_font"), &GdAlBitmapGfx::get_font);
 	ClassDB::bind_method(D_METHOD("text", "str", "x", "y", "fg", "bg"), &GdAlBitmapGfx::text, DEFVAL(Color(-1, -1, -1, -1)));
 	ClassDB::bind_method(D_METHOD("text_centered", "str", "x", "y", "fg", "bg"), &GdAlBitmapGfx::text_centered, DEFVAL(Color(-1, -1, -1, -1)));
 	ClassDB::bind_method(D_METHOD("text_right", "str", "x", "y", "fg", "bg"), &GdAlBitmapGfx::text_right, DEFVAL(Color(-1, -1, -1, -1)));
@@ -1077,10 +1345,19 @@ void GdAlBitmapGfx::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("pivot_scaled_sprite_v_flip", "sprite", "pos", "pivot", "angle_deg", "scale"), &GdAlBitmapGfx::pivot_scaled_sprite_v_flip);
 
 	// Drawing modes
+	ClassDB::bind_method(D_METHOD("set_drawing_mode", "mode", "pattern", "x_anchor", "y_anchor"), &GdAlBitmapGfx::set_drawing_mode, DEFVAL(Ref<GdAlBitmapGfx>()), DEFVAL(0), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("solid_mode"), &GdAlBitmapGfx::solid_mode);
 	ClassDB::bind_method(D_METHOD("set_xor_mode", "enabled"), &GdAlBitmapGfx::set_xor_mode);
 	ClassDB::bind_method(D_METHOD("set_trans_blender", "r", "g", "b", "a"), &GdAlBitmapGfx::set_trans_blender);
 	ClassDB::bind_method(D_METHOD("set_add_blender", "r", "g", "b", "a"), &GdAlBitmapGfx::set_add_blender);
 	ClassDB::bind_method(D_METHOD("set_alpha_blender"), &GdAlBitmapGfx::set_alpha_blender);
+
+	BIND_ENUM_CONSTANT(MODE_SOLID);
+	BIND_ENUM_CONSTANT(MODE_XOR);
+	BIND_ENUM_CONSTANT(MODE_COPY_PATTERN);
+	BIND_ENUM_CONSTANT(MODE_SOLID_PATTERN);
+	BIND_ENUM_CONSTANT(MODE_MASKED_PATTERN);
+	BIND_ENUM_CONSTANT(MODE_TRANS);
 
 	// Clipping
 	ClassDB::bind_method(D_METHOD("set_clip_rect", "x1", "y1", "x2", "y2"), &GdAlBitmapGfx::set_clip_rect);
@@ -1092,9 +1369,36 @@ void GdAlBitmapGfx::_bind_methods() {
 	// Conversion
 	ClassDB::bind_method(D_METHOD("get_image"), &GdAlBitmapGfx::get_image);
 
-	// 3D
+	// 3D triangles and quads
 	ClassDB::bind_method(D_METHOD("triangle3d_flat", "v1", "v2", "v3", "color"), &GdAlBitmapGfx::triangle3d_flat);
 	ClassDB::bind_method(D_METHOD("triangle3d_gouraud", "vertices", "colors"), &GdAlBitmapGfx::triangle3d_gouraud);
+	ClassDB::bind_method(D_METHOD("triangle3d", "polytype", "vertices", "colors", "texture"), &GdAlBitmapGfx::triangle3d, DEFVAL(Ref<GdAlBitmapGfx>()));
+	ClassDB::bind_method(D_METHOD("quad3d_flat", "vertices", "color"), &GdAlBitmapGfx::quad3d_flat);
+	ClassDB::bind_method(D_METHOD("quad3d_gouraud", "vertices", "colors"), &GdAlBitmapGfx::quad3d_gouraud);
+
+	BIND_ENUM_CONSTANT(POLY_FLAT);
+	BIND_ENUM_CONSTANT(POLY_GCOL);
+	BIND_ENUM_CONSTANT(POLY_GRGB);
+	BIND_ENUM_CONSTANT(POLY_ATEX);
+	BIND_ENUM_CONSTANT(POLY_PTEX);
+	BIND_ENUM_CONSTANT(POLY_ATEX_MASK);
+	BIND_ENUM_CONSTANT(POLY_PTEX_MASK);
+	BIND_ENUM_CONSTANT(POLY_ATEX_LIT);
+	BIND_ENUM_CONSTANT(POLY_PTEX_LIT);
+	BIND_ENUM_CONSTANT(POLY_ATEX_MASK_LIT);
+	BIND_ENUM_CONSTANT(POLY_PTEX_MASK_LIT);
+	BIND_ENUM_CONSTANT(POLY_ATEX_TRANS);
+	BIND_ENUM_CONSTANT(POLY_PTEX_TRANS);
+	BIND_ENUM_CONSTANT(POLY_ATEX_MASK_TRANS);
+	BIND_ENUM_CONSTANT(POLY_PTEX_MASK_TRANS);
+
+	// Z-buffer
+	ClassDB::bind_method(D_METHOD("create_zbuffer"), &GdAlBitmapGfx::create_zbuffer);
+	ClassDB::bind_method(D_METHOD("clear_zbuffer", "z"), &GdAlBitmapGfx::clear_zbuffer, DEFVAL(0.0f));
+	ClassDB::bind_method(D_METHOD("enable_zbuffer"), &GdAlBitmapGfx::enable_zbuffer);
+	ClassDB::bind_method(D_METHOD("disable_zbuffer"), &GdAlBitmapGfx::disable_zbuffer);
+	ClassDB::bind_method(D_METHOD("has_zbuffer"), &GdAlBitmapGfx::has_zbuffer);
+	ClassDB::bind_method(D_METHOD("destroy_zbuffer"), &GdAlBitmapGfx::destroy_zbuffer);
 
 	// Demo
 	ClassDB::bind_method(D_METHOD("render_demo"), &GdAlBitmapGfx::render_demo);
@@ -1205,6 +1509,31 @@ Ref<GdAlBitmapGfx> AlBitmapGfx::from_image(Ref<Image> image) {
 	return result;
 }
 
+Ref<GdAlFont> AlBitmapGfx::load_bitmap_font(const String &path) {
+	Ref<Image> img;
+	img.instance();
+	Error err = img->load(path);
+	ERR_FAIL_COND_V_MSG(err != OK, Ref<GdAlFont>(), "Failed to load font image: " + path);
+
+	// Convert image to al_gfx BITMAP
+	Ref<GdAlBitmapGfx> bmp_wrapper = from_image(img);
+	ERR_FAIL_COND_V(bmp_wrapper.is_null(), Ref<GdAlFont>());
+
+	return font_from_bitmap(bmp_wrapper);
+}
+
+Ref<GdAlFont> AlBitmapGfx::font_from_bitmap(Ref<GdAlBitmapGfx> bitmap) {
+	ERR_FAIL_COND_V(bitmap.is_null() || !bitmap->_get_bitmap(), Ref<GdAlFont>());
+
+	FONT *f = ::grab_font_from_bitmap(bitmap->_get_bitmap());
+	ERR_FAIL_COND_V_MSG(!f, Ref<GdAlFont>(), "Failed to extract font from bitmap");
+
+	Ref<GdAlFont> result;
+	result.instance();
+	result->_init_from_font(f);
+	return result;
+}
+
 AlBitmapGfx::AlBitmapGfx() {
 	ERR_FAIL_COND_MSG(singleton, "AlBitmapGfx singleton already exists.");
 	singleton = this;
@@ -1236,6 +1565,10 @@ void AlBitmapGfx::_bind_methods() {
 
 	// Image conversion
 	ClassDB::bind_method(D_METHOD("from_image", "image"), &AlBitmapGfx::from_image);
+
+	// Font loading
+	ClassDB::bind_method(D_METHOD("load_bitmap_font", "path"), &AlBitmapGfx::load_bitmap_font);
+	ClassDB::bind_method(D_METHOD("font_from_bitmap", "bitmap"), &AlBitmapGfx::font_from_bitmap);
 }
 
 // ============================================================================
@@ -1982,6 +2315,93 @@ TEST_SUITE("albmpgfx") {
 		destroy_bitmap(b);
 	}
 
+	TEST_CASE("al_gfx: drawing_mode with COPY_PATTERN fills from pattern") {
+		_ensure_al_init();
+		// Create a 4x4 checkerboard pattern (power-of-two required)
+		BITMAP *pattern = ::create_bitmap_ex(32, 4, 4);
+		clear_to_color(pattern, makecol(0, 0, 0));
+		// Top-left and bottom-right quadrants white
+		::rectfill(pattern, 0, 0, 1, 1, makecol(255, 255, 255));
+		::rectfill(pattern, 2, 2, 3, 3, makecol(255, 255, 255));
+
+		BITMAP *dst = ::create_bitmap_ex(32, 16, 16);
+		clear_to_color(dst, makecol(128, 128, 128));
+
+		::drawing_mode(DRAW_MODE_COPY_PATTERN, pattern, 0, 0);
+		// Draw a filled rect — should use pattern instead of solid color
+		::rectfill(dst, 0, 0, 15, 15, makecol(255, 0, 0)); // color ignored in COPY_PATTERN
+		::solid_mode();
+
+		// Pixel at (0,0) should come from pattern (0,0) = white
+		int c00 = ::getpixel(dst, 0, 0);
+		CHECK(getr32(c00) == 255);
+		CHECK(getg32(c00) == 255);
+
+		// Pixel at (1,0) should come from pattern (1,0) = white
+		// Pixel at (2,0) should come from pattern (2,0) = black
+		int c20 = ::getpixel(dst, 2, 0);
+		CHECK(getr32(c20) == 0);
+
+		destroy_bitmap(pattern);
+		destroy_bitmap(dst);
+	}
+
+	TEST_CASE("al_gfx: drawing_mode with MASKED_PATTERN skips mask-colored pixels") {
+		_ensure_al_init();
+		BITMAP *pattern = ::create_bitmap_ex(32, 4, 4);
+		// Mask color (magenta) = skip; other colors = draw in specified color
+		clear_to_color(pattern, bitmap_mask_color(pattern));
+		::rectfill(pattern, 0, 0, 1, 1, makecol(255, 255, 255)); // non-mask = draw
+
+		BITMAP *dst = ::create_bitmap_ex(32, 16, 16);
+		clear_to_color(dst, makecol(0, 0, 0));
+
+		::drawing_mode(DRAW_MODE_MASKED_PATTERN, pattern, 0, 0);
+		::rectfill(dst, 0, 0, 15, 15, makecol(255, 0, 0)); // draws red where pattern is non-mask
+		::solid_mode();
+
+		// Where pattern is non-mask → red
+		int c00 = ::getpixel(dst, 0, 0);
+		CHECK(getr32(c00) == 255);
+		CHECK(getb32(c00) == 0);
+
+		// Where pattern is mask → untouched (black)
+		int c20 = ::getpixel(dst, 2, 0);
+		CHECK(getr32(c20) == 0);
+
+		destroy_bitmap(pattern);
+		destroy_bitmap(dst);
+	}
+
+	TEST_CASE("GdAlBitmapGfx: set_drawing_mode and solid_mode wrapper") {
+		_ensure_al_init();
+		Ref<GdAlBitmapGfx> pattern;
+		pattern.instance();
+		pattern->_init_from_bitmap(::create_bitmap_ex(32, 4, 4), true);
+		pattern->clear(Color(0, 0, 0));
+		pattern->rectfill(0, 0, 1, 1, Color(1, 1, 1));
+		pattern->rectfill(2, 2, 3, 3, Color(1, 1, 1));
+
+		Ref<GdAlBitmapGfx> dst;
+		dst.instance();
+		dst->_init_from_bitmap(::create_bitmap_ex(32, 16, 16), true);
+		dst->clear(Color(0.5, 0.5, 0.5));
+
+		dst->set_drawing_mode(GdAlBitmapGfx::MODE_COPY_PATTERN, pattern, 0, 0);
+		dst->rectfill(0, 0, 15, 15, Color(1, 0, 0));
+		dst->solid_mode();
+
+		// Pattern white area
+		Color c00 = dst->getpixel(0, 0);
+		CHECK(c00.r > 0.9);
+		CHECK(c00.g > 0.9);
+
+		// Pattern black area
+		Color c20 = dst->getpixel(2, 0);
+		CHECK(c20.r < 0.1);
+		CHECK(c20.g < 0.1);
+	}
+
 	// -----------------------------------------------------------------------
 	// Clipping
 	// -----------------------------------------------------------------------
@@ -2561,7 +2981,7 @@ TEST_SUITE("albmpgfx") {
 		CHECK(px.b == doctest::Approx(1.0).epsilon(0.02));
 	}
 
-	TEST_CASE("GdAlBitmapGfx: triangle3d_flat draws filled triangle") {
+	TEST_CASE("GdAlBitmapGfx: triangle3d_flat draws filled triangle (Vector3)") {
 		_ensure_al_init();
 		BITMAP *b = ::create_bitmap(64, 64);
 		clear_to_color(b, makecol(0, 0, 0));
@@ -2569,13 +2989,13 @@ TEST_SUITE("albmpgfx") {
 		gfx.instance();
 		gfx->_init_from_bitmap(b, true);
 
-		gfx->triangle3d_flat(Vector2(32, 10), Vector2(10, 50), Vector2(54, 50), Color(1, 0, 0));
+		gfx->triangle3d_flat(Vector3(32, 10, 0), Vector3(10, 50, 0), Vector3(54, 50, 0), Color(1, 0, 0));
 
 		Color px = gfx->getpixel(32, 35);
 		CHECK(px.r == doctest::Approx(1.0).epsilon(0.02));
 	}
 
-	TEST_CASE("GdAlBitmapGfx: triangle3d_gouraud produces color gradient") {
+	TEST_CASE("GdAlBitmapGfx: triangle3d_gouraud produces color gradient (Vector3)") {
 		_ensure_al_init();
 		BITMAP *b = ::create_bitmap(128, 128);
 		clear_to_color(b, makecol(0, 0, 0));
@@ -2583,19 +3003,158 @@ TEST_SUITE("albmpgfx") {
 		gfx.instance();
 		gfx->_init_from_bitmap(b, true);
 
-		PoolVector2Array tri_verts;
-		tri_verts.push_back(Vector2(64, 10));
-		tri_verts.push_back(Vector2(10, 110));
-		tri_verts.push_back(Vector2(118, 110));
-		PoolColorArray tri_cols;
-		tri_cols.push_back(Color(1, 0, 0));
-		tri_cols.push_back(Color(0, 1, 0));
-		tri_cols.push_back(Color(0, 0, 1));
-		gfx->triangle3d_gouraud(tri_verts, tri_cols);
+		PoolVector3Array verts;
+		verts.push_back(Vector3(64, 10, 0));
+		verts.push_back(Vector3(10, 110, 0));
+		verts.push_back(Vector3(118, 110, 0));
+		PoolColorArray cols;
+		cols.push_back(Color(1, 0, 0));
+		cols.push_back(Color(0, 1, 0));
+		cols.push_back(Color(0, 0, 1));
+		gfx->triangle3d_gouraud(verts, cols);
 
 		// Near top vertex: should be reddish
 		Color top = gfx->getpixel(64, 20);
 		CHECK(top.r > 0.5);
+	}
+
+	TEST_CASE("GdAlBitmapGfx: quad3d_flat draws filled quad") {
+		_ensure_al_init();
+		BITMAP *b = ::create_bitmap(64, 64);
+		clear_to_color(b, makecol(0, 0, 0));
+		Ref<GdAlBitmapGfx> gfx;
+		gfx.instance();
+		gfx->_init_from_bitmap(b, true);
+
+		PoolVector3Array verts;
+		verts.push_back(Vector3(10, 10, 0));
+		verts.push_back(Vector3(50, 10, 0));
+		verts.push_back(Vector3(50, 50, 0));
+		verts.push_back(Vector3(10, 50, 0));
+		gfx->quad3d_flat(verts, Color(0, 1, 0));
+
+		Color center = gfx->getpixel(30, 30);
+		CHECK(center.g == doctest::Approx(1.0).epsilon(0.02));
+
+		// Outside the quad should be black
+		Color outside = gfx->getpixel(5, 5);
+		CHECK(outside.r == doctest::Approx(0.0).epsilon(0.02));
+		CHECK(outside.g == doctest::Approx(0.0).epsilon(0.02));
+	}
+
+	TEST_CASE("GdAlBitmapGfx: quad3d_gouraud produces gradient") {
+		_ensure_al_init();
+		BITMAP *b = ::create_bitmap(64, 64);
+		clear_to_color(b, makecol(0, 0, 0));
+		Ref<GdAlBitmapGfx> gfx;
+		gfx.instance();
+		gfx->_init_from_bitmap(b, true);
+
+		PoolVector3Array verts;
+		verts.push_back(Vector3(10, 10, 0));
+		verts.push_back(Vector3(50, 10, 0));
+		verts.push_back(Vector3(50, 50, 0));
+		verts.push_back(Vector3(10, 50, 0));
+		PoolColorArray cols;
+		cols.push_back(Color(1, 0, 0));
+		cols.push_back(Color(0, 1, 0));
+		cols.push_back(Color(0, 0, 1));
+		cols.push_back(Color(1, 1, 0));
+		gfx->quad3d_gouraud(verts, cols);
+
+		// Center should have some mix of colors (not black)
+		Color center = gfx->getpixel(30, 30);
+		CHECK((center.r + center.g + center.b) > 0.3);
+	}
+
+	TEST_CASE("GdAlBitmapGfx: Z-buffer lifecycle") {
+		_ensure_al_init();
+		BITMAP *b = ::create_bitmap(32, 32);
+		clear_to_color(b, makecol(0, 0, 0));
+		Ref<GdAlBitmapGfx> gfx;
+		gfx.instance();
+		gfx->_init_from_bitmap(b, true);
+
+		CHECK(!gfx->has_zbuffer());
+
+		gfx->create_zbuffer();
+		CHECK(gfx->has_zbuffer());
+
+		gfx->clear_zbuffer(0.0f);
+		gfx->enable_zbuffer();
+		gfx->disable_zbuffer();
+
+		gfx->destroy_zbuffer();
+		CHECK(!gfx->has_zbuffer());
+	}
+
+	TEST_CASE("GdAlBitmapGfx: Z-buffer depth ordering") {
+		_ensure_al_init();
+		BITMAP *b = ::create_bitmap(64, 64);
+		clear_to_color(b, makecol(0, 0, 0));
+		Ref<GdAlBitmapGfx> gfx;
+		gfx.instance();
+		gfx->_init_from_bitmap(b, true);
+
+		gfx->create_zbuffer();
+		gfx->clear_zbuffer(0.0f);
+
+		// Allegro Z-buffer stores 1/z: higher z = larger 1/z = closer.
+		// Draw a red triangle at z=0.5 (closer, 1/z=2.0)
+		gfx->triangle3d_flat(
+				Vector3(10, 10, 0.5f), Vector3(50, 10, 0.5f), Vector3(30, 50, 0.5f),
+				Color(1, 0, 0));
+
+		// Draw a blue triangle at z=0.3 (even closer, 1/z=3.33) — should overwrite red
+		gfx->triangle3d_flat(
+				Vector3(10, 10, 0.3f), Vector3(50, 10, 0.3f), Vector3(30, 50, 0.3f),
+				Color(0, 0, 1));
+
+		// The overlapping area should be blue (higher 1/z wins)
+		Color px = gfx->getpixel(30, 25);
+		CHECK(px.b > 0.5);
+		CHECK(px.r < 0.1);
+
+		// Now draw a green triangle at z=0.1 (closest, 1/z=10) — should overwrite blue
+		gfx->triangle3d_flat(
+				Vector3(10, 10, 0.1f), Vector3(50, 10, 0.1f), Vector3(30, 50, 0.1f),
+				Color(0, 1, 0));
+
+		Color px2 = gfx->getpixel(30, 25);
+		CHECK(px2.g > 0.5);
+
+		// Draw yellow at z=0.8 (farther, 1/z=1.25) — should NOT overwrite
+		gfx->triangle3d_flat(
+				Vector3(10, 10, 0.8f), Vector3(50, 10, 0.8f), Vector3(30, 50, 0.8f),
+				Color(1, 1, 0));
+
+		Color px3 = gfx->getpixel(30, 25);
+		CHECK(px3.g > 0.5); // still green
+		CHECK(px3.r < 0.1); // no yellow
+
+		gfx->destroy_zbuffer();
+	}
+
+	TEST_CASE("GdAlBitmapGfx: triangle3d generic with POLY_FLAT") {
+		_ensure_al_init();
+		BITMAP *b = ::create_bitmap(64, 64);
+		clear_to_color(b, makecol(0, 0, 0));
+		Ref<GdAlBitmapGfx> gfx;
+		gfx.instance();
+		gfx->_init_from_bitmap(b, true);
+
+		PoolVector3Array verts;
+		verts.push_back(Vector3(32, 5, 0));
+		verts.push_back(Vector3(5, 55, 0));
+		verts.push_back(Vector3(59, 55, 0));
+		PoolColorArray cols;
+		cols.push_back(Color(0, 1, 0));
+		cols.push_back(Color(0, 1, 0));
+		cols.push_back(Color(0, 1, 0));
+		gfx->triangle3d(GdAlBitmapGfx::POLY_FLAT, verts, cols);
+
+		Color px = gfx->getpixel(32, 30);
+		CHECK(px.g == doctest::Approx(1.0).epsilon(0.02));
 	}
 
 	TEST_CASE("GdAlBitmapGfx: render_demo does not crash on large bitmap") {
@@ -2872,6 +3431,181 @@ TEST_SUITE("albmpgfx") {
 		CHECK(bg.r == doctest::Approx(0.0).epsilon(0.02));
 		CHECK(bg.g == doctest::Approx(0.0).epsilon(0.02));
 		CHECK(bg.b == doctest::Approx(0.0).epsilon(0.02));
+	}
+
+	// -----------------------------------------------------------------------
+	// Font from bitmap
+	// -----------------------------------------------------------------------
+
+	// Helper: create a minimal bitmap font with 2 characters ('A' and 'B').
+	// Layout: yellow separator border around two 8x8 character cells.
+	// For 32-bit truecolor, separator is yellow (255,255,0).
+	//
+	//  Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y
+	//  Y . . . . . . . . Y . . . . . . . . Y
+	//  Y . . . . . . . . Y . . . . . . . . Y
+	//  Y . (A glyph) . . Y . (B glyph) . . Y
+	//  ...
+	//  Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y
+	//
+	static BITMAP *_make_test_font_bitmap() {
+		// 2 chars, each 6x8, with 1px separator borders
+		// Total: (1 + 6 + 1 + 6 + 1) x (1 + 8 + 1) = 15 x 10
+		int cw = 6, ch = 8;
+		int bw = 1 + cw + 1 + cw + 1; // 15
+		int bh = 1 + ch + 1; // 10
+
+		BITMAP *bmp = ::create_bitmap_ex(32, bw, bh);
+		int yellow = makecol(255, 255, 0);
+		int white = makecol(255, 255, 255);
+
+		// Fill all yellow (separator)
+		clear_to_color(bmp, yellow);
+
+		// Clear character cells to black
+		// Cell 0: x=1..6, y=1..8
+		::rectfill(bmp, 1, 1, cw, ch, 0);
+		// Cell 1: x=8..13, y=1..8
+		::rectfill(bmp, cw + 2, 1, cw + 2 + cw - 1, ch, 0);
+
+		// Draw a simple 'space' glyph (cell 0 — just black, since range starts at ' ')
+		// Actually the first char IS space (ASCII 32). Let's put patterns in them
+		// to verify font extraction works.
+
+		// Cell 0 (space): leave black — no pixels
+		// Cell 1 ('!'): draw a vertical line
+		for (int y = 1; y <= 6; y++) {
+			putpixel(bmp, cw + 2 + 2, y, white);
+		}
+		// Dot at bottom
+		putpixel(bmp, cw + 2 + 2, 8, white);
+
+		return bmp;
+	}
+
+	TEST_CASE("al_gfx: grab_font_from_bitmap creates font") {
+		_ensure_al_init();
+		BITMAP *fb = _make_test_font_bitmap();
+		REQUIRE(fb);
+
+		FONT *f = ::grab_font_from_bitmap(fb);
+		REQUIRE(f);
+
+		// 32-bit bitmaps always produce color fonts (mono detection uses
+		// raw pixel value 255, which only works for 8-bit paletted bitmaps)
+		CHECK(::is_color_font(f));
+
+		// Height should match cell height (8)
+		CHECK(::text_height(f) == 8);
+
+		// Text length for "!" should equal the glyph width
+		int len = ::text_length(f, "!");
+		CHECK(len == 6);
+
+		// Render with the font and verify pixels appear
+		BITMAP *canvas = ::create_bitmap_ex(32, 32, 16);
+		clear_to_color(canvas, 0);
+		textout_ex(canvas, f, "!", 0, 0, makecol(255, 255, 255), -1);
+
+		// Should have some white pixels from the '!' glyph
+		bool found_white = false;
+		for (int y = 0; y < 10 && !found_white; y++) {
+			for (int x = 0; x < 10 && !found_white; x++) {
+				if (getpixel(canvas, x, y) == makecol(255, 255, 255))
+					found_white = true;
+			}
+		}
+		CHECK(found_white);
+
+		::destroy_font(f);
+		::destroy_bitmap(canvas);
+		::destroy_bitmap(fb);
+	}
+
+	TEST_CASE("GdAlFont: wrapper creation and queries") {
+		_ensure_al_init();
+		BITMAP *fb = _make_test_font_bitmap();
+		REQUIRE(fb);
+
+		FONT *f = ::grab_font_from_bitmap(fb);
+		REQUIRE(f);
+
+		Ref<GdAlFont> gf;
+		gf.instance();
+		gf->_init_from_font(f);
+
+		CHECK(gf->is_valid());
+		CHECK(!gf->is_mono()); // 32-bit bitmap → color font
+		CHECK(gf->is_color());
+		CHECK(gf->get_height() == 8);
+		CHECK(gf->get_length("!") == 6);
+
+		::destroy_bitmap(fb);
+		// font is owned by GdAlFont — will be freed on destruction
+	}
+
+	TEST_CASE("GdAlBitmapGfx: set_font uses custom font for text rendering") {
+		_ensure_al_init();
+		BITMAP *fb = _make_test_font_bitmap();
+		REQUIRE(fb);
+
+		FONT *f = ::grab_font_from_bitmap(fb);
+		REQUIRE(f);
+
+		Ref<GdAlFont> gf;
+		gf.instance();
+		gf->_init_from_font(f);
+
+		// Create canvas
+		Ref<GdAlBitmapGfx> canvas;
+		canvas.instance();
+		canvas->_init_from_bitmap(::create_bitmap_ex(32, 64, 16), true);
+		canvas->clear(Color(0, 0, 0));
+
+		// Set custom font and draw
+		canvas->set_font(gf);
+		CHECK(canvas->get_font() == gf);
+
+		// Text height should now reflect custom font
+		CHECK(canvas->get_text_height() == 8);
+		CHECK(canvas->get_text_length("!") == 6);
+
+		canvas->text("!", 0, 0, Color(1, 1, 1));
+
+		// Verify pixels were drawn
+		bool found = false;
+		for (int y = 0; y < 10 && !found; y++) {
+			for (int x = 0; x < 10 && !found; x++) {
+				Color px = canvas->getpixel(x, y);
+				if (px.r > 0.5 && px.g > 0.5 && px.b > 0.5)
+					found = true;
+			}
+		}
+		CHECK(found);
+
+		// Reset font to built-in
+		canvas->set_font(Ref<GdAlFont>());
+		CHECK(canvas->get_text_height() == 8); // built-in is also 8px
+
+		::destroy_bitmap(fb);
+	}
+
+	TEST_CASE("AlBitmapGfx: font_from_bitmap creates GdAlFont from wrapper bitmap") {
+		_ensure_al_init();
+
+		// Create the test font bitmap via wrapper
+		Ref<GdAlBitmapGfx> fb_wrap;
+		fb_wrap.instance();
+		fb_wrap->_init_from_bitmap(_make_test_font_bitmap(), true);
+
+		// Create AlBitmapGfx singleton if needed (tests may not have it)
+		AlBitmapGfx factory;
+		Ref<GdAlFont> gf = factory.font_from_bitmap(fb_wrap);
+
+		REQUIRE(gf.is_valid());
+		CHECK(gf->is_valid());
+		CHECK(gf->is_color()); // 32-bit bitmap → color font
+		CHECK(gf->get_height() == 8);
 	}
 
 } // TEST_SUITE("albmpgfx")

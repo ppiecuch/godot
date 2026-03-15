@@ -67,28 +67,34 @@ void ImageLoaderThorSVG::_replace_color_property(const HashMap<Color, Color> &p_
 	}
 }
 
-Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, const PackedByteArray &p_buffer, float p_scale, bool p_upsample) {
+Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, const uint8_t *p_data, int p_size, float p_scale, bool p_upsample) {
 	ERR_FAIL_COND_V_MSG(Math::is_zero_approx(p_scale), ERR_INVALID_PARAMETER, "ImageLoaderThorSVG: Can't load SVG with a scale of 0.");
+	ERR_FAIL_COND_V_MSG(p_scale < 0, ERR_INVALID_PARAMETER, "ImageLoaderThorSVG: Can't load SVG with a negative scale.");
 
 	std::unique_ptr<tvg::Picture> picture = tvg::Picture::gen();
 
-	tvg::Result result = picture->load((const char *)p_buffer.ptr(), p_buffer.size(), "svg", true);
+	tvg::Result result = picture->load((const char *)p_data, p_size, "svg", true);
 	if (result != tvg::Result::Success) {
 		return ERR_INVALID_DATA;
 	}
 	float fw, fh;
 	picture->size(&fw, &fh);
 
-	uint32_t width = round(fw * p_scale);
-	uint32_t height = round(fh * p_scale);
+	uint32_t width = MAX(1, (uint32_t)round(fw * p_scale));
+	uint32_t height = MAX(1, (uint32_t)round(fh * p_scale));
 
 	const uint32_t max_dimension = 16384;
 	if (width > max_dimension || height > max_dimension) {
-		WARN_PRINT(vformat(
-				String::utf8("ImageLoaderThorSVG: Target canvas dimensions %d×%d (with scale %.2f) exceed the max supported dimensions %d×%d. The target canvas will be scaled down."),
-				width, height, p_scale, max_dimension, max_dimension));
-		width = MIN(width, max_dimension);
-		height = MIN(height, max_dimension);
+		// Clamp while preserving aspect ratio.
+		float aspect = (float)width / (float)height;
+		if (width > height) {
+			width = max_dimension;
+			height = MAX(1, (uint32_t)round(max_dimension / aspect));
+		} else {
+			height = max_dimension;
+			width = MAX(1, (uint32_t)round(max_dimension * aspect));
+		}
+		WARN_PRINT(vformat("ImageLoaderThorSVG: SVG dimensions clamped to %dx%d (scale %.2f).", width, height, p_scale));
 	}
 
 	picture->size(width, height);
@@ -128,17 +134,17 @@ Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, cons
 		for (uint32_t x = 0; x < width; x++) {
 			uint32_t n = buffer[y * width + x];
 			const size_t offset = sizeof(uint32_t) * width * y + sizeof(uint32_t) * x;
-			image.write[offset + 0] = (n >> 16) & 0xff;
-			image.write[offset + 1] = (n >> 8) & 0xff;
-			image.write[offset + 2] = n & 0xff;
-			image.write[offset + 3] = (n >> 24) & 0xff;
+			image.write[offset + 0] = (n >> 16) & 0xff; // R
+			image.write[offset + 1] = (n >> 8) & 0xff; // G
+			image.write[offset + 2] = n & 0xff; // B
+			image.write[offset + 3] = (n >> 24) & 0xff; // A
 		}
 	}
 
 	res = sw_canvas->clear(true);
 	memfree(buffer);
 
-	p_image->set_data(width, height, false, Image::FORMAT_RGBA8, image);
+	p_image->create(width, height, false, Image::FORMAT_RGBA8, image);
 	return OK;
 }
 
@@ -149,9 +155,9 @@ Error ImageLoaderThorSVG::create_image_from_string(Ref<Image> p_image, String p_
 		_replace_color_property(p_color_map, "stroke=\"", p_string);
 	}
 
-	PackedByteArray bytes = p_string.to_utf8_buffer();
+	CharString cs = p_string.utf8();
 
-	return create_image_from_utf8_buffer(p_image, bytes, p_scale, p_upsample);
+	return create_image_from_utf8_buffer(p_image, (const uint8_t *)cs.get_data(), cs.length(), p_scale, p_upsample);
 }
 
 void ImageLoaderThorSVG::get_recognized_extensions(List<String> *p_extensions) const {
@@ -159,11 +165,11 @@ void ImageLoaderThorSVG::get_recognized_extensions(List<String> *p_extensions) c
 	p_extensions->push_back("th.svg");
 }
 
-Error ImageLoaderThorSVG::load_image(Ref<Image> p_image, Ref<FileAccess> p_fileaccess, BitField<ImageFormatLoader::LoaderFlags> p_flags, float p_scale) {
+Error ImageLoaderThorSVG::load_image(Ref<Image> p_image, FileAccess *p_fileaccess, bool p_force_linear, float p_scale) {
 	String svg = p_fileaccess->get_as_utf8_string();
 
 	Error err;
-	if (p_flags & FLAG_CONVERT_COLORS) {
+	if (!forced_color_map.empty()) {
 		err = create_image_from_string(p_image, svg, p_scale, false, forced_color_map);
 	} else {
 		err = create_image_from_string(p_image, svg, p_scale, false, HashMap<Color, Color>());
@@ -171,11 +177,11 @@ Error ImageLoaderThorSVG::load_image(Ref<Image> p_image, Ref<FileAccess> p_filea
 
 	if (err != OK) {
 		return err;
-	} else if (p_image->is_empty()) {
+	} else if (p_image->empty()) {
 		return ERR_INVALID_DATA;
 	}
 
-	if (p_flags & FLAG_FORCE_LINEAR) {
+	if (p_force_linear) {
 		p_image->srgb_to_linear();
 	}
 	return OK;

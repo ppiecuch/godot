@@ -353,7 +353,7 @@ protected:                                                                      
 		initialize_class();                                                                                                       \
 	}                                                                                                                             \
 	_FORCE_INLINE_ bool (Object::*_get_get() const)(const StringName &p_name, Variant &) const {                                  \
-		return (bool (Object::*)(const StringName &, Variant &) const) & m_class::_get;                                           \
+		return (bool(Object::*)(const StringName &, Variant &) const) & m_class::_get;                                            \
 	}                                                                                                                             \
 	virtual bool _getv(const StringName &p_name, Variant &r_ret) GDCON {                                                          \
 		if (m_class::_get_get() != m_inherits::_get_get()) {                                                                      \
@@ -363,7 +363,7 @@ protected:                                                                      
 		return m_inherits::_getv(p_name, r_ret);                                                                                  \
 	}                                                                                                                             \
 	_FORCE_INLINE_ bool (Object::*_get_set() const)(const StringName &p_name, const Variant &p_property) {                        \
-		return (bool (Object::*)(const StringName &, const Variant &)) & m_class::_set;                                           \
+		return (bool(Object::*)(const StringName &, const Variant &)) & m_class::_set;                                            \
 	}                                                                                                                             \
 	virtual bool _setv(const StringName &p_name, const Variant &p_property) G_OVERRIDE {                                          \
 		if (m_inherits::_setv(p_name, p_property))                                                                                \
@@ -374,7 +374,7 @@ protected:                                                                      
 		return false;                                                                                                             \
 	}                                                                                                                             \
 	_FORCE_INLINE_ void (Object::*_get_get_property_list() const)(List<PropertyInfo> * p_list) const {                            \
-		return (void (Object::*)(List<PropertyInfo> *) const) & m_class::_get_property_list;                                      \
+		return (void(Object::*)(List<PropertyInfo> *) const) & m_class::_get_property_list;                                       \
 	}                                                                                                                             \
 	virtual void _get_property_listv(List<PropertyInfo> *p_list, bool p_reversed) GDCON {                                         \
 		if (!p_reversed) {                                                                                                        \
@@ -393,7 +393,7 @@ protected:                                                                      
 		}                                                                                                                         \
 	}                                                                                                                             \
 	_FORCE_INLINE_ void (Object::*_get_notification() const)(int) {                                                               \
-		return (void (Object::*)(int)) & m_class::_notification;                                                                  \
+		return (void(Object::*)(int)) & m_class::_notification;                                                                   \
 	}                                                                                                                             \
 	virtual void _notificationv(int p_notification, bool p_reversed) G_OVERRIDE {                                                 \
 		if (!p_reversed && !_disabled_base_notifications.has(p_notification)) {                                                   \
@@ -567,14 +567,14 @@ protected:
 	virtual bool _setv(const StringName &p_name, const Variant &p_property) { return false; };
 	virtual bool _getv(const StringName &p_name, Variant &r_property) const { return false; };
 	virtual void _get_property_listv(List<PropertyInfo> *p_list, bool p_reversed) const {};
-	virtual void _notificationv(int p_notification, bool p_reversed) {};
+	virtual void _notificationv(int p_notification, bool p_reversed){};
 
 	static String _get_category() { return ""; }
 	static void _bind_methods();
 	bool _set(const StringName &p_name, const Variant &p_property) { return false; };
 	bool _get(const StringName &p_name, Variant &r_property) const { return false; };
 	void _get_property_list(List<PropertyInfo> *p_list) const {};
-	void _notification(int p_notification) {};
+	void _notification(int p_notification){};
 
 	_FORCE_INLINE_ static void (*_get_bind_methods())() {
 		return &Object::_bind_methods;
@@ -629,7 +629,7 @@ protected:
 
 public: //should be protected, but bug in clang++
 	static void initialize_class();
-	_FORCE_INLINE_ static void register_custom_data_to_otdb() {};
+	_FORCE_INLINE_ static void register_custom_data_to_otdb(){};
 
 public:
 #ifdef TOOLS_ENABLED
@@ -849,7 +849,7 @@ class ObjectDB {
 	friend void register_core_types();
 
 public:
-	typedef void (*DebugFunc)(Object *p_obj);
+	typedef void (*DebugFunc)(Object *p_obj, void *p_user_data);
 
 	static Object *get_instance(ObjectID p_instance_id);
 
@@ -858,7 +858,7 @@ public:
 		return Object::cast_to<T>(get_instance(p_instance_id));
 	}
 
-	static void debug_objects(DebugFunc p_func);
+	static void debug_objects(DebugFunc p_func, void *p_user_data = nullptr);
 	static int get_object_count();
 
 	// This one may give false positives because a new object may be allocated at the same memory of a previously freed one

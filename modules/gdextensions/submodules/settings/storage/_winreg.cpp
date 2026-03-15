@@ -249,7 +249,8 @@ public:
 	void remove(const String &key);
 	void set(const String &key, const Variant &value);
 	bool get(const String &key, Variant &value) const;
-	Variant get(const String &key) const;
+	Variant get(const String &key, const Variant &default_val = Variant()) const;
+	bool has_key(const String &key) const;
 	void clear();
 	void sync();
 	void flush();
@@ -484,7 +485,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 	RegCloseKey(handle);
 }
 
-Variant SettingsStorage::get(const String &key) const {
+Variant SettingsStorage::get(const String &key, const Variant &default_val) const {
 	String _key = escaped_key(key);
 	Variant value;
 	for (const RegistryKey &r : regList) {
@@ -493,10 +494,25 @@ Variant SettingsStorage::get(const String &key) const {
 			return value;
 		}
 		if (!fallbacks) {
-			return Variant();
+			return default_val;
 		}
 	}
-	return Variant();
+	return default_val;
+}
+
+bool SettingsStorage::has_key(const String &key) const {
+	Variant dummy;
+	String _key = escaped_key(key);
+	for (const RegistryKey &r : regList) {
+		HKEY handle = r.handle();
+		if (handle != 0 && readKey(handle, _key, &dummy)) {
+			return true;
+		}
+		if (!fallbacks) {
+			return false;
+		}
+	}
+	return false;
 }
 
 bool SettingsStorage::get(const String &key, Variant &value) const {

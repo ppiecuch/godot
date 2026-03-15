@@ -40,6 +40,34 @@
 struct BITMAP;
 struct FONT;
 struct RLE_SPRITE;
+typedef struct BITMAP ZBUFFER;
+
+class GdAlFont;
+
+// GdAlFont — Godot wrapper around an al_gfx FONT.
+// Fonts can be loaded from bitmap images containing character cells
+// separated by a marker color (yellow for truecolor, color 255 for 8-bit).
+class GdAlFont : public Reference {
+	GDCLASS(GdAlFont, Reference)
+
+	FONT *fnt;
+
+protected:
+	static void _bind_methods();
+
+public:
+	int get_height() const;
+	int get_length(const String &str) const;
+	bool is_valid() const;
+	bool is_mono() const;
+	bool is_color() const;
+
+	void _init_from_font(FONT *p_font);
+	FONT *_get_font() const { return fnt; }
+
+	GdAlFont();
+	~GdAlFont();
+};
 
 // GdAlRleSprite — Godot wrapper around an al_gfx RLE_SPRITE.
 // RLE sprites are compressed representations of bitmaps that are faster
@@ -83,7 +111,10 @@ class GdAlBitmapGfx : public Reference {
 
 	BITMAP *bmp;
 	bool owns_bitmap; // false for sub-bitmaps (parent owns memory)
+	Ref<GdAlFont> current_font; // custom font (null = use built-in 8x8)
+	ZBUFFER *zbuf; // per-bitmap Z-buffer (null = no Z-buffering)
 
+	FONT *_active_font() const; // returns current_font or built-in
 	int _color_from_godot(const Color &c) const;
 	Color _color_to_godot(int c) const;
 
@@ -134,7 +165,9 @@ public:
 	// Spline (4 control points as Vector2 array)
 	void spline(const PoolVector2Array &points, const Color &color);
 
-	// Text rendering
+	// Text rendering (uses current font — built-in 8x8 or custom)
+	void set_font(Ref<GdAlFont> p_font);
+	Ref<GdAlFont> get_font() const;
 	void text(const String &str, int x, int y, const Color &fg, const Color &bg = Color(-1, -1, -1, -1));
 	void text_centered(const String &str, int x, int y, const Color &fg, const Color &bg = Color(-1, -1, -1, -1));
 	void text_right(const String &str, int x, int y, const Color &fg, const Color &bg = Color(-1, -1, -1, -1));
@@ -168,7 +201,18 @@ public:
 	void pivot_scaled_sprite(Ref<GdAlBitmapGfx> sprite, const Vector2 &pos, const Vector2 &pivot, float angle_deg, float scale);
 	void pivot_scaled_sprite_v_flip(Ref<GdAlBitmapGfx> sprite, const Vector2 &pos, const Vector2 &pivot, float angle_deg, float scale);
 
-	// Drawing modes
+	// Drawing modes (prefixed MODE_ to avoid collision with al_gfx macros)
+	enum DrawMode {
+		MODE_SOLID = 0,
+		MODE_XOR = 1,
+		MODE_COPY_PATTERN = 2,
+		MODE_SOLID_PATTERN = 3,
+		MODE_MASKED_PATTERN = 4,
+		MODE_TRANS = 5,
+	};
+
+	void set_drawing_mode(int mode, Ref<GdAlBitmapGfx> pattern = Ref<GdAlBitmapGfx>(), int x_anchor = 0, int y_anchor = 0);
+	void solid_mode();
 	void set_xor_mode(bool enabled);
 
 	// Blending
@@ -186,10 +230,44 @@ public:
 	// Conversion to Godot Image
 	Ref<Image> get_image() const;
 
-	// 3D flat-shaded triangle
-	void triangle3d_flat(const Vector2 &v1, const Vector2 &v2, const Vector2 &v3, const Color &color);
-	// 3D gouraud-shaded triangle (vertices and colors as arrays)
-	void triangle3d_gouraud(const PoolVector2Array &vertices, const PoolColorArray &colors);
+	// 3D polygon types (prefixed POLY_ to avoid collision with al_gfx macros)
+	enum PolyType {
+		POLY_FLAT = 0,
+		POLY_GCOL = 1,
+		POLY_GRGB = 2,
+		POLY_ATEX = 3,
+		POLY_PTEX = 4,
+		POLY_ATEX_MASK = 5,
+		POLY_PTEX_MASK = 6,
+		POLY_ATEX_LIT = 7,
+		POLY_PTEX_LIT = 8,
+		POLY_ATEX_MASK_LIT = 9,
+		POLY_PTEX_MASK_LIT = 10,
+		POLY_ATEX_TRANS = 11,
+		POLY_PTEX_TRANS = 12,
+		POLY_ATEX_MASK_TRANS = 13,
+		POLY_PTEX_MASK_TRANS = 14,
+	};
+
+	// 3D flat-shaded triangle (Vector3: x, y, z)
+	void triangle3d_flat(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3, const Color &color);
+	// 3D gouraud-shaded triangle (3 vertices, 3 colors)
+	void triangle3d_gouraud(const PoolVector3Array &vertices, const PoolColorArray &colors);
+	// 3D generic triangle (polytype, 3 vertices, 3 colors, optional texture)
+	void triangle3d(int polytype, const PoolVector3Array &vertices, const PoolColorArray &colors, Ref<GdAlBitmapGfx> texture = Ref<GdAlBitmapGfx>());
+
+	// 3D flat-shaded quad (4 vertices, 1 color)
+	void quad3d_flat(const PoolVector3Array &vertices, const Color &color);
+	// 3D gouraud-shaded quad (4 vertices, 4 colors)
+	void quad3d_gouraud(const PoolVector3Array &vertices, const PoolColorArray &colors);
+
+	// Z-buffer management
+	void create_zbuffer();
+	void clear_zbuffer(float z = 0.0f);
+	void enable_zbuffer();
+	void disable_zbuffer();
+	bool has_zbuffer() const;
+	void destroy_zbuffer();
 
 	// Demo rendering (reimplements demo.c)
 	void render_demo();
@@ -201,6 +279,9 @@ public:
 	GdAlBitmapGfx();
 	~GdAlBitmapGfx();
 };
+
+VARIANT_ENUM_CAST(GdAlBitmapGfx::DrawMode);
+VARIANT_ENUM_CAST(GdAlBitmapGfx::PolyType);
 
 // AlBitmapGfx — Singleton factory for creating GdAlBitmapGfx instances
 // and managing global al_gfx state.
@@ -230,6 +311,10 @@ public:
 
 	// Create bitmap from Godot Image
 	Ref<GdAlBitmapGfx> from_image(Ref<Image> image);
+
+	// Font loading
+	Ref<GdAlFont> load_bitmap_font(const String &path);
+	Ref<GdAlFont> font_from_bitmap(Ref<GdAlBitmapGfx> bitmap);
 
 	AlBitmapGfx();
 	~AlBitmapGfx();

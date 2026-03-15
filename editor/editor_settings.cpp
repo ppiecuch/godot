@@ -846,6 +846,7 @@ void EditorSettings::create() {
 	String config_dir;
 	String cache_path;
 	String cache_dir;
+	String temp_dir;
 
 	Ref<ConfigFile> extra_config = memnew(ConfigFile);
 
@@ -876,6 +877,7 @@ void EditorSettings::create() {
 		config_dir = data_dir;
 		cache_path = exe_path;
 		cache_dir = data_dir.plus_file("cache");
+		temp_dir = data_dir.plus_file("temp");
 	} else {
 		// Typically XDG_DATA_HOME or %APPDATA%
 		data_path = OS::get_singleton()->get_data_path();
@@ -890,6 +892,7 @@ void EditorSettings::create() {
 		} else {
 			cache_dir = cache_path.plus_file(OS::get_singleton()->get_godot_dir_name());
 		}
+		temp_dir = OS::get_singleton()->get_temp_path();
 	}
 
 	ClassDB::register_class<EditorSettings>(); //otherwise it can't be unserialized
@@ -1003,6 +1006,7 @@ void EditorSettings::create() {
 		singleton->settings_dir = config_dir;
 		singleton->data_dir = data_dir;
 		singleton->cache_dir = cache_dir;
+		singleton->temp_dir = temp_dir;
 
 		print_verbose("EditorSettings: Load OK!");
 
@@ -1031,6 +1035,7 @@ fail:
 	singleton->settings_dir = config_dir;
 	singleton->data_dir = data_dir;
 	singleton->cache_dir = cache_dir;
+	singleton->temp_dir = temp_dir;
 	singleton->_load_defaults(extra_config);
 	singleton->setup_language();
 	singleton->setup_network();
@@ -1255,6 +1260,10 @@ String EditorSettings::get_project_script_templates_dir() const {
 
 String EditorSettings::get_cache_dir() const {
 	return cache_dir;
+}
+
+String EditorSettings::get_temp_dir() const {
+	return temp_dir;
 }
 
 String EditorSettings::get_feature_profiles_dir() const {

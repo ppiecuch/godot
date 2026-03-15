@@ -78,6 +78,8 @@ public:
 	void set_flip_v(bool p_flip);
 	bool is_flipped_v() const;
 
+	String get_configuration_warning() const;
+
 	TextureRect();
 	~TextureRect();
 };

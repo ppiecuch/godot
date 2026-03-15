@@ -39,6 +39,7 @@
 #include "core/math/geometry.h"
 #include "core/method_bind_ext.gen.inc"
 #include "core/os/keyboard.h"
+#include "core/os/object_db_snapshot.h"
 #include "core/os/os.h"
 #include "core/project_settings.h"
 
@@ -1182,6 +1183,18 @@ void _OS::dump_resources_to_file(const String &p_file) {
 	OS::get_singleton()->dump_resources_to_file(p_file.utf8().get_data());
 }
 
+Dictionary _OS::dump_objectdb_snapshot() const {
+	return ObjectDBSnapshot::take_snapshot();
+}
+
+Error _OS::save_objectdb_snapshot(const String &p_path) const {
+	return ObjectDBSnapshot::save_to_file(p_path);
+}
+
+void _OS::print_objectdb_summary() const {
+	ObjectDBSnapshot::print_summary();
+}
+
 Error _OS::move_to_trash(const String &p_path) const {
 	return OS::get_singleton()->move_to_trash(p_path);
 }
@@ -1239,6 +1252,10 @@ String _OS::get_data_dir() const {
 String _OS::get_cache_dir() const {
 	// Exposed as `get_cache_dir()` instead of `get_cache_path()` for consistency with other exposed OS methods.
 	return OS::get_singleton()->get_cache_path();
+}
+
+String _OS::get_temp_dir() const {
+	return OS::get_singleton()->get_temp_path();
 }
 
 bool _OS::is_debug_build() const {
@@ -1501,6 +1518,10 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("print_resources_in_use", "short"), &_OS::print_resources_in_use, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("print_all_resources", "tofile"), &_OS::print_all_resources, DEFVAL(""));
 
+	ClassDB::bind_method(D_METHOD("dump_objectdb_snapshot"), &_OS::dump_objectdb_snapshot);
+	ClassDB::bind_method(D_METHOD("save_objectdb_snapshot", "path"), &_OS::save_objectdb_snapshot);
+	ClassDB::bind_method(D_METHOD("print_objectdb_summary"), &_OS::print_objectdb_summary);
+
 	ClassDB::bind_method(D_METHOD("get_static_memory_usage"), &_OS::get_static_memory_usage);
 	ClassDB::bind_method(D_METHOD("get_static_memory_peak_usage"), &_OS::get_static_memory_peak_usage);
 	ClassDB::bind_method(D_METHOD("get_dynamic_memory_usage"), &_OS::get_dynamic_memory_usage);
@@ -1511,6 +1532,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_config_dir"), &_OS::get_config_dir);
 	ClassDB::bind_method(D_METHOD("get_data_dir"), &_OS::get_data_dir);
 	ClassDB::bind_method(D_METHOD("get_cache_dir"), &_OS::get_cache_dir);
+	ClassDB::bind_method(D_METHOD("get_temp_dir"), &_OS::get_temp_dir);
 	ClassDB::bind_method(D_METHOD("get_unique_id"), &_OS::get_unique_id);
 
 	ClassDB::bind_method(D_METHOD("is_ok_left_and_cancel_right"), &_OS::is_ok_left_and_cancel_right);

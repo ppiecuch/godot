@@ -2087,12 +2087,12 @@ Object *ObjectDB::get_instance(ObjectID p_instance_id) {
 	return *obj;
 }
 
-void ObjectDB::debug_objects(DebugFunc p_func) {
+void ObjectDB::debug_objects(DebugFunc p_func, void *p_user_data) {
 	rw_lock->read_lock();
 
 	const ObjectID *K = nullptr;
 	while ((K = instances.next(K))) {
-		p_func(instances[*K]);
+		p_func(instances[*K], p_user_data);
 	}
 
 	rw_lock->read_unlock();

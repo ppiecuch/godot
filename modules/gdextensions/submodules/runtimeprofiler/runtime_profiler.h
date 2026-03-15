@@ -31,6 +31,7 @@
 #ifndef RUNTIME_PROFILER_H
 #define RUNTIME_PROFILER_H
 
+#include "core/array.h"
 #include "core/script_language.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/button.h"
@@ -121,7 +122,6 @@ private:
 
 	SpinBox *cursor_metric_edit;
 
-	Label *frame_time_label;
 	Label *status_label;
 
 	bool profiling;
@@ -198,6 +198,7 @@ public:
 	void stop_profiling();
 
 	Vector<Vector<String>> get_data_as_csv() const;
+	Array get_data_as_csv_array() const;
 
 	RuntimeProfiler();
 };

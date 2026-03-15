@@ -48,6 +48,8 @@ private:
 public:
 	void set(const String &key, const Variant &value);
 	Variant get(const String &key, const Variant &default_val = Variant()) const;
+	bool has_key(const String &key) const;
+	void remove(const String &key);
 
 	SettingsStorage();
 	~SettingsStorage();
@@ -60,15 +62,13 @@ String SettingsStorage::_to_godot_string(CFStringRef cf_string) {
 		char *result = (char *)calloc(1, length);
 		if (result) {
 			if (!CFStringGetCString(cf_string, result, length, kCFStringEncodingASCII)) {
-				if (!CFStringGetCString(cf_string, result, length, kCFStringEncodingUTF8)) {
-					free(result);
-					result = nullptr;
-				} else {
+				if (CFStringGetCString(cf_string, result, length, kCFStringEncodingUTF8)) {
 					ret = String::utf8(result);
 				}
 			} else {
 				ret = String(result);
 			}
+			free(result);
 		}
 	}
 	return ret;
@@ -95,27 +95,15 @@ Variant SettingsStorage::get(const String &key, const Variant &default_val) cons
 				ret = bool(val);
 			}
 		} else if (CFGetTypeID(value) == CFNumberGetTypeID()) {
-			switch (CFNumberGetType(CFNumberRef(value))) {
-				case kCFNumberIntType: {
-					int val;
-					if (CFNumberGetValue(CFNumberRef(value), kCFNumberIntType, &val)) {
-						ret = val;
-					}
-					break;
+			if (!CFNumberIsFloatType(CFNumberRef(value))) {
+				int64_t val;
+				if (CFNumberGetValue(CFNumberRef(value), kCFNumberSInt64Type, &val)) {
+					ret = (int)val;
 				}
-				case kCFNumberFloatType: {
-					float val;
-					if (CFNumberGetValue(CFNumberRef(value), kCFNumberFloatType, &val)) {
-						ret = val;
-					}
-					break;
-				}
-				case kCFNumberDoubleType:
-				default: {
-					double val;
-					if (CFNumberGetValue(CFNumberRef(value), kCFNumberDoubleType, &val)) {
-						ret = val;
-					}
+			} else {
+				double val;
+				if (CFNumberGetValue(CFNumberRef(value), kCFNumberDoubleType, &val)) {
+					ret = val;
 				}
 			}
 		} else if (CFGetTypeID(value) == CFStringGetTypeID()) {
@@ -149,6 +137,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 		case Variant::BOOL: {
 			CFPreferencesSetAppValue(nom, value ? kCFBooleanTrue : kCFBooleanFalse, kCFPreferencesCurrentApplication);
 			_sync();
+			break;
 		}
 		case Variant::INT: {
 			const int val = value;
@@ -158,6 +147,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 				CFRelease(cftype);
 				_sync();
 			}
+			break;
 		}
 		case Variant::REAL: {
 			const double val = value;
@@ -167,6 +157,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 				CFRelease(cftype);
 				_sync();
 			}
+			break;
 		}
 		case Variant::STRING: {
 			const String val = value;
@@ -176,6 +167,7 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 				CFRelease(cftype);
 				_sync();
 			}
+			break;
 		}
 		default: {
 			PoolByteArray val = encode_var(value);
@@ -188,6 +180,26 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 		}
 	}
 	CFRelease(nom);
+}
+
+bool SettingsStorage::has_key(const String &key) const {
+	CFStringRef nom = CFStringCreateWithCString(nullptr, key.utf8().c_str(), CFStringGetSystemEncoding());
+	ERR_FAIL_COND_V(nom == nullptr, false);
+	CFTypeRef value = CFPreferencesCopyAppValue(nom, kCFPreferencesCurrentApplication);
+	CFRelease(nom);
+	if (value != nullptr) {
+		CFRelease(value);
+		return true;
+	}
+	return false;
+}
+
+void SettingsStorage::remove(const String &key) {
+	CFStringRef nom = CFStringCreateWithCString(nullptr, key.utf8().c_str(), CFStringGetSystemEncoding());
+	ERR_FAIL_COND(nom == nullptr);
+	CFPreferencesSetAppValue(nom, nullptr, kCFPreferencesCurrentApplication);
+	CFRelease(nom);
+	_sync();
 }
 
 SettingsStorage::SettingsStorage() {

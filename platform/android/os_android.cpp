@@ -616,6 +616,10 @@ String OS_Android::get_cache_path() const {
 	return ".";
 }
 
+String OS_Android::get_temp_path() const {
+	return get_cache_path().plus_file("tmp");
+}
+
 void OS_Android::set_screen_orientation(ScreenOrientation p_orientation) {
 	godot_io_java->set_screen_orientation(p_orientation);
 }

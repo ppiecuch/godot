@@ -331,11 +331,31 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Mater
 			} else if (r_missing_deps) {
 				r_missing_deps->push_back(path);
 			}
-		} else if (l.begins_with("map_bump ")) {
+		} else if (l.begins_with("map_bump ") || l.begins_with("map_Bump ")) {
 			//normal
 			ERR_FAIL_COND_V(current.is_null(), ERR_FILE_CORRUPT);
 
-			String p = l.replace("map_bump", "").replace("\\", "/").strip_edges();
+			// Strip the "map_bump " or "map_Bump " prefix (both are 9 chars).
+			String remainder = l.substr(9).strip_edges();
+
+			String p;
+			float bm = 1.0;
+			int bm_pos = remainder.find("-bm ");
+			if (bm_pos >= 0) {
+				int bm_start = bm_pos + 4;
+				int bm_end = remainder.find(" ", bm_start);
+				if (bm_end >= 0) {
+					bm = remainder.substr(bm_start, bm_end - bm_start).to_float();
+					p = remainder.substr(bm_end + 1).strip_edges();
+				} else {
+					bm = remainder.substr(bm_start).to_float();
+					p = remainder.substr(0, bm_pos).strip_edges();
+				}
+			} else {
+				p = remainder;
+			}
+
+			p = p.replace("\\", "/");
 			String path = validate_texture_path(p);
 
 			Ref<Texture> texture = ResourceLoader::load(path);
@@ -343,6 +363,7 @@ static Error _parse_material_library(const String &p_path, Map<String, Ref<Mater
 			if (texture.is_valid()) {
 				current->set_feature(Material3D::FEATURE_NORMAL_MAPPING, true);
 				current->set_texture(Material3D::TEXTURE_NORMAL, texture);
+				current->set_normal_scale(bm);
 			} else if (r_missing_deps) {
 				r_missing_deps->push_back(path);
 			}

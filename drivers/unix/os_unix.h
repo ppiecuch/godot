@@ -97,6 +97,7 @@ public:
 
 	virtual void initialize_debugging();
 
+	virtual String get_temp_path() const;
 	virtual String get_executable_path() const;
 	virtual String get_user_data_dir() const;
 };

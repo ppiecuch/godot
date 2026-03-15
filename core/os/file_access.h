@@ -71,6 +71,11 @@ private:
 
 	AccessType _access_type;
 	static CreateFunc create_func[ACCESS_MAX]; /** default file access creation function for a platform */
+
+	bool _is_temp_file = false;
+	bool _temp_keep = false;
+	String _temp_path;
+	void _delete_temp();
 	template <class T>
 	static FileAccess *_create_builtin() {
 		return memnew(T);
@@ -153,6 +158,7 @@ public:
 	static FileAccess *create(AccessType p_access); /// Create a file access (for the current platform) this is the only portable way of accessing files.
 	static FileAccess *create_for_path(const String &p_path);
 	static FileAccess *open(const String &p_path, int p_mode_flags, Error *r_error = nullptr); /// Create a file access (for the current platform) this is the only portable way of accessing files.
+	static FileAccess *create_temp(int p_mode_flags, const String &p_prefix = "", const String &p_extension = "", bool p_keep = false, Error *r_error = nullptr);
 	static CreateFunc get_create_func(AccessType p_access);
 	static bool exists(const String &p_name); ///< return true if a file exists
 	static uint64_t get_modified_time(const String &p_file);
@@ -175,7 +181,7 @@ public:
 	}
 
 	FileAccess();
-	virtual ~FileAccess() {}
+	virtual ~FileAccess();
 };
 
 struct FileAccessRef {

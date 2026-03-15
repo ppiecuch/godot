@@ -3742,6 +3742,26 @@ String OS_Windows::get_cache_path() const {
 	return cache_path_cache;
 }
 
+String OS_Windows::get_temp_path() const {
+	static String temp_path_cache;
+	if (temp_path_cache == String()) {
+		WCHAR buf[MAX_PATH + 1];
+		if (GetTempPathW(MAX_PATH + 1, buf)) {
+			WCHAR long_buf[MAX_PATH + 1];
+			if (GetLongPathNameW(buf, long_buf, MAX_PATH + 1)) {
+				temp_path_cache = String(long_buf).replace("\\", "/");
+			} else {
+				temp_path_cache = String(buf).replace("\\", "/");
+			}
+			temp_path_cache = temp_path_cache.rstrip("/");
+		}
+		if (temp_path_cache == String()) {
+			temp_path_cache = get_cache_path();
+		}
+	}
+	return temp_path_cache;
+}
+
 // Get properly capitalized engine name for system paths
 String OS_Windows::get_godot_dir_name() const {
 	return String(VERSION_SHORT_NAME).capitalize();

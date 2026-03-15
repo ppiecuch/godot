@@ -602,6 +602,10 @@ String OSIPhone::get_cache_path() const {
 	return cache_dir;
 }
 
+String OSIPhone::get_temp_path() const {
+	return String([NSTemporaryDirectory() UTF8String]).rstrip("/");
+}
+
 String OSIPhone::get_model_name() const {
 	String model = ios->get_model();
 	if (model != "") {

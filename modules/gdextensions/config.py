@@ -66,7 +66,9 @@ def configure(env):
         "multipeer",
         "iap",
         # rendering extensions
+        "thorvg",
         "albmpgfx",
+        "canvasraster",
         "polyvector",
         "vaserenderer",
         "lsystem",

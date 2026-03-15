@@ -571,6 +571,7 @@ public:
 	virtual String get_config_path() const;
 	virtual String get_data_path() const;
 	virtual String get_cache_path() const;
+	virtual String get_temp_path() const;
 	virtual String get_godot_dir_name() const;
 
 	virtual String get_system_dir(SystemDir p_dir, bool p_shared_storage = true) const;

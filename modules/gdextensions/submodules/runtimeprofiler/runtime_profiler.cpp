@@ -221,8 +221,8 @@ void RuntimeProfiler::clear() {
 }
 
 static String _get_percent_txt(float p_value, float p_total) {
-	if (p_total == 0) {
-		p_total = 0.00001f;
+	if (p_total <= 0) {
+		return (p_value <= 0) ? "0.0%" : "N/A";
 	}
 	return String::num((p_value / p_total) * 100, 1) + "%";
 }
@@ -435,9 +435,9 @@ void RuntimeProfiler::_update_plot() {
 					column[j + 2] /= a;
 				}
 
-				const uint8_t red = uint8_t(column[j + 0]);
-				const uint8_t green = uint8_t(column[j + 1]);
-				const uint8_t blue = uint8_t(column[j + 2]);
+				const uint8_t red = uint8_t(CLAMP(column[j + 0], 0, 255));
+				const uint8_t green = uint8_t(CLAMP(column[j + 1], 0, 255));
+				const uint8_t blue = uint8_t(CLAMP(column[j + 2], 0, 255));
 				const bool is_filled = red >= 1 || green >= 1 || blue >= 1;
 				const int widx = ((j >> 2) * w + i) * 4;
 
@@ -702,19 +702,20 @@ void RuntimeProfiler::_graph_tex_input(const Ref<InputEvent> &p_ev) {
 }
 
 int RuntimeProfiler::_get_cursor_index() const {
-	if (last_metric < 0) {
+	if (last_metric < 0 || frame_metrics.empty()) {
 		return 0;
 	}
 	if (!frame_metrics[last_metric].valid) {
 		return 0;
 	}
 
-	int diff = (frame_metrics[last_metric].frame_number - cursor_metric_edit->get_value());
+	int diff = (frame_metrics[last_metric].frame_number - (int)cursor_metric_edit->get_value());
 
 	int idx = last_metric - diff;
 	while (idx < 0) {
 		idx += frame_metrics.size();
 	}
+	idx = CLAMP(idx, 0, frame_metrics.size() - 1);
 
 	return idx;
 }
@@ -748,6 +749,7 @@ void RuntimeProfiler::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("clear"), &RuntimeProfiler::clear);
 	ClassDB::bind_method(D_METHOD("set_enabled", "enable"), &RuntimeProfiler::set_enabled);
 	ClassDB::bind_method(D_METHOD("disable_seeking"), &RuntimeProfiler::disable_seeking);
+	ClassDB::bind_method(D_METHOD("get_data_as_csv"), &RuntimeProfiler::get_data_as_csv_array);
 
 	ADD_SIGNAL(MethodInfo("enable_profiling", PropertyInfo(Variant::BOOL, "enable")));
 	ADD_SIGNAL(MethodInfo("break_request"));
@@ -784,10 +786,12 @@ Vector<Vector<String>> RuntimeProfiler::get_data_as_csv() const {
 	}
 
 	// Generate CSV header and cache indices.
+	// First column is always "frame_number".
 	Map<StringName, int> sig_map;
 	Vector<String> signatures;
-	signatures.resize(possible_signatures.size());
-	int sig_index = 0;
+	signatures.push_back("frame_number");
+	signatures.resize(possible_signatures.size() + 1);
+	int sig_index = 1;
 	for (const Set<StringName>::Element *E = possible_signatures.front(); E; E = E->next()) {
 		signatures.write[sig_index] = E->get();
 		sig_map[E->get()] = sig_index;
@@ -814,7 +818,8 @@ Vector<Vector<String>> RuntimeProfiler::get_data_as_csv() const {
 		}
 
 		values.clear();
-		values.resize(possible_signatures.size());
+		values.resize(possible_signatures.size() + 1);
+		values.write[0] = itos(m.frame_number);
 
 		for (Map<StringName, Metric::Category *>::Element *E = m.category_ptrs.front(); E; E = E->next()) {
 			values.write[sig_map[E->key()]] = String::num_real(E->value()->total_time);
@@ -827,6 +832,19 @@ Vector<Vector<String>> RuntimeProfiler::get_data_as_csv() const {
 	}
 
 	return res;
+}
+
+Array RuntimeProfiler::get_data_as_csv_array() const {
+	Array result;
+	Vector<Vector<String>> csv = get_data_as_csv();
+	for (int i = 0; i < csv.size(); i++) {
+		Array row;
+		for (int j = 0; j < csv[i].size(); j++) {
+			row.push_back(csv[i][j]);
+		}
+		result.push_back(row);
+	}
+	return result;
 }
 
 void RuntimeProfiler::start_profiling(int p_max_frame_functions) {
@@ -966,8 +984,6 @@ RuntimeProfiler::RuntimeProfiler() {
 
 	h_split->add_child(graph);
 	graph->set_h_size_flags(SIZE_EXPAND_FILL);
-
-	frame_time_label = nullptr;
 
 	// Frame history
 	const int metric_size = CLAMP(int(GLOBAL_DEF("runtime_profiler/profiler_frame_history_size", 1800)), 60, 10000);

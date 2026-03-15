@@ -97,7 +97,34 @@ void TextureRect::_notification(int p_what) {
 		size.height *= vflip ? -1.0f : 1.0f;
 
 		if (region.has_no_area()) {
-			draw_texture_rect(texture, Rect2(offset, size), tile);
+			if (tile && Object::cast_to<AtlasTexture>(*texture)) {
+				// draw_texture_rect does not support tiling an AtlasTexture, so as a workaround
+				// draw it via canvas_item_add_nine_patch (zero margins = pure tile).
+				Ref<AtlasTexture> at = texture;
+				Rect2 draw_rect = Rect2(offset, size);
+				Rect2 src_rect = Rect2(0, 0, at->get_width(), at->get_height());
+				Rect2 r_rect, r_src_rect;
+				// Walk through nested AtlasTextures to get the final atlas and source region.
+				while (at.is_valid()) {
+					at->get_rect_region(draw_rect, src_rect, r_rect, r_src_rect);
+					draw_rect = r_rect;
+					src_rect = r_src_rect;
+					Ref<Texture> atlas = at->get_atlas();
+					at = atlas;
+				}
+				Ref<Texture> atlas_tex = texture;
+				// Walk to the innermost atlas texture.
+				while (Object::cast_to<AtlasTexture>(*atlas_tex)) {
+					atlas_tex = Object::cast_to<AtlasTexture>(*atlas_tex)->get_atlas();
+				}
+				VisualServer::get_singleton()->canvas_item_add_nine_patch(
+						get_canvas_item(), Rect2(offset, size), src_rect,
+						atlas_tex->get_rid(), Vector2(), Vector2(),
+						VS::NINE_PATCH_TILE, VS::NINE_PATCH_TILE, true,
+						Color(1, 1, 1));
+			} else {
+				draw_texture_rect(texture, Rect2(offset, size), tile);
+			}
 		} else {
 			draw_texture_rect_region(texture, Rect2(offset, size), region);
 		}
@@ -145,6 +172,7 @@ void TextureRect::_texture_changed() {
 	if (texture.is_valid()) {
 		update();
 		minimum_size_changed();
+		update_configuration_warning();
 	}
 }
 
@@ -184,6 +212,7 @@ bool TextureRect::has_expand() const {
 void TextureRect::set_stretch_mode(StretchMode p_mode) {
 	stretch_mode = p_mode;
 	update();
+	update_configuration_warning();
 }
 
 TextureRect::StretchMode TextureRect::get_stretch_mode() const {
@@ -206,6 +235,22 @@ void TextureRect::set_flip_v(bool p_flip) {
 
 bool TextureRect::is_flipped_v() const {
 	return vflip;
+}
+
+String TextureRect::get_configuration_warning() const {
+	String warning = Control::get_configuration_warning();
+
+	if (stretch_mode == STRETCH_TILE && texture.is_valid() && Object::cast_to<AtlasTexture>(*texture)) {
+		Ref<AtlasTexture> at = texture;
+		if (at->get_margin() != Rect2()) {
+			if (warning != String()) {
+				warning += "\n\n";
+			}
+			warning += TTR("Using STRETCH_TILE with an AtlasTexture that has a non-zero margin is not supported and may not render correctly.");
+		}
+	}
+
+	return warning;
 }
 
 TextureRect::TextureRect() {

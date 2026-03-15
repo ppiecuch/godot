@@ -541,6 +541,15 @@ void EditorNode::_notification(int p_what) {
 				ProjectSettings::get_singleton()->save();
 			}
 
+			// Record this project as the last opened, for Shift+launch feature.
+			{
+				String project_path = ProjectSettings::get_singleton()->get_resource_path();
+				if (project_path != "") {
+					EditorSettings::get_singleton()->set("last_opened_project", project_path);
+					EditorSettings::get_singleton()->save();
+				}
+			}
+
 			/* DO NOT LOAD SCENES HERE, WAIT FOR FILE SCANNING AND REIMPORT TO COMPLETE */
 		} break;
 

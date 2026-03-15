@@ -446,10 +446,72 @@ bool DirAccess::exists(String p_dir) {
 	return valid;
 }
 
+DirAccess *DirAccess::create_temp(const String &p_prefix, bool p_keep, Error *r_error) {
+	String temp_path = OS::get_singleton()->get_temp_path();
+
+	// Generate a unique directory name using ticks and date.
+	OS::Date date = OS::get_singleton()->get_date();
+	OS::Time time = OS::get_singleton()->get_time();
+	uint64_t ticks = OS::get_singleton()->get_ticks_usec();
+
+	String prefix = p_prefix.empty() ? "tmp" : p_prefix;
+	String timestamp = itos(date.year) + itos(date.month).pad_zeros(2) + itos(date.day).pad_zeros(2) +
+			itos(time.hour).pad_zeros(2) + itos(time.min).pad_zeros(2) + itos(time.sec).pad_zeros(2);
+	String unique = prefix + "_" + timestamp + "_" + itos(ticks);
+
+	String dir_path = temp_path.plus_file(unique);
+
+	DirAccess *da = create(ACCESS_FILESYSTEM);
+	ERR_FAIL_COND_V_MSG(!da, nullptr, "Cannot create DirAccess for temp directory.");
+
+	Error err = da->make_dir_recursive(dir_path);
+	if (err != OK) {
+		if (r_error) {
+			*r_error = err;
+		}
+		memdelete(da);
+		return nullptr;
+	}
+
+	err = da->change_dir(dir_path);
+	if (err != OK) {
+		if (r_error) {
+			*r_error = err;
+		}
+		memdelete(da);
+		return nullptr;
+	}
+
+	if (r_error) {
+		*r_error = OK;
+	}
+
+	da->_is_temp = true;
+	da->_temp_keep = p_keep;
+	da->_temp_path = dir_path;
+
+	return da;
+}
+
+void DirAccess::_delete_temp() {
+	if (_is_temp && !_temp_keep && !_temp_path.empty()) {
+		// Recursively delete temp directory contents, then the directory itself.
+		DirAccess *da = create(ACCESS_FILESYSTEM);
+		if (da) {
+			if (da->change_dir(_temp_path) == OK) {
+				_erase_recursive(da);
+			}
+			da->remove(_temp_path);
+			memdelete(da);
+		}
+	}
+}
+
 DirAccess::DirAccess() {
 	_access_type = ACCESS_FILESYSTEM;
 	next_is_dir = false;
 }
 
 DirAccess::~DirAccess() {
+	_delete_temp();
 }
