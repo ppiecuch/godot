@@ -31,6 +31,34 @@
 #ifndef GD_SOFTRENDER_DISPLAY_H
 #define GD_SOFTRENDER_DISPLAY_H
 
+// Node2D that displays a SoftRender framebuffer as a texture.
+// Add as a child of any Node2D, then use get_soft_render() to draw into it.
+//
+// Example: Add SoftRenderDisplay node in editor, then in GDScript:
+//
+//   func _ready():
+//       var sr = $SoftRenderDisplay.get_soft_render()
+//       sr.clear_color(Color(0.2, 0.2, 0.3, 1))
+//       sr.clear(SoftRender.COLOR_BUFFER_BIT)
+//       sr.matrix_mode(SoftRender.MATRIX_PROJECTION)
+//       sr.load_identity()
+//       sr.perspective(60, 320.0/240.0, 0.1, 100.0)
+//       sr.matrix_mode(SoftRender.MATRIX_MODELVIEW)
+//       sr.load_identity()
+//       sr.translate(Vector3(0, 0, -3))
+//       sr.begin_mesh(SoftRender.PRIM_TRIANGLES)
+//       sr.color4(Color.yellow)
+//       sr.vertex3(Vector3(0, 1, 0))
+//       sr.vertex3(Vector3(-1, -1, 0))
+//       sr.vertex3(Vector3(1, -1, 0))
+//       sr.end_mesh()
+//       $SoftRenderDisplay.refresh()  # triggers redraw
+//
+// Inspector properties:
+//   canvas_size: framebuffer resolution (default 256x256)
+//   centered: offset drawing so node position is at center
+//   backend: PortableGL (default) or Fusion2X
+
 #include "gd_softrender.h"
 #include "scene/2d/node_2d.h"
 

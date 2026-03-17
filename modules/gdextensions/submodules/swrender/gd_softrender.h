@@ -31,6 +31,81 @@
 #ifndef SOFTRENDER_H
 #define SOFTRENDER_H
 
+// Software OpenGL renderer exposed to GDScript.
+// Renders into an RGBA8 framebuffer, retrievable as Image/ImageTexture.
+//
+// Example 1: RGB triangle (standalone)
+//
+//   var sr = SoftRender.new()
+//   sr.initialize(320, 240, SoftRender.BACKEND_PORTABLEGL)
+//   sr.clear_color(Color.black)
+//   sr.clear(SoftRender.COLOR_BUFFER_BIT | SoftRender.DEPTH_BUFFER_BIT)
+//
+//   sr.matrix_mode(SoftRender.MATRIX_PROJECTION)
+//   sr.load_identity()
+//   sr.perspective(60, 320.0/240.0, 0.1, 100.0)
+//
+//   sr.matrix_mode(SoftRender.MATRIX_MODELVIEW)
+//   sr.load_identity()
+//   sr.translate(Vector3(0, 0, -3))
+//
+//   sr.begin_mesh(SoftRender.PRIM_TRIANGLES)
+//   sr.color4(Color.red)
+//   sr.vertex3(Vector3(0, 1, 0))
+//   sr.color4(Color.green)
+//   sr.vertex3(Vector3(-1, -1, 0))
+//   sr.color4(Color.blue)
+//   sr.vertex3(Vector3(1, -1, 0))
+//   sr.end_mesh()
+//
+//   var texture = sr.get_texture()  # use on Sprite, TextureRect, etc.
+//
+// Example 2: Spinning cube with depth test
+//
+//   var sr = SoftRender.new()
+//   sr.initialize(256, 256)
+//   sr.enable_depth_test(true)
+//   var angle = 0.0
+//
+//   func render_frame():
+//       sr.clear_color(Color(0.1, 0.1, 0.2, 1))
+//       sr.clear(SoftRender.COLOR_BUFFER_BIT | SoftRender.DEPTH_BUFFER_BIT)
+//       sr.matrix_mode(SoftRender.MATRIX_PROJECTION)
+//       sr.load_identity()
+//       sr.perspective(45, 1.0, 0.1, 50.0)
+//       sr.matrix_mode(SoftRender.MATRIX_MODELVIEW)
+//       sr.load_identity()
+//       sr.translate(Vector3(0, 0, -5))
+//       sr.rotate(angle, Vector3(1, 1, 0))
+//       angle += 1.0
+//       # front face
+//       sr.begin_mesh(SoftRender.PRIM_QUADS)
+//       sr.color4(Color.red)
+//       sr.vertex3(Vector3(-1, -1,  1))
+//       sr.vertex3(Vector3( 1, -1,  1))
+//       sr.vertex3(Vector3( 1,  1,  1))
+//       sr.vertex3(Vector3(-1,  1,  1))
+//       sr.end_mesh()
+//       # ... repeat for other faces with different colors
+//
+// Example 3: Textured quad
+//
+//   var sr = SoftRender.new()
+//   sr.initialize(128, 128)
+//   var tex_id = sr.create_texture(preload("res://icon.png"))
+//   sr.bind_texture(tex_id)
+//   sr.matrix_mode(SoftRender.MATRIX_PROJECTION)
+//   sr.load_identity()
+//   sr.ortho(2.0, 1.0, -1, 1)
+//   sr.matrix_mode(SoftRender.MATRIX_MODELVIEW)
+//   sr.load_identity()
+//   sr.begin_mesh(SoftRender.PRIM_QUADS)
+//   sr.texcoord2(Vector2(0, 0)); sr.vertex3(Vector3(-1, -1, 0))
+//   sr.texcoord2(Vector2(1, 0)); sr.vertex3(Vector3( 1, -1, 0))
+//   sr.texcoord2(Vector2(1, 1)); sr.vertex3(Vector3( 1,  1, 0))
+//   sr.texcoord2(Vector2(0, 1)); sr.vertex3(Vector3(-1,  1, 0))
+//   sr.end_mesh()
+
 #include "core/image.h"
 #include "core/math/camera_matrix.h"
 #include "core/reference.h"
