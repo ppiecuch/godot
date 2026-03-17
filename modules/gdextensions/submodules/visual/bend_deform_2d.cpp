@@ -29,7 +29,6 @@
 /**************************************************************************/
 
 #include <map>
-#include <string>
 #include <vector>
 
 #include "modules/modules_enabled.gen.h"
@@ -232,6 +231,11 @@ Vector2 SimulationController2D::get_simulation_force_for_node(Node *p_node) {
 	return simulation_force;
 }
 
+bool SimulationController2D::add_simulation_force_for_node(Node *p_node, std::map<int, Vector2> &p_forces) {
+	ERR_FAIL_NULL_V(p_node, false);
+	return _add_node_noise_modulation_value(p_node, _noise, _time_progress, noise_pixel_resolution, p_forces);
+}
+
 void SimulationController2D::_bind_methods() {
 	BIND_ENUM_CONSTANT(PRECISION_LOW);
 	BIND_ENUM_CONSTANT(PRECISION_MEDIUM);
@@ -398,7 +402,9 @@ void SimulationControllerInstance2D::set_debug_controller(bool p_debug) {
 	if (p_debug && !_debug_node) {
 		add_child(_debug_node = memnew(SimulationControllerDebugInstance2D));
 	}
-	_debug_node->set_visible(p_debug);
+	if (_debug_node) {
+		_debug_node->set_visible(p_debug);
+	}
 }
 
 void SimulationControllerInstance2D::_bind_methods() {
@@ -490,14 +496,13 @@ void ElasticMeshInstance2D::_bind_methods() {
 
 ElasticMeshInstance2D::ElasticMeshInstance2D() {
 	sprite_simulation_pause = false;
-	controller = Ref<SimulationController2D>(NULL);
+	controller = Ref<SimulationController2D>();
 
 	_sim_id = -1;
 	noise_scale = Vector2(1, 0);
 }
 
 ElasticMeshInstance2D::~ElasticMeshInstance2D() {
-	// TODO: Dereference __state_motion_iterator (?)
 }
 
 // END
@@ -530,7 +535,7 @@ void ElasticSprite::_update_simulation() {
 	}
 	sim->set_sim_state(_sim_id, sprite_simulation_pause ? ElasticSimulation::SIM_STATE_PAUSED : ElasticSimulation::SIM_STATE_RUNNING);
 	// request new geometry:
-	_mesh = Ref<ArrayMesh>(nullptr);
+	_mesh = Ref<ArrayMesh>();
 }
 
 void ElasticSprite::_update_geom() {
@@ -709,10 +714,10 @@ void ElasticSprite::_create_geom() {
 			indices.push_back(s * 2 + 1);
 			indices.push_back(s * 2 + 3);
 			indices.push_back(s * 2 + 2);
-		}
 
-		starting += steps[s];
-		tstarting += tsteps[s];
+			starting += steps[s];
+			tstarting += tsteps[s];
+		}
 	}
 
 	_mesh_array.clear();
@@ -742,6 +747,10 @@ Rect2 ElasticSprite::_get_texture_uv_rect() const {
 		rc = Rect2(region.position.x / tw, region.position.y / th, region.size.x / tw, region.size.y / th);
 	}
 	return rc;
+}
+
+bool ElasticSprite::_is_parent_controller() const {
+	return cast_to<SimulationControllerInstance2D>(get_parent()) != nullptr;
 }
 
 void ElasticSprite::_check_parent_controller() {
@@ -821,9 +830,13 @@ void ElasticSprite::_notification(int p_what) {
 void ElasticSprite::_on_texture_changed() {
 	// Rebuild simulation
 	if (get_texture().is_valid()) {
-		if (Ref<ElasticSimulation> sim = controller->get_simulation())
-			if (_sim_id >= 0)
-				sim->remove_sim(_sim_id);
+		if (controller.is_valid()) {
+			if (Ref<ElasticSimulation> sim = controller->get_simulation()) {
+				if (_sim_id >= 0) {
+					sim->remove_sim(_sim_id);
+				}
+			}
+		}
 		_sim_id = -1;
 		update();
 	}
@@ -976,7 +989,7 @@ void ElasticSprite::set_controller(const Ref<SimulationController2D> &p_controll
 	}
 }
 
-inline Point2 middle_point(const Point2 &a, const Point2 &b) {
+_FORCE_INLINE_ Point2 middle_point(const Point2 &a, const Point2 &b) {
 	return (a + b) / 2;
 }
 
@@ -1065,7 +1078,7 @@ void ElasticSprite::_bind_methods() {
 
 ElasticSprite::ElasticSprite() {
 	sprite_simulation_pause = false;
-	controller = Ref<SimulationController2D>(NULL);
+	controller = Ref<SimulationController2D>();
 	noise_scale = Vector2(1, 0);
 
 	geometry_enable_deformation = true;
@@ -1085,7 +1098,590 @@ ElasticSprite::ElasticSprite() {
 }
 
 ElasticSprite::~ElasticSprite() {
-	// TODO: Dereference __state_motion_iterator (?)
 }
 
-// END
+// END Sprite elastic-deform.
+
+#ifdef DOCTEST
+#include "common/gd_core.h"
+#include "doctest.h"
+
+TEST_SUITE("[[bend_deform_2d]]") {
+	// --- SimulationController2D ---
+
+	TEST_CASE("[SimulationController2D] default construction") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		CHECK(ctrl.is_valid());
+		CHECK(ctrl->is_simulation_paused() == true);
+		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_MEDIUM);
+		CHECK(ctrl->get_simulation_force() == Vector2(10, 10));
+		CHECK(ctrl->is_noise_modulation_active() == false);
+		CHECK(ctrl->get_noise_time_scale() == 10);
+		CHECK(ctrl->get_noise_pixel_resolution() == 10);
+		CHECK(ctrl->get_simulation().is_valid());
+	}
+
+	TEST_CASE("[SimulationController2D] set/get simulation_pause") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		CHECK(ctrl->is_simulation_paused() == true);
+		ctrl->set_simulation_pause(false);
+		CHECK(ctrl->is_simulation_paused() == false);
+		ctrl->set_simulation_pause(true);
+		CHECK(ctrl->is_simulation_paused() == true);
+	}
+
+	TEST_CASE("[SimulationController2D] set/get simulation_precision") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_simulation_precision(SimulationController2D::PRECISION_LOW);
+		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_LOW);
+		ctrl->set_simulation_precision(SimulationController2D::PRECISION_HIGH);
+		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_HIGH);
+		ctrl->set_simulation_precision(SimulationController2D::PRECISION_MEDIUM);
+		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_MEDIUM);
+	}
+
+	TEST_CASE("[SimulationController2D] set/get simulation_force") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_simulation_force(Vector2(5, 15));
+		CHECK(ctrl->get_simulation_force() == Vector2(5, 15));
+		ctrl->set_simulation_force(Vector2(0, 0));
+		CHECK(ctrl->get_simulation_force() == Vector2(0, 0));
+		ctrl->set_simulation_force(Vector2(-3, 7));
+		CHECK(ctrl->get_simulation_force() == Vector2(-3, 7));
+	}
+
+	TEST_CASE("[SimulationController2D] set/get noise_modulation") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		CHECK(ctrl->is_noise_modulation_active() == false);
+		ctrl->set_noise_modulation(true);
+		CHECK(ctrl->is_noise_modulation_active() == true);
+		ctrl->set_noise_modulation(false);
+		CHECK(ctrl->is_noise_modulation_active() == false);
+	}
+
+	TEST_CASE("[SimulationController2D] set/get noise_time_scale") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_noise_time_scale(50);
+		CHECK(ctrl->get_noise_time_scale() == 50);
+		ctrl->set_noise_time_scale(0);
+		CHECK(ctrl->get_noise_time_scale() == 0);
+		ctrl->set_noise_time_scale(100);
+		CHECK(ctrl->get_noise_time_scale() == 100);
+	}
+
+	TEST_CASE("[SimulationController2D] set/get noise_pixel_resolution") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_noise_pixel_resolution(25);
+		CHECK(ctrl->get_noise_pixel_resolution() == 25);
+		ctrl->set_noise_pixel_resolution(1);
+		CHECK(ctrl->get_noise_pixel_resolution() == 1);
+	}
+
+	TEST_CASE("[SimulationController2D] get_current_noise_modulation returns valid range") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		Vector2 noise = ctrl->get_current_noise_modulation(Vector2(100, 100));
+		CHECK(noise.x >= 0);
+		CHECK(noise.x <= Math_Two_PI + CMP_EPSILON);
+		CHECK(noise.y >= -CMP_EPSILON);
+		CHECK(noise.y <= 1.0 + CMP_EPSILON);
+	}
+
+	TEST_CASE("[SimulationController2D] noise modulation varies with position") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		Vector2 noise_a = ctrl->get_current_noise_modulation(Vector2(0, 0));
+		Vector2 noise_b = ctrl->get_current_noise_modulation(Vector2(1000, 1000));
+		CHECK((noise_a.x != noise_b.x || noise_a.y != noise_b.y));
+	}
+
+	TEST_CASE("[SimulationController2D] reset_simulation") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_simulation_pause(false);
+		ctrl->simulation_progress(0.1);
+		ctrl->reset_simulation();
+	}
+
+	TEST_CASE("[SimulationController2D] simulation_progress while paused") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		CHECK(ctrl->is_simulation_paused() == true);
+		ctrl->simulation_progress(0.016);
+		ctrl->simulation_progress(0.016);
+	}
+
+	TEST_CASE("[SimulationController2D] simulation_progress runs when unpaused") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_simulation_pause(false);
+		ctrl->simulation_progress(0.016);
+		ctrl->simulation_progress(0.016);
+		ctrl->simulation_progress(0.016);
+	}
+
+	TEST_CASE("[SimulationController2D] precision enum boundary validation") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_simulation_precision(SimulationController2D::PRECISION_LOW);
+		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_LOW);
+		ctrl->set_simulation_precision((SimulationController2D::SimulationPrecision)99);
+		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_LOW);
+	}
+
+	// --- ElasticSimulation ---
+
+	TEST_CASE("[ElasticSimulation] default construction") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		CHECK(sim.is_valid());
+	}
+
+	TEST_CASE("[ElasticSimulation] make_sim returns valid id") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM, 0.5, false);
+		CHECK(id >= 0);
+		CHECK(sim->get_sim_particles_count(id) > 0);
+	}
+
+	TEST_CASE("[ElasticSimulation] make_sim with different anchors") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id0 = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_LEFT);
+		int id1 = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_RIGHT);
+		int id2 = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_TOP);
+		int id3 = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		CHECK(id0 >= 0);
+		CHECK(id1 >= 0);
+		CHECK(id2 >= 0);
+		CHECK(id3 >= 0);
+		CHECK(sim->get_sim_particles_count(id0) == sim->get_sim_particles_count(id1));
+		CHECK(sim->get_sim_particles_count(id2) == sim->get_sim_particles_count(id3));
+	}
+
+	TEST_CASE("[ElasticSimulation] make_sim with size_variation") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id_normal = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int id_varied = sim->make_sim(Size2(100, 200), 3, true, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		CHECK(id_normal >= 0);
+		CHECK(id_varied >= 0);
+		CHECK(sim->get_sim_particles_count(id_normal) > 0);
+		CHECK(sim->get_sim_particles_count(id_varied) > 0);
+	}
+
+	TEST_CASE("[ElasticSimulation] update_sim preserves particle structure") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int count_before = sim->get_sim_particles_count(id);
+		sim->update_sim(id, Size2(150, 250), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int count_after = sim->get_sim_particles_count(id);
+		CHECK(count_before == count_after);
+	}
+
+	TEST_CASE("[ElasticSimulation] set/get sim state") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		sim->set_sim_state(id, ElasticSimulation::SIM_STATE_RUNNING);
+		CHECK(sim->get_sim_state(id) == ElasticSimulation::SIM_STATE_RUNNING);
+		sim->set_sim_state(id, ElasticSimulation::SIM_STATE_PAUSED);
+		CHECK(sim->get_sim_state(id) == ElasticSimulation::SIM_STATE_PAUSED);
+	}
+
+	TEST_CASE("[ElasticSimulation] particle positions are initialized") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int count = sim->get_sim_particles_count(id);
+		CHECK(count > 0);
+		for (int i = 0; i < count; i++) {
+			Vector2 pos = sim->get_sim_particle_pos(id, i);
+			CHECK(Math::is_finite(pos.x));
+			CHECK(Math::is_finite(pos.y));
+		}
+	}
+
+	TEST_CASE("[ElasticSimulation] particle mass is positive") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int count = sim->get_sim_particles_count(id);
+		for (int i = 0; i < count; i++) {
+			CHECK(sim->get_sim_particle_mass(id, i) > 0);
+		}
+	}
+
+	TEST_CASE("[ElasticSimulation] fixed particles exist (anchor points)") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int count = sim->get_sim_particles_count(id);
+		bool has_fixed = false;
+		for (int i = 0; i < count; i++) {
+			if (sim->is_sim_particle_fixed(id, i)) {
+				has_fixed = true;
+				break;
+			}
+		}
+		CHECK(has_fixed);
+	}
+
+	TEST_CASE("[ElasticSimulation] constraints exist after make_sim") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		CHECK(sim->get_sim_constraint_count(id) > 0);
+	}
+
+	TEST_CASE("[ElasticSimulation] constraint deviation in range") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int ccnt = sim->get_sim_constraint_count(id);
+		for (int i = 0; i < ccnt; i++) {
+			ElasticSimulation::Constraint c = sim->get_sim_constraint_at(id, i);
+			CHECK(c.deviation >= -1.0);
+			CHECK(c.deviation <= 1.0);
+		}
+	}
+
+	TEST_CASE("[ElasticSimulation] simulate_all moves particles") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		sim->set_sim_state(id, ElasticSimulation::SIM_STATE_RUNNING);
+
+		int count = sim->get_sim_particles_count(id);
+		Vector<Vector2> initial_pos;
+		for (int i = 0; i < count; i++) {
+			initial_pos.push_back(sim->get_sim_particle_pos(id, i));
+		}
+
+		for (int step = 0; step < 10; step++) {
+			sim->simulate_all(0.05, Vector2(10, 5));
+		}
+
+		bool any_moved = false;
+		for (int i = 0; i < count; i++) {
+			if (!sim->is_sim_particle_fixed(id, i)) {
+				Vector2 new_pos = sim->get_sim_particle_pos(id, i);
+				if (!new_pos.is_equal_approx(initial_pos[i])) {
+					any_moved = true;
+					break;
+				}
+			}
+		}
+		CHECK(any_moved);
+	}
+
+	TEST_CASE("[ElasticSimulation] simulate with per-id forces") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		sim->set_sim_state(id, ElasticSimulation::SIM_STATE_RUNNING);
+
+		std::map<simid_t, Vector2> forces;
+		forces[id] = Vector2(5, 10);
+
+		for (int step = 0; step < 5; step++) {
+			sim->simulate(0.05, forces);
+		}
+	}
+
+	TEST_CASE("[ElasticSimulation] remove_sim") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		CHECK(id >= 0);
+		sim->remove_sim(id);
+		int id2 = sim->make_sim(Size2(100, 100), 2, false, ElasticSimulation::SIM_ANCHOR_TOP);
+		CHECK(id2 >= 0);
+	}
+
+	TEST_CASE("[ElasticSimulation] reset_sim") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id = sim->make_sim(Size2(100, 200), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		sim->set_sim_state(id, ElasticSimulation::SIM_STATE_RUNNING);
+		sim->simulate_all(0.05, Vector2(10, 10));
+		sim->reset_sim();
+	}
+
+	TEST_CASE("[ElasticSimulation] stiffness factor") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id_soft = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM, 0.0);
+		int id_stiff = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM, 1.0);
+		CHECK(sim->get_sim_particles_count(id_soft) > 0);
+		CHECK(sim->get_sim_particles_count(id_stiff) > 0);
+	}
+
+	TEST_CASE("[ElasticSimulation] multiple sims coexist") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int ids[5];
+		for (int i = 0; i < 5; i++) {
+			ids[i] = sim->make_sim(Size2(50 + i * 10, 100 + i * 20), 2, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+			CHECK(ids[i] >= 0);
+			sim->set_sim_state(ids[i], ElasticSimulation::SIM_STATE_RUNNING);
+		}
+		sim->simulate_all(0.05, Vector2(3, 7));
+		for (int i = 0; i < 5; i++) {
+			CHECK(sim->get_sim_particles_count(ids[i]) > 0);
+		}
+	}
+
+	// --- SimulationControllerDebugInstance2D ---
+
+	TEST_CASE("[SimulationControllerDebugInstance2D] default construction") {
+		SimulationControllerDebugInstance2D *debug = memnew(SimulationControllerDebugInstance2D);
+		CHECK(debug->get_cell_size() == 20);
+		CHECK(debug->get_transform() == Transform2D());
+		memdelete(debug);
+	}
+
+	TEST_CASE("[SimulationControllerDebugInstance2D] set/get cell_size") {
+		SimulationControllerDebugInstance2D *debug = memnew(SimulationControllerDebugInstance2D);
+		debug->set_cell_size(50);
+		CHECK(debug->get_cell_size() == 50);
+		debug->set_cell_size(10);
+		CHECK(debug->get_cell_size() == 10);
+		memdelete(debug);
+	}
+
+	// --- SimulationControllerInstance2D ---
+
+	TEST_CASE("[SimulationControllerInstance2D] default construction") {
+		SimulationControllerInstance2D *instance = memnew(SimulationControllerInstance2D);
+		CHECK(instance->get_controller().is_null());
+		CHECK(instance->get_debug_controller() == false);
+		memdelete(instance);
+	}
+
+	TEST_CASE("[SimulationControllerInstance2D] set/get controller") {
+		SimulationControllerInstance2D *instance = memnew(SimulationControllerInstance2D);
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		instance->set_controller(ctrl);
+		CHECK(instance->get_controller() == ctrl);
+		Ref<SimulationController2D> ctrl2 = newref(SimulationController2D);
+		instance->set_controller(ctrl2);
+		CHECK(instance->get_controller() == ctrl2);
+		instance->set_controller(Ref<SimulationController2D>());
+		CHECK(instance->get_controller().is_null());
+		memdelete(instance);
+	}
+
+	// --- ElasticMeshInstance2D ---
+
+	TEST_CASE("[ElasticMeshInstance2D] default construction") {
+		ElasticMeshInstance2D *mesh = memnew(ElasticMeshInstance2D);
+		CHECK(mesh->get_simulation_id() == -1);
+		CHECK(mesh->is_sprite_simulation_paused() == false);
+		CHECK(mesh->get_controller().is_null());
+		CHECK(mesh->get_noise_scale() == Vector2(1, 0));
+		memdelete(mesh);
+	}
+
+	TEST_CASE("[ElasticMeshInstance2D] set/get sprite_simulation_pause") {
+		ElasticMeshInstance2D *mesh = memnew(ElasticMeshInstance2D);
+		mesh->set_sprite_simulation_pause(true);
+		CHECK(mesh->is_sprite_simulation_paused() == true);
+		mesh->set_sprite_simulation_pause(false);
+		CHECK(mesh->is_sprite_simulation_paused() == false);
+		memdelete(mesh);
+	}
+
+	TEST_CASE("[ElasticMeshInstance2D] set/get noise_scale") {
+		ElasticMeshInstance2D *mesh = memnew(ElasticMeshInstance2D);
+		mesh->set_noise_scale(Vector2(2, 3));
+		CHECK(mesh->get_noise_scale() == Vector2(2, 3));
+		memdelete(mesh);
+	}
+
+	TEST_CASE("[ElasticMeshInstance2D] set/get controller") {
+		ElasticMeshInstance2D *mesh = memnew(ElasticMeshInstance2D);
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		mesh->set_controller(ctrl);
+		CHECK(mesh->get_controller() == ctrl);
+		mesh->set_controller(Ref<SimulationController2D>());
+		CHECK(mesh->get_controller().is_null());
+		memdelete(mesh);
+	}
+
+	// --- ElasticSprite ---
+
+	TEST_CASE("[ElasticSprite] default construction") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		CHECK(sprite->get_simulation_id() == -1);
+		CHECK(sprite->is_sprite_simulation_paused() == false);
+		CHECK(sprite->get_controller().is_null());
+		CHECK(sprite->get_noise_scale() == Vector2(1, 0));
+		CHECK(sprite->is_geometry_deformation_enabled() == true);
+		CHECK(sprite->get_geometry_segments() == 1);
+		CHECK(sprite->is_geometry_size_variation() == false);
+		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		CHECK(sprite->get_geometry_pixel_unit() == doctest::Approx(1.0));
+		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.5));
+		CHECK(sprite->is_physics_variation() == false);
+		CHECK(sprite->get_geometry_debug() == false);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get geometry_enable_deformation") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_geometry_enable_deformation(false);
+		CHECK(sprite->is_geometry_deformation_enabled() == false);
+		sprite->set_geometry_enable_deformation(true);
+		CHECK(sprite->is_geometry_deformation_enabled() == true);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get geometry_segments with validation") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_geometry_segments(3);
+		CHECK(sprite->get_geometry_segments() == 3);
+		sprite->set_geometry_segments(5);
+		CHECK(sprite->get_geometry_segments() == 5);
+		// Reject zero
+		sprite->set_geometry_segments(0);
+		CHECK(sprite->get_geometry_segments() == 5);
+		// Reject negative
+		sprite->set_geometry_segments(-1);
+		CHECK(sprite->get_geometry_segments() == 5);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get geometry_anchor with validation") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_geometry_anchor(ElasticSimulation::SIM_ANCHOR_LEFT);
+		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_LEFT);
+		sprite->set_geometry_anchor(ElasticSimulation::SIM_ANCHOR_RIGHT);
+		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_RIGHT);
+		sprite->set_geometry_anchor(ElasticSimulation::SIM_ANCHOR_TOP);
+		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_TOP);
+		sprite->set_geometry_anchor(ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		// Invalid
+		sprite->set_geometry_anchor((ElasticSimulation::Anchor)99);
+		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get geometry_pixel_unit with validation") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_geometry_pixel_unit(0.5);
+		CHECK(sprite->get_geometry_pixel_unit() == doctest::Approx(0.5));
+		// Too small
+		sprite->set_geometry_pixel_unit(0.0001);
+		CHECK(sprite->get_geometry_pixel_unit() == doctest::Approx(0.5));
+		// Too large
+		sprite->set_geometry_pixel_unit(1.5);
+		CHECK(sprite->get_geometry_pixel_unit() == doctest::Approx(0.5));
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get geometry_stiffness with validation") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_geometry_stiffness(0.0);
+		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.0));
+		sprite->set_geometry_stiffness(1.0);
+		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(1.0));
+		sprite->set_geometry_stiffness(0.75);
+		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.75));
+		// Below 0
+		sprite->set_geometry_stiffness(-0.1);
+		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.75));
+		// Above 1
+		sprite->set_geometry_stiffness(1.1);
+		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.75));
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get geometry_size_variation") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_geometry_size_variation(true);
+		CHECK(sprite->is_geometry_size_variation() == true);
+		sprite->set_geometry_size_variation(false);
+		CHECK(sprite->is_geometry_size_variation() == false);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get physics_variation") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_physics_variation(true);
+		CHECK(sprite->is_physics_variation() == true);
+		sprite->set_physics_variation(false);
+		CHECK(sprite->is_physics_variation() == false);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get noise_scale") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_noise_scale(Vector2(3, 5));
+		CHECK(sprite->get_noise_scale() == Vector2(3, 5));
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get sprite_simulation_pause") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_sprite_simulation_pause(true);
+		CHECK(sprite->is_sprite_simulation_paused() == true);
+		sprite->set_sprite_simulation_pause(false);
+		CHECK(sprite->is_sprite_simulation_paused() == false);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get geometry_debug") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		sprite->set_geometry_debug(true);
+		CHECK(sprite->get_geometry_debug() == true);
+		sprite->set_geometry_debug(false);
+		CHECK(sprite->get_geometry_debug() == false);
+		memdelete(sprite);
+	}
+
+	TEST_CASE("[ElasticSprite] set/get controller") {
+		ElasticSprite *sprite = memnew(ElasticSprite);
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		sprite->set_controller(ctrl);
+		CHECK(sprite->get_controller() == ctrl);
+		// Same controller is no-op
+		sprite->set_controller(ctrl);
+		CHECK(sprite->get_controller() == ctrl);
+		// Replace
+		Ref<SimulationController2D> ctrl2 = newref(SimulationController2D);
+		sprite->set_controller(ctrl2);
+		CHECK(sprite->get_controller() == ctrl2);
+		// Clear
+		sprite->set_controller(Ref<SimulationController2D>());
+		CHECK(sprite->get_controller().is_null());
+		CHECK(sprite->get_simulation_id() == -1);
+		memdelete(sprite);
+	}
+
+	// --- Helper: middle_point ---
+
+	TEST_CASE("[bend_deform_2d] middle_point") {
+		CHECK(middle_point(Point2(0, 0), Point2(10, 10)) == Point2(5, 5));
+		CHECK(middle_point(Point2(-4, 6), Point2(4, -6)) == Point2(0, 0));
+		CHECK(middle_point(Point2(1, 1), Point2(1, 1)) == Point2(1, 1));
+		CHECK(middle_point(Point2(100, 200), Point2(300, 400)) == Point2(200, 300));
+	}
+
+	// --- Integration ---
+
+	TEST_CASE("[bend_deform_2d] controller manages simulation lifecycle") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		Ref<ElasticSimulation> sim = ctrl->get_simulation();
+		CHECK(sim.is_valid());
+
+		int id = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM, 0.5);
+		CHECK(id >= 0);
+
+		ctrl->set_simulation_pause(false);
+		ctrl->simulation_progress(0.016);
+		ctrl->simulation_progress(0.016);
+		ctrl->reset_simulation();
+	}
+
+	TEST_CASE("[bend_deform_2d] simulation with noise modulation (no nodes)") {
+		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
+		ctrl->set_noise_modulation(true);
+		ctrl->set_noise_time_scale(20);
+		ctrl->set_noise_pixel_resolution(5);
+		ctrl->set_simulation_pause(false);
+		ctrl->simulation_progress(0.016);
+		ctrl->simulation_progress(0.016);
+	}
+
+	TEST_CASE("[bend_deform_2d] segment count affects particle count") {
+		Ref<ElasticSimulation> sim = newref(ElasticSimulation);
+		int id1 = sim->make_sim(Size2(100, 200), 1, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int id3 = sim->make_sim(Size2(100, 200), 3, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		int id5 = sim->make_sim(Size2(100, 200), 5, false, ElasticSimulation::SIM_ANCHOR_BOTTOM);
+		CHECK(sim->get_sim_particles_count(id1) < sim->get_sim_particles_count(id3));
+		CHECK(sim->get_sim_particles_count(id3) < sim->get_sim_particles_count(id5));
+	}
+}
+
+#endif // DOCTEST

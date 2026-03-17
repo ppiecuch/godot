@@ -148,6 +148,7 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 #include "visual/destructible_sprite.h"
 #include "visual/explosion_particles.h"
 #include "visual/figure_2d.h"
+#include "visual/foliage_2d_animation.h"
 #include "visual/grid_rect.h"
 #include "visual/nixie_font.h"
 #include "visual/pixel_spaceships.h"
@@ -533,6 +534,9 @@ void register_gdextensions_types() {
 	ClassDB::register_class<ElasticMeshInstance2D>();
 	ClassDB::register_class<FakeExplosionParticles2D>();
 	ClassDB::register_class<Figure2D>();
+	ClassDB::register_class<FoliageMesh2D>();
+	ClassDB::register_class<FoliagePath2D>();
+	ClassDB::register_class<FoliageAnimation2D>();
 	ClassDB::register_class<NixieFont>();
 	ClassDB::register_class<PixelSpaceshipsOptions>();
 	ClassDB::register_class<PixelSpaceshipsMask>();
