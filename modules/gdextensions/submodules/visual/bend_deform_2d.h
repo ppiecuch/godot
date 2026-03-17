@@ -94,7 +94,7 @@ public:
 	void simulation_progress(real_t p_delta);
 
 	Vector2 get_simulation_force_for_node(Node *p_node);
-	bool add_simulation_force_for_node(Node *p_node, std::map<int, Vector2> &p_forces);
+	bool add_simulation_force_for_node(Node *p_node, std::map<simid_t, Vector2> &p_forces);
 
 	SimulationController2D();
 	~SimulationController2D();

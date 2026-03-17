@@ -922,7 +922,7 @@ FoliageAnimation2D::FoliageAnimation2D() {
 // ==========================================================================
 
 #ifdef DOCTEST
-#include "doctest.h"
+#include "doctest/doctest.h"
 
 TEST_SUITE("[[foliage_2d_animation]]") {
 	// --- FoliageMesh2D ---
@@ -1246,30 +1246,36 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 	}
 
 	TEST_CASE("[FoliageAnimation2D] make_linear_factors") {
-		PoolRealArray factors = FoliageAnimation2D::make_linear_factors(4);
+		FoliageAnimation2D *anim = memnew(FoliageAnimation2D);
+		PoolRealArray factors = anim->make_linear_factors(4);
 		CHECK(factors.size() == 5); // 4+1
 		CHECK(factors[0] == doctest::Approx(0.0));
 		CHECK(factors[1] == doctest::Approx(0.25));
 		CHECK(factors[2] == doctest::Approx(0.5));
 		CHECK(factors[3] == doctest::Approx(0.75));
 		CHECK(factors[4] == doctest::Approx(1.0));
+		memdelete(anim);
 	}
 
 	TEST_CASE("[FoliageAnimation2D] make_quadratic_factors") {
-		PoolRealArray factors = FoliageAnimation2D::make_quadratic_factors(4);
+		FoliageAnimation2D *anim = memnew(FoliageAnimation2D);
+		PoolRealArray factors = anim->make_quadratic_factors(4);
 		CHECK(factors.size() == 5);
 		CHECK(factors[0] == doctest::Approx(0.0));
 		CHECK(factors[1] == doctest::Approx(0.0625)); // 0.25^2
 		CHECK(factors[2] == doctest::Approx(0.25)); // 0.5^2
 		CHECK(factors[3] == doctest::Approx(0.5625)); // 0.75^2
 		CHECK(factors[4] == doctest::Approx(1.0));
+		memdelete(anim);
 	}
 
 	TEST_CASE("[FoliageAnimation2D] make_linear_factors monotonically increasing") {
-		PoolRealArray factors = FoliageAnimation2D::make_linear_factors(8);
+		FoliageAnimation2D *anim = memnew(FoliageAnimation2D);
+		PoolRealArray factors = anim->make_linear_factors(8);
 		for (int i = 1; i < factors.size(); i++) {
 			CHECK(factors[i] > factors[i - 1]);
 		}
+		memdelete(anim);
 	}
 
 	TEST_CASE("[FoliageAnimation2D] build_mesh creates mesh") {

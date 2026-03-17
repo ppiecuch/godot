@@ -243,9 +243,9 @@ public:
 	void update_animation();
 
 	// Generate default linear offset factors for n rows (0 at base, 1 at tip).
-	static PoolRealArray make_linear_factors(int p_height_segments);
+	PoolRealArray make_linear_factors(int p_height_segments);
 	// Generate quadratic offset factors (more movement at tip).
-	static PoolRealArray make_quadratic_factors(int p_height_segments);
+	PoolRealArray make_quadratic_factors(int p_height_segments);
 
 	FoliageAnimation2D();
 };

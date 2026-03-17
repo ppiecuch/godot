@@ -231,7 +231,7 @@ Vector2 SimulationController2D::get_simulation_force_for_node(Node *p_node) {
 	return simulation_force;
 }
 
-bool SimulationController2D::add_simulation_force_for_node(Node *p_node, std::map<int, Vector2> &p_forces) {
+bool SimulationController2D::add_simulation_force_for_node(Node *p_node, std::map<simid_t, Vector2> &p_forces) {
 	ERR_FAIL_NULL_V(p_node, false);
 	return _add_node_noise_modulation_value(p_node, _noise, _time_progress, noise_pixel_resolution, p_forces);
 }
@@ -1104,7 +1104,7 @@ ElasticSprite::~ElasticSprite() {
 
 #ifdef DOCTEST
 #include "common/gd_core.h"
-#include "doctest.h"
+#include "doctest/doctest.h"
 
 TEST_SUITE("[[bend_deform_2d]]") {
 	// --- SimulationController2D ---
@@ -1286,8 +1286,10 @@ TEST_SUITE("[[bend_deform_2d]]") {
 		CHECK(count > 0);
 		for (int i = 0; i < count; i++) {
 			Vector2 pos = sim->get_sim_particle_pos(id, i);
-			CHECK(Math::is_finite(pos.x));
-			CHECK(Math::is_finite(pos.y));
+			CHECK_FALSE(Math::is_nan(pos.x));
+			CHECK_FALSE(Math::is_inf(pos.x));
+			CHECK_FALSE(Math::is_nan(pos.y));
+			CHECK_FALSE(Math::is_inf(pos.y));
 		}
 	}
 

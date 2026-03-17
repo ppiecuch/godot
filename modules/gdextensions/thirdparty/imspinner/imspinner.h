@@ -2019,7 +2019,13 @@ namespace ImSpinner
         const float arc_angle = PI_2 / (float)points;
         const float angle_offset = arc_angle / num_segments;
 
+        // NOTE(upstream bug): dspeed is accumulated per circle (dspeed += rspeed)
+        // but never used. Likely intended to differentiate rotation speed per ring:
+        //   float angle = angleStep * arc_num + start * dspeed;  // instead of 'speed'
+        // This would make outer rings rotate slower/faster than inner ones.
+        // Keeping original behavior; suppressing warning.
         float dspeed = rspeed;
+        (void)dspeed;
         float angleStep = IM_PI * 2.0f / points; // Step between dots
 
         for (int c_num = 0; c_num < circles; c_num++) {
