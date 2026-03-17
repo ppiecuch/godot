@@ -618,6 +618,26 @@ if is_enabled("thorvg"):
 
 if is_enabled("swrender"):
     arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
+    # PortableGL backend (all platforms)
+    env_module.Append(CPPDEFINES=["SWRENDER_PORTABLEGL"])
+    env_module.Append(CPPPATH=["thirdparty/swr-portablegl"])
+    # Fusion2X backend (optional, GLES 1.0 fixed-function)
+    if os.path.isdir("thirdparty/swr-fusion2x"):
+        env_module.Append(CPPDEFINES=["SWRENDER_FUSION2X"])
+        env_module.Append(CPPPATH=[
+            "thirdparty/swr-fusion2x/include",
+            "thirdparty/swr-fusion2x/include/fusion2x",
+            "thirdparty/swr-fusion2x/src",
+        ])
+        f2x_srcs = (
+            Glob("thirdparty/swr-fusion2x/src/*.cpp")
+            + Glob("thirdparty/swr-fusion2x/src/renderer/*.cpp")
+            + Glob("thirdparty/swr-fusion2x/src/shaders/*.cpp")
+            + Glob("thirdparty/swr-fusion2x/src/shaders/optimized/*.cpp")
+            + Glob("thirdparty/swr-fusion2x/src/fixedpoint/*.cpp")
+        )
+        # Exclude regression test
+        thirdparty_sources += [f for f in f2x_srcs if "regressiontest" not in str(f)]
     if arch == "arm":  # vincent-gles1 with armjit
         env_module.Append(CPPDEFINES=["SWRENDER_VINCENT1"])
         egl_srcs = Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")

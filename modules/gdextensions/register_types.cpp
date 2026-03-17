@@ -269,6 +269,11 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 #include "canvasraster/canvas_raster.h"
 #endif
 
+#ifdef GDEXT_SWRENDER_ENABLED
+#include "swrender/gd_softrender.h"
+#include "swrender/gd_softrender_display.h"
+#endif
+
 #ifdef GDEXT_CCD_ENABLED
 #include "ccd/gd_ccd.h"
 #endif
@@ -341,14 +346,31 @@ static Ref<ImageLoaderThorSVG> image_loader_thor_svg;
 #ifdef TOOLS_ENABLED
 static void editor_init_callback() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
+	EditorNode *editor = EditorNode::get_singleton();
 
 #ifdef GDEXT_VISUAL_ENABLED
-	EditorNode::get_singleton()->add_editor_plugin(memnew(Cable2DEditorPlugin(EditorNode::get_singleton()))); /* Cable2D */
-	EditorNode::get_singleton()->add_editor_plugin(memnew(SpriteMeshEditorPlugin(EditorNode::get_singleton()))); /* SpriteMesh */
-	EditorNode::get_singleton()->add_editor_plugin(memnew(SpriteMeshLightEditorPlugin(EditorNode::get_singleton()))); /* SpriteMeshLight */
+	editor->add_editor_plugin(memnew(Cable2DEditorPlugin(editor))); /* Cable2D */
+	editor->add_editor_plugin(memnew(SpriteMeshEditorPlugin(editor))); /* SpriteMesh */
+	editor->add_editor_plugin(memnew(SpriteMeshLightEditorPlugin(editor))); /* SpriteMeshLight */
 #endif
 
-	EditorPlugins::add_by_type<ProceduralAnimationEditorPlugin>(); /* ProceduralAnimation */
+	editor->add_editor_plugin(memnew(ProceduralAnimationEditorPlugin(editor))); /* ProceduralAnimation */
+
+#ifdef GDEXT_SFXR_ENABLED
+	editor->add_editor_plugin(memnew(SfxrEditorPlugin(editor)));
+#endif
+#ifdef GDEXT_MESHLOD_ENABLED
+	editor->add_editor_plugin(memnew(MeshOptimizePlugin(editor)));
+#endif
+#ifdef GDEXT_SCENEMERGE_ENABLED
+	editor->add_editor_plugin(memnew(SceneMergePlugin(editor)));
+#endif
+#ifdef GDEXT_TEXTUREPACKER_ENABLED
+	editor->add_editor_plugin(memnew(EditorPluginPackerImageResource(editor)));
+#endif
+	editor->add_editor_plugin(memnew(ExplodomaticaEditorPlugin(editor)));
+	editor->add_editor_plugin(memnew(PowerStationEditorPlugin(editor)));
+	editor->add_editor_plugin(memnew(EditorIconPreview(editor)));
 }
 #endif // TOOLS_ENABLED
 
@@ -493,7 +515,6 @@ void register_gdextensions_types() {
 #ifdef TOOLS_ENABLED
 	Ref<ResourceImporterSfxr> sfx_data = memnew(ResourceImporterSfxr);
 	ResourceFormatImporter::get_singleton()->add_importer(sfx_data);
-	EditorPlugins::add_by_type<SfxrEditorPlugin>();
 #endif
 #endif // GDEXT_SFXR_ENABLED
 
@@ -710,6 +731,11 @@ void register_gdextensions_types() {
 	ClassDB::register_class<CanvasIty2D>();
 #endif // GDEXT_CANVASRASTER_ENABLED
 
+#ifdef GDEXT_SWRENDER_ENABLED
+	ClassDB::register_class<SoftRender>();
+	ClassDB::register_class<SoftRenderDisplay>();
+#endif // GDEXT_SWRENDER_ENABLED
+
 #ifdef GDEXT_CCD_ENABLED
 	ClassDB::register_class<CCDBox>();
 	ClassDB::register_class<CCDSphere>();
@@ -746,7 +772,6 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_MESHLOD_ENABLED
 	ClassDB::register_class<MeshOptimize>();
-	EditorPlugins::add_by_type<MeshOptimizePlugin>();
 #endif
 
 #ifdef GDEXT_MESHSLICER_ENABLED
@@ -757,7 +782,6 @@ void register_gdextensions_types() {
 #ifdef GDEXT_SCENEMERGE_ENABLED
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<SceneMerge>();
-	EditorPlugins::add_by_type<SceneMergePlugin>();
 #endif
 #endif
 
@@ -766,9 +790,6 @@ void register_gdextensions_types() {
 	ClassDB::register_class<TextureMerger>();
 	ClassDB::register_class<PackerImageResource>();
 	ClassDB::register_class<TextureLayerMerger>();
-#ifdef TOOLS_ENABLED
-	EditorPlugins::add_by_type<EditorPluginPackerImageResource>();
-#endif
 #endif
 
 #ifdef GDEXT_SPACEMOUSE_ENABLED
@@ -777,13 +798,8 @@ void register_gdextensions_types() {
 
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<ExplodomaticaGenerator>();
-	EditorPlugins::add_by_type<ExplodomaticaEditorPlugin>();
-
 	ClassDB::register_class<PowerStationGenerator>();
-	EditorPlugins::add_by_type<PowerStationEditorPlugin>();
-
 	ClassDB::register_class<EditorIconPreviewDialog>();
-	EditorPlugins::add_by_type<EditorIconPreview>();
 #endif
 
 #ifdef TOOLS_ENABLED

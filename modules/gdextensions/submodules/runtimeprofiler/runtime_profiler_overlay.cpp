@@ -193,8 +193,23 @@ void RuntimeProfilerOverlay::hide_overlay() {
 	print_verbose("RuntimeProfilerOverlay: hidden");
 }
 
+void RuntimeProfilerOverlay::_deferred_init() {
+	if (enabled && !initialized) {
+		_init_overlay();
+	}
+}
+
+bool RuntimeProfilerOverlay::_ensure_initialized() {
+	if (!initialized) {
+		if (!_init_overlay()) {
+			return false;
+		}
+	}
+	return true;
+}
+
 void RuntimeProfilerOverlay::toggle_overlay() {
-	if (!initialized && !_init_overlay()) {
+	if (!_ensure_initialized()) {
 		return;
 	}
 	_toggle_overlay();
@@ -225,6 +240,7 @@ RuntimeProfilerOverlay *RuntimeProfilerOverlay::get_singleton() {
 
 void RuntimeProfilerOverlay::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_idle_frame"), &RuntimeProfilerOverlay::_idle_frame);
+	ClassDB::bind_method(D_METHOD("_deferred_init"), &RuntimeProfilerOverlay::_deferred_init);
 
 	ClassDB::bind_method(D_METHOD("show_overlay"), &RuntimeProfilerOverlay::show_overlay);
 	ClassDB::bind_method(D_METHOD("hide_overlay"), &RuntimeProfilerOverlay::hide_overlay);
@@ -253,6 +269,10 @@ RuntimeProfilerOverlay::RuntimeProfilerOverlay() {
 #endif
 	GLOBAL_DEF("runtime_profiler/overlay_toggle_action", "toggle_profiler_overlay");
 	GLOBAL_DEF("runtime_profiler/overlay_auto_start", false);
+
+	// Auto-initialize on next idle frame so keyboard shortcut works
+	// without requiring an explicit toggle_overlay() call first.
+	call_deferred("_deferred_init");
 }
 
 RuntimeProfilerOverlay::~RuntimeProfilerOverlay() {

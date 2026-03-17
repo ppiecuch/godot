@@ -636,6 +636,7 @@ private:
 			}
 			String proj = get_project_key_from_path(dir);
 			EditorSettings::get_singleton()->set("projects/" + proj, dir);
+			EditorSettings::get_singleton()->set("filesystem/directories/last_project_path", dir.get_base_dir());
 			EditorSettings::get_singleton()->save();
 
 			hide();
@@ -744,8 +745,16 @@ public:
 			create_dir->hide();
 
 		} else {
-			fav_dir = EditorSettings::get_singleton()->get("filesystem/directories/default_project_path");
-			if (fav_dir != "") {
+			// For import, prefer last used project path; for new, use default.
+			String initial_dir;
+			if (mode == MODE_IMPORT && EditorSettings::get_singleton()->has_setting("filesystem/directories/last_project_path")) {
+				initial_dir = EditorSettings::get_singleton()->get("filesystem/directories/last_project_path");
+			}
+			if (initial_dir.empty()) {
+				initial_dir = EditorSettings::get_singleton()->get("filesystem/directories/default_project_path");
+			}
+			if (initial_dir != "" && DirAccess::exists(initial_dir)) {
+				fav_dir = initial_dir;
 				project_path->set_text(fav_dir);
 				fdialog->set_current_dir(fav_dir);
 			} else {

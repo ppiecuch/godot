@@ -212,6 +212,13 @@ void TweakBar::_auto_discover_configs() {
 		Variant result = parent->call("_tweak_bar_config");
 		if (result.get_type() == Variant::DICTIONARY) {
 			_apply_config(parent, result);
+		} else if (result.get_type() == Variant::ARRAY) {
+			Array configs = result;
+			for (int j = 0; j < configs.size(); j++) {
+				if (configs[j].get_type() == Variant::DICTIONARY) {
+					_apply_config(parent, configs[j]);
+				}
+			}
 		}
 	}
 }
@@ -241,9 +248,16 @@ void TweakBar::_apply_config(Object *p_object, const Dictionary &p_config) {
 					def = info["def"];
 				}
 				if (info.has("property")) {
-					// Bind to object property
+					// Bind to object property — use "object" override if provided
 					String prop = info["property"];
-					bind_property(bar_name, var_name, p_object, prop, def);
+					Object *target = p_object;
+					if (info.has("object") && info["object"].get_type() == Variant::OBJECT) {
+						Object *obj = info["object"];
+						if (obj) {
+							target = obj;
+						}
+					}
+					bind_property(bar_name, var_name, target, prop, def);
 				} else if (info.has("value")) {
 					// Static value
 					add_variant(bar_name, var_name, info["value"], def);
@@ -1535,6 +1549,73 @@ TEST_SUITE("[[anttweakbar]] bind_property") {
 		// Need a bar first
 		Node2D node;
 		CHECK_FALSE(tw.bind_property("NonExistent", "x", &node, "position"));
+	}
+
+	// bind_property with different target objects (tests "object" override path)
+
+	TEST_CASE("[anttweakbar] bind_property reads from target object") {
+		TweakBar tw;
+		tw.new_bar("BindTarget");
+		Node2D target;
+		target.set_position(Vector2(99, 77));
+
+		CHECK(tw.bind_property("BindTarget", "Pos", &target, "position"));
+
+		Variant val = tw.get_value("BindTarget", "Pos");
+		CHECK(val.get_type() == Variant::VECTOR2);
+		CHECK(Vector2(val) == Vector2(99, 77));
+	}
+
+	TEST_CASE("[anttweakbar] bind_property reflects target changes") {
+		TweakBar tw;
+		tw.new_bar("BindReflect");
+		Node2D target;
+		target.set_position(Vector2(10, 20));
+
+		tw.bind_property("BindReflect", "Pos", &target, "position");
+
+		target.set_position(Vector2(42, 0));
+		Variant val = tw.get_value("BindReflect", "Pos");
+		CHECK(Vector2(val) == Vector2(42, 0));
+	}
+
+	TEST_CASE("[anttweakbar] bind_property two objects same bar") {
+		TweakBar tw;
+		tw.new_bar("TwoObj");
+		Node2D a;
+		Node2D b;
+		a.set_position(Vector2(1, 2));
+		b.set_position(Vector2(3, 4));
+
+		CHECK(tw.bind_property("TwoObj", "PosA", &a, "position"));
+		CHECK(tw.bind_property("TwoObj", "PosB", &b, "position"));
+
+		CHECK(Vector2(tw.get_value("TwoObj", "PosA")) == Vector2(1, 2));
+		CHECK(Vector2(tw.get_value("TwoObj", "PosB")) == Vector2(3, 4));
+
+		// Changing one doesn't affect the other
+		a.set_position(Vector2(99, 99));
+		CHECK(Vector2(tw.get_value("TwoObj", "PosA")) == Vector2(99, 99));
+		CHECK(Vector2(tw.get_value("TwoObj", "PosB")) == Vector2(3, 4));
+	}
+
+	TEST_CASE("[anttweakbar] add_variant then get_value roundtrip") {
+		TweakBar tw;
+		tw.new_bar("Variant");
+
+		CHECK(tw.add_variant("Variant", "Speed", 5.0));
+		CHECK(tw.get_value("Variant", "Speed") == Variant(5.0));
+
+		CHECK(tw.add_variant("Variant", "Count", 42));
+		CHECK(tw.get_value("Variant", "Count") == Variant(42));
+	}
+
+	TEST_CASE("[anttweakbar] add_variant with def string") {
+		TweakBar tw;
+		tw.new_bar("VarDef");
+
+		CHECK(tw.add_variant("VarDef", "Pi", 3.14, "min=0 max=10 step=0.1"));
+		CHECK(tw.get_value("VarDef", "Pi") == Variant(3.14));
 	}
 }
 

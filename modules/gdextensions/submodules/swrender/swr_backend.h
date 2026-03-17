@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  runtime_profiler_overlay.h                                            */
+/*  swr_backend.h                                                         */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,59 +28,72 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef RUNTIME_PROFILER_OVERLAY_H
-#define RUNTIME_PROFILER_OVERLAY_H
+#ifndef SWR_BACKEND_H
+#define SWR_BACKEND_H
 
-#include "core/object.h"
+#include "core/ustring.h"
+#include <stdint.h>
 
-class CanvasLayer;
-class PanelContainer;
-class RuntimeProfiler;
-
-class RuntimeProfilerOverlay : public Object {
-	GDCLASS(RuntimeProfilerOverlay, Object);
-
-	static RuntimeProfilerOverlay *singleton;
-
-	CanvasLayer *canvas_layer;
-	PanelContainer *panel;
-	RuntimeProfiler *profiler;
-
-	bool overlay_visible;
-	bool initialized;
-	bool enabled;
-
-	// Keyboard combo state (polled each frame)
-	bool action_was_pressed;
-
-	// Gamepad combo state (L1 + R1 + Select)
-	bool pad_combo_was_active;
-
-	bool _init_overlay();
-	bool _ensure_initialized();
-	void _deferred_init();
-	void _idle_frame();
-	void _toggle_overlay();
-	void _setup_input_action();
-
-protected:
-	static void _bind_methods();
-
+class SWRBackend {
 public:
-	static RuntimeProfilerOverlay *get_singleton();
+	enum PrimitiveType {
+		PRIM_POINTS = 0,
+		PRIM_LINES,
+		PRIM_LINE_STRIP,
+		PRIM_LINE_LOOP,
+		PRIM_TRIANGLES,
+		PRIM_TRIANGLE_STRIP,
+		PRIM_TRIANGLE_FAN,
+		PRIM_QUADS,
+	};
 
-	void show_overlay();
-	void hide_overlay();
-	void toggle_overlay();
-	bool is_overlay_visible() const;
+	enum DrawFlags {
+		DRAW_HAS_COLORS = 1,
+		DRAW_HAS_TEXCOORDS = 2,
+		DRAW_HAS_NORMALS = 4,
+	};
 
-	void set_enabled(bool p_enabled);
-	bool is_enabled() const;
+	virtual ~SWRBackend() {}
 
-	RuntimeProfiler *get_profiler() const;
+	virtual bool initialize(int width, int height) = 0;
+	virtual void destroy() = 0;
+	virtual String get_name() const = 0;
+	virtual int get_width() const = 0;
+	virtual int get_height() const = 0;
 
-	RuntimeProfilerOverlay();
-	~RuntimeProfilerOverlay();
+	// Framebuffer
+	virtual void viewport(int x, int y, int w, int h) = 0;
+	virtual void clear_color(float r, float g, float b, float a) = 0;
+	virtual void clear(uint32_t mask) = 0;
+	virtual void read_pixels(uint8_t *rgba_dest) = 0;
+
+	// State
+	virtual void set_depth_test(bool enabled) = 0;
+	virtual void set_blend(bool enabled) = 0;
+	virtual void set_cull_face(bool enabled) = 0;
+
+	// Draw a batch of vertices with the given MVP matrix.
+	// positions: 3 floats per vertex (x,y,z)
+	// colors: 4 floats per vertex (r,g,b,a) or nullptr
+	// texcoords: 2 floats per vertex (u,v) or nullptr
+	// normals: 3 floats per vertex (nx,ny,nz) or nullptr
+	// mvp: 16 floats, 4x4 column-major matrix
+	// uniform_color: 4 floats (r,g,b,a), used when colors is nullptr
+	virtual void draw(PrimitiveType type,
+			const float *positions, int vertex_count,
+			const float *colors,
+			const float *texcoords,
+			const float *normals,
+			const float *mvp,
+			const float *uniform_color) = 0;
+
+	// Textures
+	virtual uint32_t upload_texture(int w, int h, const uint8_t *rgba_data) = 0;
+	virtual void bind_texture(uint32_t id) = 0;
+	virtual void delete_texture(uint32_t id) = 0;
+
+	static SWRBackend *create_portablegl();
+	static SWRBackend *create_fusion2x();
 };
 
-#endif // RUNTIME_PROFILER_OVERLAY_H
+#endif // SWR_BACKEND_H

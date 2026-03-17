@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  runtime_profiler_overlay.h                                            */
+/*  swr_builtin_shaders.cpp                                               */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,59 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef RUNTIME_PROFILER_OVERLAY_H
-#define RUNTIME_PROFILER_OVERLAY_H
+// Built-in shader implementations are defined directly in swr_portablegl.cpp
+// as static functions, since they are tightly coupled to the PortableGL API
+// and need access to PGL types (pgl_vec4, pgl_mat4, Shader_Builtins).
+//
+// This file exists as a placeholder for the build system (SCsub globs *.cpp).
+// The SWRUniforms struct and SWRShaderType enum are declared in
+// swr_builtin_shaders.h for use by other translation units.
 
-#include "core/object.h"
-
-class CanvasLayer;
-class PanelContainer;
-class RuntimeProfiler;
-
-class RuntimeProfilerOverlay : public Object {
-	GDCLASS(RuntimeProfilerOverlay, Object);
-
-	static RuntimeProfilerOverlay *singleton;
-
-	CanvasLayer *canvas_layer;
-	PanelContainer *panel;
-	RuntimeProfiler *profiler;
-
-	bool overlay_visible;
-	bool initialized;
-	bool enabled;
-
-	// Keyboard combo state (polled each frame)
-	bool action_was_pressed;
-
-	// Gamepad combo state (L1 + R1 + Select)
-	bool pad_combo_was_active;
-
-	bool _init_overlay();
-	bool _ensure_initialized();
-	void _deferred_init();
-	void _idle_frame();
-	void _toggle_overlay();
-	void _setup_input_action();
-
-protected:
-	static void _bind_methods();
-
-public:
-	static RuntimeProfilerOverlay *get_singleton();
-
-	void show_overlay();
-	void hide_overlay();
-	void toggle_overlay();
-	bool is_overlay_visible() const;
-
-	void set_enabled(bool p_enabled);
-	bool is_enabled() const;
-
-	RuntimeProfiler *get_profiler() const;
-
-	RuntimeProfilerOverlay();
-	~RuntimeProfilerOverlay();
-};
-
-#endif // RUNTIME_PROFILER_OVERLAY_H
+#include "swr_builtin_shaders.h"

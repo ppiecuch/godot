@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  runtime_profiler_overlay.h                                            */
+/*  gd_softrender_display.h                                               */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,59 +28,44 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef RUNTIME_PROFILER_OVERLAY_H
-#define RUNTIME_PROFILER_OVERLAY_H
+#ifndef GD_SOFTRENDER_DISPLAY_H
+#define GD_SOFTRENDER_DISPLAY_H
 
-#include "core/object.h"
+#include "gd_softrender.h"
+#include "scene/2d/node_2d.h"
 
-class CanvasLayer;
-class PanelContainer;
-class RuntimeProfiler;
+class SoftRenderDisplay : public Node2D {
+	GDCLASS(SoftRenderDisplay, Node2D);
 
-class RuntimeProfilerOverlay : public Object {
-	GDCLASS(RuntimeProfilerOverlay, Object);
-
-	static RuntimeProfilerOverlay *singleton;
-
-	CanvasLayer *canvas_layer;
-	PanelContainer *panel;
-	RuntimeProfiler *profiler;
-
-	bool overlay_visible;
-	bool initialized;
-	bool enabled;
-
-	// Keyboard combo state (polled each frame)
-	bool action_was_pressed;
-
-	// Gamepad combo state (L1 + R1 + Select)
-	bool pad_combo_was_active;
-
-	bool _init_overlay();
-	bool _ensure_initialized();
-	void _deferred_init();
-	void _idle_frame();
-	void _toggle_overlay();
-	void _setup_input_action();
+	Size2 canvas_size;
+	bool centered;
+	int backend;
+	Ref<SoftRender> soft_render;
 
 protected:
 	static void _bind_methods();
+	void _notification(int p_what);
 
 public:
-	static RuntimeProfilerOverlay *get_singleton();
+#ifdef TOOLS_ENABLED
+	Dictionary _edit_get_state() const;
+	void _edit_set_state(const Dictionary &p_state);
+	bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const;
+	Rect2 _edit_get_rect() const;
+	void _edit_set_rect(const Rect2 &p_rect);
+	bool _edit_use_rect() const;
+#endif
 
-	void show_overlay();
-	void hide_overlay();
-	void toggle_overlay();
-	bool is_overlay_visible() const;
+	void set_canvas_size(const Size2 &p_size);
+	Size2 get_canvas_size() const;
+	void set_centered(bool p_centered);
+	bool is_centered() const;
+	void set_backend(int p_backend);
+	int get_backend() const;
+	Ref<SoftRender> get_soft_render();
+	void refresh();
 
-	void set_enabled(bool p_enabled);
-	bool is_enabled() const;
-
-	RuntimeProfiler *get_profiler() const;
-
-	RuntimeProfilerOverlay();
-	~RuntimeProfilerOverlay();
+	SoftRenderDisplay();
 };
 
-#endif // RUNTIME_PROFILER_OVERLAY_H
+#endif // GD_SOFTRENDER_DISPLAY_H

@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  runtime_profiler_overlay.h                                            */
+/*  swr_builtin_shaders.h                                                 */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,59 +28,27 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef RUNTIME_PROFILER_OVERLAY_H
-#define RUNTIME_PROFILER_OVERLAY_H
+#ifndef SWR_BUILTIN_SHADERS_H
+#define SWR_BUILTIN_SHADERS_H
 
-#include "core/object.h"
+// Built-in shader programs for the PortableGL backend.
+// PortableGL uses C function pointers instead of GLSL.
+// These are auto-selected based on which vertex attributes
+// are used between begin_mesh() and end_mesh().
 
-class CanvasLayer;
-class PanelContainer;
-class RuntimeProfiler;
-
-class RuntimeProfilerOverlay : public Object {
-	GDCLASS(RuntimeProfilerOverlay, Object);
-
-	static RuntimeProfilerOverlay *singleton;
-
-	CanvasLayer *canvas_layer;
-	PanelContainer *panel;
-	RuntimeProfiler *profiler;
-
-	bool overlay_visible;
-	bool initialized;
-	bool enabled;
-
-	// Keyboard combo state (polled each frame)
-	bool action_was_pressed;
-
-	// Gamepad combo state (L1 + R1 + Select)
-	bool pad_combo_was_active;
-
-	bool _init_overlay();
-	bool _ensure_initialized();
-	void _deferred_init();
-	void _idle_frame();
-	void _toggle_overlay();
-	void _setup_input_action();
-
-protected:
-	static void _bind_methods();
-
-public:
-	static RuntimeProfilerOverlay *get_singleton();
-
-	void show_overlay();
-	void hide_overlay();
-	void toggle_overlay();
-	bool is_overlay_visible() const;
-
-	void set_enabled(bool p_enabled);
-	bool is_enabled() const;
-
-	RuntimeProfiler *get_profiler() const;
-
-	RuntimeProfilerOverlay();
-	~RuntimeProfilerOverlay();
+enum SWRShaderType {
+	SWR_SHADER_FLAT_COLOR = 0, // uniform color only
+	SWR_SHADER_VERTEX_COLOR, // per-vertex color interpolation
+	SWR_SHADER_TEXTURED, // texture sampling with uniform color
+	SWR_SHADER_TEXTURED_VERTEX_COLOR, // texture + per-vertex color
+	SWR_SHADER_MAX,
 };
 
-#endif // RUNTIME_PROFILER_OVERLAY_H
+// Uniform block passed to all built-in shaders.
+struct SWRUniforms {
+	float mvp[16]; // 4x4 column-major MVP matrix
+	float color[4]; // uniform color (r,g,b,a)
+	int tex_bound; // whether a texture is bound
+};
+
+#endif // SWR_BUILTIN_SHADERS_H

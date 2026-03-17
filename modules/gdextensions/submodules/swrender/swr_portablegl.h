@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  runtime_profiler_overlay.h                                            */
+/*  swr_portablegl.h                                                      */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,59 +28,48 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef RUNTIME_PROFILER_OVERLAY_H
-#define RUNTIME_PROFILER_OVERLAY_H
+#ifndef SWR_PORTABLEGL_H
+#define SWR_PORTABLEGL_H
 
-#include "core/object.h"
+#include "swr_backend.h"
 
-class CanvasLayer;
-class PanelContainer;
-class RuntimeProfiler;
+// Forward declaration only. The PortableGL header is included
+// exclusively in swr_portablegl.cpp to contain symbol scope.
 
-class RuntimeProfilerOverlay : public Object {
-	GDCLASS(RuntimeProfilerOverlay, Object);
-
-	static RuntimeProfilerOverlay *singleton;
-
-	CanvasLayer *canvas_layer;
-	PanelContainer *panel;
-	RuntimeProfiler *profiler;
-
-	bool overlay_visible;
-	bool initialized;
-	bool enabled;
-
-	// Keyboard combo state (polled each frame)
-	bool action_was_pressed;
-
-	// Gamepad combo state (L1 + R1 + Select)
-	bool pad_combo_was_active;
-
-	bool _init_overlay();
-	bool _ensure_initialized();
-	void _deferred_init();
-	void _idle_frame();
-	void _toggle_overlay();
-	void _setup_input_action();
-
-protected:
-	static void _bind_methods();
+class SWRPortableGL : public SWRBackend {
+	struct Impl;
+	Impl *impl;
 
 public:
-	static RuntimeProfilerOverlay *get_singleton();
+	bool initialize(int width, int height) override;
+	void destroy() override;
+	String get_name() const override;
+	int get_width() const override;
+	int get_height() const override;
 
-	void show_overlay();
-	void hide_overlay();
-	void toggle_overlay();
-	bool is_overlay_visible() const;
+	void viewport(int x, int y, int w, int h) override;
+	void clear_color(float r, float g, float b, float a) override;
+	void clear(uint32_t mask) override;
+	void read_pixels(uint8_t *rgba_dest) override;
 
-	void set_enabled(bool p_enabled);
-	bool is_enabled() const;
+	void set_depth_test(bool enabled) override;
+	void set_blend(bool enabled) override;
+	void set_cull_face(bool enabled) override;
 
-	RuntimeProfiler *get_profiler() const;
+	void draw(PrimitiveType type,
+			const float *positions, int vertex_count,
+			const float *colors,
+			const float *texcoords,
+			const float *normals,
+			const float *mvp,
+			const float *uniform_color) override;
 
-	RuntimeProfilerOverlay();
-	~RuntimeProfilerOverlay();
+	uint32_t upload_texture(int w, int h, const uint8_t *rgba_data) override;
+	void bind_texture(uint32_t id) override;
+	void delete_texture(uint32_t id) override;
+
+	SWRPortableGL();
+	~SWRPortableGL();
 };
 
-#endif // RUNTIME_PROFILER_OVERLAY_H
+#endif // SWR_PORTABLEGL_H
