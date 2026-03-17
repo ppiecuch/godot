@@ -32,6 +32,7 @@
 
 #include "os_osx.h"
 
+#import <Cocoa/Cocoa.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -39,12 +40,29 @@ int main(int argc, char **argv) {
 	int first_arg = 1;
 	const char *dbg_arg = "-NSDocumentRevisionsDebugMode";
 	printf("arguments\n");
+	bool is_headless = false;
 	for (int i = 0; i < argc; i++) {
 		if (strcmp(dbg_arg, argv[i]) == 0) {
 			first_arg = i + 2;
 		}
+		if (strcmp(argv[i], "--no-window") == 0 ||
+				strcmp(argv[i], "--doctool") == 0 ||
+				strcmp(argv[i], "-h") == 0 ||
+				strcmp(argv[i], "--help") == 0 ||
+				strcmp(argv[i], "--version") == 0 ||
+				strcmp(argv[i], "--no-docbase") == 0) {
+			is_headless = true;
+		}
 		printf("%i: %s\n", i, argv[i]);
 	};
+
+	// Set activation policy early to prevent wrong-desktop placement and
+	// dock icon flash for CLI-only tools. See godotengine/godot#109681.
+	if (is_headless) {
+		[NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+	} else {
+		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+	}
 
 #ifdef DEBUG_ENABLED
 	// lets report the path we made current after all that

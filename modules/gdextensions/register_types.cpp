@@ -33,6 +33,20 @@
 #include "core/engine.h"
 #include "core/io/resource_importer.h"
 
+// Common resources begin.
+#undef INCBIN_PREFIX
+#define INCBIN_PREFIX
+#define INCBIN_STYLE INCBIN_STYLE_SNAKE
+#define INCBIN_SILENCE_BITCODE_WARNING
+#include "misc/incbin.h"
+
+INCBIN(vera_ttf, "resources/vera.ttf");
+
+#undef INCBIN_PREFIX
+#undef INCBIN_STYLE
+#undef INCBIN_SILENCE_BITCODE_WARNING
+// Common resources end.
+
 #ifdef TOOLS_ENABLED
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
@@ -89,6 +103,10 @@
 #include "statemachine/state.h"
 #include "statemachine/statemachine.h"
 
+#ifdef GDEXT_MAZEGEN_ENABLED
+#include "mazegen/gd_mazegen.h"
+#endif
+
 #ifdef GDEXT_BEHAVIORNODE_ENABLED
 #include "behaviornode/behaviornode.h"
 #include "behaviornode/linkerbnode.h"
@@ -142,7 +160,7 @@
 
 #include "ropesim/rope_server.h"
 
-#include "vgamepad/vgamepad.h"
+#include "vgamepaddesign/vgamepad_design.h"
 
 #include "environment/proc_rocks/proc_rocks.h"
 #include "environment/spherical_waves/spherical_waves.h"
@@ -157,6 +175,23 @@
 
 #ifdef GDEXT_HYDRO_ENABLED
 #include "hydro/register.h"
+#endif
+
+#ifdef GDEXT_HWINFO_ENABLED
+#include "hwinfo/gd_hwinfo.h"
+#endif
+
+#ifdef GDEXT_ISOTOOLS_ENABLED
+#include "isotools/iso_kinematic_body.h"
+#include "isotools/iso_object.h"
+#include "isotools/iso_physics.h"
+#include "isotools/iso_rigid_body.h"
+#include "isotools/iso_static_body.h"
+#include "isotools/iso_world.h"
+#endif
+
+#ifdef GDEXT_KEYCHAINS_ENABLED
+#include "keychains/keychain.h"
 #endif
 
 #ifdef GDEXT_MEDIA_FLAC_ENABLED
@@ -193,6 +228,9 @@
 
 #include "settings/settings.h"
 
+#ifdef GDEXT_FLASHDB_ENABLED
+#include "flashdb/gd_flashdb.h"
+#endif
 #ifdef GDEXT_SQLITE_ENABLED
 #include "sqlite/gd_sqlite.h"
 #endif
@@ -408,6 +446,9 @@ void register_gdextensions_types() {
 	ClassDB::register_class<StateMachine>();
 	ClassDB::register_class<State>();
 #endif
+#ifdef GDEXT_MAZEGEN_ENABLED
+	ClassDB::register_class<GdMazeGenerator>();
+#endif
 #ifdef GDEXT_LANADVERTISER_ENABLED
 	ClassDB::register_class<LanAdvertiser>();
 	ClassDB::register_class<LanListener>();
@@ -428,6 +469,10 @@ void register_gdextensions_types() {
 #endif // GDEXT_CORE_ENABLED
 #ifdef GDEXT_SETTINGS_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Settings", memnew(Settings)));
+#endif
+#ifdef GDEXT_FLASHDB_ENABLED
+	ClassDB::register_class<FlashKVDB>();
+	ClassDB::register_class<FlashTSDB>();
 #endif
 #ifdef GDEXT_SQLITE_ENABLED
 	ClassDB::register_class<SQLite>();
@@ -514,9 +559,27 @@ void register_gdextensions_types() {
 #ifdef GDEXT_CYBERELEMENTS_ENABLED
 	ClassDB::register_class<CyberElement>();
 #endif
-#ifdef GDEXT_VGAMEPAD_ENABLED
-	ClassDB::register_class<VGamePad>();
-#endif // GDEXT_VGAMEPAD_ENABLED
+#ifdef GDEXT_VGAMEPADDESIGN_ENABLED
+	ClassDB::register_class<VGamePadDesign>();
+#endif // GDEXT_VGAMEPADDESIGN_ENABLED
+
+#ifdef GDEXT_ISOTOOLS_ENABLED
+	ClassDB::register_class<IsoWorld>();
+	ClassDB::register_class<IsoObject>();
+	ClassDB::register_class<IsoRigidBody>();
+	ClassDB::register_class<IsoKinematicBody>();
+	ClassDB::register_class<IsoStaticBody>();
+	ClassDB::register_class<IsoPhysics>();
+#endif // GDEXT_ISOTOOLS_ENABLED
+
+#ifdef GDEXT_HWINFO_ENABLED
+	ClassDB::register_class<HWInfo>();
+#endif // GDEXT_HWINFO_ENABLED
+
+#ifdef GDEXT_KEYCHAINS_ENABLED
+	ClassDB::register_class<Keychain>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Keychain", memnew(Keychain)));
+#endif // GDEXT_KEYCHAINS_ENABLED
 
 #ifdef GDEXT_ENVIRONMENT_WATERFALL_ENABLED
 	ClassDB::register_class<GdWaterfall>();
@@ -794,6 +857,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_SPACEMOUSE_ENABLED
 	RemoveSingleton(SpaceMouse);
+#endif
+#ifdef GDEXT_KEYCHAINS_ENABLED
+	RemoveSingleton(Keychain);
 #endif
 #ifdef GDEXT_MEDIA_SMACKVIDEO_ENABLED
 	gdsmackvideo_terminate();

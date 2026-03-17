@@ -39,6 +39,10 @@ char *_get_sysctl_prop(const char *key) {
 }
 
 const char *get_os_name(int major, int minor) {
+  if (major >= 16)
+    return "macOS (future)";
+  if (major == 15)
+    return "Sequoia";
   if (major == 14)
     return "Sonoma";
   if (major == 13)

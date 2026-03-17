@@ -2043,7 +2043,6 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	set_use_vsync(p_desired.use_vsync);
 
 	if (!is_no_window_mode_enabled()) {
-		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 		[NSApp activateIgnoringOtherApps:YES];
 	}
 

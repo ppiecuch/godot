@@ -56,6 +56,14 @@ public:
 	static Ref<Image> make_seamless(const Image *p_src, SeamlessStampMode p_stamp_mode = FE_STAMPING, real_t p_hardness = 0.6, real_t p_randomize = 0.25, real_t p_stamper_radius = 0.45, real_t p_stamp_density = 0.4, real_t p_stamp_noise_mask = 1, int p_stamp_rotate = 1, SeamlessAxis p_to_loop = FE_XY);
 	static Vector<Ref<Image>> extract_channels(const Image *p_src, bool p_as_grey_rbg = false); // returns vector of: r, g, b, a separated channels
 	static Ref<Image> merge_channels(Image *p_dest, const Ref<Image> &p_r, const Ref<Image> &p_g, const Ref<Image> &p_b, const Ref<Image> &p_a = Ref<Image>());
+
+	// Convolution: apply an arbitrary kernel to an image.
+	// p_kernel is a flat array of krow*kcol ints, applied as krow x kcol convolution matrix.
+	static void convolve(Image *p_src, const int *p_kernel, int p_krow, int p_kcol);
+	// Built-in 3x3 sharpen filter.
+	static void sharpen(Image *p_src);
+	// Built-in 3x3 smooth filter.
+	static void smooth(Image *p_src);
 };
 
 #endif // IMAGE_TOOLS_H

@@ -165,6 +165,98 @@ String TweakBar::_var_key(const String &bar, const String &var) const {
 }
 
 // ---------------------------------------------------------------------------
+// Auto-discovery: looks for _tweak_bar_config() on scene tree nodes
+// ---------------------------------------------------------------------------
+//
+// GDScript usage:
+//   func _tweak_bar_config():
+//       return {
+//           "bar_name": "Player",          # name of the bar to create
+//           "bar_def": "label='Player' position='10 10'",  # optional bar definition
+//           "vars": {
+//               "speed": {"property": "speed"},           # bind to self.speed
+//               "health": {"property": "health", "def": "min=0 max=100"},
+//               "color": {"property": "modulate"},        # auto-detects Color type
+//               "name": {"value": "Player1"},             # static value, no binding
+//           }
+//       }
+
+void TweakBar::_auto_discover_configs() {
+	Node *parent = get_parent();
+	if (!parent) {
+		return;
+	}
+	// Check parent and all siblings
+	for (int i = 0; i < parent->get_child_count(); i++) {
+		Node *child = parent->get_child(i);
+		if (child == this) {
+			continue;
+		}
+		if (child->has_method("_tweak_bar_config")) {
+			Variant result = child->call("_tweak_bar_config");
+			if (result.get_type() == Variant::DICTIONARY) {
+				_apply_config(child, result);
+			} else if (result.get_type() == Variant::ARRAY) {
+				// Multiple bars
+				Array configs = result;
+				for (int j = 0; j < configs.size(); j++) {
+					if (configs[j].get_type() == Variant::DICTIONARY) {
+						_apply_config(child, configs[j]);
+					}
+				}
+			}
+		}
+	}
+	// Also check parent itself
+	if (parent->has_method("_tweak_bar_config")) {
+		Variant result = parent->call("_tweak_bar_config");
+		if (result.get_type() == Variant::DICTIONARY) {
+			_apply_config(parent, result);
+		}
+	}
+}
+
+void TweakBar::_apply_config(Object *p_object, const Dictionary &p_config) {
+	String bar_name = p_config.has("bar_name") ? String(p_config["bar_name"]) : "Tweaks";
+
+	if (!new_bar(bar_name)) {
+		return;
+	}
+
+	if (p_config.has("bar_def")) {
+		define(bar_name + " " + String(p_config["bar_def"]));
+	}
+
+	if (p_config.has("vars") && p_config["vars"].get_type() == Variant::DICTIONARY) {
+		Dictionary vars = p_config["vars"];
+		Array keys = vars.keys();
+		for (int i = 0; i < keys.size(); i++) {
+			String var_name = keys[i];
+			Variant var_info = vars[var_name];
+			String def = "";
+
+			if (var_info.get_type() == Variant::DICTIONARY) {
+				Dictionary info = var_info;
+				if (info.has("def")) {
+					def = info["def"];
+				}
+				if (info.has("property")) {
+					// Bind to object property
+					String prop = info["property"];
+					bind_property(bar_name, var_name, p_object, prop, def);
+				} else if (info.has("value")) {
+					// Static value
+					add_variant(bar_name, var_name, info["value"], def);
+				}
+			} else {
+				// Simple value
+				add_variant(bar_name, var_name, var_info, def);
+			}
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Lifecycle and notifications
 // ---------------------------------------------------------------------------
 
@@ -177,6 +269,9 @@ TweakBar::~TweakBar() {
 		memdelete(m_cb_infos[i]);
 	for (int i = 0; i < m_btn_infos.size(); i++)
 		memdelete(m_btn_infos[i]);
+	for (Map<String, PropertyBinding *>::Element *E = m_bindings.front(); E; E = E->next()) {
+		memdelete(E->value());
+	}
 
 	if (initialized) {
 		TwTerminate();
@@ -192,6 +287,8 @@ void TweakBar::_notification(int p_what) {
 			set_process_input(true);
 			Size2 wnd = get_viewport_rect().size;
 			TwWindowSize(wnd.x, wnd.y);
+			// Auto-discover _tweak_bar_config() on sibling/child nodes
+			_auto_discover_configs();
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
@@ -540,6 +637,253 @@ void TweakBar::set_value(const String &p_bar, const String &p_name, const Varian
 }
 
 // ---------------------------------------------------------------------------
+// Variant type mapping
+// ---------------------------------------------------------------------------
+
+TweakBar::VarData::Type TweakBar::_variant_type_to_var_type(Variant::Type p_type) const {
+	switch (p_type) {
+		case Variant::REAL:
+			return VarData::FLOAT;
+		case Variant::INT:
+			return VarData::INT;
+		case Variant::BOOL:
+			return VarData::BOOL;
+		case Variant::STRING:
+			return VarData::STRING;
+		case Variant::COLOR:
+			return VarData::COLOR4;
+		case Variant::VECTOR3:
+			return VarData::DIR3;
+		default:
+			return VarData::STRING; // fallback: show as string
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Property binding callbacks
+// ---------------------------------------------------------------------------
+
+void TweakBar::_prop_set_cb(const void *value, void *clientData) {
+	PropertyBinding *bind = (PropertyBinding *)clientData;
+	Object *obj = ObjectDB::get_instance(bind->object_id);
+	if (!obj) {
+		return;
+	}
+
+	Variant val;
+	switch (bind->type) {
+		case VarData::FLOAT:
+			val = *(const float *)value;
+			break;
+		case VarData::INT:
+			val = *(const int *)value;
+			break;
+		case VarData::BOOL:
+			val = (*(const int *)value) != 0;
+			break;
+		case VarData::STRING: {
+			const std::string &s = *(const std::string *)value;
+			val = String::utf8(s.c_str());
+		} break;
+		case VarData::COLOR3: {
+			const float *c = (const float *)value;
+			val = Color(c[0], c[1], c[2]);
+		} break;
+		case VarData::COLOR4: {
+			const float *c = (const float *)value;
+			val = Color(c[0], c[1], c[2], c[3]);
+		} break;
+		case VarData::DIR3: {
+			const float *d = (const float *)value;
+			val = Vector3(d[0], d[1], d[2]);
+		} break;
+	}
+
+	obj->set(bind->property, val);
+	bind->self->emit_signal("value_changed", bind->bar_name, bind->var_name);
+}
+
+void TweakBar::_prop_get_cb(void *value, void *clientData) {
+	PropertyBinding *bind = (PropertyBinding *)clientData;
+	Object *obj = ObjectDB::get_instance(bind->object_id);
+
+	Variant val;
+	if (obj) {
+		val = obj->get(bind->property);
+	}
+
+	switch (bind->type) {
+		case VarData::FLOAT:
+			*(float *)value = obj ? (float)val : 0.0f;
+			break;
+		case VarData::INT:
+			*(int *)value = obj ? (int)val : 0;
+			break;
+		case VarData::BOOL:
+			*(int *)value = obj ? ((bool)val ? 1 : 0) : 0;
+			break;
+		case VarData::STRING: {
+			std::string &dest = *(std::string *)value;
+			if (obj) {
+				CharString cs = String(val).utf8();
+				dest = cs.get_data();
+			} else {
+				dest.clear();
+			}
+		} break;
+		case VarData::COLOR3: {
+			float *c = (float *)value;
+			if (obj) {
+				Color col = val;
+				c[0] = col.r;
+				c[1] = col.g;
+				c[2] = col.b;
+			} else {
+				memset(c, 0, sizeof(float) * 3);
+			}
+		} break;
+		case VarData::COLOR4: {
+			float *c = (float *)value;
+			if (obj) {
+				Color col = val;
+				c[0] = col.r;
+				c[1] = col.g;
+				c[2] = col.b;
+				c[3] = col.a;
+			} else {
+				memset(c, 0, sizeof(float) * 4);
+			}
+		} break;
+		case VarData::DIR3: {
+			float *d = (float *)value;
+			if (obj) {
+				Vector3 v = val;
+				d[0] = v.x;
+				d[1] = v.y;
+				d[2] = v.z;
+			} else {
+				memset(d, 0, sizeof(float) * 3);
+			}
+		} break;
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Property binding
+// ---------------------------------------------------------------------------
+
+bool TweakBar::bind_property(const String &p_bar, const String &p_name, Object *p_object, const String &p_property, const String &p_def) {
+	ERR_FAIL_COND_V(!p_object, false);
+	_ensure_init();
+	TwBar *bar = TwGetBarByName(p_bar.utf8().get_data());
+	ERR_FAIL_COND_V(!bar, false);
+
+	// Detect type from current property value
+	Variant val = p_object->get(p_property);
+	VarData::Type vtype = _variant_type_to_var_type(val.get_type());
+
+	// Map to AntTweakBar type
+	TwType tw_type;
+	switch (vtype) {
+		case VarData::FLOAT:
+			tw_type = TW_TYPE_FLOAT;
+			break;
+		case VarData::INT:
+			tw_type = TW_TYPE_INT32;
+			break;
+		case VarData::BOOL:
+			tw_type = TW_TYPE_BOOL32;
+			break;
+		case VarData::STRING:
+			tw_type = TW_TYPE_STDSTRING;
+			break;
+		case VarData::COLOR3:
+			tw_type = TW_TYPE_COLOR3F;
+			break;
+		case VarData::COLOR4:
+			tw_type = TW_TYPE_COLOR4F;
+			break;
+		case VarData::DIR3:
+			tw_type = TW_TYPE_DIR3F;
+			break;
+		default:
+			tw_type = TW_TYPE_STDSTRING;
+			break;
+	}
+
+	// Create binding
+	PropertyBinding *bind = memnew(PropertyBinding);
+	bind->object_id = p_object->get_instance_id();
+	bind->property = p_property;
+	bind->bar_name = p_bar;
+	bind->var_name = p_name;
+	bind->type = vtype;
+	bind->self = this;
+
+	String key = _var_key(p_bar, p_name);
+	m_bindings[key] = bind;
+
+	return TwAddVarCB(bar, p_name.utf8().get_data(), tw_type, _prop_set_cb, _prop_get_cb, bind, p_def.utf8().get_data()) == 1;
+}
+
+bool TweakBar::add_variant(const String &p_bar, const String &p_name, const Variant &p_value, const String &p_def) {
+	switch (p_value.get_type()) {
+		case Variant::REAL:
+			if (add_float(p_bar, p_name, p_def)) {
+				set_value(p_bar, p_name, p_value);
+				return true;
+			}
+			return false;
+		case Variant::INT:
+			if (add_int(p_bar, p_name, p_def)) {
+				set_value(p_bar, p_name, p_value);
+				return true;
+			}
+			return false;
+		case Variant::BOOL:
+			if (add_bool(p_bar, p_name, p_def)) {
+				set_value(p_bar, p_name, p_value);
+				return true;
+			}
+			return false;
+		case Variant::STRING:
+			if (add_string(p_bar, p_name, p_def)) {
+				set_value(p_bar, p_name, p_value);
+				return true;
+			}
+			return false;
+		case Variant::COLOR: {
+			Color c = p_value;
+			if (c.a < 1.0f) {
+				if (add_color4(p_bar, p_name, p_def)) {
+					set_value(p_bar, p_name, p_value);
+					return true;
+				}
+			} else {
+				if (add_color3(p_bar, p_name, p_def)) {
+					set_value(p_bar, p_name, p_value);
+					return true;
+				}
+			}
+			return false;
+		}
+		case Variant::VECTOR3:
+			if (add_direction(p_bar, p_name, p_def)) {
+				set_value(p_bar, p_name, p_value);
+				return true;
+			}
+			return false;
+		default:
+			// Unsupported type — add as read-only string representation
+			if (add_string(p_bar, p_name, p_def)) {
+				set_value(p_bar, p_name, String(p_value));
+				return true;
+			}
+			return false;
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Info
 // ---------------------------------------------------------------------------
 
@@ -579,6 +923,9 @@ void TweakBar::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_value", "bar", "name"), &TweakBar::get_value);
 	ClassDB::bind_method(D_METHOD("set_value", "bar", "name", "value"), &TweakBar::set_value);
 
+	ClassDB::bind_method(D_METHOD("bind_property", "bar", "name", "object", "property", "def"), &TweakBar::bind_property, DEFVAL(""));
+	ClassDB::bind_method(D_METHOD("add_variant", "bar", "name", "value", "def"), &TweakBar::add_variant, DEFVAL(""));
+
 	ClassDB::bind_method(D_METHOD("get_last_error"), &TweakBar::get_last_error);
 	ClassDB::bind_method(D_METHOD("refresh"), &TweakBar::refresh);
 
@@ -597,9 +944,10 @@ void TweakBar::_bind_methods() {
 // Test suite
 // ---------------------------------------------------------------------------
 
+#ifdef DOCTEST
 #include "thirdparty/doctest/doctest.h"
 
-TEST_SUITE("anttweakbar") {
+TEST_SUITE("[[anttweakbar]] C API") {
 	TEST_CASE("lifecycle") {
 		int result = TwInit(NULL);
 		CHECK(result == 1);
@@ -922,7 +1270,10 @@ TEST_SUITE("anttweakbar") {
 		TwTerminate();
 	}
 
-	TEST_CASE("wrapper_default_state") {
+} // TEST_SUITE C API
+
+TEST_SUITE("[[anttweakbar]] Godot wrapper") {
+	TEST_CASE("[anttweakbar] wrapper_default_state") {
 		TweakBar tw;
 		// Before initialization, bar count is 0
 		CHECK(tw.get_bar_count() == 0);
@@ -1116,4 +1467,75 @@ TEST_SUITE("anttweakbar") {
 		CHECK(int(tw.get_value("Mix", "count")) == 7);
 		CHECK(bool(tw.get_value("Mix", "active")) == true);
 	}
+} // TEST_SUITE Godot wrapper
+
+TEST_SUITE("[[anttweakbar]] add_variant") {
+	TEST_CASE("[anttweakbar] add_variant float") {
+		TweakBar tw;
+		tw.new_bar("VarBar");
+		CHECK(tw.add_variant("VarBar", "fval", 3.14f));
+		CHECK(float(tw.get_value("VarBar", "fval")) == doctest::Approx(3.14f));
+	}
+
+	TEST_CASE("[anttweakbar] add_variant int") {
+		TweakBar tw;
+		tw.new_bar("VarBar");
+		CHECK(tw.add_variant("VarBar", "ival", 42));
+		CHECK(int(tw.get_value("VarBar", "ival")) == 42);
+	}
+
+	TEST_CASE("[anttweakbar] add_variant bool") {
+		TweakBar tw;
+		tw.new_bar("VarBar");
+		CHECK(tw.add_variant("VarBar", "bval", true));
+		CHECK(bool(tw.get_value("VarBar", "bval")) == true);
+	}
+
+	TEST_CASE("[anttweakbar] add_variant string") {
+		TweakBar tw;
+		tw.new_bar("VarBar");
+		CHECK(tw.add_variant("VarBar", "sval", String("hello")));
+	}
+
+	TEST_CASE("[anttweakbar] add_variant color") {
+		TweakBar tw;
+		tw.new_bar("VarBar");
+		CHECK(tw.add_variant("VarBar", "col", Color(1, 0, 0)));
+	}
+
+	TEST_CASE("[anttweakbar] add_variant vector3") {
+		TweakBar tw;
+		tw.new_bar("VarBar");
+		CHECK(tw.add_variant("VarBar", "dir", Vector3(0, 1, 0)));
+	}
+
+	TEST_CASE("[anttweakbar] add_variant unsupported falls back to string") {
+		TweakBar tw;
+		tw.new_bar("VarBar");
+		// Array is not directly supported — should fall back to string
+		CHECK(tw.add_variant("VarBar", "arr", Array()));
+	}
 }
+
+TEST_SUITE("[[anttweakbar]] bind_property") {
+	TEST_CASE("[anttweakbar] bind_property rejects null object") {
+		TweakBar tw;
+		tw.new_bar("BindBar");
+		CHECK_FALSE(tw.bind_property("BindBar", "val", nullptr, "speed"));
+	}
+
+	TEST_CASE("[anttweakbar] bind_property rejects nonexistent bar") {
+		TweakBar tw;
+		Node2D node;
+		CHECK_FALSE(tw.bind_property("NoBar", "val", &node, "position"));
+	}
+
+	TEST_CASE("[anttweakbar] bind_property to nonexistent bar fails") {
+		TweakBar tw;
+		// Need a bar first
+		Node2D node;
+		CHECK_FALSE(tw.bind_property("NonExistent", "x", &node, "position"));
+	}
+}
+
+#endif // DOCTEST

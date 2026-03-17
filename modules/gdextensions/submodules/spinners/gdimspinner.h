@@ -5,214 +5,39 @@
 /*                             GODOT ENGINE                               */
 /*                        https://godotengine.org                         */
 /**************************************************************************/
-/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
-/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
-/*                                                                        */
-/* Permission is hereby granted, free of charge, to any person obtaining  */
-/* a copy of this software and associated documentation files (the        */
-/* "Software"), to deal in the Software without restriction, including    */
-/* without limitation the rights to use, copy, modify, merge, publish,    */
-/* distribute, sublicense, and/or sell copies of the Software, and to     */
-/* permit persons to whom the Software is furnished to do so, subject to  */
-/* the following conditions:                                              */
-/*                                                                        */
-/* The above copyright notice and this permission notice shall be         */
-/* included in all copies or substantial portions of the Software.        */
-/*                                                                        */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
-/**************************************************************************/
 
 #ifndef GDSPINNER_H
 #define GDSPINNER_H
 
 #include "scene/2d/node_2d.h"
 
-class SpinnerCanvas;
-
-enum SpinnerVariant {
-	/*   0 */ SPINNER,
-	/*   1 */ SPINNERANG,
-	/*   2 */ SPINNERDOTS,
-	/*   3 */ SPINNERANGNOBG,
-	/*   4 */ SPINNERANG270,
-	/*   5 */ SPINNERANG270NOBG,
-	/*   6 */ SPINNERVDOTS,
-	/*   7 */ SPINNERBOUNCEBALL,
-	/*   8 */ SPINNERANGECLIPSE,
-	/*   9 */ SPINNERINGYANG,
-	/*  10 */ SPINNERBARCHARTSINE,
-	/*  11 */ SPINNERBOUNCEDOTS,
-	/*  12 */ SPINNERFADEDOTS,
-	/*  13 */ SPINNERSCALEDOTS,
-	/*  14 */ SPINNERMOVINGDOTS,
-	/*  15 */ SPINNERROTATEDOTS,
-	/*  16 */ SPINNERTWINANG,
-	/*  17 */ SPINNERCLOCK,
-	/*  18 */ SPINNERINGYANGR,
-	/*  19 */ SPINNERBARCHARTSINE2,
-	/*  20 */ SPINNERTWINANG180,
-	/*  21 */ SPINNERTWINANG360,
-	/*  22 */ SPINNERINCDOTS,
-	/*  23 */ SPINNERDOTSWOBG,
-	/*  24 */ SPINNERINCSCALEDOTS,
-	/*  25 */ SPINNERANG90BG,
-	/*  26 */ SPINNERANG90,
-	/*  27 */ SPINNERFADEBARS,
-	/*  28 */ SPINNERPULSARSEQ,
-	/*  29 */ SPINNERINGYANGR2,
-	/*  30 */ SPINNERBARCHARTRAINBOW,
-	/*  31 */ SPINNERBARSROTATEFADE,
-	/*  32 */ SPINNERFADESCALEBARS,
-	/*  33 */ SPINNERBARSSCALEMIDDLE,
-	/*  34 */ SPINNERANGTWIN1,
-	/*  35 */ SPINNERANGTWIN2,
-	/*  36 */ SPINNERANGTWIN3,
-	/*  37 */ SPINNERANGTWIN4,
-	/*  38 */ SPINNERTWINPULSAR,
-	/*  39 */ SPINNERANGTWIN5,
-	/*  40 */ SPINNERBLOCKS,
-	/*  41 */ SPINNERTWINBALL,
-	/*  42 */ SPINNERTWINBALL2,
-	/*  43 */ SPINNERTWINBALL3,
-	/*  44 */ SPINNERANGTRIPLE,
-	/*  45 */ SPINNERINCFULLDOTS,
-	/*  46 */ SPINNERGOOEYBALLS,
-	/*  47 */ SPINNERROTATEGOOEYBALLS2,
-	/*  48 */ SPINNERROTATEGOOEYBALLS3,
-	/*  49 */ SPINNERMOONLINE,
-	/*  50 */ SPINNERARCROTATION,
-	/*  51 */ SPINNERFLUID,
-	/*  52 */ SPINNERARCFADE,
-	/*  53 */ SPINNERFILLING,
-	/*  54 */ SPINNERTOPUP,
-	/*  55 */ SPINNERFADEPULSAR,
-	/*  56 */ SPINNERFADEPULSAR2,
-	/*  57 */ SPINNERPULSAR,
-	/*  58 */ SPINNERDOUBLEFADEPULSAR,
-	/*  59 */ SPINNERFILLEDARCFADE,
-	/*  60 */ SPINNERFILLEDARCFADE6,
-	/*  61 */ SPINNERFILLEDARCFADE8,
-	/*  62 */ SPINNERFILLEDARCCOLOR,
-	/*  63 */ SPINNERCIRCLEDROP,
-	/*  64 */ SPINNERSURROUNDEDINDICATOR,
-	/*  65 */ SPINNERTRIANGLESSELETOR,
-	/*  66 */ SPINNERFLOWINGFRADIENT,
-	/*  67 */ SPINNERROTATESEGMENTS,
-	/*  68 */ SPINNERROTATESEGMENTS2,
-	/*  69 */ SPINNERROTATESEGMENTS3,
-	/*  70 */ SPINNERLEMNISCATE,
-	/*  71 */ SPINNERROTATEGEAR,
-	/*  72 */ SPINNERROTATEDATOM,
-	/*  73 */ SPINNERATOM,
-	/*  74 */ SPINNERRAINBOWBALLS,
-	/*  75 */ SPINNERCAMERA,
-	/*  76 */ SPINNERARCPOLARFADE,
-	/*  77 */ SPINNERARCPOLARRADIUS,
-	/*  78 */ SPINNERARCPOLARPIES,
-	/*  79 */ SPINNERARCPOLARPIES2,
-	/*  80 */ SPINNERSCALEBLOCKS,
-	/*  81 */ SPINNERROTATETRIANGLES,
-	/*  82 */ SPINNERARCWEDGES,
-	/*  83 */ SPINNERSCALESQUARES,
-	/*  84 */ SPINNERMOVINGHBODOTS,
-	/*  85 */ SPINNERMOVINGHBODOTS2,
-	/*  86 */ SPINNERBOUNCEBALL3,
-	/*  87 */ SPINNERBOUNCEBALLSHADOW,
-	/*  88 */ SPINNERBOUNCEBALL5SHADOW,
-	/*  89 */ SPINNERSQUARESTROKEFADE,
-	/*  90 */ SPINNERSQUARESTROKEFILL,
-	/*  91 */ SPINNERSWINGDOTS,
-	/*  92 */ SPINNERROTATEWHEEL,
-	/*  93 */ SPINNERWAVEDOTS,
-	/*  94 */ SPINNERROTATESHAPES,
-	/*  95 */ SPINNERSQUARESTROKELOANDING,
-	/*  96 */ SPINNERSINSQUARES,
-	/*  97 */ SPINNERZIPDOTS,
-	/*  98 */ SPINNERDOTSTOBAR,
-	/*  99 */ SPINNERSINEARCS,
-	/* 100 */ SPINNERTRIANGLESSHIFT,
-	/* 101 */ SPINNERCIRCULARLINES,
-	/* 102 */ SPINNERLOADINGRING,
-	/* 103 */ SPINNERPATTERNRINGS,
-	/* 104 */ SPINNERPATTERNSPHERE,
-	/* 105 */ SPINNERRINGSNCHRONOUS,
-	/* 106 */ SPINNERRINGWATERMARKS,
-	/* 107 */ SPINNERFILLEDARCRING,
-	/* 108 */ SPINNERPOINTSSHIFT,
-	/* 109 */ SPINNERCIRCULARPOINTS,
-	/* 110 */ SPINNERCURVEDCIRCLE,
-	/* 111 */ SPINNERMODCIRCLRE,
-	/* 112 */ SPINNERMODCIRCLRE2,
-	/* 113 */ SPINNERPATTERNECLIPSE,
-	/* 114 */ SPINNERPATTERNECLIPSE2,
-	/* 115 */ SPINNERMULTIFADEDOTS,
-	/* 116 */ SPINNERRAINBOWSHOT,
-	/* 117 */ SPINNERSPIRAL,
-	/* 118 */ SPINNERSPIRALEYE,
-	/* 119 */ SPINNERWIFIINDICATOR,
-	/* 120 */ SPINNERMOVINGDOTS3,
-	/* 121 */ SPINNERMOVINGDOTS4,
-	/* 122 */ SPINNERMOVINGDOTS5,
-	/* 123 */ SPINNERDNADOTSH,
-	/* 124 */ SPINNERDNADOTSV,
-	/* 125 */ SPINNERROTATEDOTS2,
-	/* 126 */ SPINNERSEVENSEGMENTS,
-	/* 127 */ SPINNERSOLARBALLS,
-	/* 128 */ SPINNERSOLARARCS,
-	/* 129 */ SPINNERRAINBOW,
-	/* 130 */ SPINNERROTATINGHEART,
-	/* 131 */ SPINNERSOLARSCALEBALLS,
-	/* 132 */ SPINNERORIONDOTS,
-	/* 133 */ SPINNERGALAXYDOTS,
-	/* 134 */ SPINNERASCIISYMBOLPOINTS,
-	/* 135 */ SPINNERRAINBOWCIRCLE,
-	/* 136 */ SPINNERRAINBOWCIRCLE2,
-	/* 137 */ SPINNERVDOTS2,
-	/* 138 */ SPINNERVDOTS3,
-	/* 139 */ SPINNERSQUARERANDOMDOTS,
-	/* 140 */ SPINNERFLUIDPOINTS,
-	/* 141 */ SPINNERDOTSLOADING,
-	/* 142 */ SPINNERDOTSTOPOINTS,
-	/* 143 */ SPINNERTHREEDOTS,
-	/* 144 */ SPINNER4CALEIDOSPCOPE,
-	/* 145 */ SPINNERSIXDOTS,
-	/* 146 */ SPINNERFILLINGMEM,
-};
-
+// Forward declarations
 struct ImGuiWindow;
-
-struct ImGuiWindowCanvas : public Reference {
-	ImGuiWindow *wnd;
-	ImGuiWindowCanvas(CanvasItem *p_canvas);
-	~ImGuiWindowCanvas();
-};
-
-class SpinnerCanvas : public Reference {
-	struct SpinnerCanvasData;
-	SpinnerCanvasData *data;
-
-public:
-	void draw_spinners(ImGuiWindow *p_imgui, int p_spinner);
-
-	SpinnerCanvas();
-	~SpinnerCanvas();
-};
+struct SpinnerConfig;
+struct SpinnerAnimState;
 
 class Spinner : public Node2D {
 	GDCLASS(Spinner, Node2D);
 
-	Ref<ImGuiWindowCanvas> imgui;
-	Ref<SpinnerCanvas> canvas;
+	ImGuiWindow *_imgui_wnd;
 
 	int spinner_variant;
 	bool spinner_active;
-	void draw_spinners(int p_spinner);
+
+	// Configurable parameters (exposed to GDScript)
+	real_t _radius;
+	real_t _thickness;
+	real_t _speed;
+	Color _color;
+	Color _bg_color;
+	real_t _angle;
+	int _dots;
+	int _mode;
+
+	// Animation state
+	SpinnerAnimState *_anim;
+
+	void _draw_spinner();
 
 protected:
 	static void _bind_methods();
@@ -225,9 +50,36 @@ public:
 	void set_spinner_variant(int p_variant);
 	int get_spinner_variant() const;
 
-	Spinner();
-};
+	void set_radius(real_t p_radius);
+	real_t get_radius() const;
 
-VARIANT_ENUM_CAST(SpinnerVariant);
+	void set_thickness(real_t p_thickness);
+	real_t get_thickness() const;
+
+	void set_speed(real_t p_speed);
+	real_t get_speed() const;
+
+	void set_color(const Color &p_color);
+	Color get_color() const;
+
+	void set_bg_color(const Color &p_color);
+	Color get_bg_color() const;
+
+	void set_angle(real_t p_angle);
+	real_t get_angle() const;
+
+	void set_dots(int p_dots);
+	int get_dots() const;
+
+	void set_mode(int p_mode);
+	int get_mode() const;
+
+	int get_variant_count() const;
+	String get_variant_name(int p_variant) const;
+	String get_spinner_name() const;
+
+	Spinner();
+	~Spinner();
+};
 
 #endif // GDSPINNER_H

@@ -31,7 +31,10 @@
 #include "core/image_tools.h"
 #include "bind/core_bind.h"
 #include "core/image.h"
-#include "image.h"
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#endif
 
 void ImageTools::checker_board(Image *p_src, int p_cell, const Color &grid_color0, const Color &grid_color1, bool details, const Color &details_color) {
 	p_src->lock();
@@ -464,7 +467,8 @@ static real_t _re_get_y_gap_between_rectangles(const Rect2 &rect_a, const Rect2 
 }
 
 static bool _re_is_background(const Image *image, int x, int y, const _re_options *opts) {
-	const uint8_t *data_ptr = image->get_data().read().ptr();
+	PoolVector<uint8_t>::Read rlock = image->get_data().read();
+	const uint8_t *data_ptr = rlock.ptr();
 	const uint32_t ofs = y * image->get_width() + x;
 	_byteword color_at_xy;
 	switch (image->get_format()) {
@@ -472,9 +476,10 @@ static bool _re_is_background(const Image *image, int x, int y, const _re_option
 			color_at_xy.w = ((uint32_t *)data_ptr)[ofs];
 		} break;
 		case Image::FORMAT_RGB8: {
-			color_at_xy.b[0] = data_ptr[ofs + 0];
-			color_at_xy.b[1] = data_ptr[ofs + 1];
-			color_at_xy.b[2] = data_ptr[ofs + 2];
+			const uint32_t byte_ofs = ofs * 3;
+			color_at_xy.b[0] = data_ptr[byte_ofs + 0];
+			color_at_xy.b[1] = data_ptr[byte_ofs + 1];
+			color_at_xy.b[2] = data_ptr[byte_ofs + 2];
 			color_at_xy.b[3] = 0xff;
 		} break;
 		default: {
@@ -940,20 +945,42 @@ Ref<Image> ImageTools::make_seamless(const Image *p_src, SeamlessStampMode p_sta
  *
  */
 
-#define _clone(IMG) memnew(Image(IMG->get_width(), IMG->get_height(), false, Image::FORMAT_RGBA8))
+static Ref<Image> _clone_rgba8(const Image *img) {
+	return Ref<Image>(memnew(Image(img->get_width(), img->get_height(), false, Image::FORMAT_RGBA8)));
+}
 
 Vector<Ref<Image>> ImageTools::extract_channels(const Image *p_src, bool p_as_grey_rbg) {
 	ERR_FAIL_NULL_V(p_src, Vector<Ref<Image>>());
-	Ref<Image> r = _clone(p_src), g = _clone(p_src), b = _clone(p_src), a = _clone(p_src);
+	Ref<Image> r = _clone_rgba8(p_src), g = _clone_rgba8(p_src), b = _clone_rgba8(p_src), a = _clone_rgba8(p_src);
+	r->lock();
+	g->lock();
+	b->lock();
+	a->lock();
 	for (int j = 0; j < p_src->get_height(); j++) {
 		for (int i = 0; i < p_src->get_width(); i++) {
 			const uint32_t px = p_src->_get_pixel32(i, j);
-			r->_set_pixel32(i, j, Image::red_comp(px));
-			g->_set_pixel32(i, j, Image::green_comp(px));
-			b->_set_pixel32(i, j, Image::blue_comp(px));
-			a->_set_pixel32(i, j, Image::alpha_comp(px));
+			const uint32_t rv = Image::red_comp(px);
+			const uint32_t gv = Image::green_comp(px);
+			const uint32_t bv = Image::blue_comp(px);
+			const uint32_t av = Image::alpha_comp(px);
+			if (p_as_grey_rbg) {
+				// Output each channel as greyscale RGB (R=G=B=value, A=255).
+				r->_set_pixel32(i, j, rv | (rv << 8) | (rv << 16) | (0xffu << 24));
+				g->_set_pixel32(i, j, gv | (gv << 8) | (gv << 16) | (0xffu << 24));
+				b->_set_pixel32(i, j, bv | (bv << 8) | (bv << 16) | (0xffu << 24));
+				a->_set_pixel32(i, j, av | (av << 8) | (av << 16) | (0xffu << 24));
+			} else {
+				r->_set_pixel32(i, j, rv);
+				g->_set_pixel32(i, j, gv);
+				b->_set_pixel32(i, j, bv);
+				a->_set_pixel32(i, j, av);
+			}
 		}
 	}
+	r->unlock();
+	g->unlock();
+	b->unlock();
+	a->unlock();
 	return make_vector(r, g, b, a);
 }
 
@@ -961,61 +988,480 @@ Ref<Image> ImageTools::merge_channels(Image *p_dest, const Ref<Image> &p_r, cons
 	ERR_FAIL_NULL_V(p_dest, Ref<Image>());
 	ERR_FAIL_COND_V(!p_dest->_can_modify(p_dest->format), Ref<Image>());
 	ERR_FAIL_COND_V_MSG(p_dest->write_lock.ptr(), Ref<Image>(), "Cannot modify image when it is locked.");
-	Ref<Image> r;
-	return r;
+
+	const int w = p_dest->get_width();
+	const int h = p_dest->get_height();
+
+	ERR_FAIL_COND_V(p_r.is_null() || p_r->get_width() != w || p_r->get_height() != h, Ref<Image>());
+	ERR_FAIL_COND_V(p_g.is_null() || p_g->get_width() != w || p_g->get_height() != h, Ref<Image>());
+	ERR_FAIL_COND_V(p_b.is_null() || p_b->get_width() != w || p_b->get_height() != h, Ref<Image>());
+
+	const bool has_alpha = p_a.is_valid() && p_a->get_width() == w && p_a->get_height() == h;
+
+	Ref<Image> result = _clone_rgba8(p_dest);
+	result->lock();
+	for (int j = 0; j < h; j++) {
+		for (int i = 0; i < w; i++) {
+			const uint32_t rv = Image::red_comp(p_r->_get_pixel32(i, j));
+			const uint32_t gv = Image::red_comp(p_g->_get_pixel32(i, j));
+			const uint32_t bv = Image::red_comp(p_b->_get_pixel32(i, j));
+			const uint32_t av = has_alpha ? Image::red_comp(p_a->_get_pixel32(i, j)) : 255u;
+			result->_set_pixel32(i, j, rv | (gv << 8) | (bv << 16) | (av << 24));
+		}
+	}
+	result->unlock();
+	return result;
 }
 
 /*
- *  General colvolution routines for RGB and gray (both 8bit and 16bit)
- *  images. 3x3 and 5x5 kernels are manually unrolled.
+ *  General convolution routines for RGBA images.
+ *  3x3 and 5x5 kernels are manually unrolled for performance.
+ *  Based on XForms library (T.C. Zhao, 1993-2002).
  */
 
-static void init_kernels(void);
+// Convolution macros for manually unrolled 3x3 and 5x5 kernels.
+// These operate on flat arrays of channel values extracted from the image.
 
-// convolution
+#define vec3p(k, b, i) ((k)[0] * (b)[(i)-1] + (k)[1] * (b)[(i)] + (k)[2] * (b)[(i) + 1])
+#define conv3x3(cm, m, r, c) (vec3p((cm), (m) + ((r)-1) * w_stride, (c)) + vec3p((cm) + 3, (m) + (r)*w_stride, (c)) + vec3p((cm) + 6, (m) + ((r) + 1) * w_stride, (c)))
 
-#define vec3p(k, b, i) (k[0] * b[i - 1] + k[1] * b[i] + k[2] * b[i + 1])
-#define conv3x3(cm, m, r, c) (vec3p(cm[0], m[r - 1], c) + vec3p(cm[1], m[r + 0], c) + vec3p(cm[2], m[r + 1], c))
+#define vec5p(k, b, i) ((k)[0] * (b)[(i)-2] + (k)[1] * (b)[(i)-1] + (k)[2] * (b)[(i)] + (k)[3] * (b)[(i) + 1] + (k)[4] * (b)[(i) + 2])
+#define conv5x5(km, m, r, c) (vec5p((km), (m) + ((r)-2) * w_stride, (c)) + vec5p((km) + 5, (m) + ((r)-1) * w_stride, (c)) + vec5p((km) + 10, (m) + (r)*w_stride, (c)) + vec5p((km) + 15, (m) + ((r) + 1) * w_stride, (c)) + vec5p((km) + 20, (m) + ((r) + 2) * w_stride, (c)))
 
-#define vec5p(k, b, i) (k[0] * b[i - 2] + k[1] * b[i - 1] + k[2] * b[i] + k[3] * b[i + 1] + k[4] * b[i + 2])
-#define conv5x5(kernel, pc, row, col) \
-	(vec5p(kernel[0], pc[row - 2], col) + vec5p(kernel[1], pc[row - 1], col) + vec5p(kernel[2], pc[row + 0], col) + vec5p(kernel[3], pc[row + 1], col) + vec5p(kernel[4], pc[row + 2], col))
-
-// normalize with weight the clamp
-
-#define NormAndClamp(pc, w, max)    \
-	do {                            \
-		if (pc < 0)                 \
-			pc = 0;                 \
-		else if ((pc /= w) > (max)) \
-			pc = (max);             \
-	} while (0)
-
-// some built-in kernels
-
-static int sharpen_kernel[3][3];
-static int smooth_kernel[3][3];
-
-static void init_kernels(void) {
-	sharpen_kernel[0][0] = -1;
-	sharpen_kernel[0][1] = -2;
-	sharpen_kernel[0][2] = -1;
-	sharpen_kernel[1][0] = -2;
-	sharpen_kernel[1][1] = 28;
-	sharpen_kernel[1][2] = -2;
-	sharpen_kernel[2][0] = -1;
-	sharpen_kernel[2][1] = -2;
-	sharpen_kernel[2][2] = -1;
-
-	// smoothing a bit stronger than sharpening
-
-	smooth_kernel[0][0] = 1;
-	smooth_kernel[0][1] = 2;
-	smooth_kernel[0][2] = 1;
-	smooth_kernel[1][0] = 2;
-	smooth_kernel[1][1] = 7;
-	smooth_kernel[1][2] = 2;
-	smooth_kernel[2][0] = 1;
-	smooth_kernel[2][1] = 2;
-	smooth_kernel[2][2] = 1;
+static _FORCE_INLINE_ int _norm_and_clamp(int val, int weight) {
+	if (val < 0) {
+		return 0;
+	}
+	val /= weight;
+	return val > 255 ? 255 : val;
 }
+
+void ImageTools::convolve(Image *p_src, const int *p_kernel, int p_krow, int p_kcol) {
+	ERR_FAIL_NULL(p_src);
+	ERR_FAIL_COND(p_src->empty());
+	ERR_FAIL_COND(!(p_krow & 1) || !(p_kcol & 1)); // Must be odd.
+	ERR_FAIL_COND(p_krow < 3 || p_kcol < 3);
+	ERR_FAIL_COND_MSG(p_src->write_lock.ptr(), "Cannot modify image when it is locked.");
+
+	// Compute kernel weight (sum of all elements).
+	int weight = 0;
+	for (int i = 0; i < p_krow * p_kcol; i++) {
+		weight += p_kernel[i];
+	}
+	ERR_FAIL_COND_MSG(weight <= 0, "Convolution kernel weight must be positive.");
+
+	// Convert to RGBA8 if needed for pixel manipulation.
+	if (p_src->get_format() != Image::FORMAT_RGBA8) {
+		p_src->convert(Image::FORMAT_RGBA8);
+	}
+
+	const int h = p_src->get_height();
+	const int w = p_src->get_width();
+	const int k_halfh = p_krow / 2;
+	const int k_halfw = p_kcol / 2;
+
+	// Extract channels into flat arrays for convolution.
+	// w_stride is the row width used by the conv macros.
+	const int w_stride = w;
+	Vector<int> r_buf, g_buf, b_buf;
+	Vector<uint32_t> a_buf;
+	r_buf.resize(w * h);
+	g_buf.resize(w * h);
+	b_buf.resize(w * h);
+	a_buf.resize(w * h);
+	int *r_data = r_buf.ptrw();
+	int *g_data = g_buf.ptrw();
+	int *b_data = b_buf.ptrw();
+	uint32_t *a_data = a_buf.ptrw();
+
+	p_src->lock();
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			const uint32_t px = p_src->_get_pixel32(x, y);
+			r_data[y * w + x] = Image::red_comp(px);
+			g_data[y * w + x] = Image::green_comp(px);
+			b_data[y * w + x] = Image::blue_comp(px);
+			a_data[y * w + x] = Image::alpha_comp(px);
+		}
+	}
+
+	// Apply convolution, skipping border pixels.
+	for (int row = k_halfh; row < h - k_halfh; row++) {
+		for (int col = k_halfw; col < w - k_halfw; col++) {
+			int newr, newg, newb;
+
+			if (p_krow == 3 && p_kcol == 3) {
+				newr = conv3x3(p_kernel, r_data, row, col);
+				newg = conv3x3(p_kernel, g_data, row, col);
+				newb = conv3x3(p_kernel, b_data, row, col);
+			} else if (p_krow == 5 && p_kcol == 5) {
+				newr = conv5x5(p_kernel, r_data, row, col);
+				newg = conv5x5(p_kernel, g_data, row, col);
+				newb = conv5x5(p_kernel, b_data, row, col);
+			} else {
+				// General NxM kernel.
+				newr = newg = newb = 0;
+				for (int i = 0; i < p_krow; i++) {
+					int ii = row - k_halfh + i;
+					for (int j = 0; j < p_kcol; j++) {
+						int jj = col - k_halfw + j;
+						int kval = p_kernel[i * p_kcol + j];
+						newr += kval * r_data[ii * w + jj];
+						newg += kval * g_data[ii * w + jj];
+						newb += kval * b_data[ii * w + jj];
+					}
+				}
+			}
+
+			newr = _norm_and_clamp(newr, weight);
+			newg = _norm_and_clamp(newg, weight);
+			newb = _norm_and_clamp(newb, weight);
+
+			// Preserve original alpha from pre-extracted buffer.
+			const uint32_t alpha = a_data[row * w + col];
+			p_src->_set_pixel32(col, row, newr | (newg << 8) | (newb << 16) | (alpha << 24));
+		}
+	}
+	p_src->unlock();
+}
+
+// Built-in 3x3 kernels.
+
+static const int _sharpen_kernel[9] = {
+	-1, -2, -1,
+	-2, 28, -2,
+	-1, -2, -1
+};
+
+static const int _smooth_kernel[9] = {
+	1, 2, 1,
+	2, 7, 2,
+	1, 2, 1
+};
+
+void ImageTools::sharpen(Image *p_src) {
+	convolve(p_src, _sharpen_kernel, 3, 3);
+}
+
+void ImageTools::smooth(Image *p_src) {
+	convolve(p_src, _smooth_kernel, 3, 3);
+}
+
+#undef vec3p
+#undef conv3x3
+#undef vec5p
+#undef conv5x5
+#undef ERR_FAIL_RANGE_V
+#undef MATH_LERP
+#undef MATH_INVLERP
+#undef MATH_SQRT
+
+#ifdef DOCTEST
+
+static Ref<Image> _make_test_image(int w, int h, const Color &fill) {
+	Ref<Image> img = memnew(Image(w, h, false, Image::FORMAT_RGBA8));
+	img->lock();
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			img->set_pixel(x, y, fill);
+		}
+	}
+	img->unlock();
+	return img;
+}
+
+TEST_SUITE("ImageTools") {
+	TEST_CASE("Sharpen modifies center pixels") {
+		Ref<Image> img = _make_test_image(8, 8, Color(0.5, 0.5, 0.5, 1.0));
+		img->lock();
+		img->set_pixel(4, 4, Color(1, 1, 1, 1));
+		img->unlock();
+
+		Ref<Image> copy = img->duplicate();
+		ImageTools::sharpen(copy.ptr());
+
+		copy->lock();
+		img->lock();
+		bool center_changed = false;
+		for (int y = 2; y < 6; y++) {
+			for (int x = 2; x < 6; x++) {
+				if (copy->get_pixel(x, y) != img->get_pixel(x, y)) {
+					center_changed = true;
+				}
+			}
+		}
+		copy->unlock();
+		img->unlock();
+		REQUIRE(center_changed);
+	}
+
+	TEST_CASE("Smooth averages values") {
+		Ref<Image> img = memnew(Image(8, 8, false, Image::FORMAT_RGBA8));
+		img->lock();
+		for (int y = 0; y < 8; y++) {
+			for (int x = 0; x < 8; x++) {
+				float v = (float)x / 7.0;
+				img->set_pixel(x, y, Color(v, v, v, 1.0));
+			}
+		}
+		img->unlock();
+
+		Ref<Image> original = img->duplicate();
+		ImageTools::smooth(img.ptr());
+
+		img->lock();
+		original->lock();
+		bool changed = false;
+		for (int y = 1; y < 7; y++) {
+			for (int x = 1; x < 7; x++) {
+				if (img->get_pixel(x, y) != original->get_pixel(x, y)) {
+					changed = true;
+				}
+			}
+		}
+		img->unlock();
+		original->unlock();
+		REQUIRE(changed);
+	}
+
+	TEST_CASE("Identity kernel leaves image unchanged") {
+		Ref<Image> img = _make_test_image(8, 8, Color(0.3, 0.6, 0.9, 1.0));
+		img->lock();
+		img->set_pixel(3, 3, Color(1, 0, 0, 1));
+		img->set_pixel(5, 5, Color(0, 1, 0, 1));
+		img->unlock();
+
+		Ref<Image> original = img->duplicate();
+
+		static const int identity_kernel[9] = {
+			0, 0, 0,
+			0, 1, 0,
+			0, 0, 0
+		};
+		ImageTools::convolve(img.ptr(), identity_kernel, 3, 3);
+
+		img->lock();
+		original->lock();
+		for (int y = 1; y < 7; y++) {
+			for (int x = 1; x < 7; x++) {
+				CHECK(img->get_pixel(x, y) == original->get_pixel(x, y));
+			}
+		}
+		img->unlock();
+		original->unlock();
+	}
+
+	TEST_CASE("Uniform kernel on solid color preserves color") {
+		Ref<Image> img = _make_test_image(8, 8, Color(0.4, 0.6, 0.8, 1.0));
+		Ref<Image> original = img->duplicate();
+
+		static const int uniform_kernel[9] = {
+			1, 1, 1,
+			1, 1, 1,
+			1, 1, 1
+		};
+		ImageTools::convolve(img.ptr(), uniform_kernel, 3, 3);
+
+		img->lock();
+		original->lock();
+		for (int y = 1; y < 7; y++) {
+			for (int x = 1; x < 7; x++) {
+				Color a = img->get_pixel(x, y);
+				Color b = original->get_pixel(x, y);
+				CHECK(Math::abs(a.r - b.r) <= 2.0 / 255);
+				CHECK(Math::abs(a.g - b.g) <= 2.0 / 255);
+				CHECK(Math::abs(a.b - b.b) <= 2.0 / 255);
+			}
+		}
+		img->unlock();
+		original->unlock();
+	}
+
+	TEST_CASE("Convolve preserves alpha") {
+		Ref<Image> img = memnew(Image(8, 8, false, Image::FORMAT_RGBA8));
+		img->lock();
+		for (int y = 0; y < 8; y++) {
+			for (int x = 0; x < 8; x++) {
+				float a = (float)(x + y) / 14.0;
+				img->set_pixel(x, y, Color(0.5, 0.5, 0.5, a));
+			}
+		}
+		img->unlock();
+
+		Vector<float> orig_alpha;
+		orig_alpha.resize(64);
+		img->lock();
+		for (int y = 0; y < 8; y++) {
+			for (int x = 0; x < 8; x++) {
+				orig_alpha.write[y * 8 + x] = img->get_pixel(x, y).a;
+			}
+		}
+		img->unlock();
+
+		ImageTools::sharpen(img.ptr());
+
+		img->lock();
+		for (int y = 0; y < 8; y++) {
+			for (int x = 0; x < 8; x++) {
+				CHECK(Math::abs(img->get_pixel(x, y).a - orig_alpha[y * 8 + x]) <= 1.0 / 255);
+			}
+		}
+		img->unlock();
+	}
+
+	TEST_CASE("Extract channels") {
+		Ref<Image> img = _make_test_image(4, 4, Color(0.2, 0.4, 0.6, 0.8));
+		img->lock();
+		Vector<Ref<Image>> channels = ImageTools::extract_channels(img.ptr());
+		img->unlock();
+
+		REQUIRE(channels.size() == 4);
+
+		Ref<Image> ch_r = channels[0];
+		Ref<Image> ch_g = channels[1];
+		Ref<Image> ch_b = channels[2];
+		Ref<Image> ch_a = channels[3];
+
+		ch_r->lock();
+		uint32_t rv = Image::red_comp(ch_r->_get_pixel32(0, 0));
+		ch_r->unlock();
+		CHECK(rv >= 49);
+		CHECK(rv <= 53);
+
+		ch_g->lock();
+		uint32_t gv = Image::red_comp(ch_g->_get_pixel32(0, 0));
+		ch_g->unlock();
+		CHECK(gv >= 100);
+		CHECK(gv <= 104);
+
+		ch_b->lock();
+		uint32_t bv = Image::red_comp(ch_b->_get_pixel32(0, 0));
+		ch_b->unlock();
+		CHECK(bv >= 151);
+		CHECK(bv <= 155);
+
+		ch_a->lock();
+		uint32_t av = Image::red_comp(ch_a->_get_pixel32(0, 0));
+		ch_a->unlock();
+		CHECK(av >= 202);
+		CHECK(av <= 206);
+	}
+
+	TEST_CASE("Merge channels roundtrip") {
+		Ref<Image> img = _make_test_image(4, 4, Color(0.2, 0.4, 0.6, 0.8));
+		img->lock();
+		Vector<Ref<Image>> channels = ImageTools::extract_channels(img.ptr());
+		img->unlock();
+
+		Ref<Image> ch_r = channels[0];
+		Ref<Image> ch_g = channels[1];
+		Ref<Image> ch_b = channels[2];
+		Ref<Image> ch_a = channels[3];
+		ch_r->lock();
+		ch_g->lock();
+		ch_b->lock();
+		ch_a->lock();
+		Ref<Image> merged = ImageTools::merge_channels(img.ptr(), ch_r, ch_g, ch_b, ch_a);
+		ch_r->unlock();
+		ch_g->unlock();
+		ch_b->unlock();
+		ch_a->unlock();
+		REQUIRE(merged.is_valid());
+
+		img->lock();
+		merged->lock();
+		for (int y = 0; y < 4; y++) {
+			for (int x = 0; x < 4; x++) {
+				CHECK(img->_get_pixel32(x, y) == merged->_get_pixel32(x, y));
+			}
+		}
+		img->unlock();
+		merged->unlock();
+	}
+
+	TEST_CASE("Extract channels greyscale mode") {
+		Ref<Image> img = _make_test_image(4, 4, Color(0.2, 0.4, 0.6, 0.8));
+		img->lock();
+		Vector<Ref<Image>> channels = ImageTools::extract_channels(img.ptr(), true);
+		img->unlock();
+
+		REQUIRE(channels.size() == 4);
+
+		Ref<Image> ch0 = channels[0];
+		ch0->lock();
+		uint32_t px = ch0->_get_pixel32(0, 0);
+		uint32_t r = Image::red_comp(px);
+		uint32_t g = Image::green_comp(px);
+		uint32_t b = Image::blue_comp(px);
+		uint32_t a = Image::alpha_comp(px);
+		ch0->unlock();
+
+		CHECK(r == g);
+		CHECK(g == b);
+		CHECK(a == 255);
+	}
+
+	TEST_CASE("Checker board") {
+		Ref<Image> img = memnew(Image(8, 8, false, Image::FORMAT_RGBA8));
+		const Color c0(1, 0, 0, 1);
+		const Color c1(0, 0, 1, 1);
+		ImageTools::checker_board(img.ptr(), 4, c0, c1, false);
+
+		img->lock();
+		Color tl = img->get_pixel(0, 0);
+		Color tr = img->get_pixel(4, 0);
+		img->unlock();
+
+		CHECK(tl.r > 0.9);
+		CHECK(tl.b < 0.1);
+		CHECK(tr.b > 0.9);
+		CHECK(tr.r < 0.1);
+	}
+
+	TEST_CASE("Fix alpha edges") {
+		Ref<Image> img = _make_test_image(8, 8, Color(0, 0, 0, 0));
+		img->lock();
+		img->set_pixel(4, 4, Color(1, 0, 0, 1));
+		img->unlock();
+
+		ImageTools::fix_alpha_edges(img.ptr());
+
+		img->lock();
+		Color nearby = img->get_pixel(3, 4);
+		img->unlock();
+
+		CHECK(nearby.r > 0.9);
+		CHECK(nearby.g < 0.1);
+		CHECK(nearby.b < 0.1);
+	}
+
+	TEST_CASE("Bumpmap to normalmap") {
+		Ref<Image> img = _make_test_image(8, 8, Color(0.5, 0.5, 0.5, 1.0));
+		ImageTools::bumpmap_to_normalmap(img.ptr(), 1.0);
+
+		img->lock();
+		Color center = img->get_pixel(2, 2);
+		img->unlock();
+
+		CHECK(Math::abs(center.r - 128.0 / 255.0) < 5.0 / 255.0);
+		CHECK(Math::abs(center.g - 128.0 / 255.0) < 5.0 / 255.0);
+		CHECK(Math::abs(center.b - 1.0) < 5.0 / 255.0);
+	}
+
+	TEST_CASE("Normalmap to XY") {
+		Ref<Image> img = _make_test_image(4, 4, Color(128.0 / 255, 200.0 / 255, 1.0, 1.0));
+		ImageTools::normalmap_to_xy(img.ptr());
+
+		CHECK(img->get_format() == Image::FORMAT_LA8);
+
+		img->lock();
+		Color px = img->get_pixel(0, 0);
+		img->unlock();
+
+		CHECK(Math::abs(px.r - 200.0 / 255.0) < 3.0 / 255.0);
+		CHECK(Math::abs(px.a - 128.0 / 255.0) < 3.0 / 255.0);
+	}
+
+} // TEST_SUITE
+
+#endif // DOCTEST

@@ -48,15 +48,14 @@ std::vector<Disk> getAllDisks() {
     utils::strip(disk._vendor);
     utils::strip(disk._model);
     utils::strip(disk._serialNumber);
+    // Read disk size from /sys/class/block/<dev>/size (in 512-byte sectors)
     disk._size_Bytes = -1;
-    /*
-    struct statvfs buf {};
-    std::string mount_path("/dev/");
-    mount_path.append(split_get_index(entry.path().string(), "/", -1));
-    if (statvfs(mount_path.c_str(), &buf)) {
-      size = static_cast<int64_t>(buf.f_bsize * buf.f_bfree);
+    std::ifstream size_f(base_path + "/" + entry + "/size");
+    if (size_f) {
+      int64_t sectors = 0;
+      size_f >> sectors;
+      disk._size_Bytes = sectors * 512;
     }
-    */
 
     disks.push_back(std::move(disk));
   }

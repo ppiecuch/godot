@@ -2097,10 +2097,30 @@ Ref<Image> _ImageTools::make_seamless(Ref<Image> p_src, Dictionary p_opts) {
 #endif
 }
 
+void _ImageTools::convolve(Ref<Image> p_src, PoolIntArray p_kernel, int p_krow, int p_kcol) {
+	ERR_FAIL_COND(p_src.is_null());
+	ERR_FAIL_COND(p_kernel.size() != p_krow * p_kcol);
+	PoolIntArray::Read r = p_kernel.read();
+	ImageTools::convolve(*p_src, r.ptr(), p_krow, p_kcol);
+}
+
+void _ImageTools::sharpen(Ref<Image> p_src) {
+	ERR_FAIL_COND(p_src.is_null());
+	ImageTools::sharpen(*p_src);
+}
+
+void _ImageTools::smooth(Ref<Image> p_src) {
+	ERR_FAIL_COND(p_src.is_null());
+	ImageTools::smooth(*p_src);
+}
+
 void _ImageTools::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("neighbor_tracing", "image"), &_ImageTools::neighbor_tracing);
 	ClassDB::bind_method(D_METHOD("make_seamless", "image", "options"), &_ImageTools::make_seamless, DEFVAL(Dictionary()));
 	ClassDB::bind_method(D_METHOD("unpack_region", "image", "options"), &_ImageTools::unpack_region, DEFVAL(Dictionary()));
+	ClassDB::bind_method(D_METHOD("convolve", "image", "kernel", "kernel_rows", "kernel_cols"), &_ImageTools::convolve);
+	ClassDB::bind_method(D_METHOD("sharpen", "image"), &_ImageTools::sharpen);
+	ClassDB::bind_method(D_METHOD("smooth", "image"), &_ImageTools::smooth);
 
 	BIND_ENUM_CONSTANT(FE_XY);
 	BIND_ENUM_CONSTANT(FE_X);

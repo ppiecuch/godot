@@ -10,9 +10,7 @@ def configure(env):
 
     # all submodules available in the extensions
     modules = [
-        # core extensions
-        "core",
-        "editor",
+        # media formats and visual components
         "media",
         "visual",
         # low-level extensions
@@ -36,12 +34,13 @@ def configure(env):
         "flexbuffers",
         "openclwrapper",
         "sfxr",
-        "vgamepad",
+        "vgamepaddesign",
         # navigation/ai extensions
         "detournav",
         "behaviornode",
         "behaviortree",
         "statemachine",
+        "mazegen",
         "daedalus",
         "simpleai",
         "opensteer",
@@ -55,6 +54,8 @@ def configure(env):
         # network extensions
         "benet",
         "httpserver",
+        "isotools",
+        "keychains",
         # middleware extensions
         "nakama1",
         "discord",

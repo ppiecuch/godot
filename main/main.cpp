@@ -289,137 +289,154 @@ void finalize_navigation_server() {
 #define MAIN_PRINT(m_txt)
 #endif
 
+// The length of the longest option column in the command-line help
+// (excluding the 2-space left and right margins).
+static const int OPTION_COLUMN_LENGTH = 35;
+
+void Main::print_help_copyright(const char *p_notice) {
+	print_line_rich(vformat("[color=gray]%s[/color]", String(p_notice)));
+}
+
+void Main::print_help_title(const char *p_title) {
+	print_line_rich(vformat("\n[color=yellow][b]%s:[/b][/color]", String(p_title)));
+}
+
+void Main::print_help_option(const char *p_option, const char *p_description) {
+	print_line_rich(vformat("  [color=green]%s[/color]%s", String(p_option).rpad(OPTION_COLUMN_LENGTH), String(p_description)));
+}
+
 void Main::print_help(const char *p_binary) {
-	print_line(String(VERSION_NAME) + " v" + get_full_version_string() + " - " + String(VERSION_WEBSITE));
-	OS::get_singleton()->print("Free and open source software under the terms of the MIT license.\n");
-	OS::get_singleton()->print("(c) 2014-present Godot Engine contributors.\n");
-	OS::get_singleton()->print("(c) 2007-2014 Juan Linietsky, Ariel Manzur.\n");
-	OS::get_singleton()->print("\n");
-	OS::get_singleton()->print("Usage: %s [options] [path to scene or 'project.godot' file]\n", p_binary);
-	OS::get_singleton()->print("\n");
+	print_line_rich("[color=cyan][b]" + String(VERSION_NAME) + "[/b][/color] v" + get_full_version_string() + " - " + String(VERSION_WEBSITE));
+	print_help_copyright("Free and open source software under the terms of the MIT license.");
+	print_help_copyright("(c) 2014-present Godot Engine contributors.");
+	print_help_copyright("(c) 2007-2014 Juan Linietsky, Ariel Manzur.");
 
-	OS::get_singleton()->print("General options:\n");
-	OS::get_singleton()->print("  -h, --help                       Display this help message.\n");
-	OS::get_singleton()->print("  --version                        Display the version string.\n");
-	OS::get_singleton()->print("  -v, --verbose                    Use verbose stdout mode.\n");
-	OS::get_singleton()->print("  --quiet                          Quiet mode, silences stdout messages. Errors are still displayed.\n");
-	OS::get_singleton()->print("\n");
+	print_help_title("Usage");
+	OS::get_singleton()->print("  %s [options] [path to scene or \"project.godot\" file]\n", p_binary);
 
-	OS::get_singleton()->print("Run options:\n");
+	print_help_title("General options");
+	print_help_option("-h, --help", "Display this help message.");
+	print_help_option("--version", "Display the version string.");
+	print_help_option("-v, --verbose", "Use verbose stdout mode.");
+	print_help_option("--quiet", "Quiet mode, silences stdout messages. Errors are still displayed.");
+
+	print_help_title("Run options");
 #ifdef TOOLS_ENABLED
-	OS::get_singleton()->print("  -e, --editor                     Start the editor instead of running the scene.\n");
-	OS::get_singleton()->print("  -p, --project-manager            Start the project manager, even if a project is auto-detected.\n");
-	OS::get_singleton()->print("  --debug-server <address>         Start the editor debug server (<IP>:<port>, e.g. 127.0.0.1:6007)\n");
+	print_help_option("-e, --editor", "Start the editor instead of running the scene.");
+	print_help_option("-p, --project-manager", "Start the project manager, even if a project is auto-detected.");
+	print_help_option("--debug-server <address>", "Start the editor debug server (<IP>:<port>, e.g. 127.0.0.1:6007)");
 #if defined(MODULE_GDSCRIPT_ENABLED) && !defined(GDSCRIPT_NO_LSP)
-	OS::get_singleton()->print("  --lsp-port <port>                 Use the specified port for the language server protocol. The port must be between 0 to 65535.\n");
+	print_help_option("--lsp-port <port>", "Use the specified port for the language server protocol. The port must be between 0 to 65535.");
 #endif // MODULE_GDSCRIPT_ENABLED && !GDSCRIPT_NO_LSP
 #endif
-	OS::get_singleton()->print("  -q, --quit                       Quit after the first iteration.\n");
-	OS::get_singleton()->print("  -l, --language <locale>          Use a specific locale (<locale> being a two-letter code).\n");
-	OS::get_singleton()->print("  --path <directory>               Path to a project (<directory> must contain a 'project.godot' file).\n");
-	OS::get_singleton()->print("  -u, --upwards                    Scan folders upwards for project.godot file.\n");
-	OS::get_singleton()->print("  --main-pack <file>               Path to a pack (.pck) file to load.\n");
-	OS::get_singleton()->print("  --render-thread <mode>           Render thread mode ('unsafe', 'safe', 'separate').\n");
-	OS::get_singleton()->print("  --remote-fs <address>            Remote filesystem (<host/IP>[:<port>] address).\n");
-	OS::get_singleton()->print("  --remote-fs-password <password>  Password for remote filesystem.\n");
-	OS::get_singleton()->print("  --audio-driver <driver>          Audio driver (");
+	print_help_option("-q, --quit", "Quit after the first iteration.");
+	print_help_option("-l, --language <locale>", "Use a specific locale (<locale> being a two-letter code).");
+	print_help_option("--path <directory>", "Path to a project (<directory> must contain a \"project.godot\" file).");
+	print_help_option("-u, --upwards", "Scan folders upwards for \"project.godot\" file.");
+	print_help_option("--main-pack <file>", "Path to a pack (.pck) file to load.");
+	print_help_option("--render-thread <mode>", "Render thread mode (\"unsafe\", \"safe\", \"separate\").");
+	print_help_option("--remote-fs <address>", "Remote filesystem (<host/IP>[:<port>] address).");
+	print_help_option("--remote-fs-password <password>", "Password for remote filesystem.");
+
+	String audio_drivers;
 	for (int i = 0; i < OS::get_singleton()->get_audio_driver_count(); i++) {
-		if (i != 0) {
-			OS::get_singleton()->print(", ");
+		if (i > 0) {
+			audio_drivers += ", ";
 		}
-		OS::get_singleton()->print("'%s'", OS::get_singleton()->get_audio_driver_name(i));
+		audio_drivers += vformat("\"%s\"", OS::get_singleton()->get_audio_driver_name(i));
 	}
-	OS::get_singleton()->print(").\n");
-	OS::get_singleton()->print("  --video-driver <driver>          Video driver (");
+	print_help_option("--audio-driver <driver>", vformat("Audio driver [%s].", audio_drivers).utf8().get_data());
+
+	String video_drivers;
 	for (int i = 0; i < OS::get_singleton()->get_video_driver_count(); i++) {
-		if (i != 0) {
-			OS::get_singleton()->print(", ");
+		if (i > 0) {
+			video_drivers += ", ";
 		}
-		OS::get_singleton()->print("'%s'", OS::get_singleton()->get_video_driver_name(i));
+		video_drivers += vformat("\"%s\"", OS::get_singleton()->get_video_driver_name(i));
 	}
-	OS::get_singleton()->print(").\n");
-	OS::get_singleton()->print("\n");
+	print_help_option("--video-driver <driver>", vformat("Video driver [%s].", video_drivers).utf8().get_data());
 
 #ifndef SERVER_ENABLED
-	OS::get_singleton()->print("Display options:\n");
-	OS::get_singleton()->print("  -f, --fullscreen                 Request fullscreen mode.\n");
-	OS::get_singleton()->print("  -m, --maximized                  Request a maximized window.\n");
-	OS::get_singleton()->print("  -w, --windowed                   Request windowed mode.\n");
-	OS::get_singleton()->print("  -t, --always-on-top              Request an always-on-top window.\n");
-	OS::get_singleton()->print("  --resolution <W>x<H>             Request window resolution.\n");
-	OS::get_singleton()->print("  --position <X>,<Y>               Request window position.\n");
-	OS::get_singleton()->print("  --low-dpi                        Force low-DPI mode (macOS and Windows only).\n");
-	OS::get_singleton()->print("  --no-window                      Run with invisible window. Useful together with --script.\n");
-	OS::get_singleton()->print("  --enable-vsync-via-compositor    When vsync is enabled, vsync via the OS' window compositor (Windows only).\n");
-	OS::get_singleton()->print("  --disable-vsync-via-compositor   Disable vsync via the OS' window compositor (Windows only).\n");
-	OS::get_singleton()->print("  --enable-delta-smoothing         When vsync is enabled, enabled frame delta smoothing.\n");
-	OS::get_singleton()->print("  --disable-delta-smoothing        Disable frame delta smoothing.\n");
-	OS::get_singleton()->print("  --tablet-driver                  Tablet input driver (");
+	print_help_title("Display options");
+	print_help_option("-f, --fullscreen", "Request fullscreen mode.");
+	print_help_option("-m, --maximized", "Request a maximized window.");
+	print_help_option("-w, --windowed", "Request windowed mode.");
+	print_help_option("-t, --always-on-top", "Request an always-on-top window.");
+	print_help_option("--resolution <W>x<H>", "Request window resolution.");
+	print_help_option("--position <X>,<Y>", "Request window position.");
+	print_help_option("--low-dpi", "Force low-DPI mode (macOS and Windows only).");
+	print_help_option("--no-window", "Run with invisible window. Useful together with --script.");
+	print_help_option("--enable-vsync-via-compositor", "When vsync is enabled, vsync via the OS' window compositor (Windows only).");
+	print_help_option("--disable-vsync-via-compositor", "Disable vsync via the OS' window compositor (Windows only).");
+	print_help_option("--enable-delta-smoothing", "When vsync is enabled, enable frame delta smoothing.");
+	print_help_option("--disable-delta-smoothing", "Disable frame delta smoothing.");
+
+	String tablet_drivers;
 	for (int i = 0; i < OS::get_singleton()->get_tablet_driver_count(); i++) {
-		if (i != 0) {
-			OS::get_singleton()->print(", ");
+		if (i > 0) {
+			tablet_drivers += ", ";
 		}
-		OS::get_singleton()->print("'%s'", OS::get_singleton()->get_tablet_driver_name(i).utf8().get_data());
+		tablet_drivers += vformat("\"%s\"", OS::get_singleton()->get_tablet_driver_name(i));
 	}
-	OS::get_singleton()->print(") (Windows only).\n");
-	OS::get_singleton()->print("\n");
+	print_help_option("--tablet-driver", vformat("Tablet input driver [%s] (Windows only).", tablet_drivers).utf8().get_data());
 #endif
 
-	OS::get_singleton()->print("Debug options:\n");
-	OS::get_singleton()->print("  -d, --debug                      Debug (local stdout debugger).\n");
-	OS::get_singleton()->print("  -b, --breakpoints                Breakpoint list as source::line comma-separated pairs, no spaces (use %%20 instead).\n");
-	OS::get_singleton()->print("  --profiling                      Enable profiling in the script debugger.\n");
-	OS::get_singleton()->print("  --remote-debug <address>         Remote debug (<host/IP>:<port> address).\n");
+	print_help_title("Debug options");
+	print_help_option("-d, --debug", "Debug (local stdout debugger).");
+	print_help_option("-b, --breakpoints", "Breakpoint list as source::line comma-separated pairs, no spaces (use %%20 instead).");
+	print_help_option("--profiling", "Enable profiling in the script debugger.");
+	print_help_option("--remote-debug <address>", "Remote debug (<host/IP>:<port> address).");
 #if defined(DEBUG_ENABLED) && !defined(SERVER_ENABLED)
-	OS::get_singleton()->print("  --debug-collisions               Show collision shapes when running the scene.\n");
-	OS::get_singleton()->print("  --debug-navigation               Show navigation polygons when running the scene.\n");
-	OS::get_singleton()->print("  --debug-shader-fallbacks         Use the fallbacks of the shaders which have one when running the scene (GL ES 3 only).\n");
+	print_help_option("--debug-collisions", "Show collision shapes when running the scene.");
+	print_help_option("--debug-navigation", "Show navigation polygons when running the scene.");
+	print_help_option("--debug-shader-fallbacks", "Use the fallbacks of the shaders which have one when running the scene (GL ES 3 only).");
 #endif
-	OS::get_singleton()->print("  --frame-delay <ms>               Simulate high CPU load (delay each frame by <ms> milliseconds).\n");
-	OS::get_singleton()->print("  --time-scale <scale>             Force time scale (higher values are faster, 1.0 is normal speed).\n");
-	OS::get_singleton()->print("  --disable-render-loop            Disable render loop so rendering only occurs when called explicitly from script.\n");
-	OS::get_singleton()->print("  --disable-crash-handler          Disable crash handler when supported by the platform code.\n");
-	OS::get_singleton()->print("  --fixed-fps <fps>                Force a fixed number of frames per second. This setting disables real-time synchronization.\n");
-	OS::get_singleton()->print("  --print-fps                      Print the frames per second to the stdout.\n");
-	OS::get_singleton()->print("\n");
+	print_help_option("--frame-delay <ms>", "Simulate high CPU load (delay each frame by <ms> milliseconds).");
+	print_help_option("--time-scale <scale>", "Force time scale (higher values are faster, 1.0 is normal speed).");
+	print_help_option("--disable-render-loop", "Disable render loop so rendering only occurs when called explicitly from script.");
+	print_help_option("--disable-crash-handler", "Disable crash handler when supported by the platform code.");
+	print_help_option("--fixed-fps <fps>", "Force a fixed number of frames per second. This setting disables real-time synchronization.");
+	print_help_option("--print-fps", "Print the frames per second to the stdout.");
 
-	OS::get_singleton()->print("Standalone tools:\n");
-	OS::get_singleton()->print("  -s, --script <script>            Run a script.\n");
-	OS::get_singleton()->print("  --check-only                     Only parse for errors and quit (use with --script).\n");
+	print_help_title("Standalone tools");
+	print_help_option("-s, --script <script>", "Run a script.");
+	print_help_option("--check-only", "Only parse for errors and quit (use with --script).");
 #ifdef TOOLS_ENABLED
-	OS::get_singleton()->print("  --import                         Starts the editor, waits for any resources to be imported, and then quits.\n");
-	OS::get_singleton()->print("  --export <preset> <path>         Export the project using the given preset and matching release template. The preset name should match one defined in export_presets.cfg.\n");
-	OS::get_singleton()->print("                                   <path> should be absolute or relative to the project directory, and include the filename for the binary (e.g. 'builds/game.exe'). The target directory should exist.\n");
-	OS::get_singleton()->print("  --export-debug <preset> <path>   Same as --export, but using the debug template.\n");
-	OS::get_singleton()->print("  --export-pack <preset> <path>    Same as --export, but only export the game pack for the given preset. The <path> extension determines whether it will be in PCK or ZIP format.\n");
-	OS::get_singleton()->print("  --install-android-export <file>  Install custom Android export template. The <file> points to Android source ZIP package.\n");
-	OS::get_singleton()->print("  --doctool [<path>]               Dump the engine API reference to the given <path> (defaults to current dir) in XML format, merging if existing files are found.\n");
-	OS::get_singleton()->print("  --no-docbase                     Disallow dumping the base types (used with --doctool).\n");
-	OS::get_singleton()->print("  --build-solutions                Build the scripting solutions (e.g. for C# projects). Implies --editor and requires a valid project to edit.\n");
-	OS::get_singleton()->print("  --benchmark                      Benchmark the run time and print it to console.\n");
-	OS::get_singleton()->print("  --benchmark-file <path>          Benchmark the run time and save it to a given file in JSON format. The path should be absolute.\n");
+	print_help_option("--import", "Starts the editor, waits for any resources to be imported, and then quits.");
+	print_help_option("--export <preset> <path>", "Export the project using the given preset and matching release template.");
+	print_help_option("", "<path> should be absolute or relative to the project directory, and include the filename for the binary (e.g. \"builds/game.exe\"). The target directory should exist.");
+	print_help_option("--export-debug <preset> <path>", "Same as --export, but using the debug template.");
+	print_help_option("--export-pack <preset> <path>", "Same as --export, but only export the game pack for the given preset. The <path> extension determines whether it will be in PCK or ZIP format.");
+	print_help_option("--install-android-export <file>", "Install custom Android export template. The <file> points to Android source ZIP package.");
+	print_help_option("--doctool [<path>]", "Dump the engine API reference to the given <path> (defaults to current dir) in XML format, merging if existing files are found.");
+	print_help_option("--no-docbase", "Disallow dumping the base types (used with --doctool).");
+	print_help_option("--build-solutions", "Build the scripting solutions (e.g. for C# projects). Implies --editor and requires a valid project to edit.");
+	print_help_option("--benchmark", "Benchmark the run time and print it to console.");
+	print_help_option("--benchmark-file <path>", "Benchmark the run time and save it to a given file in JSON format. The path should be absolute.");
 #ifdef DEBUG_METHODS_ENABLED
-	OS::get_singleton()->print("  --gdnative-generate-json-api     Generate JSON dump of the Godot API for GDNative bindings.\n");
+	print_help_option("--gdnative-generate-json-api", "Generate JSON dump of the Godot API for GDNative bindings.");
 #endif
 #ifdef BYTECODE_EXPORT_ENABLED
-	OS::get_singleton()->print("  --dump-bytecode <file>           Generate script's bytecode dump.\n");
+	print_help_option("--dump-bytecode <file>", "Generate script's bytecode dump.");
 #endif
 #ifdef TOOLS_ENABLED
 #ifdef DOCTEST
-	OS::get_singleton()->print("  --doctest-run                    Run embedded tests from doctest.\n");
-	OS::get_singleton()->print("  --doctest-<opt>                  Forward option to doctest (e.g. --doctest-list-test-cases).\n");
+	print_help_option("--doctest-run", "Run embedded tests from doctest.");
+	print_help_option("--doctest-<opt>", "Forward option to doctest (e.g. --doctest-list-test-cases).");
 #endif
-	OS::get_singleton()->print("  --test <test>                    Run a unit test (");
+
+	String test_list;
 	const char **test_names = tests_get_names();
 	const char *comma = "";
 	while (*test_names) {
-		OS::get_singleton()->print("%s'%s'", comma, *test_names);
+		test_list += vformat("%s\"%s\"", comma, *test_names);
 		test_names++;
 		comma = ", ";
 	}
-	OS::get_singleton()->print(").\n");
+	print_help_option("--test <test>", vformat("Run a unit test (%s).", test_list).utf8().get_data());
 #endif
 #endif
+	OS::get_singleton()->print("\n");
 }
 
 /* Engine initialization

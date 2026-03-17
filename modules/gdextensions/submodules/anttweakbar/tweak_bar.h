@@ -62,8 +62,19 @@ class TweakBar : public Node2D {
 		VarData::Type type;
 	};
 
+	// Property binding: binds a TweakBar variable to a Godot object's property
+	struct PropertyBinding {
+		ObjectID object_id; // safe reference (doesn't prevent GC)
+		String property;
+		String bar_name;
+		String var_name;
+		VarData::Type type;
+		TweakBar *self;
+	};
+
 	Map<String, VarData> m_vars;
 	Map<String, String> m_string_vars;
+	Map<String, PropertyBinding *> m_bindings; // var_key → binding
 	Vector<VarCBInfo *> m_cb_infos;
 	Vector<VarCBInfo *> m_btn_infos;
 
@@ -71,8 +82,15 @@ class TweakBar : public Node2D {
 	static void _get_cb(void *value, void *clientData);
 	static void _btn_cb(void *clientData);
 
+	// Property binding callbacks
+	static void _prop_set_cb(const void *value, void *clientData);
+	static void _prop_get_cb(void *value, void *clientData);
+	VarData::Type _variant_type_to_var_type(Variant::Type p_type) const;
+
 	void _ensure_init();
 	String _var_key(const String &bar, const String &var) const;
+	void _auto_discover_configs();
+	void _apply_config(Object *p_object, const Dictionary &p_config);
 
 protected:
 	static void _bind_methods();
@@ -101,6 +119,14 @@ public:
 	// Get/set variable values
 	Variant get_value(const String &p_bar, const String &p_name) const;
 	void set_value(const String &p_bar, const String &p_name, const Variant &p_value);
+
+	// Property binding: observe a Godot object property
+	// Automatically detects type and creates the right TweakBar variable.
+	// The bar variable stays synced with the object property bidirectionally.
+	bool bind_property(const String &p_bar, const String &p_name, Object *p_object, const String &p_property, const String &p_def = "");
+
+	// Variant-based: auto-detect type and add appropriate variable
+	bool add_variant(const String &p_bar, const String &p_name, const Variant &p_value, const String &p_def = "");
 
 	// Input forwarding
 	void _handle_input(const Ref<InputEvent> &p_event);

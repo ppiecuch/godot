@@ -135,7 +135,7 @@ def snake_case(name):
 
 env_module = env_modules.Clone()
 
-sources = Glob("*.cpp") + Glob("common/*.cpp")  # Always build common
+sources = Glob("*.cpp") + Glob("common/*.cpp") + Glob("core/*.cpp") + Glob("core/*.c")  # Always build core and common
 
 modules = [
     # A
@@ -149,7 +149,6 @@ modules = [
     "bulletkit",
     # C
     "canvasraster",
-    "core",
     "cpufeatures",
     "cyberelements",
     # D
@@ -176,11 +175,16 @@ modules = [
     "httpserver",
     "hydro",
     "hwinfo",
+    # I
+    "isotools",
+    # K
+    "keychains",
     # L
     "landiscovery",
     "ldrdraw",
     "lsystem",
     # M
+    "mazegen",
     "media/ffmpeg",
     "media/flac",
     "media/gifexporter",
@@ -221,7 +225,7 @@ modules = [
     "turbobadger",
     # V
     "vaserenderer",
-    "vgamepad",
+    "vgamepaddesign",
     "visual",
 ]
 
@@ -234,10 +238,9 @@ thirdparty_sources = [
 ]
 
 if env["tools"]:
-    if is_enabled("editor"):
-        thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
-        env_module.Append(CPPPATH=["thirdparty/gc-8.2.2/include"])
-        modules += ["editor"]
+    thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
+    env_module.Append(CPPPATH=["thirdparty/gc-8.2.2/include"])
+    sources += Glob("editor/*.cpp") + Glob("editor/*.c")  # Always build editor for tools
     if is_enabled("qrcodetexture"):
         modules += ["qrcodetexture"]
     if is_enabled("texturepacker"):
@@ -317,6 +320,16 @@ if is_enabled("hwinfo"):
             Glob("thirdparty/hwinfo/src/*.cpp")
             + Glob("thirdparty/hwinfo/src/platform_apple/*.cpp")
             + ["thirdparty/hwinfo/src/platform_apple/utils/apple_info_ios.m"]
+        )
+    elif env["platform"] == "android":
+        thirdparty_sources += (
+            Glob("thirdparty/hwinfo/src/*.cpp")
+            + Glob("thirdparty/hwinfo/src/platform_android/*.cpp")
+        )
+    elif env["platform"] == "windows":
+        thirdparty_sources += (
+            Glob("thirdparty/hwinfo/src/*.cpp")
+            + Glob("thirdparty/hwinfo/src/platform_windows/*.cpp")
         )
     else:
         arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
@@ -541,7 +554,6 @@ if is_enabled("thorvg"):
         thorvg_sources = [
             # common
             "src/common/tvgCompressor.cpp",
-            "src/common/tvgLines.cpp",
             "src/common/tvgMath.cpp",
             "src/common/tvgStr.cpp",
             # renderer
@@ -572,10 +584,9 @@ if is_enabled("thorvg"):
             "src/renderer/tvgText.cpp",
             "src/renderer/tvgWgCanvas.cpp",
             # loaders
+            "src/loaders/external_jpg/tvgJpgLoader.cpp",
             "src/loaders/external_png/tvgPngLoader.cpp",
             "src/loaders/external_webp/tvgWebpLoader.cpp",
-            "src/loaders/jpg/tvgJpgd.cpp",
-            "src/loaders/jpg/tvgJpgLoader.cpp",
             "src/loaders/raw/tvgRawLoader.cpp",
             "src/loaders/svg/tvgSvgCssStyle.cpp",
             "src/loaders/svg/tvgSvgLoader.cpp",
@@ -592,9 +603,10 @@ if is_enabled("thorvg"):
                 thirdparty_dir + "src/common",
                 thirdparty_dir + "src/renderer",
                 thirdparty_dir + "src/renderer/sw_engine",
+                thirdparty_dir + "src/loaders/external_jpg",
+                "#thirdparty/jpeg-compressor",  # jpgd.h for thorvg JPG loader (replaces turbojpeg)
                 thirdparty_dir + "src/loaders/external_png",
                 thirdparty_dir + "src/loaders/external_webp",
-                thirdparty_dir + "src/loaders/jpg",
                 thirdparty_dir + "src/loaders/raw",
                 thirdparty_dir + "src/loaders/svg",
             ]
@@ -655,8 +667,13 @@ if is_enabled("turbobadger"):
         env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_STB"])
     thirdparty_sources += Glob("thirdparty/turbobadger/src/**/*.cpp") + Glob("thirdparty/turbobadger/resources/*.c")
 
-if is_enabled("vgamepad"):
-    sources += Glob("submodules/vgamepad/res/*.c")
+if is_enabled("keychains"):
+    if env["platform"] == "osx" or env["platform"] == "iphone":
+        sources += Glob("submodules/keychains/*.mm")
+        env.Append(LINKFLAGS=["-framework", "Security"])
+
+if is_enabled("vgamepaddesign"):
+    sources += Glob("submodules/vgamepaddesign/*.cpp") + Glob("submodules/vgamepaddesign/res/*.c")
 
 if is_enabled("openclwrapper"):
     if env["tools"]:

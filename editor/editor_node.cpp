@@ -171,6 +171,7 @@
 #include "editor/plugins/tile_set_editor_plugin.h"
 #include "editor/plugins/version_control_editor_plugin.h"
 #include "editor/plugins/viewport_preview_editor_plugin.h"
+#include "editor/plugins/virtual_joystick_editor_plugin.h"
 #include "editor/plugins/visual_shader_editor_plugin.h"
 #include "editor/progress_dialog.h"
 #include "editor/project_export.h"
@@ -4365,9 +4366,14 @@ Ref<Texture> EditorNode::get_class_icon(const String &p_class, const String &p_f
 	return nullptr;
 }
 
+// Used to track the progress of tasks in the CLI output (since we don't have any other frame of reference).
+// Per-task counters to handle nested/overlapping tasks correctly. See godotengine/godot#109391.
+static Map<String, int> progress_total_steps;
+
 void EditorNode::progress_add_task(const String &p_task, const String &p_label, int p_steps, bool p_can_cancel) {
 	if (singleton->cmdline_export_mode) {
-		print_line(p_task + ": begin: " + p_label + " steps: " + itos(p_steps));
+		print_line_rich(vformat("[   0%% ] [color=gray][b]%s[/b] | Started %s (%d steps)[/color]", p_task, p_label, p_steps));
+		progress_total_steps[p_task] = p_steps;
 	} else {
 		singleton->progress_dialog->add_task(p_task, p_label, p_steps, p_can_cancel);
 	}
@@ -4375,7 +4381,8 @@ void EditorNode::progress_add_task(const String &p_task, const String &p_label, 
 
 bool EditorNode::progress_task_step(const String &p_task, const String &p_state, int p_step, bool p_force_refresh) {
 	if (singleton->cmdline_export_mode) {
-		print_line("\t" + p_task + ": step " + itos(p_step) + ": " + p_state);
+		const int percent = (p_step / float(progress_total_steps[p_task] + 1)) * 100;
+		print_line_rich(vformat("[%4d%% ] [color=gray][b]%s[/b] | %s[/color]", percent, p_task, p_state));
 		return false;
 	} else {
 		return singleton->progress_dialog->task_step(p_task, p_state, p_step, p_force_refresh);
@@ -4384,7 +4391,8 @@ bool EditorNode::progress_task_step(const String &p_task, const String &p_state,
 
 void EditorNode::progress_end_task(const String &p_task) {
 	if (singleton->cmdline_export_mode) {
-		print_line(p_task + ": end");
+		progress_total_steps.erase(p_task);
+		print_line_rich(vformat("[color=green][ DONE ][/color] [b]%s[/b]\n", p_task));
 	} else {
 		singleton->progress_dialog->end_task(p_task);
 	}
@@ -7312,6 +7320,7 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(ViewportPreviewEditorPlugin(this)));
 	add_editor_plugin(memnew(GradientTexture2DEditorPlugin(this)));
 	add_editor_plugin(memnew(RayCast2DEditorPlugin(this)));
+	add_editor_plugin(memnew(VirtualJoystickEditorPlugin(this)));
 	add_editor_plugin(memnew(BitMapEditorPlugin(this)));
 
 	for (int i = 0; i < EditorPlugins::get_plugin_count(); i++) {

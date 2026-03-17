@@ -566,6 +566,9 @@ public:
 	Ref<Image> neighbor_tracing(Ref<Image> p_src);
 	Array unpack_region(Ref<Image> p_src, Dictionary p_opts = Dictionary());
 	Ref<Image> make_seamless(Ref<Image> p_src, Dictionary p_opts = Dictionary());
+	void convolve(Ref<Image> p_src, PoolIntArray p_kernel, int p_krow, int p_kcol);
+	void sharpen(Ref<Image> p_src);
+	void smooth(Ref<Image> p_src);
 
 	_ImageTools();
 };

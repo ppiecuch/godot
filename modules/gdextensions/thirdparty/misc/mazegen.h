@@ -346,7 +346,6 @@ void place_rooms() {
     std::uniform_int_distribution<> room_position_y_distribution(0, maze_height() - room_avg);
 
     for (int i = 0; i < cfg.ROOM_BASE_NUMBER; i++) {
-        bool room_is_placed = false;
         int width = room_size_distribution(rng) / 2 * 2 + 1;
         int height = room_size_distribution(rng) / 2 * 2 + 1;
         int room_x = room_position_x_distribution(rng) / 2 * 2 + 1;
@@ -378,7 +377,6 @@ void place_rooms() {
             if (breaks_hall_constraint) continue;
         }
         rooms.push_back(room);
-        room_is_placed = true;
         for (int x = room.min_point.x; x <= room.max_point.x; x++) {
             for (int y = room.min_point.y; y <= room.max_point.y; y++) {
                 grid[y][x]= room_id;
@@ -550,7 +548,6 @@ bool is_dead_end(const Point& p) {
 
 // Removes blind parts of the maze with (1.0 - DEADEND_CHANCE) probability
 void reduce_maze() {
-    bool done = false;
     std::uniform_real_distribution<double> reduce_distribution(0.0, 1.0);
     for (auto& end_p : dead_ends) {
         if (reduce_distribution(rng) < cfg.DEADEND_CHANCE) continue;

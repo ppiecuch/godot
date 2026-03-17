@@ -29,8 +29,15 @@ find . -type f -name 'meson.build' -delete
 
 # Fix newline at end of file.
 for source in $(find ./ -type f \( -iname \*.h -o -iname \*.cpp \)); do
-    sed -i -e '$a\' $source
+    # Use '' as backup suffix on macOS to avoid creating -e backup files
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' -e '$a\' "$source"
+    else
+        sed -i -e '$a\' "$source"
+    fi
 done
+# Clean up any leftover sed backup files (safety net)
+find ./ -name "*-e" -delete 2>/dev/null || true
 
 cp -v AUTHORS LICENSE ..
 cp -rv inc ../
@@ -74,4 +81,20 @@ cp -rv src/loaders/external_jpg ../src/loaders/
 
 popd
 rm -rf tmp
+
+# Apply Godot-specific patches from patch/ directory
+echo "**"
+echo "** Applying patches"
+echo "**"
+
+for p in patch/*.patch; do
+    [ -f "$p" ] || continue
+    echo "  Applying: $p"
+    patch -p1 < "$p" || echo "  WARNING: patch $p failed (may already be applied)"
+done
+
 popd
+
+echo "*"
+echo "* DONE"
+echo "*"

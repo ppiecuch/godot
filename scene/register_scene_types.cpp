@@ -130,6 +130,7 @@
 #include "scene/gui/tree.h"
 #include "scene/gui/video_player.h"
 #include "scene/gui/viewport_container.h"
+#include "scene/gui/virtual_joystick.h"
 #include "scene/main/canvas_layer.h"
 #include "scene/main/http_request.h"
 #include "scene/main/instance_placeholder.h"
@@ -340,6 +341,7 @@ void register_scene_types() {
 	ClassDB::register_class<HSeparator>();
 	ClassDB::register_class<VSeparator>();
 	ClassDB::register_class<TextureButton>();
+	ClassDB::register_class<VirtualJoystick>();
 	ClassDB::register_class<Container>();
 	ClassDB::register_virtual_class<BoxContainer>();
 	ClassDB::register_class<HBoxContainer>();

@@ -40,6 +40,9 @@ class Vector;
 
 class Main {
 	static void print_help(const char *p_binary);
+	static void print_help_copyright(const char *p_notice);
+	static void print_help_title(const char *p_title);
+	static void print_help_option(const char *p_option, const char *p_description);
 	static uint64_t last_ticks;
 	static uint32_t hide_print_fps_attempts;
 	static uint32_t frames;

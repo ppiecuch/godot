@@ -43,6 +43,7 @@
 #include "scene/resources/font.h"
 
 #include "misc/default_bitmap_font.auto.h"
+#include "scene/resources/dynamic_font.h"
 
 // https://github.com/dalerank/imspinner
 // commit 5896bfa0de0bef45b280e8a6fa5b08c7210727fb
@@ -51,6 +52,7 @@ typedef uint32_t ImU32;
 typedef Vector2 ImVec2;
 typedef Vector2i ImVec2ih;
 typedef Rect2 ImRect;
+typedef Color ImVec4;
 typedef uint64_t ImGuiID;
 typedef uint64_t ImDrawListFlags;
 
@@ -134,10 +136,45 @@ struct ImColor {
 struct ImFontGlyph {
 	real_t U0, U1;
 	real_t V0, V1;
+	real_t AdvanceX;
 };
 
+// Use shared embedded vera.ttf from register_types.cpp
+extern const uint8_t vera_ttf_data[];
+extern const unsigned int vera_ttf_size;
+
 struct ImFont : public Reference {
-	ImFontGlyph *FindGlyph(int glyph) { return nullptr; }
+	real_t FontSize = 12;
+	mutable Ref<DynamicFont> _gdFont;
+	mutable ImFontGlyph _stub_glyph;
+
+	ImFont() {
+		memset(&_stub_glyph, 0, sizeof(_stub_glyph));
+		_stub_glyph.AdvanceX = 8;
+		// Create font from embedded vera.ttf
+		_gdFont.instance();
+		Ref<DynamicFontData> fd;
+		fd.instance();
+		fd->set_font_ptr(vera_ttf_data, vera_ttf_size);
+		_gdFont->set_font_data(fd);
+		_gdFont->set_size(12);
+	}
+
+	ImFontGlyph *FindGlyph(int glyph) { return &_stub_glyph; }
+
+	template <typename TDrawList>
+	void RenderChar(TDrawList draw_list, real_t size, ImVec2 pos, ImU32 col, unsigned short ch) const {
+		// Render single character via DynamicFont
+		if (_gdFont.is_valid() && draw_list.is_valid() && draw_list->_Canvas) {
+			String s;
+			s += (CharType)ch;
+			if ((int)size != _gdFont->get_size()) {
+				_gdFont->set_size((int)size);
+			}
+			draw_list->_Canvas->draw_string(_gdFont, pos, s, ImColor(col));
+			_stub_glyph.AdvanceX = _gdFont->get_string_size(s).x;
+		}
+	}
 };
 
 struct ImFontAtlas : public Reference {
@@ -402,6 +439,22 @@ struct ImGuiWindow {
 			}
 			_Canvas->draw_polygon(Vector<Vector2>(num_points, points), make_vector<Color>(ImColor(col)));
 		}
+		void AddRect(const ImVec2 &p_min, const ImVec2 &p_max, ImU32 col, real_t rounding = 0, int flags = 0, real_t thickness = 1.0) {
+			if ((col & IM_COL32_A_MASK) == 0) {
+				return;
+			}
+			_Canvas->draw_rect(Rect2(p_min, p_max - p_min), ImColor(col), false, thickness);
+		}
+		void AddTriangleFilled(const ImVec2 &p1, const ImVec2 &p2, const ImVec2 &p3, ImU32 col) {
+			if ((col & IM_COL32_A_MASK) == 0) {
+				return;
+			}
+			Vector<Vector2> pts;
+			pts.push_back(p1);
+			pts.push_back(p2);
+			pts.push_back(p3);
+			_Canvas->draw_polygon(pts, make_vector<Color>(ImColor(col)));
+		}
 	};
 
 	static ImDrawListSharedData SharedData;
@@ -421,7 +474,9 @@ struct ImGuiWindow {
 
 struct ImGuiContext {
 	ImGuiStyle Style;
-	Ref<ImFont> Font = memnew(ImFont);
+	ImFont *Font;
+	ImGuiContext() { Font = memnew(ImFont); }
+	~ImGuiContext() { memdelete(Font); }
 };
 
 ImGuiWindow::ImDrawListSharedData ImGuiWindow::SharedData;
@@ -456,6 +511,27 @@ _FORCE_INLINE_ void ColorConvertRGBtoHSV(float r, float g, float b, float &out_h
 	out_s = c.get_s();
 	out_v = c.get_v();
 }
+const char *FindRenderedTextEnd(const char *text, const char *text_end = nullptr) {
+	if (!text)
+		return text;
+	const char *p = text;
+	while (p < (text_end ? text_end : p + 1) && *p)
+		p++;
+	return p;
+}
+ImVec2 CalcTextSize(const char *text, const char *text_end = nullptr) {
+	// Approximate: 8px per char, 12px height
+	int len = 0;
+	const char *p = text;
+	while (p && *p && (!text_end || p < text_end)) {
+		len++;
+		p++;
+	}
+	return ImVec2(len * 8.0f, 12.0f);
+}
+ImU32 GetColorU32(const Color &col) {
+	return col.to_abgr32();
+}
 } //namespace ImGui
 
 // -----
@@ -465,6 +541,16 @@ _FORCE_INLINE_ void ColorConvertRGBtoHSV(float r, float g, float b, float &out_h
 #define ImAbs(x) Math::abs(x)
 #define ImFmod(x, y) Math::fmod(real_t(x), real_t(y))
 #define ImPow(x, y) Math::pow(x, y)
+#define ImSqrt(x) Math::sqrt(real_t(x))
+#define ImAcos(x) Math::acos(real_t(x))
+#define ImFloor(x) Math::floor(x)
+
+// Color channel shift constants (ABGR32 layout)
+#define IM_COL32_R_SHIFT 0
+#define IM_COL32_G_SHIFT 8
+#define IM_COL32_B_SHIFT 16
+
+typedef unsigned short ImWchar;
 
 #define float real_t
 

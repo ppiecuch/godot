@@ -564,7 +564,7 @@ namespace types {
 namespace parsers {
 namespace transform {
 
-static const real_t DEG_TO_RAD = 0.0174532925;
+static const real_t DEG_TO_RAD = Math_PI / 180.0;
 
 struct matrix {
 	union {
@@ -911,3 +911,392 @@ std::array<real_t, 6> parse_transforms(const char *c, const char *const end) {
 } //namespace parsers
 } //namespace types
 } //namespace svg
+
+// =========================================================================
+// Tests
+// =========================================================================
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+
+using namespace svg::types::parsers;
+using namespace svg::types::parsers::path;
+
+// Test helper: counts path commands for verification
+struct TestRecorder : public parser {
+	int move_count = 0, line_count = 0, curve_count = 0, close_count = 0, arc_count = 0;
+	real_t last_x = 0, last_y = 0;
+	bool eof_called = false;
+
+	void move_to(bool, real_t x, real_t y) override {
+		last_x = x;
+		last_y = y;
+		move_count++;
+	}
+	void line_to(bool, real_t x, real_t y) override {
+		last_x = x;
+		last_y = y;
+		line_count++;
+	}
+	void horizontal_line_to(bool, real_t x) override {
+		last_x = x;
+		line_count++;
+	}
+	void vertical_line_to(bool, real_t y) override {
+		last_y = y;
+		line_count++;
+	}
+	void curve_to(bool, real_t, real_t, real_t, real_t, real_t x, real_t y) override {
+		last_x = x;
+		last_y = y;
+		curve_count++;
+	}
+	void smooth_curve_to(bool, real_t, real_t, real_t x, real_t y) override {
+		last_x = x;
+		last_y = y;
+		curve_count++;
+	}
+	void bezier_curve_to(bool, real_t, real_t, real_t x, real_t y) override {
+		last_x = x;
+		last_y = y;
+		curve_count++;
+	}
+	void smooth_bezier_curve_to(bool, real_t x, real_t y) override {
+		last_x = x;
+		last_y = y;
+		curve_count++;
+	}
+	void elliptical_arc_to(bool, real_t, real_t, real_t, bool, bool, real_t x, real_t y) override {
+		last_x = x;
+		last_y = y;
+		arc_count++;
+	}
+	void close_path() override { close_count++; }
+	void eof() override { eof_called = true; }
+	int total() const { return move_count + line_count + curve_count + close_count + arc_count; }
+};
+
+TEST_SUITE("[[cyberelements]] svg_path: basic parsers") {
+	TEST_CASE("ws_p identifies whitespace") {
+		CHECK(ws_p(' '));
+		CHECK(ws_p('\t'));
+		CHECK(ws_p('\n'));
+		CHECK(ws_p('\r'));
+		CHECK_FALSE(ws_p('a'));
+		CHECK_FALSE(ws_p('0'));
+		CHECK_FALSE(ws_p(','));
+	}
+
+	TEST_CASE("number_p identifies number starts") {
+		CHECK(number_p('0'));
+		CHECK(number_p('9'));
+		CHECK(number_p('+'));
+		CHECK(number_p('-'));
+		CHECK(number_p('.'));
+		CHECK_FALSE(number_p('a'));
+		CHECK_FALSE(number_p(' '));
+		CHECK_FALSE(number_p(','));
+	}
+
+	TEST_CASE("parse_number: integers") {
+		const char *s = "42";
+		const char *end = s + 2;
+		real_t val = 0;
+		CHECK(parse_number(s, end, val));
+		CHECK(val == doctest::Approx(42.0f));
+		CHECK(s == end);
+	}
+
+	TEST_CASE("parse_number: floats") {
+		const char *s = "3.14";
+		const char *end = s + 4;
+		real_t val = 0;
+		CHECK(parse_number(s, end, val));
+		CHECK(val == doctest::Approx(3.14f));
+	}
+
+	TEST_CASE("parse_number: negative") {
+		const char *s = "-7.5";
+		const char *end = s + 4;
+		real_t val = 0;
+		CHECK(parse_number(s, end, val));
+		CHECK(val == doctest::Approx(-7.5f));
+	}
+
+	TEST_CASE("parse_number: no number returns false") {
+		const char *s = "abc";
+		const char *end = s + 3;
+		real_t val = 0;
+		CHECK_FALSE(parse_number(s, end, val));
+	}
+
+	TEST_CASE("parse_flag: 0 and 1") {
+		const char *s0 = "0";
+		const char *end0 = s0 + 1;
+		bool flag = true;
+		CHECK(parse_flag(s0, end0, flag));
+		CHECK_FALSE(flag);
+
+		const char *s1 = "1";
+		const char *end1 = s1 + 1;
+		CHECK(parse_flag(s1, end1, flag));
+		CHECK(flag);
+	}
+
+	TEST_CASE("parse_flag: non-flag returns false") {
+		const char *s = "2";
+		const char *end = s + 1;
+		bool flag = false;
+		CHECK_FALSE(parse_flag(s, end, flag));
+	}
+
+	TEST_CASE("parse_comma_wsp: comma") {
+		const char *s = ", ";
+		const char *end = s + 2;
+		CHECK(parse_comma_wsp(s, end));
+	}
+
+	TEST_CASE("parse_comma_wsp: space") {
+		const char *s = "  ,";
+		const char *end = s + 3;
+		CHECK(parse_comma_wsp(s, end));
+	}
+
+	TEST_CASE("parse_comma_wsp: no separator") {
+		const char *s = "M";
+		const char *end = s + 1;
+		CHECK_FALSE(parse_comma_wsp(s, end));
+	}
+}
+
+TEST_SUITE("[[cyberelements]] svg_path: path commands") {
+	TEST_CASE("MoveTo absolute") {
+		TestRecorder r;
+		CHECK(r.parse("M 10 20"));
+		CHECK(r.move_count == 1);
+		CHECK(r.last_x == doctest::Approx(10.0f));
+		CHECK(r.last_y == doctest::Approx(20.0f));
+	}
+
+	TEST_CASE("MoveTo relative") {
+		TestRecorder r;
+		CHECK(r.parse("m 5 7"));
+		CHECK(r.move_count == 1);
+		CHECK(r.last_x == doctest::Approx(5.0f));
+		CHECK(r.last_y == doctest::Approx(7.0f));
+	}
+
+	TEST_CASE("MoveTo followed by implicit LineTo") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 10 20 30 40"));
+		CHECK(r.move_count == 1);
+		CHECK(r.line_count == 2);
+	}
+
+	TEST_CASE("LineTo absolute and relative") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 L 10 20 l 5 5"));
+		CHECK(r.line_count == 2);
+	}
+
+	TEST_CASE("HorizontalLineTo") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 H 50"));
+		CHECK(r.line_count == 1);
+		CHECK(r.last_x == doctest::Approx(50.0f));
+	}
+
+	TEST_CASE("VerticalLineTo") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 V 30"));
+		CHECK(r.line_count == 1);
+		CHECK(r.last_y == doctest::Approx(30.0f));
+	}
+
+	TEST_CASE("CurveTo (cubic bezier)") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 C 10,20 30,40 50,60"));
+		CHECK(r.curve_count == 1);
+	}
+
+	TEST_CASE("SmoothCurveTo") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 S 30,40 50,60"));
+		CHECK(r.curve_count == 1);
+	}
+
+	TEST_CASE("QuadraticBezier") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 Q 10,20 30,40"));
+		CHECK(r.curve_count == 1);
+	}
+
+	TEST_CASE("SmoothQuadraticBezier") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 T 30,40"));
+		CHECK(r.curve_count == 1);
+	}
+
+	TEST_CASE("EllipticalArc") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 A 25 25 0 0 1 50 50"));
+		CHECK(r.arc_count == 1);
+	}
+
+	TEST_CASE("ClosePath") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 L 10 0 L 10 10 Z"));
+		CHECK(r.close_count == 1);
+	}
+
+	TEST_CASE("ClosePath lowercase") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 L 10 0 z"));
+		CHECK(r.close_count == 1);
+	}
+
+	TEST_CASE("Complex path with multiple command types") {
+		TestRecorder r;
+		CHECK(r.parse("M 10,80 C 40,10 65,10 95,80 S 150,150 180,80"));
+		CHECK(r.move_count == 1);
+		CHECK(r.curve_count == 2);
+	}
+
+	TEST_CASE("Multiple sub-paths") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 L 10 10 Z M 20 20 L 30 30 Z"));
+		CHECK(r.move_count == 2);
+		CHECK(r.line_count == 2);
+		CHECK(r.close_count == 2);
+	}
+
+	TEST_CASE("Compact notation (no spaces between numbers)") {
+		TestRecorder r;
+		CHECK(r.parse("M0,0L10,20"));
+		CHECK(r.move_count == 1);
+		CHECK(r.line_count == 1);
+	}
+
+	TEST_CASE("Negative numbers as separators") {
+		TestRecorder r;
+		CHECK(r.parse("M10-20L30-40"));
+		CHECK(r.move_count == 1);
+		CHECK(r.line_count == 1);
+	}
+
+	TEST_CASE("Empty string returns true") {
+		TestRecorder r;
+		CHECK(r.parse(""));
+	}
+
+	TEST_CASE("Whitespace only returns true") {
+		TestRecorder r;
+		CHECK(r.parse("   \t\n  "));
+	}
+
+	TEST_CASE("EOF is called") {
+		TestRecorder r;
+		r.parse("M 0 0");
+		CHECK(r.eof_called);
+	}
+
+	TEST_CASE("Invalid command returns false") {
+		TestRecorder r;
+		CHECK_FALSE(r.parse("X 10 20"));
+	}
+
+	TEST_CASE("Real CyberElement path parses") {
+		// Simplified path from CyberEl1
+		TestRecorder r;
+		CHECK(r.parse("M742 863c-55 0-83-36-83-36l-21 46s37 43 104 43c67 0 104-43 104-43l-21-46s-28 36-83 36z"));
+		CHECK(r.move_count >= 1);
+		CHECK(r.close_count >= 1);
+		int total = r.move_count + r.line_count + r.curve_count + r.close_count;
+		CHECK(total > 5);
+	}
+
+	TEST_CASE("Multiple repeated curves") {
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 C 1,2 3,4 5,6 7,8 9,10 11,12"));
+		CHECK(r.curve_count == 2);
+	}
+
+	TEST_CASE("Arc with flags without separator") {
+		// Per SVG spec, flags are single digits and don't need separators
+		TestRecorder r;
+		CHECK(r.parse("M 0 0 A 10 10 0 01 50 50"));
+		CHECK(r.arc_count == 1);
+	}
+}
+
+TEST_SUITE("[[cyberelements]] svg_path: transform parser") {
+	using namespace svg::types::parsers::transform;
+
+	TEST_CASE("parse_transforms: translate") {
+		const char *s = "translate(10, 20)";
+		auto result = parse_transforms(s, s + strlen(s));
+		// result = [a, b, c, d, e, f] = [1, 0, 0, 1, 10, 20]
+		CHECK(result[0] == doctest::Approx(1.0f));
+		CHECK(result[1] == doctest::Approx(0.0f));
+		CHECK(result[2] == doctest::Approx(0.0f));
+		CHECK(result[3] == doctest::Approx(1.0f));
+		CHECK(result[4] == doctest::Approx(10.0f));
+		CHECK(result[5] == doctest::Approx(20.0f));
+	}
+
+	TEST_CASE("parse_transforms: scale uniform") {
+		const char *s = "scale(2)";
+		auto result = parse_transforms(s, s + strlen(s));
+		CHECK(result[0] == doctest::Approx(2.0f));
+		CHECK(result[3] == doctest::Approx(2.0f));
+		CHECK(result[4] == doctest::Approx(0.0f));
+		CHECK(result[5] == doctest::Approx(0.0f));
+	}
+
+	TEST_CASE("parse_transforms: scale non-uniform") {
+		const char *s = "scale(3, 5)";
+		auto result = parse_transforms(s, s + strlen(s));
+		CHECK(result[0] == doctest::Approx(3.0f));
+		CHECK(result[3] == doctest::Approx(5.0f));
+	}
+
+	TEST_CASE("parse_transforms: rotate 90") {
+		const char *s = "rotate(90)";
+		auto result = parse_transforms(s, s + strlen(s));
+		CHECK(result[0] == doctest::Approx(0.0f).epsilon(0.001));
+		CHECK(result[1] == doctest::Approx(1.0f).epsilon(0.001));
+		CHECK(result[2] == doctest::Approx(-1.0f).epsilon(0.001));
+		CHECK(result[3] == doctest::Approx(0.0f).epsilon(0.001));
+	}
+
+	TEST_CASE("parse_transforms: identity matrix") {
+		const char *s = "matrix(1 0 0 1 0 0)";
+		auto result = parse_transforms(s, s + strlen(s));
+		CHECK(result[0] == doctest::Approx(1.0f));
+		CHECK(result[1] == doctest::Approx(0.0f));
+		CHECK(result[2] == doctest::Approx(0.0f));
+		CHECK(result[3] == doctest::Approx(1.0f));
+		CHECK(result[4] == doctest::Approx(0.0f));
+		CHECK(result[5] == doctest::Approx(0.0f));
+	}
+
+	TEST_CASE("parse_transforms: chained transforms") {
+		const char *s = "translate(10, 0) scale(2)";
+		auto result = parse_transforms(s, s + strlen(s));
+		// translate(10,0) then scale(2): point (x,y) -> (2*(x+10), 2*y) = (2x+20, 2y)
+		CHECK(result[0] == doctest::Approx(2.0f));
+		CHECK(result[3] == doctest::Approx(2.0f));
+		CHECK(result[4] == doctest::Approx(20.0f));
+		CHECK(result[5] == doctest::Approx(0.0f));
+	}
+
+	TEST_CASE("parse_transforms: empty string") {
+		const char *s = "";
+		auto result = parse_transforms(s, s);
+		// Should return identity
+		CHECK(result[0] == doctest::Approx(1.0f));
+		CHECK(result[3] == doctest::Approx(1.0f));
+	}
+}
+
+#endif // DOCTEST

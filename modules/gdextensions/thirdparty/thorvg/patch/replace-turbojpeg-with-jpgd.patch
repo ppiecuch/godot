@@ -1,0 +1,141 @@
+--- a/src/loaders/external_jpg/tvgJpgLoader.cpp	2026-03-16 14:21:29
++++ b/src/loaders/external_jpg/tvgJpgLoader.cpp	2026-03-16 14:21:51
+@@ -20,8 +20,12 @@
+  * SOFTWARE.
+  */
+ 
++// Patched for Godot: uses jpgd (thirdparty/jpeg-compressor) instead of turbojpeg.
++// jpgd is a public-domain single-file JPEG decoder already bundled with Godot.
++
+ #include <memory.h>
+-#include <turbojpeg.h>
++#include <stdlib.h>
++#include "jpgd.h"
+ #include "tvgJpgLoader.h"
+ 
+ /************************************************************************/
+@@ -43,17 +47,13 @@
+ 
+ JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
+ {
+-    jpegDecompressor = tjInitDecompress();
+ }
+ 
+ 
+ JpgLoader::~JpgLoader()
+ {
+     clear();
+-    tjDestroy(jpegDecompressor);
+-
+-    //This image is shared with raster engine.
+-    tjFree(surface.buf8);
++    free(surface.buf8);
+ }
+ 
+ 
+@@ -77,16 +77,17 @@
+ 
+     if (fread(data, size, 1, jpegFile) < 1) goto failure;
+ 
+-    int width, height, subSample, colorSpace;
+-    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) {
+-        TVGERR("JPG LOADER", "%s", tjGetErrorStr());
+-        goto failure;
++    {
++        int width, height, actual_comps;
++        auto probe = jpgd::decompress_jpeg_image_from_memory(data, size, &width, &height, &actual_comps, 4);
++        if (!probe) goto failure;
++        free(probe);
++
++        w = static_cast<float>(width);
++        h = static_cast<float>(height);
++        ret = true;
+     }
+ 
+-    w = static_cast<float>(width);
+-    h = static_cast<float>(height);
+-    ret = true;
+-
+     goto finalize;
+ 
+ failure:
+@@ -103,8 +104,10 @@
+ 
+ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
+ {
+-    int width, height, subSample, colorSpace;
+-    if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
++    int width, height, actual_comps;
++    auto probe = jpgd::decompress_jpeg_image_from_memory((const unsigned char *)data, size, &width, &height, &actual_comps, 4);
++    if (!probe) return false;
++    free(probe);
+ 
+     if (copy) {
+         this->data = (unsigned char *) malloc(size);
+@@ -130,27 +133,24 @@
+ 
+     if (w == 0 || h == 0) return false;
+ 
+-    //determine the image format
+-    TJPF format;
++    // Decompress using jpgd — always request 4 components (RGBX)
++    int dw, dh, actual_comps;
++    auto image = jpgd::decompress_jpeg_image_from_memory(data, size, &dw, &dh, &actual_comps, 4);
++    if (!image) return false;
++
++    // jpgd returns RGBX layout — convert to match expected color space
+     if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
+-        format = TJPF_BGRX;
++        // Swap R<->B for BGRA layout
++        auto px = (uint32_t *)image;
++        for (int i = 0; i < dw * dh; i++) {
++            uint32_t c = px[i];
++            px[i] = (c & 0xFF00FF00) | ((c >> 16) & 0xFF) | ((c & 0xFF) << 16);
++        }
+         surface.cs = ColorSpace::ARGB8888;
+     } else {
+-        format = TJPF_RGBX;
+         surface.cs = ColorSpace::ABGR8888;
+     }
+ 
+-    auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[format]);
+-    if (!image) return false;
+-
+-    //decompress jpg image
+-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), format, 0) < 0) {
+-        TVGERR("JPG LOADER", "%s", tjGetErrorStr());
+-        tjFree(image);
+-        image = nullptr;
+-        return false;
+-    }
+-
+     //setup the surface
+     surface.buf8 = image;
+     surface.stride = w;
+--- a/src/loaders/external_jpg/tvgJpgLoader.h	2026-03-16 14:21:30
++++ b/src/loaders/external_jpg/tvgJpgLoader.h	2026-03-16 14:21:51
+@@ -20,14 +20,13 @@
+  * SOFTWARE.
+  */
+ 
++// Patched for Godot: removed turbojpeg dependency, uses jpgd instead.
++
+ #ifndef _TVG_JPG_LOADER_H_
+ #define _TVG_JPG_LOADER_H_
+ 
+ #include "tvgLoader.h"
+ 
+-using tjhandle = void*;
+-
+-//TODO: Use Task?
+ class JpgLoader : public ImageLoader
+ {
+ public:
+@@ -41,7 +40,6 @@
+ private:
+     void clear();
+ 
+-    tjhandle jpegDecompressor;
+     unsigned char* data = nullptr;
+     unsigned long size = 0;
+     bool freeData = false;
