@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  swr_backend.h                                                         */
+/*  swr_vincent1.h                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,73 +28,63 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef SWR_BACKEND_H
-#define SWR_BACKEND_H
+#ifndef SWR_VINCENT1_H
+#define SWR_VINCENT1_H
 
-#include "core/ustring.h"
-#include <stdint.h>
+#include "swr_backend.h"
 
-class SWRBackend {
+// Vincent GLES 1.1 backend — full OpenGL ES 1.1 software renderer.
+// Uses the EGL::Context C++ API directly (no gl.cpp) to avoid symbol
+// conflicts with other backends.
+//
+// Features:
+// - Complete GLES 1.1 fixed-function pipeline
+// - ARM32 JIT compilation for scanline rasterization (when EGL_USE_JIT=1)
+// - 16-bit RGB565 color + separate 8-bit alpha framebuffer
+// - Multi-texture (2 units), lighting (8 lights), fog, stencil
+//
+// JIT status:
+// - ARM32: full JIT support (ARMv4/v5 instruction generation)
+// - ARM64: software-only (JIT not yet ported to AArch64)
+// - x86/x64: software-only
+
+class SWRVincent1 : public SWRBackend {
+	struct Impl;
+	Impl *impl;
+
 public:
-	enum PrimitiveType {
-		PRIM_POINTS = 0,
-		PRIM_LINES,
-		PRIM_LINE_STRIP,
-		PRIM_LINE_LOOP,
-		PRIM_TRIANGLES,
-		PRIM_TRIANGLE_STRIP,
-		PRIM_TRIANGLE_FAN,
-		PRIM_QUADS,
-	};
+	bool initialize(int width, int height) override;
+	void destroy() override;
+	String get_name() const override;
+	int get_width() const override;
+	int get_height() const override;
 
-	enum DrawFlags {
-		DRAW_HAS_COLORS = 1,
-		DRAW_HAS_TEXCOORDS = 2,
-		DRAW_HAS_NORMALS = 4,
-	};
+	void viewport(int x, int y, int w, int h) override;
+	void clear_color(float r, float g, float b, float a) override;
+	void clear(uint32_t mask) override;
+	void read_pixels(uint8_t *rgba_dest) override;
 
-	virtual ~SWRBackend() {}
+	void set_depth_test(bool enabled) override;
+	void set_blend(bool enabled) override;
+	void set_cull_face(bool enabled) override;
 
-	virtual bool initialize(int width, int height) = 0;
-	virtual void destroy() = 0;
-	virtual String get_name() const = 0;
-	virtual int get_width() const = 0;
-	virtual int get_height() const = 0;
-
-	// Framebuffer
-	virtual void viewport(int x, int y, int w, int h) = 0;
-	virtual void clear_color(float r, float g, float b, float a) = 0;
-	virtual void clear(uint32_t mask) = 0;
-	virtual void read_pixels(uint8_t *rgba_dest) = 0;
-
-	// State
-	virtual void set_depth_test(bool enabled) = 0;
-	virtual void set_blend(bool enabled) = 0;
-	virtual void set_cull_face(bool enabled) = 0;
-
-	// Draw a batch of vertices with the given MVP matrix.
-	// positions: 3 floats per vertex (x,y,z)
-	// colors: 4 floats per vertex (r,g,b,a) or nullptr
-	// texcoords: 2 floats per vertex (u,v) or nullptr
-	// normals: 3 floats per vertex (nx,ny,nz) or nullptr
-	// mvp: 16 floats, 4x4 column-major matrix
-	// uniform_color: 4 floats (r,g,b,a), used when colors is nullptr
-	virtual void draw(PrimitiveType type,
+	void draw(PrimitiveType type,
 			const float *positions, int vertex_count,
 			const float *colors,
 			const float *texcoords,
 			const float *normals,
 			const float *mvp,
-			const float *uniform_color) = 0;
+			const float *uniform_color) override;
 
-	// Textures
-	virtual uint32_t upload_texture(int w, int h, const uint8_t *rgba_data) = 0;
-	virtual void bind_texture(uint32_t id) = 0;
-	virtual void delete_texture(uint32_t id) = 0;
+	uint32_t upload_texture(int w, int h, const uint8_t *rgba_data) override;
+	void bind_texture(uint32_t id) override;
+	void delete_texture(uint32_t id) override;
 
-	static SWRBackend *create_portablegl();
-	static SWRBackend *create_fusion2x();
-	static SWRBackend *create_vincent1();
+	// Vincent-specific: query JIT status
+	static bool is_jit_enabled();
+
+	SWRVincent1();
+	~SWRVincent1();
 };
 
-#endif // SWR_BACKEND_H
+#endif // SWR_VINCENT1_H

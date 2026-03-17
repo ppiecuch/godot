@@ -99,6 +99,9 @@ void SoftRender::initialize(int p_width, int p_height, int p_backend) {
 		case BACKEND_FUSION2X:
 			backend = SWRBackend::create_fusion2x();
 			break;
+		case BACKEND_VINCENT1:
+			backend = SWRBackend::create_vincent1();
+			break;
 		default:
 			ERR_FAIL_MSG("Unknown backend type");
 			return;
@@ -517,6 +520,7 @@ void SoftRender::_bind_methods() {
 	// Enums
 	BIND_ENUM_CONSTANT(BACKEND_PORTABLEGL);
 	BIND_ENUM_CONSTANT(BACKEND_FUSION2X);
+	BIND_ENUM_CONSTANT(BACKEND_VINCENT1);
 
 	BIND_ENUM_CONSTANT(MATRIX_MODELVIEW);
 	BIND_ENUM_CONSTANT(MATRIX_PROJECTION);
@@ -904,3 +908,185 @@ TEST_SUITE("swrender") {
 }
 
 #endif // SWRENDER_PORTABLEGL
+
+#ifdef SWRENDER_VINCENT1
+
+#include "swr_vincent1.h"
+
+TEST_SUITE("swrender-vincent") {
+	TEST_CASE("[SoftRender:Vincent] Lifecycle - initialize and get backend name") {
+		Ref<SoftRender> sr;
+		sr.instance();
+		sr->initialize(128, 128, SoftRender::BACKEND_VINCENT1);
+		CHECK(sr->get_width() == 128);
+		CHECK(sr->get_height() == 128);
+		CHECK(sr->get_backend_name() == "Vincent");
+	}
+
+	TEST_CASE("[SoftRender:Vincent] get_image returns valid RGBA8") {
+		Ref<SoftRender> sr;
+		sr.instance();
+		sr->initialize(64, 64, SoftRender::BACKEND_VINCENT1);
+
+		Ref<Image> img = sr->get_image();
+		REQUIRE(img.is_valid());
+		CHECK(img->get_width() == 64);
+		CHECK(img->get_height() == 64);
+		CHECK(img->get_format() == Image::FORMAT_RGBA8);
+	}
+
+	TEST_CASE("[SoftRender:Vincent] Clear fills framebuffer with color") {
+		Ref<SoftRender> sr;
+		sr.instance();
+		sr->initialize(64, 64, SoftRender::BACKEND_VINCENT1);
+
+		sr->clear_color(Color(1, 0, 0, 1));
+		sr->clear(SoftRender::COLOR_BUFFER_BIT);
+
+		Ref<Image> img = sr->get_image();
+		REQUIRE(img.is_valid());
+		img->lock();
+		Color pixel = img->get_pixel(32, 32);
+		// Vincent uses RGB565 so color precision is lower
+		CHECK(pixel.r > 0.8f);
+		CHECK(pixel.g < 0.15f);
+		CHECK(pixel.b < 0.15f);
+		img->unlock();
+	}
+
+	TEST_CASE("[SoftRender:Vincent] Triangle rendering") {
+		Ref<SoftRender> sr;
+		sr.instance();
+		sr->initialize(128, 128, SoftRender::BACKEND_VINCENT1);
+
+		sr->clear_color(Color(0, 0, 0, 1));
+		sr->clear(SoftRender::COLOR_BUFFER_BIT | SoftRender::DEPTH_BUFFER_BIT);
+
+		sr->matrix_mode(SoftRender::MATRIX_PROJECTION);
+		sr->load_identity();
+		sr->ortho_bounds(-1, 1, -1, 1, -1, 1);
+
+		sr->matrix_mode(SoftRender::MATRIX_MODELVIEW);
+		sr->load_identity();
+
+		sr->begin_mesh(SoftRender::PRIM_TRIANGLES);
+		sr->color4(Color(1, 1, 1, 1));
+		sr->vertex3(Vector3(0, 0.8, 0));
+		sr->vertex3(Vector3(-0.8, -0.8, 0));
+		sr->vertex3(Vector3(0.8, -0.8, 0));
+		sr->end_mesh();
+
+		Ref<Image> img = sr->get_image();
+		REQUIRE(img.is_valid());
+		img->lock();
+		// Center of triangle should be non-black
+		Color center = img->get_pixel(64, 64);
+		CHECK(center.r > 0.5f);
+		img->unlock();
+	}
+
+	TEST_CASE("[SoftRender:Vincent] Vertex color interpolation") {
+		Ref<SoftRender> sr;
+		sr.instance();
+		sr->initialize(128, 128, SoftRender::BACKEND_VINCENT1);
+
+		sr->clear_color(Color(0, 0, 0, 1));
+		sr->clear(SoftRender::COLOR_BUFFER_BIT);
+
+		sr->matrix_mode(SoftRender::MATRIX_PROJECTION);
+		sr->load_identity();
+		sr->ortho_bounds(-1, 1, -1, 1, -1, 1);
+		sr->matrix_mode(SoftRender::MATRIX_MODELVIEW);
+		sr->load_identity();
+
+		sr->begin_mesh(SoftRender::PRIM_TRIANGLES);
+		sr->color4(Color(1, 0, 0, 1));
+		sr->vertex3(Vector3(0, 0.9, 0));
+		sr->color4(Color(0, 1, 0, 1));
+		sr->vertex3(Vector3(-0.9, -0.9, 0));
+		sr->color4(Color(0, 0, 1, 1));
+		sr->vertex3(Vector3(0.9, -0.9, 0));
+		sr->end_mesh();
+
+		Ref<Image> img = sr->get_image();
+		REQUIRE(img.is_valid());
+		img->lock();
+		Color center = img->get_pixel(64, 70);
+		CHECK(center.a > 0.5f);
+		// At centroid, each channel should have contribution
+		CHECK(center.r > 0.05f);
+		CHECK(center.g > 0.05f);
+		CHECK(center.b > 0.05f);
+		img->unlock();
+	}
+
+	TEST_CASE("[SoftRender:Vincent] JIT status reports correctly") {
+		// On ARM32 builds: is_jit_enabled() should return true
+		// On all other platforms: should return false
+		bool jit = SWRVincent1::is_jit_enabled();
+#if defined(ARM) || defined(_ARM_) || defined(__MARM__)
+		CHECK(jit == true);
+		MESSAGE("Vincent ARM JIT: ENABLED (ARM32)");
+#elif defined(__aarch64__)
+		CHECK(jit == false);
+		MESSAGE("Vincent ARM JIT: DISABLED (ARM64 - not yet ported)");
+#else
+		CHECK(jit == false);
+		MESSAGE("Vincent ARM JIT: DISABLED (non-ARM platform)");
+#endif
+	}
+
+	TEST_CASE("[SoftRender:Vincent] Both backends produce valid output") {
+		// Compare PortableGL and Vincent rendering the same scene
+		Ref<SoftRender> sr_pgl;
+		sr_pgl.instance();
+		sr_pgl->initialize(64, 64, SoftRender::BACKEND_PORTABLEGL);
+
+		Ref<SoftRender> sr_vin;
+		sr_vin.instance();
+		sr_vin->initialize(64, 64, SoftRender::BACKEND_VINCENT1);
+
+		// Both: clear to green, draw white triangle
+		for (int i = 0; i < 2; i++) {
+			Ref<SoftRender> sr = (i == 0) ? sr_pgl : sr_vin;
+			sr->clear_color(Color(0, 0.5, 0, 1));
+			sr->clear(SoftRender::COLOR_BUFFER_BIT);
+			sr->matrix_mode(SoftRender::MATRIX_PROJECTION);
+			sr->load_identity();
+			sr->ortho_bounds(-1, 1, -1, 1, -1, 1);
+			sr->matrix_mode(SoftRender::MATRIX_MODELVIEW);
+			sr->load_identity();
+			sr->begin_mesh(SoftRender::PRIM_TRIANGLES);
+			sr->color4(Color(1, 1, 1, 1));
+			sr->vertex3(Vector3(0, 0.8, 0));
+			sr->vertex3(Vector3(-0.8, -0.8, 0));
+			sr->vertex3(Vector3(0.8, -0.8, 0));
+			sr->end_mesh();
+		}
+
+		Ref<Image> img_pgl = sr_pgl->get_image();
+		Ref<Image> img_vin = sr_vin->get_image();
+		REQUIRE(img_pgl.is_valid());
+		REQUIRE(img_vin.is_valid());
+
+		img_pgl->lock();
+		img_vin->lock();
+
+		// Both should have non-black center (triangle was drawn)
+		Color pgl_center = img_pgl->get_pixel(32, 32);
+		Color vin_center = img_vin->get_pixel(32, 32);
+		CHECK(pgl_center.r > 0.5f);
+		CHECK(vin_center.r > 0.5f);
+
+		// Both should have green-ish corners (clear color)
+		Color pgl_corner = img_pgl->get_pixel(2, 2);
+		Color vin_corner = img_vin->get_pixel(2, 2);
+		CHECK(pgl_corner.g > 0.3f);
+		CHECK(vin_corner.g > 0.3f);
+
+		img_pgl->unlock();
+		img_vin->unlock();
+	}
+}
+
+#endif // SWRENDER_VINCENT1

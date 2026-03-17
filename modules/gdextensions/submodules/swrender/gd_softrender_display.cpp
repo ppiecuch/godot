@@ -155,5 +155,5 @@ void SoftRenderDisplay::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "canvas_size"), "set_canvas_size", "get_canvas_size");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "centered"), "set_centered", "is_centered");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "backend", PROPERTY_HINT_ENUM, "PortableGL,Fusion2X"), "set_backend", "get_backend");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "backend", PROPERTY_HINT_ENUM, "PortableGL,Fusion2X,Vincent"), "set_backend", "get_backend");
 }

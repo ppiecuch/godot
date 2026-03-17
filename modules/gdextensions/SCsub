@@ -638,18 +638,26 @@ if is_enabled("swrender"):
         )
         # Exclude regression test
         thirdparty_sources += [f for f in f2x_srcs if "regressiontest" not in str(f)]
-    if arch == "arm":  # vincent-gles1 with armjit
+    # Vincent GLES 1.1 backend (all platforms, JIT only on ARM32)
+    if os.path.isdir("thirdparty/swr-vincent-gles1"):
         env_module.Append(CPPDEFINES=["SWRENDER_VINCENT1"])
-        egl_srcs = Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")
-        gles_srcs = (
+        env_module.Append(CPPPATH=[
+            "thirdparty/swr-vincent-gles1/include",
+            "thirdparty/swr-vincent-gles1/src",
+        ])
+        vin_srcs = (
             Glob("thirdparty/swr-vincent-gles1/src/*.cpp")
-            + Glob("thirdparty/swr-vincent-gles1/src/arm/*.cpp")
-            + Glob("thirdparty/swr-vincent-gles1/src/codegen/*.c")
+            + Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")
         )
-        ug_srcs = Glob("thirdparty/swr-vincent-gles1/ug/*.c")
-
-        thirdparty_sources += egl_srcs + gles_srcs + ug_srcs
-        env_module.Append(CPPPATH=["thirdparty/swr-vincent-gles1/include"])
+        # Exclude gl.cpp — we use the C++ API directly to avoid gl* symbol conflicts
+        vin_srcs = [f for f in vin_srcs if not str(f).endswith("gl.cpp")]
+        # ARM JIT codegen (ARM32 only, ignored on other platforms via EGL_USE_JIT=0)
+        if arch == "arm":
+            vin_srcs += (
+                Glob("thirdparty/swr-vincent-gles1/src/armjit/*.cpp")
+                + Glob("thirdparty/swr-vincent-gles1/src/codegen/*.c")
+            )
+        thirdparty_sources += vin_srcs
 
 if is_enabled("lsystem"):
     env_module.Append(CPPPATH=["submodules/lsystem"])

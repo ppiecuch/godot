@@ -121,6 +121,7 @@ public:
 	enum Backend {
 		BACKEND_PORTABLEGL = 0,
 		BACKEND_FUSION2X = 1,
+		BACKEND_VINCENT1 = 2,
 	};
 
 	enum MatrixMode {
