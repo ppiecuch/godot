@@ -67,6 +67,19 @@ namespace {
 		return value;
 	}
 
+	/* LOAD_PTR: load a pointer-width value (64-bit on ARM64, 32-bit on ARM32) */
+	inline cg_virtual_reg_t * LOAD_PTR(cg_block_t * block, cg_virtual_reg_t * base, I32 constant) {
+		cg_virtual_reg_t * offset = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * addr = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * value = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+		LDI(offset, constant);
+		ADD(addr, base, offset);
+		LDPTR(value, addr);
+
+		return value;
+	}
+
 #define ALLOC_REG(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
 #define ALLOC_FLAGS(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
 #define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
@@ -103,7 +116,7 @@ void CodeGenerator :: GenerateRasterPoint() {
 	cg_block_t * block = cg_block_create(procedure, 1);
 
 	// load argument values
-	cg_virtual_reg_t * regTexture = LOAD_DATA(block, regInfo, OFFSET_TEXTURES);
+	cg_virtual_reg_t * regTexture = LOAD_PTR(block, regInfo, OFFSET_TEXTURES);
 
 	FragmentGenerationInfo info;
 	size_t unit;

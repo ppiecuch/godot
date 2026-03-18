@@ -255,6 +255,7 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 #include "noise/noise.h"
 
 #include "geomfonts//gd_geomfonts.h"
+#include "geomfonts/geom_font_2d.h"
 #include "symbolfonts/gdsymfonts.h"
 
 #ifdef GDEXT_IAP_ENABLED
@@ -531,6 +532,7 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_GEOMFONTS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
+	ClassDB::register_class<GeomFont2D>();
 #endif
 
 #ifdef GDEXT_SYMBOLFONTS_ENABLED

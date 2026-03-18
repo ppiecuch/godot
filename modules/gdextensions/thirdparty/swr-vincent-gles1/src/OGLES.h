@@ -44,11 +44,9 @@
 
 #if (defined(ARM) || defined(_ARM_) || defined(__MARM__)) && !defined(EGL_NO_COMPILE)
 # define EGL_USE_JIT 1
-#elif (defined(__aarch64__) || defined(_M_ARM64)) && defined(EGL_ARM64_JIT_VERIFIED) && !defined(EGL_NO_COMPILE)
-/* ARM64 JIT: codegen infrastructure complete (arm64-codegen.h/c, emit.c with
- * AArch64 prologue/epilogue/call_runtime/branch_fixup, FunctionCache W^X).
- * Instruction emission needs per-opcode verification before enabling.
- * Enable with -DEGL_ARM64_JIT_VERIFIED. */
+#elif (defined(__aarch64__) || defined(_M_ARM64)) && !defined(EGL_NO_COMPILE)
+/* ARM64 JIT: codegen with 64-bit register spills, W^X support, and
+ * AArch64 prologue/epilogue/call_runtime/branch_fixup. */
 # define EGL_USE_JIT 1
 #else
 # define EGL_USE_JIT 0

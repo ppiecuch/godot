@@ -67,6 +67,19 @@ namespace {
 		return value;
 	}
 
+	/* LOAD_PTR: load a pointer-width value (64-bit on ARM64, 32-bit on ARM32) */
+	inline cg_virtual_reg_t * LOAD_PTR(cg_block_t * block, cg_virtual_reg_t * base, I32 constant) {
+		cg_virtual_reg_t * offset = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * addr = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * value = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+		LDI(offset, constant);
+		ADD(addr, base, offset);
+		LDPTR(value, addr);
+
+		return value;
+	}
+
 #define ALLOC_REG(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
 #define ALLOC_FLAGS(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
 #define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
@@ -290,13 +303,13 @@ void CodeGenerator :: GenerateRasterScanLine() {
 
 #if EGL_MIPMAP_PER_TEXEL
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
-		regAddrTextures[unit] = LOAD_DATA(block, regInfo, OFFSET_TEXTURES + unit * sizeof(I32));
+		regAddrTextures[unit] = LOAD_PTR(block, regInfo, OFFSET_TEXTURES + unit * sizeof(void *));
 		regTexture[unit] = regAddrTextures[unit];
 	}
 #else
 	for (unit = 0; unit < EGL_NUM_TEXTURE_UNITS; ++unit) {
 		cg_virtual_reg_t * mipmapLevel = LOAD_DATA(block, regInfo, OFFSET_MIPMAP_LEVEL + unit * sizeof(I32));
-		regAddrTextures[unit] = LOAD_DATA(block, regInfo, OFFSET_TEXTURES + unit * sizeof(I32));
+		regAddrTextures[unit] = LOAD_PTR(block, regInfo, OFFSET_TEXTURES + unit * sizeof(void *));
 
 		DECL_REG		(shiftedLevel);
 		DECL_CONST_REG	(constant2, 2);
@@ -957,7 +970,7 @@ void CodeGenerator :: GenerateRasterScanLine() {
 	DECL_REG	(regConstant2);
 	DECL_REG	(regInverseAddr);
 
-	cg_virtual_reg_t * regInverseTablePtr =		LOAD_DATA(block, regInfo, OFFSET_INVERSE_TABLE_PTR);
+	cg_virtual_reg_t * regInverseTablePtr =		LOAD_PTR(block, regInfo, OFFSET_INVERSE_TABLE_PTR);
 
 	LDI			(regConstant2, 2);
 	LSL			(regShiftedBlock4DiffX, regBlock4DiffX, regConstant2);

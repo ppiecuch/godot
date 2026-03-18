@@ -1490,28 +1490,73 @@ static void emit_load(cg_codegen_t * gen, cg_inst_load_t * inst)
 			switch (inst->base.kind)
 			{
 				case cg_inst_load:
-					ARM_LDR_IMM(gen->cseg, inst->dest->physical_reg->regno, 
+					ARM_LDR_IMM(gen->cseg, inst->dest->physical_reg->regno,
 								inst->mem.base->physical_reg->regno, 0);
 					break;
-					
+
 				case cg_inst_arm_load_immed_offset:
-					ARM_LDR_IMM(gen->cseg, inst->dest->physical_reg->regno, 
-								inst->mem.immed_offset.base->physical_reg->regno, 
+					ARM_LDR_IMM(gen->cseg, inst->dest->physical_reg->regno,
+								inst->mem.immed_offset.base->physical_reg->regno,
 								inst->mem.immed_offset.offset);
 					break;
-					
+
 				case cg_inst_arm_load_reg_offset:
-					ARM_LDR_REG_REG(gen->cseg, inst->dest->physical_reg->regno, 
-									inst->mem.reg_offset.base->physical_reg->regno, 
+					ARM_LDR_REG_REG(gen->cseg, inst->dest->physical_reg->regno,
+									inst->mem.reg_offset.base->physical_reg->regno,
 									inst->mem.reg_offset.offset->physical_reg->regno);
 					break;
-					
+
 				default:
 					assert(0);
 			}
-			
+
 			break;
-			
+
+		case cg_op_ldptr:
+			/* Load pointer-width value: 64-bit on ARM64, 32-bit on ARM32 */
+			switch (inst->base.kind)
+			{
+#if defined(__aarch64__) || defined(_M_ARM64)
+				case cg_inst_load:
+					ARM64_LDR_X_IMM(gen->cseg, inst->dest->physical_reg->regno,
+								inst->mem.base->physical_reg->regno, 0);
+					break;
+
+				case cg_inst_arm_load_immed_offset:
+					ARM64_LDR_X_IMM(gen->cseg, inst->dest->physical_reg->regno,
+								inst->mem.immed_offset.base->physical_reg->regno,
+								inst->mem.immed_offset.offset);
+					break;
+
+				case cg_inst_arm_load_reg_offset:
+					ARM64_LDR_X_REG_REG(gen->cseg, inst->dest->physical_reg->regno,
+								inst->mem.reg_offset.base->physical_reg->regno,
+								inst->mem.reg_offset.offset->physical_reg->regno);
+					break;
+#else
+				case cg_inst_load:
+					ARM_LDR_IMM(gen->cseg, inst->dest->physical_reg->regno,
+								inst->mem.base->physical_reg->regno, 0);
+					break;
+
+				case cg_inst_arm_load_immed_offset:
+					ARM_LDR_IMM(gen->cseg, inst->dest->physical_reg->regno,
+								inst->mem.immed_offset.base->physical_reg->regno,
+								inst->mem.immed_offset.offset);
+					break;
+
+				case cg_inst_arm_load_reg_offset:
+					ARM_LDR_REG_REG(gen->cseg, inst->dest->physical_reg->regno,
+								inst->mem.reg_offset.base->physical_reg->regno,
+								inst->mem.reg_offset.offset->physical_reg->regno);
+					break;
+#endif
+				default:
+					assert(0);
+			}
+
+			break;
+
 		default:
 			assert(0);
 	}
@@ -1787,11 +1832,13 @@ static I32 fp_offset(cg_codegen_t * gen, cg_virtual_reg_t * reg) {
 		{
 			cg_proc_t * proc = gen->current_block->proc;
 
-			proc->local_storage += sizeof(U32);
 #if defined(__aarch64__) || defined(_M_ARM64)
+			/* ARM64: 8-byte spill slots for 64-bit X-register save/restore */
+			proc->local_storage += sizeof(void *);
 			/* ARM64: locals at positive offset from FP (after save area) */
-			reg->representative->fp_offset = SAVE_AREA_SIZE + (int)proc->local_storage - (int)sizeof(U32);
+			reg->representative->fp_offset = SAVE_AREA_SIZE + (int)proc->local_storage - (int)sizeof(void *);
 #else
+			proc->local_storage += sizeof(U32);
 			reg->representative->fp_offset = - (int) proc->local_storage - SAVE_AREA_SIZE;
 #endif
 		}
@@ -1810,11 +1857,17 @@ static void save_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg,
 	/************************************************************************/
 {
 	assert(physical_reg->dirty);
-	
+
 	// generate code to save the register; reg -> FP + offset
-	ARM_STR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP, 
+#if defined(__aarch64__) || defined(_M_ARM64)
+	/* ARM64: must use 64-bit STR (X-register) to preserve full pointer width */
+	ARM64_STR_X_IMM(gen->cseg, physical_reg->regno, ARMREG_FP,
 			    fp_offset(gen, reg));
-	
+#else
+	ARM_STR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP,
+			    fp_offset(gen, reg));
+#endif
+
 	physical_reg->dirty = 0;
 	
 }
@@ -1827,11 +1880,17 @@ static void restore_reg(cg_codegen_t * gen, cg_physical_reg_t * physical_reg,
 	/************************************************************************/
 {
 	assert(!physical_reg->defined);
-	
-	// generate code to save the register; FP + offset -> reg
-	ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP, 
+
+	// generate code to restore the register; FP + offset -> reg
+#if defined(__aarch64__) || defined(_M_ARM64)
+	/* ARM64: must use 64-bit LDR (X-register) to preserve full pointer width */
+	ARM64_LDR_X_IMM(gen->cseg, physical_reg->regno, ARMREG_FP,
 				fp_offset(gen, reg));
-	
+#else
+	ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_FP,
+				fp_offset(gen, reg));
+#endif
+
 	physical_reg->defined = 1;
 	
 }

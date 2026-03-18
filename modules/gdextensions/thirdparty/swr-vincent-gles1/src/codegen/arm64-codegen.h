@@ -163,6 +163,16 @@ typedef enum {
 
 #define ARM64COND_INVERT(c) ((c) ^ 1)
 
+/* Conditional skip: emit B.cond to skip the next N instructions.
+ * On Apple Silicon, B.NV (cond 0xF) is TAKEN, not "never" as ARM spec says.
+ * When cond == AL (always), the inverted cond would be NV — instead emit NOP
+ * to maintain the same instruction count (branch fixups depend on this). */
+#define ARM64_COND_SKIP(p, cond, n) \
+	do { \
+		if ((cond) == ARM64COND_AL) ARM64_NOP(p); \
+		else ARM64_B_COND(p, ARM64COND_INVERT(cond), n); \
+	} while(0)
+
 
 /* ======================================================================== */
 /*  Shift types (same encoding as ARM32)                                    */
@@ -209,17 +219,22 @@ typedef enum {
 /*  Data Processing — Register (W, 32-bit, sf=0)                           */
 /* ======================================================================== */
 
-/* ADD Wd, Wn, Wm */
+/* ADD Xd, Xn, Xm — use 64-bit form to preserve pointer-width values.
+ * For 32-bit data (zero-extended to 64-bit), the lower 32 bits of the
+ * result are identical to ADD Wd, Wn, Wm. This is critical for ARM64
+ * JIT where the same ADD instruction may operate on 32-bit data values
+ * or 64-bit pointer+offset computations. */
 #define ARM64_ADD_REG_REG(p, rd, rn, rm) \
-	ARM64_EMIT(p, 0x0B000000 | ((rm) << 16) | ((rn) << 5) | (rd))
+	ARM64_EMIT(p, 0x8B000000 | ((rm) << 16) | ((rn) << 5) | (rd))
 
-/* ADDS Wd, Wn, Wm (sets flags) */
+/* ADDS Wd, Wn, Wm (sets flags) — MUST stay 32-bit for correct flag
+ * behavior with signed 32-bit values (CMP, BLE, etc.) */
 #define ARM64_ADDS_REG_REG(p, rd, rn, rm) \
 	ARM64_EMIT(p, 0x2B000000 | ((rm) << 16) | ((rn) << 5) | (rd))
 
-/* SUB Wd, Wn, Wm */
+/* SUB Xd, Xn, Xm — 64-bit form, same reasoning as ADD above */
 #define ARM64_SUB_REG_REG(p, rd, rn, rm) \
-	ARM64_EMIT(p, 0x4B000000 | ((rm) << 16) | ((rn) << 5) | (rd))
+	ARM64_EMIT(p, 0xCB000000 | ((rm) << 16) | ((rn) << 5) | (rd))
 
 /* SUBS Wd, Wn, Wm */
 #define ARM64_SUBS_REG_REG(p, rd, rn, rm) \
@@ -263,19 +278,22 @@ typedef enum {
 /*  shift_type: 0=LSL, 1=LSR, 2=ASR                                        */
 /* ======================================================================== */
 
-/* ADD Wd, Wn, Wm, <shift> #amount */
+/* ADD Xd, Xn, Xm, <shift> #amount — 64-bit to preserve pointers */
 #define ARM64_ADD_REG_REGSHIFT(p, rd, rn, rm, shift_type, amount) \
-	ARM64_EMIT(p, 0x0B000000 | ((shift_type) << 22) | ((rm) << 16) | \
+	ARM64_EMIT(p, 0x8B000000 | ((shift_type) << 22) | ((rm) << 16) | \
 		(((amount) & 0x3F) << 10) | ((rn) << 5) | (rd))
 
+/* ADDS Wd, Wn, Wm, <shift> — 32-bit for correct flags */
 #define ARM64_ADDS_REG_REGSHIFT(p, rd, rn, rm, shift_type, amount) \
 	ARM64_EMIT(p, 0x2B000000 | ((shift_type) << 22) | ((rm) << 16) | \
 		(((amount) & 0x3F) << 10) | ((rn) << 5) | (rd))
 
+/* SUB Xd, Xn, Xm, <shift> — 64-bit to preserve pointers */
 #define ARM64_SUB_REG_REGSHIFT(p, rd, rn, rm, shift_type, amount) \
-	ARM64_EMIT(p, 0x4B000000 | ((shift_type) << 22) | ((rm) << 16) | \
+	ARM64_EMIT(p, 0xCB000000 | ((shift_type) << 22) | ((rm) << 16) | \
 		(((amount) & 0x3F) << 10) | ((rn) << 5) | (rd))
 
+/* SUBS Wd, Wn, Wm, <shift> — 32-bit for correct flags */
 #define ARM64_SUBS_REG_REGSHIFT(p, rd, rn, rm, shift_type, amount) \
 	ARM64_EMIT(p, 0x6B000000 | ((shift_type) << 22) | ((rm) << 16) | \
 		(((amount) & 0x3F) << 10) | ((rn) << 5) | (rd))
@@ -348,7 +366,7 @@ typedef enum {
 
 #define ARM64_ADD_REG_IMM8_COND(p, rd, rn, imm8, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		ARM64_ADD_REG_IMM8(p, rd, rn, imm8); \
 	} while (0)
 
@@ -362,7 +380,7 @@ typedef enum {
 
 #define ARM64_SUB_REG_IMM8_COND(p, rd, rn, imm8, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		ARM64_SUB_REG_IMM8(p, rd, rn, imm8); \
 	} while (0)
 
@@ -437,7 +455,7 @@ typedef enum {
 
 #define ARM64_MOV_REG_IMM8_COND(p, rd, imm8, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		ARM64_MOV_REG_IMM8(p, rd, imm8); \
 	} while (0)
 
@@ -745,9 +763,9 @@ typedef enum {
 #define ARM64_BL(p, offset) \
 	ARM64_EMIT(p, 0x94000000 | ((offset) & 0x3FFFFFF))
 
-/* B.cond imm19 (offset in instructions) */
+/* B.cond imm19 (offset in instructions, signed) */
 #define ARM64_B_COND(p, cond, offset) \
-	ARM64_EMIT(p, 0x54000000 | ((((unsigned int)(offset)) & 0x7FFFF) << 5) | (cond))
+	ARM64_EMIT(p, 0x54000000 | ((((unsigned int)((int)(offset) & 0x7FFFF)) << 5) | (cond)))
 
 /* BR Xn */
 #define ARM64_BR(p, rn) \
@@ -849,6 +867,14 @@ typedef enum {
 #define ARM64_STR_X_IMM(p, rt, rn, imm) \
 	ARM64_EMIT(p, 0xF9000000 | ((((unsigned int)(imm) / 8) & 0xFFF) << 10) | ((rn) << 5) | (rt))
 
+/* LDR Xt, [Xn, Xm] (64-bit register+register) */
+#define ARM64_LDR_X_REG_REG(p, rt, rn, rm) \
+	ARM64_EMIT(p, 0xF8606800 | ((rm) << 16) | ((rn) << 5) | (rt))
+
+/* STR Xt, [Xn, Xm] (64-bit register+register) */
+#define ARM64_STR_X_REG_REG(p, rt, rn, rm) \
+	ARM64_EMIT(p, 0xF8206800 | ((rm) << 16) | ((rn) << 5) | (rt))
+
 /* MOVZ Xd, #imm16 (64-bit) */
 #define ARM64_MOVZ_X(p, rd, imm16, hw) \
 	ARM64_EMIT(p, 0xD2800000 | ((hw) << 21) | (((imm16) & 0xFFFF) << 5) | (rd))
@@ -871,54 +897,54 @@ typedef enum {
 /* MVN_REG_REG_COND: B.invcond skip; MVN rd, rm */
 #define ARM64_MVN_REG_REG_COND(p, rd, rm, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		ARM64_MVN_REG_REG(p, rd, rm); \
 	} while (0)
 
 /* Generic _COND for data processing: B.invcond over 1 instruction */
 #define ARM64_ADD_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_ADD_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_ADD_REG_REG(p, rd, rn, rm); } while (0)
 
 #define ARM64_SUB_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SUB_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SUB_REG_REG(p, rd, rn, rm); } while (0)
 
 #define ARM64_AND_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_AND_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_AND_REG_REG(p, rd, rn, rm); } while (0)
 
 #define ARM64_ORR_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_ORR_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_ORR_REG_REG(p, rd, rn, rm); } while (0)
 
 #define ARM64_EOR_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_EOR_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_EOR_REG_REG(p, rd, rn, rm); } while (0)
 
 #define ARM64_BIC_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_BIC_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_BIC_REG_REG(p, rd, rn, rm); } while (0)
 
 /* Shifted register _COND variants */
 #define ARM64_ADD_REG_REGSHIFT_COND(p, rd, rn, rm, st, amt, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_ADD_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_ADD_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
 
 #define ARM64_SUB_REG_REGSHIFT_COND(p, rd, rn, rm, st, amt, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SUB_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SUB_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
 
 #define ARM64_AND_REG_REGSHIFT_COND(p, rd, rn, rm, st, amt, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_AND_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_AND_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
 
 #define ARM64_ORR_REG_REGSHIFT_COND(p, rd, rn, rm, st, amt, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_ORR_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_ORR_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
 
 #define ARM64_EOR_REG_REGSHIFT_COND(p, rd, rn, rm, st, amt, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_EOR_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_EOR_REG_REGSHIFT(p, rd, rn, rm, st, amt); } while (0)
 
 /* Flag-setting _COND variants */
 #define ARM64_ADDS_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_ADDS_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_ADDS_REG_REG(p, rd, rn, rm); } while (0)
 
 #define ARM64_SUBS_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SUBS_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SUBS_REG_REG(p, rd, rn, rm); } while (0)
 
 #define ARM64_ANDS_REG_REG_COND(p, rd, rn, rm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_ANDS_REG_REG(p, rd, rn, rm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_ANDS_REG_REG(p, rd, rn, rm); } while (0)
 
 /* Immediate shift _COND: uses the shifted-register encoding with B.cond skip */
 #define ARM64_MOV_REG_IMMSHIFT(p, rd, rm, shift_type, imm_shift) \
@@ -933,13 +959,13 @@ typedef enum {
 
 #define ARM64_MOV_REG_IMMSHIFT_COND(p, rd, rm, shift_type, imm_shift, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		ARM64_MOV_REG_IMMSHIFT(p, rd, rm, shift_type, imm_shift); \
 	} while (0)
 
 #define ARM64_MOVS_REG_IMMSHIFT_COND(p, rd, rm, shift_type, imm_shift, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 3); \
+		ARM64_COND_SKIP(p, cond, 3); \
 		ARM64_MOV_REG_IMMSHIFT(p, rd, rm, shift_type, imm_shift); \
 		ARM64_ANDS_REG_REG(p, ARM64REG_WZR, rd, rd); \
 	} while (0)
@@ -1124,7 +1150,7 @@ typedef enum {
  */
 #define ARM64_DPIOP_REG_REG_COND(p, op, rd, rn, rm, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		switch (op) { \
 		case ARM64OP_AND: ARM64_AND_REG_REG(p, rd, rn, rm); break; \
 		case ARM64OP_EOR: ARM64_EOR_REG_REG(p, rd, rn, rm); break; \
@@ -1143,7 +1169,7 @@ typedef enum {
 
 #define ARM64_DPIOP_S_REG_REG_COND(p, op, rd, rn, rm, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		switch (op) { \
 		case ARM64OP_AND: ARM64_ANDS_REG_REG(p, rd, rn, rm); break; \
 		case ARM64OP_SUB: ARM64_SUBS_REG_REG(p, rd, rn, rm); break; \
@@ -1166,7 +1192,7 @@ typedef enum {
 /* DPIOP with immediate-shifted register */
 #define ARM64_DPIOP_REG_IMMSHIFT_COND(p, op, rd, rn, rm, shift_type, imm_shift, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); \
+		ARM64_COND_SKIP(p, cond, 2); \
 		switch (op) { \
 		case ARM64OP_AND: ARM64_AND_REG_REGSHIFT(p, rd, rn, rm, shift_type, imm_shift); break; \
 		case ARM64OP_EOR: ARM64_EOR_REG_REGSHIFT(p, rd, rn, rm, shift_type, imm_shift); break; \
@@ -1183,7 +1209,7 @@ typedef enum {
 
 #define ARM64_DPIOP_S_REG_IMMSHIFT_COND(p, op, rd, rn, rm, shift_type, imm_shift, cond) \
 	do { \
-		ARM64_B_COND(p, ARM64COND_INVERT(cond), 3); \
+		ARM64_COND_SKIP(p, cond, 3); \
 		switch (op) { \
 		case ARM64OP_AND: ARM64_AND_REG_REGSHIFT(p, rd, rn, rm, shift_type, imm_shift); ARM64_ANDS_REG_REG(p, ARM64REG_WZR, rd, rd); break; \
 		case ARM64OP_SUB: ARM64_SUBS_REG_REGSHIFT(p, rd, rn, rm, shift_type, imm_shift); break; \
@@ -1234,31 +1260,31 @@ typedef enum {
 /* ======================================================================== */
 
 #define ARM64_SHL_IMM_COND(p, rd, rm, imm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SHL_IMM(p, rd, rm, imm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SHL_IMM(p, rd, rm, imm); } while (0)
 
 #define ARM64_SHR_IMM_COND(p, rd, rm, imm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SHR_IMM(p, rd, rm, imm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SHR_IMM(p, rd, rm, imm); } while (0)
 
 #define ARM64_SAR_IMM_COND(p, rd, rm, imm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SAR_IMM(p, rd, rm, imm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SAR_IMM(p, rd, rm, imm); } while (0)
 
 #define ARM64_SHL_REG_COND(p, rd, rm, rs, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SHL_REG(p, rd, rm, rs); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SHL_REG(p, rd, rm, rs); } while (0)
 
 #define ARM64_SHR_REG_COND(p, rd, rm, rs, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SHR_REG(p, rd, rm, rs); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SHR_REG(p, rd, rm, rs); } while (0)
 
 #define ARM64_SAR_REG_COND(p, rd, rm, rs, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_SAR_REG(p, rd, rm, rs); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_SAR_REG(p, rd, rm, rs); } while (0)
 
 #define ARM64_SHLS_IMM_COND(p, rd, rm, imm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 3); ARM64_SHLS_IMM(p, rd, rm, imm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 3); ARM64_SHLS_IMM(p, rd, rm, imm); } while (0)
 
 #define ARM64_SHRS_IMM_COND(p, rd, rm, imm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 3); ARM64_SHRS_IMM(p, rd, rm, imm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 3); ARM64_SHRS_IMM(p, rd, rm, imm); } while (0)
 
 #define ARM64_SARS_IMM_COND(p, rd, rm, imm, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 3); ARM64_SARS_IMM(p, rd, rm, imm); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 3); ARM64_SARS_IMM(p, rd, rm, imm); } while (0)
 
 
 /* ======================================================================== */
@@ -1374,7 +1400,7 @@ typedef enum {
 /* Branch */
 #define ARM_B_COND(p, cond, offset) ARM64_B_COND(p, cond, offset)
 #define ARM_B(p, offset)            ARM64_B(p, offset)
-#define ARM_BL_COND(p, cond, offset) do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_BL(p, offset); } while (0)
+#define ARM_BL_COND(p, cond, offset) do { ARM64_COND_SKIP(p, cond, 2); ARM64_BL(p, offset); } while (0)
 #define ARM_BL(p, offset)           ARM64_BL(p, offset)
 
 /* MOV */
@@ -1387,7 +1413,7 @@ typedef enum {
 #define ARM_MOV_REG_IMMSHIFT_COND(p, rd, rm, shift_type, imm_shift, cond) ARM64_MOV_REG_IMMSHIFT_COND(p, rd, rm, shift_type, imm_shift, cond)
 #define ARM_MOV_REG_REGSHIFT(p, rd, rm, shift_type, rs) ARM64_MOV_REG_REGSHIFT(p, rd, rm, shift_type, rs)
 #define ARM_MOV_REG_REGSHIFT_COND(p, rd, rm, shift_type, rs, cond) \
-	do { ARM64_B_COND(p, ARM64COND_INVERT(cond), 2); ARM64_MOV_REG_REGSHIFT(p, rd, rm, shift_type, rs); } while (0)
+	do { ARM64_COND_SKIP(p, cond, 2); ARM64_MOV_REG_REGSHIFT(p, rd, rm, shift_type, rs); } while (0)
 #define ARM_MOVS_REG_REG(p, rd, rm) ARM64_MOVS_REG_REG(p, rd, rm)
 #define ARM_MOVS_REG_IMMSHIFT(p, rd, rm, shift_type, imm_shift) ARM64_MOVS_REG_IMMSHIFT(p, rd, rm, shift_type, imm_shift)
 #define ARM_MOVS_REG_IMMSHIFT_COND(p, rd, rm, shift_type, imm_shift, cond) ARM64_MOVS_REG_IMMSHIFT_COND(p, rd, rm, shift_type, imm_shift, cond)

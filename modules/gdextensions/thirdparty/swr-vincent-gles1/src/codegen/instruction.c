@@ -885,12 +885,28 @@ static void proc_allocate_variables(cg_proc_t * proc)
 		reg->reg_no = ~0;
 	}
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+	/* ARM64: argument spill slots must be after the save area (96 bytes).
+	 * Each slot is 8 bytes (pointer-width) for 64-bit register spills. */
+	{
+		size_t num_args_to_alloc = arg_count;
+		arg_offset = 96; /* SAVE_AREA_SIZE */
+		for (reg = proc->registers; reg && arg_count; reg = reg->next, arg_count--)
+		{
+			reg->reg_no = reg->representative->reg_no = proc->num_registers++;
+			reg->fp_offset = reg->representative->fp_offset = arg_offset;
+			arg_offset += sizeof(void *);
+		}
+		proc->local_storage = num_args_to_alloc * sizeof(void *);
+	}
+#else
 	for (reg = proc->registers; reg && arg_count; reg = reg->next, arg_count--)
 	{
 		reg->reg_no = reg->representative->reg_no = proc->num_registers++;
 		reg->fp_offset = reg->representative->fp_offset = arg_offset;
 		arg_offset += sizeof(U32);
 	}
+#endif
 
 	for (; reg ; reg = reg->next)
 	{

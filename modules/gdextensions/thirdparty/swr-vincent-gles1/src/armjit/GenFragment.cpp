@@ -67,6 +67,19 @@ namespace {
 		return value;
 	}
 
+	/* LOAD_PTR: load a pointer-width value (64-bit on ARM64, 32-bit on ARM32) */
+	inline cg_virtual_reg_t * LOAD_PTR(cg_block_t * block, cg_virtual_reg_t * base, I32 constant) {
+		cg_virtual_reg_t * offset = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * addr = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+		cg_virtual_reg_t * value = cg_virtual_reg_create(block->proc, cg_reg_type_general);
+
+		LDI(offset, constant);
+		ADD(addr, base, offset);
+		LDPTR(value, addr);
+
+		return value;
+	}
+
 #define ALLOC_REG(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
 #define ALLOC_FLAGS(reg) reg = cg_virtual_reg_create(procedure, cg_reg_type_flags)
 #define DECL_REG(reg) cg_virtual_reg_t * reg = cg_virtual_reg_create(procedure, cg_reg_type_general)
@@ -396,7 +409,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 
 		cg_virtual_reg_t * regTextureLogWidth =		LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_LOG_WIDTH);
 		cg_virtual_reg_t * regTextureLogHeight =	LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_LOG_HEIGHT);
-		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_DATA);
+		cg_virtual_reg_t * regTextureData =			LOAD_PTR(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_DATA);
 
 		LSL		(regScaledU, regU0, regTextureLogWidth);
 		LSL		(regScaledV, regV0, regTextureLogHeight);
@@ -501,7 +514,7 @@ void CodeGenerator :: GenerateFetchTexColor(cg_proc_t * procedure, cg_block_t * 
 		cg_virtual_reg_t * regColorA00, * regColorA01, *regColorA10, * regColorA11;
 		cg_virtual_reg_t * regColor56500, * regColor56501, *regColor56510, * regColor56511;
 
-		cg_virtual_reg_t * regTextureData =			LOAD_DATA(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_DATA);
+		cg_virtual_reg_t * regTextureData =			LOAD_PTR(block, fragmentInfo.regTexture[unit], OFFSET_TEXTURE_DATA);
 
 		FetchTexColor(procedure, block, m_State->m_Texture + unit, regTextureData, regTexOffset00,
 					  regColorR00, regColorG00, regColorB00, regColorA00, regColor56500);
@@ -619,7 +632,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		regOffset = fragmentInfo.regX;
 	}
 
-	cg_virtual_reg_t * regDepthBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
+	cg_virtual_reg_t * regDepthBuffer =			LOAD_PTR(block, fragmentInfo.regInfo, OFFSET_SURFACE_DEPTH_BUFFER);
 
 	DECL_FLAGS	(regDepthTest);
 	DECL_REG	(regScaledY);
@@ -1394,7 +1407,7 @@ void CodeGenerator :: GenerateFragment(cg_proc_t * procedure,  cg_block_t * curr
 		DECL_REG	(regStencil);
 		DECL_FLAGS	(regStencilTest);
 
-		cg_virtual_reg_t * regStencilBuffer =		LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
+		cg_virtual_reg_t * regStencilBuffer =		LOAD_PTR(block, fragmentInfo.regInfo, OFFSET_SURFACE_STENCIL_BUFFER);
 
 		LDI		(regStencilRef, m_State->m_Stencil.Reference & m_State->m_Stencil.ComparisonMask);
 		LDI		(regStencilMask, m_State->m_Stencil.ComparisonMask);
@@ -1768,8 +1781,8 @@ no_write:
 	}
 
 	// surface color buffer, depth buffer, alpha buffer, stencil buffer
-	cg_virtual_reg_t * regColorBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);
-	cg_virtual_reg_t * regAlphaBuffer =			LOAD_DATA(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
+	cg_virtual_reg_t * regColorBuffer =			LOAD_PTR(block, fragmentInfo.regInfo, OFFSET_SURFACE_COLOR_BUFFER);
+	cg_virtual_reg_t * regAlphaBuffer =			LOAD_PTR(block, fragmentInfo.regInfo, OFFSET_SURFACE_ALPHA_BUFFER);
 
 	//U16 dstValue = m_Surface->GetColorBuffer()[offset];
 	//U8 dstAlpha = m_Surface->GetAlphaBuffer()[offset];

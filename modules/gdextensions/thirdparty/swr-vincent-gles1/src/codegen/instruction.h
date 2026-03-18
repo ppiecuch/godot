@@ -104,8 +104,8 @@ typedef enum cg_opcode_t {
 	cg_op_trunc,	cg_op_round,	cg_op_fcnv,															
 	cg_op_beq,		cg_op_bge,		cg_op_ble,		cg_op_bgt,		cg_op_blt,		
 	cg_op_bne,		cg_op_bra,			
-	cg_op_ldb,		cg_op_ldh,		cg_op_ldi,		cg_op_ldw,		cg_op_stb,		
-	cg_op_sth,		cg_op_stw,							
+	cg_op_ldb,		cg_op_ldh,		cg_op_ldi,		cg_op_ldw,		cg_op_stb,
+	cg_op_sth,		cg_op_stw,		cg_op_ldptr,							
 	cg_op_call,		cg_op_ret,		cg_op_phi
 }
 cg_opcode_t;
@@ -535,6 +535,8 @@ cg_inst_t * cg_create_inst_load(cg_block_t * block,
 #define LDB(dest, mem)							cg_create_inst_load(block, cg_op_ldb, dest, mem CG_INST_DEBUG_ARGS)
 #define LDH(dest, mem)							cg_create_inst_load(block, cg_op_ldh, dest, mem CG_INST_DEBUG_ARGS)
 #define LDW(dest, mem)							cg_create_inst_load(block, cg_op_ldw, dest, mem CG_INST_DEBUG_ARGS)
+/* LDPTR: load pointer-width value (64-bit on ARM64, 32-bit on ARM32) */
+#define LDPTR(dest, mem)						cg_create_inst_load(block, cg_op_ldptr, dest, mem CG_INST_DEBUG_ARGS)
 
 cg_inst_t * cg_create_inst_store(cg_block_t * block, 
 								 cg_opcode_t op, 
