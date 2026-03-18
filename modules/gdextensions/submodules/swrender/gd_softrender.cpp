@@ -1028,8 +1028,8 @@ TEST_SUITE("swrender-vincent") {
 		CHECK(jit == true);
 		MESSAGE("Vincent ARM JIT: ENABLED (ARM32)");
 #elif defined(__aarch64__)
-		CHECK(jit == false);
-		MESSAGE("Vincent ARM JIT: DISABLED (ARM64 - not yet ported)");
+		CHECK(jit == true);
+		MESSAGE("Vincent ARM JIT: ENABLED (ARM64)");
 #else
 		CHECK(jit == false);
 		MESSAGE("Vincent ARM JIT: DISABLED (non-ARM platform)");

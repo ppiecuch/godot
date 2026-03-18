@@ -42,10 +42,17 @@
 #define OGLES_API
 #define APIENTRY
 
-#if (defined(ARM) || defined(_ARM_) || defined(__MARM__)) && !defined(EGL_NO_COMPILE)
+#if ((defined(ARM) || defined(_ARM_) || defined(__MARM__)) || \
+	 (defined(__aarch64__) || defined(_M_ARM64))) && !defined(EGL_NO_COMPILE)
 # define EGL_USE_JIT 1
 #else
 # define EGL_USE_JIT 0
+#endif
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+# define EGL_USE_ARM64 1
+#else
+# define EGL_USE_ARM64 0
 #endif
 
 

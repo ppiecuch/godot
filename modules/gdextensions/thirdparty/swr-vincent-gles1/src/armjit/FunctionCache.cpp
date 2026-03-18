@@ -38,9 +38,16 @@
 #include "stdafx.h"
 #include "FunctionCache.h"
 #include "CodeGenerator.h"
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 
-#ifdef EGL_ON_LINUX
+#if defined(EGL_ON_LINUX) || defined(__APPLE__)
 #include <sys/mman.h>
+#endif
+#ifdef __APPLE__
+#include <libkern/OSCacheControl.h>
+#include <pthread.h>
 #endif
 
 using namespace EGL;
@@ -76,9 +83,20 @@ FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
 	m_Functions = (FunctionInfo *) malloc(sizeof(FunctionInfo)  * m_MaxFunctions);
 	memset(m_Functions, 0, sizeof(FunctionInfo)  * m_MaxFunctions);
 
-#if defined(EGL_ON_LINUX)
-    m_Code = new U8[totalSize];
-    mprotect((void *) m_Code, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC);
+#if defined(__APPLE__)
+	// Apple Silicon: use MAP_JIT for W^X compliance
+	m_Code = (U8 *)mmap(NULL, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC,
+			MAP_PRIVATE | MAP_ANONYMOUS | MAP_JIT, -1, 0);
+	if (m_Code == MAP_FAILED) {
+		// Fallback: try without MAP_JIT (older macOS / x86)
+		m_Code = (U8 *)mmap(NULL, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC,
+				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	}
+#elif defined(EGL_ON_LINUX)
+	m_Code = new U8[totalSize];
+	mprotect((void *) m_Code, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC);
+#else
+	m_Code = new U8[totalSize];
 #endif
 }
 
@@ -86,8 +104,14 @@ FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
 FunctionCache :: ~FunctionCache() {
 	free(m_Functions);
 
-#if defined(EGL_ON_LINUX)
-    delete[] m_Code;
+#if defined(__APPLE__)
+	if (m_Code && m_Code != MAP_FAILED) {
+		munmap(m_Code, m_Total);
+	}
+#elif defined(EGL_ON_LINUX)
+	delete[] m_Code;
+#else
+	delete[] m_Code;
 #endif
 }
 
@@ -136,6 +160,11 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 
 	// not found in cache, need to compile
 
+#if defined(__APPLE__) && defined(__aarch64__)
+	// Apple Silicon W^X: enable writing to JIT memory
+	pthread_jit_write_protect_np(false);
+#endif
+
 	CodeGenerator generator;
 	generator.SetState(&state);
 
@@ -159,7 +188,16 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 		;
 	}
 
-	return reinterpret_cast<void *>(m_Code + m_MostRecentlyUsed->m_Offset); 
+#if defined(__APPLE__) && defined(__aarch64__)
+	// Apple Silicon W^X: switch back to execute mode and flush icache
+	pthread_jit_write_protect_np(true);
+	sys_icache_invalidate(m_Code, m_Used);
+#elif defined(__GNUC__) && defined(__aarch64__)
+	// Linux ARM64: flush instruction cache
+	__builtin___clear_cache((char *)m_Code, (char *)(m_Code + m_Used));
+#endif
+
+	return reinterpret_cast<void *>(m_Code + m_MostRecentlyUsed->m_Offset);
 }
 
 

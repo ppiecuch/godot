@@ -651,8 +651,8 @@ if is_enabled("swrender"):
         )
         # Exclude gl.cpp — we use the C++ API directly to avoid gl* symbol conflicts
         vin_srcs = [f for f in vin_srcs if not str(f).endswith("gl.cpp")]
-        # ARM JIT codegen (ARM32 only, ignored on other platforms via EGL_USE_JIT=0)
-        if arch == "arm":
+        # ARM JIT codegen (ARM32 and ARM64)
+        if arch in ["arm", "arm64", "aarch64"]:
             vin_srcs += (
                 Glob("thirdparty/swr-vincent-gles1/src/armjit/*.cpp")
                 + Glob("thirdparty/swr-vincent-gles1/src/codegen/*.c")

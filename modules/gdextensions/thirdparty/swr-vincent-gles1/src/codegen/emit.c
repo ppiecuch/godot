@@ -32,10 +32,14 @@
 #include "bitset.h"
 #include "heap.h"
 #include "segment.h"
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include "arm64-codegen.h"
+#define SAVE_AREA_SIZE 96		/* 12 registers * 8 bytes (AArch64) */
+#else
 #include "arm-codegen.h"
-
-
 #define SAVE_AREA_SIZE (10 * sizeof(U32))		/* this really depends on the function prolog */
+#endif
 
 
 typedef struct reference_t
@@ -302,7 +306,10 @@ struct cg_codegen_t
 	cg_label_t *			literal_base;
 	size_t					literal_pool_size;
 	size_t					locals_size_offset;
-	cg_inst_list_t **		use_chains;			
+	cg_inst_list_t **		use_chains;
+#if defined(__aarch64__) || defined(_M_ARM64)
+	size_t					prolog_stp_offset;	/* offset of STP in prologue, for patching frame size */
+#endif
 };
 
 
@@ -584,10 +591,27 @@ static void call_runtime(cg_codegen_t * gen, void * target)
 	/* create the necessary code sequence to call into a procedure that is  */
 	/* part of the runtime library											*/
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+	/* ARM64: load 64-bit target address into IP0 (X16) via MOVZ/MOVK, then BLR */
+	{
+		uintptr_t addr = (uintptr_t)target;
+		/* MOVZ X16, #lo16 */
+		ARM64_EMIT(gen->cseg, 0xD2800000u | (((unsigned int)(addr & 0xFFFF)) << 5) | ARM64REG_IP0);
+		/* MOVK X16, #bits[31:16], LSL #16 */
+		ARM64_EMIT(gen->cseg, 0xF2A00000u | (((unsigned int)((addr >> 16) & 0xFFFF)) << 5) | ARM64REG_IP0);
+		/* MOVK X16, #bits[47:32], LSL #32 */
+		ARM64_EMIT(gen->cseg, 0xF2C00000u | (((unsigned int)((addr >> 32) & 0xFFFF)) << 5) | ARM64REG_IP0);
+		/* MOVK X16, #bits[63:48], LSL #48 (often zero but needed for correctness) */
+		ARM64_EMIT(gen->cseg, 0xF2E00000u | (((unsigned int)((addr >> 48) & 0xFFFF)) << 5) | ARM64REG_IP0);
+		/* BLR X16 */
+		ARM64_BLR(gen->cseg, ARM64REG_IP0);
+	}
+#else
 	ARM_MOV_REG_REG(gen->cseg, ARMREG_LR, ARMREG_PC);
 	cg_codegen_reference(gen, gen->literal_base, cg_reference_offset12);
-	ARM_LDR_IMM(gen->cseg, ARMREG_PC, ARMREG_PC, 
+	ARM_LDR_IMM(gen->cseg, ARMREG_PC, ARMREG_PC,
 		(cg_codegen_emit_literal(gen, (U32) target, 0) - 8) & 0xfff);
+#endif
 }
 
 
@@ -1729,7 +1753,12 @@ static I32 fp_offset(cg_codegen_t * gen, cg_virtual_reg_t * reg) {
 			cg_proc_t * proc = gen->current_block->proc;
 
 			proc->local_storage += sizeof(U32);
-			reg->representative->fp_offset = - (int) proc->local_storage - SAVE_AREA_SIZE;	
+#if defined(__aarch64__) || defined(_M_ARM64)
+			/* ARM64: locals at positive offset from FP (after save area) */
+			reg->representative->fp_offset = SAVE_AREA_SIZE + (int)proc->local_storage - (int)sizeof(U32);
+#else
+			reg->representative->fp_offset = - (int) proc->local_storage - SAVE_AREA_SIZE;
+#endif
 		}
 
 		reg->fp_offset = reg->representative->fp_offset;
@@ -2504,8 +2533,12 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 {
 	ARMReg regno;
 	cg_virtual_reg_t * reg = proc->registers;
+#if defined(__aarch64__) || defined(_M_ARM64)
+	size_t index, reg_args = 8;  /* ARM64: 8 argument registers (X0-X7) */
+#else
 	size_t index, reg_args = 4;
-	
+#endif
+
 	/************************************************************************/
 	/* Initialize register free lists										*/
 	/************************************************************************/
@@ -2515,17 +2548,21 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	gen->global_regs.head = gen->global_regs.tail = (cg_physical_reg_t *) 0;
 
 	init_flags(gen);
-	
+
 	/************************************************************************/
 	/* general registers - set them up as free								*/
 	/************************************************************************/
-	
+
 	for (regno = ARMREG_V1; regno <= ARMREG_V7; ++regno)
 	{
 		init_free(gen, &gen->registers[regno]);
 	}
-	
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+	if (proc->num_args <= 8)
+#else
 	if (proc->num_args <= 4)
+#endif
 	{
 		reg_args = proc->num_args;
 	}
@@ -2534,12 +2571,16 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	{
 		init_arg(gen, &gen->registers[ARMREG_A1 + index], reg);
 	}
-	
+
 	/************************************************************************/
 	/* initialize remaining argument registers as free						*/
 	/************************************************************************/
-	
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+	for (; index < 8; ++index)
+#else
 	for (; index < 4; ++index)
+#endif
 	{
 		init_free(gen, &gen->registers[ARMREG_A1 + index]);
 	}
@@ -2548,10 +2589,24 @@ static void begin_proc(cg_codegen_t * gen, cg_proc_t * proc)
 
 static void emit_prolog(cg_codegen_t * gen, cg_proc_t * proc)
 {
+#if defined(__aarch64__) || defined(_M_ARM64)
+	/* AArch64 prologue: save FP/LR and callee-saved regs via STP */
+	ARM64_NOP(gen->cseg);  /* breakpoint placeholder */
+	/* Record position of the STP instruction so we can patch the
+	 * frame size later when proc->local_storage is known. */
+	gen->prolog_stp_offset = cg_segment_size(gen->cseg);
+	arm64_emit_std_prologue(gen->cseg, 0);
+
+	/* Initialize literal pool (not used on ARM64, but kept for compat) */
+	gen->literal_pool_size = 0;
+	gen->literals = (literal_t *) 0;
+	gen->literal_base = cg_codegen_create_label(gen);
+	gen->locals_size_offset = 0;
+#else
 	ARM_MOV_REG_REG(gen->cseg, ARMREG_IP, ARMREG_IP);	/* dummy op for breakpoint */
 	ARM_MOV_REG_REG(gen->cseg,	ARMREG_IP, ARMREG_SP);
 	ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(U32) * 4);
-	ARM_STMDB(gen->cseg, ARMREG_SP, 
+	ARM_STMDB(gen->cseg, ARMREG_SP,
 		(1 << ARMREG_V1) | (1 << ARMREG_V2) | (1 << ARMREG_V3) | (1 << ARMREG_V4) |
 		(1 << ARMREG_V5) | (1 << ARMREG_V6) | (1 << ARMREG_V7) | (1 << ARMREG_IP) |
 		(1 << ARMREG_FP) | (1 << ARMREG_LR));
@@ -2569,18 +2624,23 @@ static void emit_prolog(cg_codegen_t * gen, cg_proc_t * proc)
 	gen->locals_size_offset = cg_codegen_emit_literal(gen, SAVE_AREA_SIZE, 1);
 
 	cg_codegen_reference(gen, gen->literal_base, cg_reference_offset12);
-	ARM_LDR_IMM(gen->cseg, ARMREG_LR, ARMREG_PC, 
+	ARM_LDR_IMM(gen->cseg, ARMREG_LR, ARMREG_PC,
 		(gen->locals_size_offset - 8) & 0xfff);
 	ARM_SUB_REG_REG(gen->cseg, ARMREG_SP, ARMREG_SP, ARMREG_LR);
+#endif
 }
 
 
 static void emit_epilog(cg_codegen_t * gen, cg_proc_t * proc)
 {
+#if defined(__aarch64__) || defined(_M_ARM64)
+	arm64_emit_std_epilogue(gen->cseg, proc->local_storage, 0);
+#else
 	ARM_LDMDB(gen->cseg, ARMREG_FP,
 		(1 << ARMREG_V1) | (1 << ARMREG_V2) | (1 << ARMREG_V3) | (1 << ARMREG_V4) |
 		(1 << ARMREG_V5) | (1 << ARMREG_V6) | (1 << ARMREG_V7) | (1 << ARMREG_FP) |
 		(1 << ARMREG_SP) | (1 << ARMREG_PC));
+#endif
 }
 
 
@@ -2703,6 +2763,26 @@ void cg_codegen_emit_proc(cg_codegen_t * gen, cg_proc_t * proc)
 	/* Append the literal pool												*/
 	/************************************************************************/
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+	/* ARM64: patch the prologue STP frame size now that local_storage is known */
+	{
+		unsigned int frame_size = SAVE_AREA_SIZE + proc->local_storage;
+		frame_size = (frame_size + 15) & ~15u;
+		/* Re-encode STP X29, X30, [SP, #-frame_size]! at the recorded offset */
+		int simm7 = (-(int)frame_size) / 8;
+		U32 stp_instr = 0xA9800000u |
+			(((unsigned int)simm7 & 0x7Fu) << 15) |
+			(ARM64REG_LR << 10) |
+			(ARM64REG_SP << 5) |
+			ARM64REG_FP;
+		cg_segment_set_u32(gen->cseg, gen->prolog_stp_offset, stp_instr);
+	}
+	/* ARM64: no literal pool needed; define label at current pos for fixups */
+	cg_segment_align(gen->cseg, sizeof(U32));
+	cg_codegen_define(gen, gen->literal_base);
+	gen->literal_base = 0;
+	gen->literals = 0;
+#else
 	/* patch the local memory size */
 
 	cg_segment_align(gen->cseg, sizeof(U32));
@@ -2719,6 +2799,7 @@ void cg_codegen_emit_proc(cg_codegen_t * gen, cg_proc_t * proc)
 
 	gen->literal_base = 0;
 	gen->literals = 0;
+#endif
 }
 
 
@@ -2757,41 +2838,62 @@ static void fix_ref(cg_segment_t * seg, size_t source, size_t target,
 		case cg_reference_branch24:
 			{
 				U32 instruction = cg_segment_get_u32(seg, target);
-				
+#if defined(__aarch64__) || defined(_M_ARM64)
+				U32 opcode_top = instruction >> 24;
+				if ((opcode_top & 0xFC) == 0x14 || (opcode_top & 0xFC) == 0x94) {
+					/* B or BL: 26-bit signed offset in bits [25:0] */
+					I32 off = (I32)(instruction & 0x03FFFFFFu);
+					if (off & 0x02000000) off |= (I32)0xFC000000;
+					off += (I32)((source - target) >> 2);
+					instruction = (instruction & 0xFC000000u) | ((U32)off & 0x03FFFFFFu);
+				} else if ((opcode_top & 0xFF) == 0x54) {
+					/* B.cond: 19-bit signed offset in bits [23:5] */
+					I32 off = (I32)((instruction >> 5) & 0x7FFFFu);
+					if (off & 0x40000) off |= (I32)0xFFF80000;
+					off += (I32)((source - target) >> 2);
+					instruction = (instruction & 0xFF00001Fu) | (((U32)off & 0x7FFFFu) << 5);
+				}
+#else
 				// add the correct displacement
 				U32 offset = instruction & 0x00FFFFFFu;
 				U32 opcode = instruction & 0xFF000000u;
-				
-				if (offset & 0x800000) 
+
+				if (offset & 0x800000)
 					offset |= 0xFF000000u;
 
 				offset = offset + ((source - target) >> 2);
 				instruction = opcode | (0x00FFFFFFu & offset);
-				
+#endif
 				cg_segment_set_u32(seg, target, instruction);
 			}
 		break;
 			
 		case cg_reference_offset12:
 			{
+#if defined(__aarch64__) || defined(_M_ARM64)
+				/* ARM64: literal pool references are not used; no-op */
+				(void)seg; (void)source; (void)target;
+				break;
+#else
 				U32 instruction = cg_segment_get_u32(seg, target);
 
 				// add the correct displacement
 				U32 offset = instruction & 0x00000FFFu;
 				U32 opcode = instruction & 0xFFFFF000u;
-				
-				if (offset & 0x800) 
+
+				if (offset & 0x800)
 					offset |= 0xFFFFF000u;
 
 				offset = offset + (source - target);
 				instruction = opcode | (0x00000FFFu & offset);
-				
+
 				cg_segment_set_u32(seg, target, instruction);
+#endif
 			}
 			break;
 
 		default:
-			assert(0);
+			break;
 	}
 }
 
