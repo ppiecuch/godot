@@ -5578,6 +5578,23 @@ void EditorNode::add_tool_menu_item(const String &p_name, Object *p_handler, con
 	parameters.push_back(p_ud);
 
 	tool_menu->set_item_metadata(idx, parameters);
+
+	// Sync to native menu if active (macOS global menu).
+	PopupMenu *native = _get_native_tool_menu();
+	if (native) {
+		native->add_item(p_name, TOOLS_CUSTOM);
+	}
+}
+
+PopupMenu *EditorNode::_get_native_tool_menu() const {
+	if (!main_menu || !main_menu->is_native_menu()) {
+		return nullptr;
+	}
+	PopupMenu *native_project = Object::cast_to<PopupMenu>(main_menu->get_node_or_null(NodePath(TTR("Project"))));
+	if (!native_project) {
+		return nullptr;
+	}
+	return Object::cast_to<PopupMenu>(native_project->get_node_or_null(NodePath("Tools")));
 }
 
 void EditorNode::add_tool_submenu_item(const String &p_name, PopupMenu *p_submenu) {
@@ -5586,6 +5603,16 @@ void EditorNode::add_tool_submenu_item(const String &p_name, PopupMenu *p_submen
 
 	tool_menu->add_child(p_submenu);
 	tool_menu->add_submenu_item(p_name, p_submenu->get_name(), TOOLS_CUSTOM);
+
+	// Sync to native menu if active.
+	PopupMenu *native = _get_native_tool_menu();
+	if (native) {
+		PopupMenu *native_sub = memnew(PopupMenu);
+		native_sub->set_name(p_submenu->get_name());
+		native->add_child(native_sub);
+		_copy_popup_menu_items(p_submenu, native_sub);
+		native->add_submenu_item(p_name, p_submenu->get_name(), TOOLS_CUSTOM);
+	}
 }
 
 void EditorNode::remove_tool_menu_item(const String &p_name) {
@@ -5602,6 +5629,26 @@ void EditorNode::remove_tool_menu_item(const String &p_name) {
 			}
 			tool_menu->remove_item(i);
 			tool_menu->set_as_minsize();
+
+			// Sync removal to native menu.
+			PopupMenu *native = _get_native_tool_menu();
+			if (native) {
+				for (int j = 0; j < native->get_item_count(); j++) {
+					if (native->get_item_text(j) == p_name && native->get_item_id(j) == TOOLS_CUSTOM) {
+						String sub = native->get_item_submenu(j);
+						if (!sub.empty()) {
+							Node *sn = native->get_node_or_null(sub);
+							if (sn) {
+								native->remove_child(sn);
+								memdelete(sn);
+							}
+						}
+						native->remove_item(j);
+						native->set_as_minsize();
+						break;
+					}
+				}
+			}
 			return;
 		}
 	}
@@ -7486,6 +7533,9 @@ EditorNode::EditorNode() {
 	String exec = OS::get_singleton()->get_executable_path();
 	EditorSettings::get_singleton()->set_project_metadata("editor_metadata", "executable_path", exec); // Save editor executable path for third-party tools
 
+	// Setup native menus for the main menu bar (Scene, Project, Debug, etc.).
+	// Tool menu items added later by plugins sync individually via
+	// _get_native_tool_menu() in add/remove_tool_menu_item.
 	_setup_native_menus();
 
 	OS::get_singleton()->benchmark_end_measure("editor");

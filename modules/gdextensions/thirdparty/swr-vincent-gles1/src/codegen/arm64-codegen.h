@@ -553,7 +553,8 @@ typedef enum {
 	do { \
 		ARM64_EMIT(p, 0x9B207C00 | ((rs) << 16) | ((rm) << 5) | (rd_lo)); \
 		/* extract high 32 bits: ASR Xd_hi, Xd_lo, #32 (64-bit) */ \
-		ARM64_EMIT(p, 0x9340FC00 | ((rd_lo) << 5) | (rd_hi)); \
+		/* SBFM Xd, Xn, #32, #63 = 0x93400000 | (immr=32 << 16) | (imms=63 << 10) */ \
+		ARM64_EMIT(p, 0x9360FC00 | ((rd_lo) << 5) | (rd_hi)); \
 	} while (0)
 
 /* MLA Wd, Wn, Wm, Wa = MADD Wd, Wn, Wm, Wa */
@@ -826,7 +827,9 @@ typedef enum {
 #define ARM64_SUB_X_REG_REG(p, rd, rn, rm) \
 	ARM64_EMIT(p, 0xCB000000 | ((rm) << 16) | ((rn) << 5) | (rd))
 
-/* MOV Xd, Xm = ORR Xd, XZR, Xm */
+/* MOV Xd, Xm = ORR Xd, XZR, Xm
+ * WARNING: Do NOT use this with rm=SP (31), because ORR treats reg 31 as XZR.
+ * To read SP, use ARM64_ADD_X_REG_IMM(p, rd, ARM64REG_SP, 0) instead. */
 #define ARM64_MOV_X_REG_REG(p, rd, rm) \
 	ARM64_EMIT(p, 0xAA000000 | ((rm) << 16) | (31 << 5) | (rd))
 

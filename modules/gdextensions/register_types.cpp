@@ -347,6 +347,13 @@ static Ref<ImageLoaderThorSVG> image_loader_thor_svg;
 static void editor_init_callback() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
 	EditorNode *editor = EditorNode::get_singleton();
+	ERR_FAIL_NULL(editor);
+
+	if (Engine::get_singleton()->is_editor_hint()) {
+		Ref<ResourceImporterSWF> swfdata;
+		swfdata.instance();
+		ResourceFormatImporter::get_singleton()->add_importer(swfdata);
+	}
 
 #ifdef GDEXT_VISUAL_ENABLED
 	editor->add_editor_plugin(memnew(Cable2DEditorPlugin(editor))); /* Cable2D */
@@ -377,6 +384,10 @@ static void editor_init_callback() {
 static ThreadPool *thread_pool = nullptr;
 
 void register_gdextensions_types() {
+#ifdef TOOLS_ENABLED
+	EditorNode::add_init_callback(editor_init_callback);
+#endif
+
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ResCache", memnew(ResCache)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	ClassDB::register_class<SRGraph>();
@@ -748,14 +759,6 @@ void register_gdextensions_types() {
 
 	resource_loader_jsonvector.instance();
 	ResourceLoader::add_resource_format_loader(resource_loader_jsonvector);
-
-#ifdef TOOLS_ENABLED
-	if (Engine::get_singleton()->is_editor_hint()) {
-		Ref<ResourceImporterSWF> swfdata;
-		swfdata.instance();
-		ResourceFormatImporter::get_singleton()->add_importer(swfdata);
-	}
-#endif
 #endif
 
 #ifdef GDEXT_THORVG_ENABLED
@@ -800,10 +803,6 @@ void register_gdextensions_types() {
 	ClassDB::register_class<ExplodomaticaGenerator>();
 	ClassDB::register_class<PowerStationGenerator>();
 	ClassDB::register_class<EditorIconPreviewDialog>();
-#endif
-
-#ifdef TOOLS_ENABLED
-	EditorNode::add_init_callback(editor_init_callback);
 #endif
 }
 

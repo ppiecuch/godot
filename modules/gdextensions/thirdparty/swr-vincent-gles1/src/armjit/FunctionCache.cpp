@@ -88,9 +88,20 @@ FunctionCache :: FunctionCache(size_t totalSize, float percentageKeep) {
 	m_Code = (U8 *)mmap(NULL, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC,
 			MAP_PRIVATE | MAP_ANONYMOUS | MAP_JIT, -1, 0);
 	if (m_Code == MAP_FAILED) {
-		// Fallback: try without MAP_JIT (older macOS / x86)
+		// Fallback: try without MAP_JIT (older macOS / ad-hoc signed)
 		m_Code = (U8 *)mmap(NULL, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC,
 				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	}
+	if (m_Code == MAP_FAILED) {
+		// Last resort: allocate RW and mprotect to RWX
+		m_Code = (U8 *)mmap(NULL, totalSize, PROT_READ | PROT_WRITE,
+				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (m_Code != MAP_FAILED) {
+			mprotect(m_Code, totalSize, PROT_READ | PROT_WRITE | PROT_EXEC);
+		}
+	}
+	if (m_Code == MAP_FAILED) {
+		m_Code = NULL;
 	}
 #elif defined(EGL_ON_LINUX)
 	m_Code = new U8[totalSize];
@@ -159,6 +170,14 @@ void * FunctionCache :: GetFunction(FunctionType type, const RasterizerState & s
 	}
 
 	// not found in cache, need to compile
+
+	// If code buffer allocation failed, return NULL to fall back to C++ rasterizer
+	if (!m_Code) {
+		return 0;
+	}
+
+	/* ARM64 JIT is gated by EGL_USE_JIT in OGLES.h.
+	 * When EGL_ARM64_JIT_VERIFIED is defined, this code path is active. */
 
 #if defined(__APPLE__) && defined(__aarch64__)
 	// Apple Silicon W^X: enable writing to JIT memory
@@ -236,6 +255,10 @@ void * FunctionCache :: AddFunction(FunctionType type, const RasterizerState & s
 
 void FunctionCache :: CompactCode() {
 
+#if defined(__APPLE__) && defined(__aarch64__)
+	pthread_jit_write_protect_np(false);
+#endif
+
 	size_t limit = (size_t) (m_Total * m_PercentageKeep);
 	size_t limitFunctions = (size_t) (m_MaxFunctions * m_PercentageKeep);
 
@@ -301,4 +324,11 @@ void FunctionCache :: CompactCode() {
 			m_Functions[index].m_Next = m_Functions + index + 1;
 		}
 	}
+
+#if defined(__APPLE__) && defined(__aarch64__)
+	pthread_jit_write_protect_np(true);
+	sys_icache_invalidate(m_Code, m_Used);
+#elif defined(__GNUC__) && defined(__aarch64__)
+	__builtin___clear_cache((char *)m_Code, (char *)(m_Code + m_Used));
+#endif
 }

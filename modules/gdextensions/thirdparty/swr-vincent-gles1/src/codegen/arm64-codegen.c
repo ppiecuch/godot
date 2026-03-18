@@ -112,8 +112,8 @@ void arm64_emit_std_prologue(cg_segment_t * segment, unsigned int local_size) {
 	/* STP X29, X30, [SP, #-frame_size]! */
 	ARM64_STP_X_PRE(segment, ARM64REG_FP, ARM64REG_LR, ARM64REG_SP, -(int)frame_size);
 
-	/* MOV X29, SP */
-	ARM64_MOV_X_REG_REG(segment, ARM64REG_FP, ARM64REG_SP);
+	/* MOV X29, SP — must use ADD Xd, SP, #0, not ORR (reg 31 = XZR in ORR) */
+	ARM64_ADD_X_REG_IMM(segment, ARM64REG_FP, ARM64REG_SP, 0);
 
 	/* Save callee-saved registers */
 	ARM64_STP_X(segment, ARM64REG_X19, ARM64REG_X20, ARM64REG_SP, 16);

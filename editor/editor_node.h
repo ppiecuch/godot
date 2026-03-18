@@ -871,6 +871,7 @@ public:
 	void add_tool_menu_item(const String &p_name, Object *p_handler, const String &p_callback, const Variant &p_ud = Variant());
 	void add_tool_submenu_item(const String &p_name, PopupMenu *p_submenu);
 	void remove_tool_menu_item(const String &p_name);
+	PopupMenu *_get_native_tool_menu() const;
 
 	void save_all_scenes();
 	void save_scene_list(Vector<String> p_scene_filenames);

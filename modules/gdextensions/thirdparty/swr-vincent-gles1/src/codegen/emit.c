@@ -424,14 +424,30 @@ static void branch_cond(cg_codegen_t * gen, cg_label_t * target, ARMCond cond)
 {
 	/* insert a conditional branch to the specified target label */
 	cg_codegen_reference(gen, target, cg_reference_branch24);
+#if defined(__aarch64__) || defined(_M_ARM64)
+	/* ARM64: no PC offset compensation needed; initial displacement is 0.
+	 * fix_ref() will patch the actual offset later. */
+	if (cond == ARMCOND_AL) {
+		/* Use B (26-bit range) instead of B.cond AL (19-bit range) */
+		ARM64_B(gen->cseg, 0);
+	} else {
+		ARM64_B_COND(gen->cseg, cond, 0);
+	}
+#else
 	/* compensate for PC pointing 2 instruction words ahead */
 	ARM_B_COND(gen->cseg, cond, -2 & 0xFFFFFF);
+#endif
 }
 
 
 static void branch(cg_codegen_t * gen, cg_label_t * target)
 {
+#if defined(__aarch64__) || defined(_M_ARM64)
+	cg_codegen_reference(gen, target, cg_reference_branch24);
+	ARM64_B(gen->cseg, 0);
+#else
 	branch_cond(gen, target, ARMCOND_AL);
+#endif
 }
 
 
@@ -449,11 +465,16 @@ static void restore_flags(cg_codegen_t * gen, cg_physical_reg_t * reg)
 
 static void call_store_additional_args(cg_codegen_t * gen, cg_virtual_reg_list_t * args, cg_inst_t * inst)
 {
-	/* In case we have more than 4 arguments: store all remaining args onto the stack */
+	/* In case we have more than N arguments: store all remaining args onto the stack */
 
 	ARMReg regno;
+#if defined(__aarch64__) || defined(_M_ARM64)
+	ARMReg last_arg = ARMREG_A1 + 7;
+#else
+	ARMReg last_arg = ARMREG_A4;
+#endif
 
-	for (regno = ARMREG_A1; regno <= ARMREG_A4 && args != (cg_virtual_reg_list_t *) 0; 
+	for (regno = ARMREG_A1; regno <= last_arg && args != (cg_virtual_reg_list_t *) 0;
 		 ++regno, args = args->next)
 		;										/* skip register arguments */
 
@@ -523,8 +544,13 @@ static void load_register_arg(cg_codegen_t * gen, cg_virtual_reg_t * reg, ARMReg
 static void kill_argument_registers(cg_codegen_t * gen)
 {
 	ARMReg regno;
+#if defined(__aarch64__) || defined(_M_ARM64)
+	ARMReg last_arg = ARMREG_A1 + 7;  /* X0-X7 are caller-saved on ARM64 */
+#else
+	ARMReg last_arg = ARMREG_A4;
+#endif
 
-	for (regno = ARMREG_A1; regno <= ARMREG_A4; ++regno)
+	for (regno = ARMREG_A1; regno <= last_arg; ++regno)
 	{
 		cg_physical_reg_t * physical_reg = gen->registers + regno;
 		cg_virtual_reg_t * reg = physical_reg->virtual_reg;
@@ -540,7 +566,7 @@ static void kill_argument_registers(cg_codegen_t * gen)
 				/* register is a duplicate of another register, just free it up */
 				reg_list_remove(&gen->used_regs, physical_reg);
 				reg_list_add(&gen->free_regs, physical_reg);
-				
+
 				physical_reg->virtual_reg = 0;
 			}
 		}
@@ -573,8 +599,13 @@ static void call_load_register_args(cg_codegen_t * gen, cg_virtual_reg_list_t * 
 {
 	ARMReg regno;
 	cg_virtual_reg_list_t * args;
+#if defined(__aarch64__) || defined(_M_ARM64)
+	ARMReg last_arg = ARMREG_A1 + 7;
+#else
+	ARMReg last_arg = ARMREG_A4;
+#endif
 
-	for (regno = ARMREG_A1, args = begin_args; regno <= ARMREG_A4 && args != (cg_virtual_reg_list_t *) 0; 
+	for (regno = ARMREG_A1, args = begin_args; regno <= last_arg && args != (cg_virtual_reg_list_t *) 0;
 		 ++regno, args = args->next)
 	{
 		load_register_arg(gen, args->reg, regno, inst);
@@ -623,7 +654,11 @@ static void call(cg_codegen_t * gen, cg_label_t * target,
 	call_store_additional_args(gen, args, inst);
 	call_load_register_args(gen, args, inst);
 	cg_codegen_reference(gen, target, cg_reference_branch24);
+#if defined(__aarch64__) || defined(_M_ARM64)
+	ARM64_BL(gen->cseg, 0);  /* no PC offset compensation on ARM64 */
+#else
 	ARM_BL(gen->cseg, -2);
+#endif
 }
 
 
@@ -2232,8 +2267,15 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				load_register_arg(gen, inst->binary.operand.source, ARMREG_A3, inst);
 				kill_flags(gen);
 				kill_argument_registers(gen);
+#if defined(__aarch64__) || defined(_M_ARM64)
+				/* ARM64: SP is 64-bit, must use X-reg operations.
+				 * MOV from SP must use ADD Xd, SP, #0 (not ORR which treats reg 31 as XZR) */
+				ARM64_SUB_X_REG_IMM(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
+				ARM64_ADD_X_REG_IMM(gen->cseg, ARMREG_A1, ARMREG_SP, 0);
+#else
 				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
 				ARM_MOV_REG_REG(gen->cseg, ARMREG_A1, ARMREG_SP);
+#endif
 				call_runtime(gen, gen->runtime->div);
 
 				/* load result from stack position */
@@ -2241,7 +2283,11 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				assign_reg(gen, physical_reg, inst->unary.dest_value);
 				physical_reg->dirty = physical_reg->defined = 1;
 				ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_SP, offsetof(div_t, quot));
+#if defined(__aarch64__) || defined(_M_ARM64)
+				ARM64_ADD_X_REG_IMM(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
+#else
 				ARM_ADD_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
+#endif
 			}
 			break;
 
@@ -2253,8 +2299,15 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				load_register_arg(gen, inst->binary.operand.source, ARMREG_A3, inst);
 				kill_flags(gen);
 				kill_argument_registers(gen);
+#if defined(__aarch64__) || defined(_M_ARM64)
+				/* ARM64: SP is 64-bit, must use X-reg operations.
+				 * MOV from SP must use ADD Xd, SP, #0 (not ORR which treats reg 31 as XZR) */
+				ARM64_SUB_X_REG_IMM(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
+				ARM64_ADD_X_REG_IMM(gen->cseg, ARMREG_A1, ARMREG_SP, 0);
+#else
 				ARM_SUB_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
 				ARM_MOV_REG_REG(gen->cseg, ARMREG_A1, ARMREG_SP);
+#endif
 				call_runtime(gen, gen->runtime->div);
 
 				/* load result from stack position */
@@ -2262,7 +2315,11 @@ void cg_codegen_emit_inst(cg_codegen_t * gen, cg_inst_t * inst)
 				assign_reg(gen, physical_reg, inst->unary.dest_value);
 				physical_reg->dirty = physical_reg->defined = 1;
 				ARM_LDR_IMM(gen->cseg, physical_reg->regno, ARMREG_SP, offsetof(div_t, rem));
+#if defined(__aarch64__) || defined(_M_ARM64)
+				ARM64_ADD_X_REG_IMM(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
+#else
 				ARM_ADD_REG_IMM8(gen->cseg, ARMREG_SP, ARMREG_SP, sizeof(div_t));
+#endif
 			}
 			break;
 
@@ -2402,7 +2459,11 @@ static void flush_dirty_regs(cg_codegen_t * gen, cg_bitset_t * live)
 
 static void flush_dirty_args(cg_codegen_t * gen)
 {
+#if defined(__aarch64__) || defined(_M_ARM64)
+	flush_dirty_reg_set(gen, ARMREG_A1, ARMREG_A1 + 7, NULL);
+#else
 	flush_dirty_reg_set(gen, ARMREG_A1, ARMREG_A4, NULL);
+#endif
 }
 
 

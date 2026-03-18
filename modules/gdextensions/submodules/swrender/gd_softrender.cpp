@@ -1027,9 +1027,12 @@ TEST_SUITE("swrender-vincent") {
 #if defined(ARM) || defined(_ARM_) || defined(__MARM__)
 		CHECK(jit == true);
 		MESSAGE("Vincent ARM JIT: ENABLED (ARM32)");
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) && defined(EGL_ARM64_JIT_VERIFIED)
 		CHECK(jit == true);
 		MESSAGE("Vincent ARM JIT: ENABLED (ARM64)");
+#elif defined(__aarch64__)
+		CHECK(jit == false);
+		MESSAGE("Vincent ARM JIT: codegen ready, enable with -DEGL_ARM64_JIT_VERIFIED");
 #else
 		CHECK(jit == false);
 		MESSAGE("Vincent ARM JIT: DISABLED (non-ARM platform)");
