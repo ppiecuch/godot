@@ -209,12 +209,17 @@ aa2map_get_object_by_ascii (st_aa2map_t *aa2map, int c)
 int
 aa2map_compile (st_aa2map_t *aa2map)
 {
+#ifdef AA2MAP_GODOT_EMBEDDED
+  // system() calls disabled inside Godot Engine
+  (void)aa2map;
+  return 0;
+#else
   int result = 0;
   char buf[MAXBUFSIZE];
 
   if (aa2map->map_file == stdout)
     return 0;
-    
+
   sprintf (buf, aa2map->q3map_cmd, aa2map->map_file_s);
   printf ("%s\n", buf);
   result = system (buf);
@@ -224,6 +229,7 @@ aa2map_compile (st_aa2map_t *aa2map)
   result = system (buf);
 
   return result;
+#endif
 }
 
 /*
@@ -381,20 +387,20 @@ aa2map_mazegen (st_aa2map_t *aa2map, int xsize, int ysize)
 
   if (!(hedges = malloc (xsize * ysize)))
     {
-      fprintf (stderr, "ERROR: aa2map_mazegen() failed\n");
+      AA2MAP_LOG_ERROR ("ERROR: aa2map_mazegen() failed\n");
       return;
     }
 
   if (!(vedges = malloc (xsize * ysize)))
     {
-      fprintf (stderr, "ERROR: aa2map_mazegen() failed\n");
+      AA2MAP_LOG_ERROR ("ERROR: aa2map_mazegen() failed\n");
       free (hedges);
       return;
     }
 
   if (maze_calc (xsize, ysize, hedges, vedges) != 0)
     {
-      fprintf (stderr, "ERROR: randomize() failed\n");
+      AA2MAP_LOG_ERROR ("ERROR: randomize() failed\n");
       free (hedges);
       free (vedges);
       return; 
@@ -448,7 +454,7 @@ aa2map_strafe (st_aa2map_t *aa2map, int pads, int gap_initial, int gap_increment
            aa2map->yscale,
            aa2map->zscale, height_increment, gap_initial, gap_increment);
 
-  fprintf (stderr, "%s\n", message);
+  AA2MAP_LOG_INFO ( "%s\n", message);
 
   idtech3_map_start (aa2map->map_file, message,
                                        aa2map->light,
@@ -656,7 +662,7 @@ aa2map_run (st_aa2map_t *aa2map, int run_len, int checkpoints)
            checkpoints,
            aa2map->xrot);
 
-  fprintf (stderr, "%s\n", message);
+  AA2MAP_LOG_INFO ( "%s\n", message);
 
   idtech3_map_start (aa2map->map_file, message,
                                        aa2map->light,
@@ -847,7 +853,7 @@ aa2map_museum (st_aa2map_t *aa2map, const char *pk3_file)
 
   if (!(pk3 = unzip2_open (pk3_file, "rb")))
     {
-      fprintf (stderr, "ERROR: could not open %s\n", pk3_file);
+      AA2MAP_LOG_ERROR ("ERROR: could not open %s\n", pk3_file);
       return;
     }
 
@@ -865,7 +871,7 @@ aa2map_museum (st_aa2map_t *aa2map, const char *pk3_file)
 
   sprintf (message, "Map: Museum, %d models", assets);
 
-  fprintf (stderr, "%s\n", message);
+  AA2MAP_LOG_INFO ( "%s\n", message);
 
   idtech3_map_start (aa2map->map_file, message,
                                        aa2map->light,

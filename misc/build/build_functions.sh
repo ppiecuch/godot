@@ -88,6 +88,28 @@ sync_extra () {
 		return
 	fi
 
+	# Expand glob patterns into actual file paths.
+	# Supported: **/name.ext (recursive), dir/*.ext (single-level)
+	local EXPANDED=()
+	for pattern in "${FILES[@]}"; do
+		if [[ "$pattern" == **'*'** ]]; then
+			# Strip leading **/ to get the -name part for simple recursive globs
+			if [[ "$pattern" == '**/'* ]]; then
+				local namepart="${pattern#\*\*/}"
+				while IFS= read -r match; do
+					EXPANDED+=("$match")
+				done < <(cd "$REPO_ROOT" && find . -name "$namepart" -not -path "./.git/*" 2>/dev/null | sed 's|^\./||')
+			else
+				while IFS= read -r match; do
+					EXPANDED+=("$match")
+				done < <(cd "$REPO_ROOT" && find . -path "./$pattern" -not -path "./.git/*" 2>/dev/null | sed 's|^\./||')
+			fi
+		else
+			EXPANDED+=("$pattern")
+		fi
+	done
+	FILES=("${EXPANDED[@]}")
+
 	# Get local IPs to avoid rsyncing to ourselves
 	local LOCAL_IPS
 	LOCAL_IPS=$(ip -4 -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1 || true)

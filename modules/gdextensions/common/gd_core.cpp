@@ -105,7 +105,7 @@ String array_concat(const Array &p_args) {
 
 String string_ellipsis(const Ref<Font> &p_font, const String &p_text, real_t p_max_width) {
 	ERR_FAIL_NULL_V(p_font, p_text);
-	ERR_FAIL_COND_V(p_max_width > 0, p_text);
+	ERR_FAIL_COND_V(p_max_width <= 0, p_text);
 	if (p_text.size() > 1) {
 		Size2 text_size = p_font->get_string_size(p_text);
 		if (text_size.x > p_max_width) {

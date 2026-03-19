@@ -201,7 +201,7 @@ aa2map_set_opt (st_aa2map_t *aa2map, int c, const char *optarg)
               aa2map->map_file = fopen (aa2map->map_file_s, "w");
               if (!aa2map->map_file)
               {
-                  fprintf (stderr, "ERROR: could not open output file %s (using stdout)\n", aa2map->map_file_s);
+                  AA2MAP_LOG_ERROR ( "ERROR: could not open output file %s (using stdout)\n", aa2map->map_file_s);
                   aa2map->map_file = stdout;
               }
 
@@ -211,7 +211,7 @@ aa2map_set_opt (st_aa2map_t *aa2map, int c, const char *optarg)
               aa2map->shader_file = fopen (aa2map->shader_file_s, "w");
               if (!aa2map->shader_file)
               {
-                  fprintf (stderr, "ERROR: could not open output file %s (using stdout)\n", aa2map->shader_file_s);
+                  AA2MAP_LOG_ERROR ( "ERROR: could not open output file %s (using stdout)\n", aa2map->shader_file_s);
                   aa2map->shader_file = stdout;
               }
           }
@@ -261,8 +261,8 @@ aa2map_gen (st_aa2map_t *aa2map)
     result = set_property_array (aa2map->configfile, props);
   if (result == -1) // property_check() or update failed
     { 
-      fprintf (stderr, "ERROR: could not create %s\n", aa2map->configfile);
-      fprintf (stderr, "       using default: %s", AA2MAP_DEFAULT_ASCII_CHARS_S);
+      AA2MAP_LOG_ERROR ( "ERROR: could not create %s\n", aa2map->configfile);
+      AA2MAP_LOG_ERROR ( "       using default: %s", AA2MAP_DEFAULT_ASCII_CHARS_S);
     }
 
   srand (time_ms (0)); // seed random
@@ -324,7 +324,7 @@ aa2map_gen (st_aa2map_t *aa2map)
 
   if (!aa2map->input_file[0])
     {
-      fprintf (stderr, "ERROR: no ASCIIFILE specified\n");
+      AA2MAP_LOG_ERROR ( "ERROR: no ASCIIFILE specified\n");
       return -1;
     }
 
@@ -339,7 +339,7 @@ aa2map_gen (st_aa2map_t *aa2map)
 
   if (!parsed)
     {
-      fprintf (stderr, "ERROR: aa2map_parse() failed\n");
+      AA2MAP_LOG_ERROR ( "ERROR: aa2map_parse() failed\n");
       return -1;
     }
 

@@ -26,8 +26,8 @@
 #pragma once
 #endif
 
-#include "../../context.h"
-#include "../../renderer/span.h"
+#include "src/context.h"
+#include "src/renderer/span.h"
 #include "spanfuncs.h"
 
 #include <map>

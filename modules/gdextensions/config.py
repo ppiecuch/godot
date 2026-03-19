@@ -89,10 +89,11 @@ def configure(env):
         "generator",
         "goxel",
         "fontengine3d",
-        "qmap",
+        "gqmaps",
         "spinners",
         "tileengine",
         # ui and gui extensions
+        "glitehtml",
         "turbobadger",
         "textui",
         "ofxdatgui",

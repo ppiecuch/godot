@@ -73,7 +73,7 @@ private:
 	} MeshInfo;
 
 	void refill_grid_mesh(const Rect2 &p_frame);
-	void refill_plot_mesh(MeshInfo &p_mesh, std::deque<real_t> &p_vals);
+	void refill_plot_mesh(MeshInfo &p_mesh, std::deque<real_t> &p_vals, real_t p_low, real_t p_high);
 
 	String title_label;
 	std::deque<real_t> values;
@@ -85,6 +85,8 @@ private:
 
 	real_t lowest, highest; // auto-updated range of all the current data values
 	real_t manual_lowest, manual_highest;
+	real_t display_low, display_high; // smoothly interpolated display range
+	real_t range_smooth_speed; // interpolation speed (higher = faster)
 
 	RangeMode range_mode;
 
@@ -124,6 +126,7 @@ private:
 	MeshInfo grid_mesh, plot_mesh, smooth_plot_mesh, text_mesh;
 
 	Rect2 prev_rect;
+	Rect2 _plot_rect; // screen-space rect for plot area (excluding header)
 
 	void _recalc_low_high();
 	bool _prep_vec_glyph(PoolVector2Array &p_data, uint8_t p_idx, const Point2 &p_pos, const Size2 &p_scale = Size2(1, 1));
@@ -199,6 +202,9 @@ public:
 
 	void set_show_smoothed_curve(bool p_show);
 	void set_smooth_filter(real_t p_filter);
+
+	void set_range_smooth_speed(real_t p_speed);
+	real_t get_range_smooth_speed() const;
 
 	PoolColorArray get_color_from_palette(int pal, int num_colors);
 

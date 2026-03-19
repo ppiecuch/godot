@@ -51,7 +51,7 @@ aa2map_parse (st_aa2map_t *aa2map)
     {
       if (access (aa2map->input_file[i], R_OK) != 0)
         {
-          fprintf (stderr, "ERROR: failed to open input file with ASCII Art (%s)\n", aa2map->input_file[i]);
+          AA2MAP_LOG_ERROR ( "ERROR: failed to open input file with ASCII Art (%s)\n", aa2map->input_file[i]);
           continue;
         }
 
@@ -59,7 +59,7 @@ aa2map_parse (st_aa2map_t *aa2map)
 #if 0
       if (file_size < 11) // 9x9 + 2 line feed
         {
-          fprintf (stderr, "ERROR: The map is too small (at least 9 x 9 plus 2 line feed)\n"
+          AA2MAP_LOG_ERROR ( "ERROR: The map is too small (at least 9 x 9 plus 2 line feed)\n"
                            "EXAMPLE: ***(+\\n)\n"
                            "         * *(+\\n)\n"
                            "         ***\n");
@@ -75,7 +75,7 @@ aa2map_parse (st_aa2map_t *aa2map)
   p = malloc (total_size + 1);
   if (!p)
     {
-      fprintf (stderr, "ERROR: aa2map_parse() {p = malloc()} failed\n");
+      AA2MAP_LOG_ERROR ( "ERROR: aa2map_parse() {p = malloc()} failed\n");
       return NULL;
     }
   memset (p, 0, total_size + 1);
@@ -86,7 +86,7 @@ aa2map_parse (st_aa2map_t *aa2map)
 
   if (!(parsed = malloc (sizeof (st_aa2map_parse_t) * (total_size + 1))))
     {
-      fprintf (stderr, "ERROR: aa2map_parse() {parsed = malloc()} failed\n");
+      AA2MAP_LOG_ERROR ( "ERROR: aa2map_parse() {parsed = malloc()} failed\n");
       free (p);
       return NULL;
     }
@@ -97,7 +97,7 @@ aa2map_parse (st_aa2map_t *aa2map)
     {
       if (!(fh = fopen (aa2map->input_file[i], "r")))
         {
-          fprintf (stderr, "ERROR: failed to open input file with ASCII Art (%s)\n", aa2map->input_file[i]);
+          AA2MAP_LOG_ERROR ( "ERROR: failed to open input file with ASCII Art (%s)\n", aa2map->input_file[i]);
           return NULL;
         }
 
@@ -105,7 +105,7 @@ aa2map_parse (st_aa2map_t *aa2map)
 
       if (fread (p, 1, file_size, fh) < file_size)
         {
-          fprintf (stderr, "ERROR: aa2map_parse() {fread()} failed\n");
+          AA2MAP_LOG_ERROR ( "ERROR: aa2map_parse() {fread()} failed\n");
           return NULL;
         }
 
@@ -154,7 +154,7 @@ aa2map_parse (st_aa2map_t *aa2map)
 
   aa2map->zsize = MAX (aa2map->zsize, zpos);
 
-  fprintf (stderr, "Map dimensions: %dx%dx%d\n", aa2map->xsize, aa2map->ysize, aa2map->zsize);
+  AA2MAP_LOG_INFO ("Map dimensions: %dx%dx%d\n", aa2map->xsize, aa2map->ysize, aa2map->zsize);
 
   //mirror
   if (aa2map->mirror)

@@ -48,6 +48,7 @@ class SRGraph : public Control {
 	GDCLASS(SRGraph, Control);
 
 	int plot_history_size;
+	Vector<int> _owned_graphs;
 
 protected:
 	void _notification(int p_what);
@@ -62,17 +63,24 @@ public:
 	void set_grid(sr_graph_t p_graph, bool p_visible, real_t p_stepx, real_t p_stepy, const Color &p_color = Color());
 	void set_axes(sr_graph_t p_graph, bool p_visible, const Color &p_color = Color());
 
-	int add_curve(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, const Color &p_color = Color());
+	int add_curve(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, const Color &p_color = Color(1, 1, 1));
 	void update_curve(sr_graph_t p_graph, int p_curve_id, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys);
 
-	int add_hist(sr_graph_t p_graph, int p_bins, const Vector<real_t> &p_ys, real_t p_spacing, const Color &p_color = Color());
+	int add_hist(sr_graph_t p_graph, int p_bins, const Vector<real_t> &p_ys, real_t p_spacing, const Color &p_color = Color(1, 1, 1));
 	void update_hist(sr_graph_t p_graph, int p_hist_id, const Vector<real_t> &p_ys);
 
-	int add_points(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, real_t p_size, const Color &p_color = Color());
+	int add_points(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, real_t p_size, const Color &p_color = Color(1, 1, 1));
 	void update_points(sr_graph_t p_graph, int p_points_id, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys);
 
-	int add_stack(sr_graph_t p_graph, real_t p_weight, const Vector<real_t> &p_vs);
+	int add_stack(sr_graph_t p_graph, real_t p_weight, const Vector<real_t> &p_vs, const Color &p_color = Color(1, 1, 1));
 	void update_stack(sr_graph_t p_graph, int p_stack_id, const Vector<real_t> &p_vs);
+
+	void clear_graph(sr_graph_t p_graph);
+	void remove_curve(sr_graph_t p_graph, int p_curve_id);
+	void remove_hist(sr_graph_t p_graph, int p_hist_id);
+	void remove_points(sr_graph_t p_graph, int p_points_id);
+
+	void push_value(sr_graph_t p_graph, int p_curve_id, real_t p_value);
 
 	Color get_palette_color(SRGraphPalette p_pal, int p_col, int p_num_cols = 0);
 

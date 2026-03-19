@@ -151,6 +151,7 @@
 #include "scene/resources/cylinder_shape.h"
 #include "scene/resources/default_theme/default_theme.h"
 #include "scene/resources/dynamic_font.h"
+#include "scene/resources/ssfn_font.h"
 #include "scene/resources/gradient.h"
 #include "scene/resources/height_map_shape.h"
 #include "scene/resources/line_shape_2d.h"
@@ -248,6 +249,7 @@ static Ref<ResourceFormatLoaderStreamTexture> resource_loader_stream_texture;
 static Ref<ResourceFormatLoaderTextureLayered> resource_loader_texture_layered;
 
 static Ref<ResourceFormatLoaderBMFont> resource_loader_bmfont;
+static Ref<ResourceFormatLoaderSSFNFont> resource_loader_ssfnfont;
 
 static Ref<ResourceFormatSaverShader> resource_saver_shader;
 static Ref<ResourceFormatLoaderShader> resource_loader_shader;
@@ -284,6 +286,9 @@ void register_scene_types() {
 
 	resource_loader_bmfont.instance();
 	ResourceLoader::add_resource_format_loader(resource_loader_bmfont, true);
+
+	resource_loader_ssfnfont.instance();
+	ResourceLoader::add_resource_format_loader(resource_loader_ssfnfont, true);
 
 	OS::get_singleton()->yield(); //may take time to init
 
@@ -740,6 +745,7 @@ void register_scene_types() {
 	ClassDB::register_class<Animation>();
 	ClassDB::register_virtual_class<Font>();
 	ClassDB::register_class<BitmapFont>();
+	ClassDB::register_class<SSFNFont>();
 	ClassDB::register_class<Curve>();
 
 	ClassDB::register_class<TextFile>();
@@ -890,6 +896,9 @@ void unregister_scene_types() {
 
 	ResourceLoader::remove_resource_format_loader(resource_loader_bmfont);
 	resource_loader_bmfont.unref();
+
+	ResourceLoader::remove_resource_format_loader(resource_loader_ssfnfont);
+	resource_loader_ssfnfont.unref();
 
 	//SpatialMaterial is not initialised when 3D is disabled, so it shouldn't be cleaned up either
 #ifndef _3D_DISABLED

@@ -34,11 +34,37 @@
 #include "core/reference.h"
 #include "scene/2d/node_2d.h"
 
+#include <cfloat>
+#include <deque>
+
 class TweakBar : public Node2D {
 	GDCLASS(TweakBar, Node2D);
 
 	bool initialized;
 
+public:
+	// Chart data for histogram, line chart, and flame graph widgets
+	struct ChartData {
+		enum ChartType { HISTOGRAM,
+			LINE_CHART,
+			FLAME_GRAPH } type;
+		// Histogram & line chart: rolling buffer
+		std::deque<float> values;
+		int max_history;
+		float scale_min, scale_max; // FLT_MAX = auto-range
+		// Flame graph entries
+		struct FlameEntry {
+			float start, end;
+			int level;
+			String caption;
+		};
+		Vector<FlameEntry> flame_entries;
+
+		ChartData() :
+				type(HISTOGRAM), max_history(128), scale_min(FLT_MAX), scale_max(FLT_MAX) {}
+	};
+
+private:
 	struct VarData {
 		enum Type { FLOAT,
 			INT,
@@ -75,6 +101,7 @@ class TweakBar : public Node2D {
 	Map<String, VarData> m_vars;
 	Map<String, String> m_string_vars;
 	Map<String, PropertyBinding *> m_bindings; // var_key → binding
+	Map<String, ChartData *> m_charts; // var_key → chart data
 	Vector<VarCBInfo *> m_cb_infos;
 	Vector<VarCBInfo *> m_btn_infos;
 
@@ -127,6 +154,15 @@ public:
 
 	// Variant-based: auto-detect type and add appropriate variable
 	bool add_variant(const String &p_bar, const String &p_name, const Variant &p_value, const String &p_def = "");
+
+	// Chart widgets
+	bool add_histogram(const String &p_bar, const String &p_name, const String &p_def);
+	bool add_line_chart(const String &p_bar, const String &p_name, const String &p_def);
+	bool add_flame_graph(const String &p_bar, const String &p_name, const String &p_def);
+	void chart_push_value(const String &p_bar, const String &p_name, float p_value);
+	void chart_set_values(const String &p_bar, const String &p_name, const PoolRealArray &p_values);
+	void chart_add_flame_entry(const String &p_bar, const String &p_name, const Vector2 &p_range, int p_level, const String &p_caption);
+	void chart_clear(const String &p_bar, const String &p_name);
 
 	// Input forwarding
 	void _handle_input(const Ref<InputEvent> &p_event);

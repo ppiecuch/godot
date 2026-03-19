@@ -51,7 +51,7 @@
 
 void GdHistoryPlot::_recalc_low_high() {
 	real_t nlowest = FLT_MAX;
-	real_t nhighest = -FLT_MIN;
+	real_t nhighest = -FLT_MAX;
 	for (size_t i = 0; i < values.size(); i++) {
 		const real_t val = values[i];
 		if (val > nhighest) {
@@ -64,17 +64,17 @@ void GdHistoryPlot::_recalc_low_high() {
 	if (nlowest == FLT_MAX) {
 		nlowest = DEFAULT_LOWEST;
 	}
-	if (nhighest == -FLT_MIN) {
+	if (nhighest == -FLT_MAX) {
 		nhighest = DEFAULT_HIGHEST;
 	}
 	if (shrink_back_in_auto_range) {
 		lowest = nlowest;
 		highest = nhighest;
-	} else { // never shrink range
-		if (lowest < nlowest) {
+	} else { // never shrink range — only expand
+		if (nlowest < lowest) {
 			lowest = nlowest;
 		}
-		if (highest > nhighest) {
+		if (nhighest > highest) {
 			highest = nhighest;
 		}
 	}
@@ -93,8 +93,10 @@ void GdHistoryPlot::reset() {
 	values.clear();
 	smooth_values.clear();
 	count = 0;
-	lowest = -1;
-	highest = 1;
+	lowest = DEFAULT_LOWEST;
+	highest = DEFAULT_HIGHEST;
+	display_low = DEFAULT_LOWEST;
+	display_high = DEFAULT_HIGHEST;
 }
 
 void GdHistoryPlot::add_sample(real_t p_new_val) {
@@ -164,17 +166,34 @@ void GdHistoryPlot::refill_grid_mesh(const Rect2 &p_frame) {
 	grid_mesh._dirty = false;
 }
 
-void GdHistoryPlot::refill_plot_mesh(MeshInfo &mesh, std::deque<real_t> &vals) {
-	mesh.clear();
-	PoolVector2Array data;
-	for (size_t i = 0; i < vals.size(); i += draw_skip) {
-		data.push_back(Vector2(i, vals[i]));
+void GdHistoryPlot::refill_plot_mesh(MeshInfo &p_mesh, std::deque<real_t> &p_vals, real_t p_low, real_t p_high) {
+	p_mesh.clear();
+	// Vertices are now in screen space — no transform needed at draw time.
+	// Caller must set plot_rect before calling.
+	const real_t range = p_high - p_low;
+	if (range <= 0 || p_vals.size() == 0) {
+		return;
 	}
+
+	const Rect2 &pr = _plot_rect;
+	const real_t x_scale = pr.size.width / (real_t)MAX(1, max_history);
+	const real_t y_scale = pr.size.height / range;
+	const real_t x_start = draw_from_right ? (pr.position.x + pr.size.width) : pr.position.x;
+	const real_t x_dir = draw_from_right ? -x_scale : x_scale;
+
+	PoolVector2Array data;
+	for (size_t i = 0; i < p_vals.size(); i += draw_skip) {
+		const real_t val = CLAMP(p_vals[i], p_low, p_high);
+		const real_t x = x_start + x_dir * i;
+		const real_t y = pr.position.y + pr.size.height - (val - p_low) * y_scale;
+		data.push_back(Vector2(x, y));
+	}
+
 	Array mesh_array;
 	mesh_array.resize(VS::ARRAY_MAX);
 	mesh_array[VS::ARRAY_VERTEX] = data;
-	mesh.m->add_surface_from_arrays(Mesh::PRIMITIVE_LINE_STRIP, mesh_array);
-	mesh._dirty = false;
+	p_mesh.m->add_surface_from_arrays(Mesh::PRIMITIVE_LINE_STRIP, mesh_array);
+	p_mesh._dirty = false;
 }
 
 void GdHistoryPlot::add_horizontal_guide(real_t yval, const Color &c) {
@@ -202,6 +221,7 @@ void GdHistoryPlot::draw(const Rect2 &p_frame) {
 		plot_needs_refresh = false;
 	}
 
+	// Compute range from mode
 	real_t plot_low = 0, plot_high = 0;
 
 	switch (range_mode) {
@@ -217,6 +237,15 @@ void GdHistoryPlot::draw(const Rect2 &p_frame) {
 			plot_low = lowest;
 			plot_high = highest;
 		} break;
+	}
+
+	// Add padding to auto ranges so data doesn't hug the edges
+	if (range_mode != RANGE_MANUAL && plot_high > plot_low) {
+		const real_t pad = (plot_high - plot_low) * 0.05;
+		if (range_mode == RANGE_AUTOMATIC) {
+			plot_low -= pad;
+		}
+		plot_high += pad;
 	}
 
 	const bool needs_grid = (rc != prev_rect);
@@ -262,31 +291,31 @@ void GdHistoryPlot::draw(const Rect2 &p_frame) {
 	prev_rect = rc;
 
 	if (have_data) {
+		const real_t header_h = (respect_borders && draw_header) ? (VECFONT_HEIGHT * text_scale.y) : 0;
+
+		// Ensure minimum range so flat data (e.g. constant FPS) is still visible
+		if (plot_high - plot_low < 0.001) {
+			plot_low -= 1;
+			plot_high += 1;
+		}
+
+		// Set the plot rect for refill_plot_mesh to use
+		_plot_rect = Rect2(rc.position.x, rc.position.y + header_h,
+				rc.size.width, rc.size.height - header_h);
+
 		if (needs_mesh) {
-			refill_plot_mesh(plot_mesh, values);
+			refill_plot_mesh(plot_mesh, values, plot_low, plot_high);
 			if (show_smoothed_plot) {
-				refill_plot_mesh(smooth_plot_mesh, smooth_values);
+				refill_plot_mesh(smooth_plot_mesh, smooth_values, plot_low, plot_high);
 			}
 		}
-		if (respect_borders && draw_header) {
-			rc.size.height -= (VECFONT_HEIGHT * text_scale.y);
-		}
-		Transform2D draw_xform;
-		const real_t plot_values_range = plot_high - plot_low;
-		const real_t yscale = (rc.size.height - 1) / plot_values_range;
-		const real_t xscale = rc.size.width / max_history;
-		if (draw_from_right) {
-			draw_xform.translate(rc.size.width, 0);
-			draw_xform.scale(Vector2(-1, 1));
-		}
-		draw_xform.scale(Vector2(xscale, -yscale));
-		draw_xform.translate(rc.position.x / xscale, (rc.position.y - (rc.size.height + (respect_borders ? (VECFONT_HEIGHT * text_scale.y) : 0))) / yscale); // bottom-left origin
-		draw_xform.translate(0, -plot_low);
+
+		// Mesh vertices are already in screen space — draw with identity transform
 		if (show_smoothed_plot) {
-			draw_mesh(plot_mesh.m, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), draw_xform, Color(line_color.r * 0.25, line_color.g * 0.25, line_color.b * 0.25, line_color.a));
-			draw_mesh(smooth_plot_mesh.m, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), draw_xform, line_color);
+			draw_mesh(plot_mesh.m, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), Transform2D(), Color(line_color.r * 0.25, line_color.g * 0.25, line_color.b * 0.25, line_color.a));
+			draw_mesh(smooth_plot_mesh.m, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), Transform2D(), line_color);
 		} else {
-			draw_mesh(plot_mesh.m, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), draw_xform, line_color);
+			draw_mesh(plot_mesh.m, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), Transform2D(), line_color);
 		}
 	}
 }
@@ -489,7 +518,15 @@ void GdHistoryPlot::set_show_smoothed_curve(bool p_show) {
 
 void GdHistoryPlot::set_smooth_filter(real_t p_filter) {
 	smooth_factor = p_filter;
-};
+}
+
+void GdHistoryPlot::set_range_smooth_speed(real_t p_speed) {
+	range_smooth_speed = MAX(0.1, p_speed);
+}
+
+real_t GdHistoryPlot::get_range_smooth_speed() const {
+	return range_smooth_speed;
+}
 
 std::deque<real_t> &GdHistoryPlot::get_values() {
 	return values;
@@ -607,21 +644,21 @@ void GdHistoryPlot::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_precision"), &GdHistoryPlot::get_precision);
 	ClassDB::bind_method(D_METHOD("set_humanize_value", "humanize"), &GdHistoryPlot::set_humanize_value);
 	ClassDB::bind_method(D_METHOD("is_humanize_value"), &GdHistoryPlot::is_humanize_value);
-	ClassDB::bind_method(D_METHOD("set_background_color", "prec"), &GdHistoryPlot::set_background_color);
+	ClassDB::bind_method(D_METHOD("set_background_color", "color"), &GdHistoryPlot::set_background_color);
 	ClassDB::bind_method(D_METHOD("get_background_color"), &GdHistoryPlot::get_background_color);
-	ClassDB::bind_method(D_METHOD("set_text_color", "prec"), &GdHistoryPlot::set_line_color);
-	ClassDB::bind_method(D_METHOD("get_text_color"), &GdHistoryPlot::get_line_color);
-	ClassDB::bind_method(D_METHOD("set_line_color", "prec"), &GdHistoryPlot::set_line_color);
+	ClassDB::bind_method(D_METHOD("set_text_color", "color"), &GdHistoryPlot::set_text_color);
+	ClassDB::bind_method(D_METHOD("get_text_color"), &GdHistoryPlot::get_text_color);
+	ClassDB::bind_method(D_METHOD("set_line_color", "color"), &GdHistoryPlot::set_line_color);
 	ClassDB::bind_method(D_METHOD("get_line_color"), &GdHistoryPlot::get_line_color);
-	ClassDB::bind_method(D_METHOD("set_grid_color", "prec"), &GdHistoryPlot::set_grid_color);
+	ClassDB::bind_method(D_METHOD("set_grid_color", "color"), &GdHistoryPlot::set_grid_color);
 	ClassDB::bind_method(D_METHOD("get_grid_color"), &GdHistoryPlot::get_grid_color);
-	ClassDB::bind_method(D_METHOD("set_title_label", "prec"), &GdHistoryPlot::set_title_label);
+	ClassDB::bind_method(D_METHOD("set_title_label", "label"), &GdHistoryPlot::set_title_label);
 	ClassDB::bind_method(D_METHOD("get_title_label"), &GdHistoryPlot::get_title_label);
-	ClassDB::bind_method(D_METHOD("show_grid", "prec"), &GdHistoryPlot::show_grid);
+	ClassDB::bind_method(D_METHOD("show_grid", "show"), &GdHistoryPlot::show_grid);
 	ClassDB::bind_method(D_METHOD("is_grid"), &GdHistoryPlot::is_grid);
-	ClassDB::bind_method(D_METHOD("show_text_header", "prec"), &GdHistoryPlot::show_text_header);
+	ClassDB::bind_method(D_METHOD("show_text_header", "show"), &GdHistoryPlot::show_text_header);
 	ClassDB::bind_method(D_METHOD("is_text_header"), &GdHistoryPlot::is_text_header);
-	ClassDB::bind_method(D_METHOD("show_background", "prec"), &GdHistoryPlot::show_background);
+	ClassDB::bind_method(D_METHOD("show_background", "show"), &GdHistoryPlot::show_background);
 	ClassDB::bind_method(D_METHOD("is_background"), &GdHistoryPlot::is_background);
 	ClassDB::bind_method(D_METHOD("set_range", "low", "high"), &GdHistoryPlot::set_range);
 	ClassDB::bind_method(D_METHOD("set_lower_range", "lower"), &GdHistoryPlot::set_lower_range);
@@ -630,7 +667,22 @@ void GdHistoryPlot::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_higer_range"), &GdHistoryPlot::get_higer_range);
 	ClassDB::bind_method(D_METHOD("set_auto_range_shrinks_back", "shrink"), &GdHistoryPlot::set_auto_range_shrinks_back);
 	ClassDB::bind_method(D_METHOD("get_range_mode"), &GdHistoryPlot::get_range_mode);
-	ClassDB::bind_method(D_METHOD("get_color_from_palette", "palette", "color"), &GdHistoryPlot::get_color_from_palette);
+	ClassDB::bind_method(D_METHOD("get_color_from_palette", "palette", "num_colors"), &GdHistoryPlot::get_color_from_palette);
+
+	ClassDB::bind_method(D_METHOD("add_sample", "value"), &GdHistoryPlot::add_sample);
+	ClassDB::bind_method(D_METHOD("reset"), &GdHistoryPlot::reset);
+	ClassDB::bind_method(D_METHOD("add_horizontal_guide", "yval", "color"), &GdHistoryPlot::add_horizontal_guide);
+	ClassDB::bind_method(D_METHOD("clear_horizontal_guides"), &GdHistoryPlot::clear_horizontal_guides);
+	ClassDB::bind_method(D_METHOD("set_draw_guide_values", "draw"), &GdHistoryPlot::set_draw_guide_values);
+	ClassDB::bind_method(D_METHOD("set_draw_from_right", "draw"), &GdHistoryPlot::set_draw_from_right);
+	ClassDB::bind_method(D_METHOD("get_draw_from_right"), &GdHistoryPlot::get_draw_from_right);
+	ClassDB::bind_method(D_METHOD("set_show_smoothed_curve", "show"), &GdHistoryPlot::set_show_smoothed_curve);
+	ClassDB::bind_method(D_METHOD("set_smooth_filter", "filter"), &GdHistoryPlot::set_smooth_filter);
+	ClassDB::bind_method(D_METHOD("set_draw_skip_val", "skip"), &GdHistoryPlot::set_draw_skip_val);
+	ClassDB::bind_method(D_METHOD("get_lowest_value"), &GdHistoryPlot::get_lowest_value);
+	ClassDB::bind_method(D_METHOD("get_highest_value"), &GdHistoryPlot::get_highest_value);
+	ClassDB::bind_method(D_METHOD("set_range_smooth_speed", "speed"), &GdHistoryPlot::set_range_smooth_speed);
+	ClassDB::bind_method(D_METHOD("get_range_smooth_speed"), &GdHistoryPlot::get_range_smooth_speed);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "text_header"), "show_text_header", "is_text_header");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "title_label"), "set_title_label", "get_title_label");
@@ -658,6 +710,9 @@ GdHistoryPlot::GdHistoryPlot() {
 	auto_update = false;
 	lowest = DEFAULT_LOWEST;
 	highest = DEFAULT_HIGHEST;
+	display_low = DEFAULT_LOWEST;
+	display_high = DEFAULT_HIGHEST;
+	range_smooth_speed = 5.0;
 	max_history = 100;
 	range_mode = RANGE_AUTOMATIC;
 	auto_recalc_interval = 60;

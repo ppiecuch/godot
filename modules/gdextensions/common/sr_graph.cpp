@@ -66,9 +66,9 @@ SR_GRAPH_API int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real
 SR_GRAPH_API void sr_update_hist(sr_graph_t hgraph, int hist_id, const Vector<real_t> &ys);
 SR_GRAPH_API int sr_add_points(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, real_t size, const Color &color);
 SR_GRAPH_API void sr_update_points(sr_graph_t hgraph, int points_id, const Vector<real_t> &xs, const Vector<real_t> &ys);
-SR_GRAPH_API int sr_add_stack(sr_graph_t hgraph, real_t weight, const Vector<real_t> &vs);
+SR_GRAPH_API int sr_add_stack(sr_graph_t hgraph, real_t weight, const Vector<real_t> &vs, const Color &color = Color());
 SR_GRAPH_API void sr_update_stack(sr_graph_t hgraph, int stack_id, const Vector<real_t> &vs);
-SR_GRAPH_API void sr_draw(CanvasItem *canvas, Size2 frame);
+SR_GRAPH_API void sr_draw(CanvasItem *canvas, Size2 frame, const Vector<int> &owned);
 SR_GRAPH_API unsigned *sr_palette(int pal, int num_cols);
 
 /// Internal structs.
@@ -76,8 +76,9 @@ SR_GRAPH_API unsigned *sr_palette(int pal, int num_cols);
 typedef struct {
 	PoolVector2Array buffer;
 	Color color;
-	real_t param0;
-	unsigned param1;
+	real_t param0 = 0;
+	unsigned param1 = 0;
+	Vector<real_t> stream_ys; // rolling buffer for push_value
 } _sr_curve;
 
 typedef struct {
@@ -135,7 +136,8 @@ static void _sr_generate_axis(_sr_orientation orientation, real_t ratio, real_t 
 static int _sr_generate_curve(const _sr_graph *graph, const Vector<real_t> &xs, const Vector<real_t> &ys, _sr_curve *curve);
 static int _sr_generate_points(const _sr_graph *graph, const Vector<real_t> &xs, const Vector<real_t> &ys, _sr_curve *curve);
 static void _sr_generate_hist(const _sr_graph *graph, const Vector<real_t> &ys, _sr_curve *curve);
-static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame);
+static void _sr_generate_stack(const _sr_graph *graph, const Vector<real_t> &vs, _sr_curve *curve);
+static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame, Vector2 offset = Vector2());
 
 /// Exposed functions.
 
@@ -161,6 +163,15 @@ void sr_cleanup() {
 		memdelete(h);
 	}
 	_handles.reset();
+}
+
+static void sr_remove_graph(sr_graph_t hgraph) {
+	_sr_graph *graph = _from_handle(hgraph);
+	if (graph) {
+		const Id_T t = make_handle(hgraph);
+		_handles.erase(t);
+		memdelete(graph);
+	}
 }
 
 SR_GRAPH_API void sr_add_axes(sr_graph_t hgraph, const Color &color, bool axis_on_side) {
@@ -235,6 +246,7 @@ SR_GRAPH_API void sr_add_grid(sr_graph_t hgraph, real_t stepx, real_t stepy, con
 
 SR_GRAPH_API int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const Color &color) {
 	_sr_graph *graph = _from_handle(hgraph);
+	ERR_FAIL_NULL_V_MSG(graph, -1, "Invalid graph handle");
 	// generate the lines
 	_sr_curve curve;
 	curve.color = color;
@@ -243,8 +255,9 @@ SR_GRAPH_API int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const
 	// generate the points junctions
 	_sr_curve curvepoints;
 	curvepoints.color = color;
+	curvepoints.param0 = 0.02;
 	_sr_generate_points(graph, xs, ys, &curvepoints);
-	const int cid = graph->curves.size();
+	const int cid = graph->curves.size() - 1;
 	graph->curvespoints.push_back(curvepoints);
 	graph->_dirty = true;
 	return cid;
@@ -252,6 +265,8 @@ SR_GRAPH_API int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const
 
 SR_GRAPH_API void sr_update_curve(sr_graph_t hgraph, int curve_id, const Vector<real_t> &xs, const Vector<real_t> &ys) {
 	_sr_graph *graph = _from_handle(hgraph);
+	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
+	ERR_FAIL_INDEX_MSG(curve_id, graph->curves.size(), "Invalid curve index");
 	// update the lines
 	_sr_curve *curve = &graph->curves.write[curve_id];
 	curve->buffer = PoolVector2Array();
@@ -281,6 +296,7 @@ SR_GRAPH_API void sr_update_points(sr_graph_t hgraph, int points_id, const Vecto
 	_sr_curve *curve = &graph->points.write[points_id];
 	curve->buffer = PoolVector2Array();
 	_sr_generate_points(graph, xs, ys, curve);
+	graph->_dirty = true;
 }
 
 SR_GRAPH_API int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real_t> &ys, real_t spacing, const Color &color) {
@@ -298,28 +314,60 @@ SR_GRAPH_API int sr_add_hist(sr_graph_t hgraph, unsigned bins, const Vector<real
 SR_GRAPH_API void sr_update_hist(sr_graph_t hgraph, int hist_id, const Vector<real_t> &ys) {
 	_sr_graph *graph = _from_handle(hgraph);
 	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
-	ERR_FAIL_INDEX_MSG(hist_id, graph->points.size(), "Invalid hist index");
+	ERR_FAIL_INDEX_MSG(hist_id, graph->hists.size(), "Invalid hist index");
 	_sr_curve *curve = &graph->hists.write[hist_id];
 	curve->buffer = PoolVector2Array();
 	_sr_generate_hist(graph, ys, curve);
+	graph->_dirty = true;
 }
 
-SR_GRAPH_API int sr_add_stack(sr_graph_t hgraph, real_t weight, const Vector<real_t> &vs) {
+SR_GRAPH_API int sr_add_stack(sr_graph_t hgraph, real_t weight, const Vector<real_t> &vs, const Color &color) {
 	_sr_graph *graph = _from_handle(hgraph);
 	ERR_FAIL_NULL_V_MSG(graph, -1, "Invalid graph handle");
-	return 0;
+	_sr_curve curve;
+	curve.color = color;
+	curve.param0 = weight;
+	_sr_generate_stack(graph, vs, &curve);
+	graph->stacks.push_back(curve);
+	graph->_dirty = true;
+	return graph->stacks.size() - 1;
 }
 
 SR_GRAPH_API void sr_update_stack(sr_graph_t hgraph, int stack_id, const Vector<real_t> &vs) {
 	_sr_graph *graph = _from_handle(hgraph);
 	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
 	ERR_FAIL_INDEX_MSG(stack_id, graph->stacks.size(), "Invalid stack index");
+	_sr_curve *curve = &graph->stacks.write[stack_id];
+	curve->buffer = PoolVector2Array();
+	_sr_generate_stack(graph, vs, curve);
+	graph->_dirty = true;
 }
 
-SR_GRAPH_API void sr_draw(CanvasItem *canvas, Size2 frame) {
-	for (_sr_graph *graph : _handles) {
+SR_GRAPH_API void sr_draw(CanvasItem *canvas, Size2 frame, const Vector<int> &owned) {
+	const int count = owned.size();
+	if (count == 0) {
+		return;
+	}
+
+	// Auto-layout: arrange graphs in a grid that fits the frame
+	const int cols = (int)Math::ceil(Math::sqrt((real_t)count));
+	const int rows = (int)Math::ceil((real_t)count / cols);
+	const real_t cell_w = frame.width / cols;
+	const real_t cell_h = frame.height / rows;
+	const real_t pad = 2;
+
+	for (int idx = 0; idx < count; idx++) {
+		_sr_graph *graph = _from_handle(owned[idx]);
 		ERR_CONTINUE_MSG(graph == nullptr, "Invalid graph handle");
-		_sr_draw(canvas, graph, frame);
+		const int col = idx % cols;
+		const int row = idx / cols;
+		const Size2 cell_size(cell_w - pad * 2, cell_h - pad * 2);
+		const Vector2 cell_offset(col * cell_w + pad, row * cell_h + pad);
+
+		// Draw background
+		canvas->draw_rect(Rect2(cell_offset, cell_size), graph->color);
+
+		_sr_draw(canvas, graph, cell_size, cell_offset);
 	}
 }
 
@@ -330,16 +378,18 @@ static void _sr_get_line(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t 
 	points.push_back({ p1x, p1y });
 }
 
+static _FORCE_INLINE_ real_t _clamp_coord(real_t v) { return CLAMP(v, -1, 1); }
+
 static void _sr_get_rectangle(const real_t p0x, const real_t p0y, const real_t p1x, const real_t p1y, const real_t w, PoolVector2Array &points) {
 	const real_t wx = w * 0.5;
-	const real_t ax = p0x - wx;
-	const real_t ay = p0y;
-	const real_t bx = p0x + wx;
-	const real_t by = p0y;
-	const real_t cx = p1x + wx;
-	const real_t cy = p1y;
-	const real_t dx = p1x - wx;
-	const real_t dy = p1y;
+	const real_t ax = _clamp_coord(p0x - wx);
+	const real_t ay = _clamp_coord(p0y);
+	const real_t bx = _clamp_coord(p0x + wx);
+	const real_t by = _clamp_coord(p0y);
+	const real_t cx = _clamp_coord(p1x + wx);
+	const real_t cy = _clamp_coord(p1y);
+	const real_t dx = _clamp_coord(p1x - wx);
+	const real_t dy = _clamp_coord(p1y);
 
 	points.push_back({ ax, ay });
 	points.push_back({ bx, by });
@@ -352,14 +402,14 @@ static void _sr_get_rectangle(const real_t p0x, const real_t p0y, const real_t p
 static void _sr_get_point(real_t p0x, real_t p0y, real_t radius, real_t ratio, PoolVector2Array &points) {
 	const real_t wx = radius;
 	const real_t wy = radius * ratio;
-	const real_t ax = p0x - wx;
-	const real_t ay = p0y - wy;
-	const real_t bx = p0x + wx;
-	const real_t by = p0y - wy;
-	const real_t cx = p0x + wx;
-	const real_t cy = p0y + wy;
-	const real_t dx = p0x - wx;
-	const real_t dy = p0y + wy;
+	const real_t ax = _clamp_coord(p0x - wx);
+	const real_t ay = _clamp_coord(p0y - wy);
+	const real_t bx = _clamp_coord(p0x + wx);
+	const real_t by = _clamp_coord(p0y - wy);
+	const real_t cx = _clamp_coord(p0x + wx);
+	const real_t cy = _clamp_coord(p0y + wy);
+	const real_t dx = _clamp_coord(p0x - wx);
+	const real_t dy = _clamp_coord(p0y + wy);
 
 	points.push_back({ ax, ay });
 	points.push_back({ bx, by });
@@ -373,47 +423,54 @@ static void _sr_generate_axis(_sr_orientation orientation, real_t ratio, real_t 
 	real_t hy;
 	// three positions.
 	if (axis_on_side || 0 <= MIN(mini, maxi)) {
-		// axis on the bottom
 		hy = -1;
 		if (!axis_on_side && maxi < mini) {
 			hy *= -1;
 		}
 	} else if (0 >= MAX(maxi, mini)) {
-		// axis on the top
 		hy = 1;
 		if (maxi < mini) {
 			hy *= -1;
 		}
 	} else {
-		// need to find 0 y coord.
 		hy = -2 * (mini / (maxi - mini)) - 1;
 	}
 
-	const real_t ld = 0.03;
-	const real_t rv = orientation == orient_vert ? ratio : 1;
-	const real_t hx0 = -1 + (reverse ? 1.5 * ld * rv : 0);
-	const real_t hx1 = 1 - (reverse ? 0 : 1.5 * ld * rv);
-	const real_t ord = reverse ? hx0 : hx1;
-	const real_t sn = reverse ? -1 : 1;
+	const real_t major_tick = 0.05;
+	const real_t minor_tick = 0.025;
+	const int num_major = 4; // number of major intervals (= num_major+1 major ticks)
+	const int num_minor = 1; // minor ticks between each pair of major ticks
 
 	if (orientation == orient_vert) {
-		//   \    |  |
-		//    \   |  |
-		//  +--+  |  |
-		//  |     |  +--+
-		//  |     |    /
-		//  |     |   /
-		_sr_get_line(hy, hx0, hy, hx1, ratio, axis_data);
-		_sr_get_line(hy, ord, hy + ld, ord, ratio, axis_data);
-		_sr_get_line(hy + ld, ord, hy, sn, ratio, axis_data);
+		// Vertical axis at x=hy, ticks point inward (toward center)
+		const real_t dir = (hy <= 0) ? 1.0 : -1.0;
+		_sr_get_line(hy, -1, hy, 1, ratio, axis_data);
+		for (int i = 0; i <= num_major; i++) {
+			const real_t t = -1 + 2.0 * i / num_major;
+			_sr_get_line(hy, t, hy + major_tick * dir, t, ratio, axis_data);
+			// Minor ticks
+			if (i < num_major) {
+				for (int j = 1; j <= num_minor; j++) {
+					const real_t mt = t + 2.0 * j / (num_major * (num_minor + 1));
+					_sr_get_line(hy, mt, hy + minor_tick * dir, mt, ratio, axis_data);
+				}
+			}
+		}
 	} else {
-		// -----+   /  |  \   +-----
-		//      |  /   |   \  |
-		//      | /    |    \ |
-		//      +      |     +
-		_sr_get_line(hx0, hy, hx1, hy, ratio, axis_data);
-		_sr_get_line(ord, hy, ord, hy + ld * ratio, ratio, axis_data);
-		_sr_get_line(sn, hy, ord, hy + ld * ratio, ratio, axis_data);
+		// Horizontal axis at y=hy, ticks point inward (toward center)
+		const real_t dir = (hy <= 0) ? 1.0 : -1.0;
+		_sr_get_line(-1, hy, 1, hy, ratio, axis_data);
+		for (int i = 0; i <= num_major; i++) {
+			const real_t t = -1 + 2.0 * i / num_major;
+			_sr_get_line(t, hy, t, hy + major_tick * ratio * dir, ratio, axis_data);
+			// Minor ticks
+			if (i < num_major) {
+				for (int j = 1; j <= num_minor; j++) {
+					const real_t mt = t + 2.0 * j / (num_major * (num_minor + 1));
+					_sr_get_line(mt, hy, mt, hy + minor_tick * ratio * dir, ratio, axis_data);
+				}
+			}
+		}
 	}
 }
 
@@ -503,7 +560,28 @@ static void _sr_generate_hist(const _sr_graph *graph, const Vector<real_t> &ys, 
 	curve->buffer = data;
 }
 
-static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame) {
+static void _sr_generate_stack(const _sr_graph *graph, const Vector<real_t> &vs, _sr_curve *curve) {
+	if (vs.size() == 0) {
+		return;
+	}
+
+	const real_t ax = 2.0 / (graph->maxx - graph->minx);
+	const real_t bx = -1 - ax * graph->minx;
+	const real_t ay = 2.0 / (graph->maxy - graph->miny);
+	const real_t by = -1 - ay * graph->miny;
+	const real_t bar_width = curve->param0;
+
+	PoolVector2Array data;
+	for (int i = 0; i < vs.size(); i++) {
+		real_t x0 = ax * i + bx;
+		real_t y0 = by;
+		real_t y1 = ay * vs[i] + by;
+		_sr_get_rectangle(x0, y0, x0, y1, bar_width, data);
+	}
+	curve->buffer = data;
+}
+
+static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame, Vector2 offset) {
 	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
 	auto _add_layer = [](Mesh::PrimitiveType primitive, const PoolVector2Array &buffer, const Color &color, Ref<ArrayMesh> &mesh) {
 		if (buffer.size()) {
@@ -529,6 +607,9 @@ static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame) {
 		for (int i = 0; i < graph->hists.size(); ++i) { // histograms
 			_add_layer(Mesh::PRIMITIVE_TRIANGLES, graph->hists[i].buffer, graph->hists[i].color, graph->_mesh);
 		}
+		for (int i = 0; i < graph->stacks.size(); ++i) { // stacks
+			_add_layer(Mesh::PRIMITIVE_TRIANGLES, graph->stacks[i].buffer, graph->stacks[i].color, graph->_mesh);
+		}
 		for (int i = 0; i < graph->curves.size(); ++i) { // curves
 			_add_layer(Mesh::PRIMITIVE_LINES, graph->curves[i].buffer, graph->curves[i].color, graph->_mesh);
 			_add_layer(Mesh::PRIMITIVE_POINTS, graph->curvespoints[i].buffer, graph->curvespoints[i].color, graph->_mesh);
@@ -540,7 +621,13 @@ static void _sr_draw(CanvasItem *canvas, _sr_graph *graph, Size2 frame) {
 		graph->_dirty = false;
 	}
 
-	canvas->draw_mesh(graph->_mesh, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), Transform2D().translated(Vector2(1, 1)).scaled(frame)); // draw everything
+	// Mesh vertices are in [-1,1]. Map to cell rect (no margin — ticks point inward).
+	const real_t hw = frame.width * 0.5;
+	const real_t hh = frame.height * 0.5;
+	const real_t cx = offset.x + hw;
+	const real_t cy = offset.y + hh;
+	Transform2D xf(hw, 0, 0, -hh, cx, cy);
+	canvas->draw_mesh(graph->_mesh, Ref<Texture>(), Ref<Texture>(), Ref<Texture>(), xf);
 }
 
 // get rgb color from palette: warm, cool or neon.
@@ -645,7 +732,9 @@ void SRGraph::set_axes(sr_graph_t p_graph, bool p_visible, const Color &p_color)
 }
 
 sr_graph_t SRGraph::add_graph(const Point2 &p_min, const Point2 &p_max, real_t p_ratio, const Color &p_bg, const String &p_label) {
-	return sr_setup_graph(p_min.x, p_max.x, p_min.y, p_max.y, p_ratio, p_bg, p_label);
+	sr_graph_t id = sr_setup_graph(p_min.x, p_max.x, p_min.y, p_max.y, p_ratio, p_bg, p_label);
+	_owned_graphs.push_back(id);
+	return id;
 }
 
 int SRGraph::add_curve(sr_graph_t p_graph, const Vector<real_t> &p_xs, const Vector<real_t> &p_ys, const Color &p_color) {
@@ -681,8 +770,8 @@ void SRGraph::update_points(sr_graph_t p_graph, int p_points_id, const Vector<re
 	update();
 }
 
-int SRGraph::add_stack(sr_graph_t p_graph, real_t p_weight, const Vector<real_t> &p_vs) {
-	int id = sr_add_stack(p_graph, p_weight, p_vs);
+int SRGraph::add_stack(sr_graph_t p_graph, real_t p_weight, const Vector<real_t> &p_vs, const Color &p_color) {
+	int id = sr_add_stack(p_graph, p_weight, p_vs, p_color);
 	update();
 	return id;
 }
@@ -692,15 +781,91 @@ void SRGraph::update_stack(sr_graph_t p_graph, int p_stack_id, const Vector<real
 	update();
 }
 
+void SRGraph::clear_graph(sr_graph_t p_graph) {
+	_sr_graph *graph = _from_handle(p_graph);
+	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
+	graph->curves.clear();
+	graph->curvespoints.clear();
+	graph->hists.clear();
+	graph->points.clear();
+	graph->stacks.clear();
+	graph->axes.buffer = PoolVector2Array();
+	graph->grid.buffer = PoolVector2Array();
+	graph->_dirty = true;
+	update();
+}
+
+void SRGraph::remove_curve(sr_graph_t p_graph, int p_curve_id) {
+	_sr_graph *graph = _from_handle(p_graph);
+	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
+	ERR_FAIL_INDEX_MSG(p_curve_id, graph->curves.size(), "Invalid curve index");
+	graph->curves.remove(p_curve_id);
+	graph->curvespoints.remove(p_curve_id);
+	graph->_dirty = true;
+	update();
+}
+
+void SRGraph::remove_hist(sr_graph_t p_graph, int p_hist_id) {
+	_sr_graph *graph = _from_handle(p_graph);
+	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
+	ERR_FAIL_INDEX_MSG(p_hist_id, graph->hists.size(), "Invalid hist index");
+	graph->hists.remove(p_hist_id);
+	graph->_dirty = true;
+	update();
+}
+
+void SRGraph::remove_points(sr_graph_t p_graph, int p_points_id) {
+	_sr_graph *graph = _from_handle(p_graph);
+	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
+	ERR_FAIL_INDEX_MSG(p_points_id, graph->points.size(), "Invalid points index");
+	graph->points.remove(p_points_id);
+	graph->_dirty = true;
+	update();
+}
+
+void SRGraph::push_value(sr_graph_t p_graph, int p_curve_id, real_t p_value) {
+	_sr_graph *graph = _from_handle(p_graph);
+	ERR_FAIL_NULL_MSG(graph, "Invalid graph handle");
+	ERR_FAIL_INDEX_MSG(p_curve_id, graph->curves.size(), "Invalid curve index");
+
+	_sr_curve *curve = &graph->curves.write[p_curve_id];
+	_sr_curve *curvepoints = &graph->curvespoints.write[p_curve_id];
+
+	const int max_samples = plot_history_size;
+
+	// Append to rolling buffer
+	curve->stream_ys.push_back(p_value);
+	while (curve->stream_ys.size() > max_samples) {
+		curve->stream_ys.remove(0);
+	}
+
+	// Map x values evenly across graph range
+	Vector<real_t> xs;
+	const int count = curve->stream_ys.size();
+	for (int i = 0; i < count; i++) {
+		xs.push_back(graph->minx + (graph->maxx - graph->minx) * i / (real_t)MAX(1, count - 1));
+	}
+
+	curve->buffer = PoolVector2Array();
+	_sr_generate_curve(graph, xs, curve->stream_ys, curve);
+	curvepoints->buffer = PoolVector2Array();
+	_sr_generate_points(graph, xs, curve->stream_ys, curvepoints);
+	graph->_dirty = true;
+	update();
+}
+
 Color SRGraph::get_palette_color(SRGraphPalette p_pal, int p_col, int p_num_cols) {
 	ERR_FAIL_INDEX_V(p_pal, SR_GRAPH_PAL_NUM, Color());
 	if (p_num_cols > 0) {
-		p_num_cols = (p_num_cols % 12) + 1; // 1 -12
+		p_num_cols = CLAMP(p_num_cols, 1, 12);
 	} else {
-		p_num_cols = (p_col % 12) + 1; // 1 -12
+		p_num_cols = (p_col % 12) + 1; // 1-12
 	}
 	p_col = p_col % p_num_cols;
-	return Color::from_abgr(sr_palette(p_pal, p_num_cols)[p_col]);
+	unsigned *pal = sr_palette(p_pal, p_num_cols);
+	ERR_FAIL_NULL_V(pal, Color());
+	const unsigned rgb = pal[p_col];
+	return Color(((rgb >> 16) & 0xFF) / 255.0, ((rgb >> 8) & 0xFF) / 255.0, (rgb & 0xFF) / 255.0);
 }
 
 void SRGraph::_notification(int p_what) {
@@ -710,10 +875,13 @@ void SRGraph::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
-			sr_cleanup();
+			for (int i = 0; i < _owned_graphs.size(); i++) {
+				sr_remove_graph(_owned_graphs[i]);
+			}
+			_owned_graphs.clear();
 		} break;
 		case NOTIFICATION_DRAW: {
-			sr_draw(this, get_size());
+			sr_draw(this, get_size(), _owned_graphs);
 		} break;
 	}
 }
@@ -723,11 +891,27 @@ void SRGraph::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_plot_history_size"), &SRGraph::get_plot_history_size);
 
 	ClassDB::bind_method(D_METHOD("set_axes", "graph", "visible", "color"), &SRGraph::set_axes, DEFVAL(Color()));
-	ClassDB::bind_method(D_METHOD("set_grid", "graph", "visible", "color"), &SRGraph::set_grid, DEFVAL(Color()));
+	ClassDB::bind_method(D_METHOD("set_grid", "graph", "visible", "stepx", "stepy", "color"), &SRGraph::set_grid, DEFVAL(Color()));
 
 	ClassDB::bind_method(D_METHOD("add_graph", "min_xy", "max_xy", "ratio", "bg", "label"), &SRGraph::add_graph, DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("add_curve", "graph_id", "xs", "ys", "color"), &SRGraph::add_curve);
 	ClassDB::bind_method(D_METHOD("update_curve", "graph_id", "curve_id", "xs", "ys"), &SRGraph::update_curve);
+
+	ClassDB::bind_method(D_METHOD("add_hist", "graph_id", "bins", "ys", "spacing", "color"), &SRGraph::add_hist, DEFVAL(Color(1, 1, 1)));
+	ClassDB::bind_method(D_METHOD("update_hist", "graph_id", "hist_id", "ys"), &SRGraph::update_hist);
+
+	ClassDB::bind_method(D_METHOD("add_points", "graph_id", "xs", "ys", "size", "color"), &SRGraph::add_points, DEFVAL(Color(1, 1, 1)));
+	ClassDB::bind_method(D_METHOD("update_points", "graph_id", "points_id", "xs", "ys"), &SRGraph::update_points);
+
+	ClassDB::bind_method(D_METHOD("add_stack", "graph_id", "weight", "vs", "color"), &SRGraph::add_stack, DEFVAL(Color(1, 1, 1)));
+	ClassDB::bind_method(D_METHOD("update_stack", "graph_id", "stack_id", "vs"), &SRGraph::update_stack);
+
+	ClassDB::bind_method(D_METHOD("clear_graph", "graph_id"), &SRGraph::clear_graph);
+	ClassDB::bind_method(D_METHOD("remove_curve", "graph_id", "curve_id"), &SRGraph::remove_curve);
+	ClassDB::bind_method(D_METHOD("remove_hist", "graph_id", "hist_id"), &SRGraph::remove_hist);
+	ClassDB::bind_method(D_METHOD("remove_points", "graph_id", "points_id"), &SRGraph::remove_points);
+
+	ClassDB::bind_method(D_METHOD("push_value", "graph_id", "curve_id", "value"), &SRGraph::push_value);
 
 	ClassDB::bind_method(D_METHOD("get_palette_color", "pal", "col", "col_nums"), &SRGraph::get_palette_color);
 

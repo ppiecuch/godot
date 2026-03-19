@@ -516,6 +516,9 @@ struct CTwMgr {
 	TwType m_TypeQuat4D;
 	TwType m_TypeDir3F;
 	TwType m_TypeDir3D;
+	TwType m_TypeHistogram;
+	TwType m_TypeLineChart;
+	TwType m_TypeFlameGraph;
 
 	std::vector<char> m_CSStringBuffer;
 	struct CCDStdString {
@@ -759,6 +762,32 @@ struct CQuaternionExt {
 	double m_OrigQuat[4];
 	float m_OrigX, m_OrigY;
 	double m_PrevX, m_PrevY;
+};
+
+//  ---------------------------------------------------------------------------
+//  Chart struct ext — histogram, line chart, flame graph inline widgets
+//  ---------------------------------------------------------------------------
+
+struct CChartExt {
+	enum ChartType { CHART_HISTOGRAM = 0,
+		CHART_LINECHART = 1,
+		CHART_FLAMEGRAPH = 2 };
+	int m_ChartType;
+	void *m_DataPtr; // pointer to TweakBar's ChartData
+	CTwMgr::CStructProxy *m_StructProxy;
+	bool m_Highlighted;
+	int m_HoverIndex; // hovered value index (-1 = none)
+
+	static void ANT_CALL InitHistogramCB(void *_ExtValue, void *_ClientData);
+	static void ANT_CALL InitLineChartCB(void *_ExtValue, void *_ClientData);
+	static void ANT_CALL InitFlameGraphCB(void *_ExtValue, void *_ClientData);
+	static void ANT_CALL CopyVarFromExtCB(void *_VarValue, const void *_ExtValue, unsigned int _ExtMemberIndex, void *_ClientData);
+	static void ANT_CALL CopyVarToExtCB(const void *_VarValue, void *_ExtValue, unsigned int _ExtMemberIndex, void *_ClientData);
+	static void ANT_CALL SummaryCB(char *_SummaryString, size_t _SummaryMaxLength, const void *_ExtValue, void *_ClientData);
+	static void ANT_CALL DrawCB(int _W, int _H, void *_ExtValue, void *_ClientData, TwBar *_Bar, CTwVarGroup *varGrp);
+	static bool ANT_CALL MouseMotionCB(int _MouseX, int _MouseY, int _W, int _H, void *_StructExtValue, void *_ClientData, TwBar *_Bar, CTwVarGroup *varGrp);
+	static void ANT_CALL MouseLeaveCB(void *_StructExtValue, void *_ClientData, TwBar *_Bar);
+	static void CreateTypes();
 };
 
 //  ---------------------------------------------------------------------------
@@ -6362,6 +6391,412 @@ void CQuaternionExt::CreateTypes() {
 	CreateArrow();
 }
 
+//  ---------------------------------------------------------------------------
+//  CChartExt implementation
+//  ---------------------------------------------------------------------------
+
+// ChartData is defined in tweak_bar.h but we access it opaquely here via a
+// C-compatible accessor interface. These are implemented in tweak_bar.cpp.
+extern int TwChartGetValueCount(void *chartData);
+extern float TwChartGetValue(void *chartData, int index);
+extern float TwChartGetScaleMin(void *chartData);
+extern float TwChartGetScaleMax(void *chartData);
+extern int TwChartGetFlameEntryCount(void *chartData);
+extern void TwChartGetFlameEntry(void *chartData, int index, float *start, float *end, int *level, char *caption, int captionMaxLen);
+extern int TwChartGetType(void *chartData);
+
+static void _chart_init_common(CChartExt *ext, int chartType, void *clientData) {
+	ext->m_ChartType = chartType;
+	ext->m_DataPtr = nullptr;
+	ext->m_StructProxy = (CTwMgr::CStructProxy *)clientData;
+	ext->m_Highlighted = false;
+	ext->m_HoverIndex = -1;
+	if (ext->m_StructProxy != nullptr) {
+		ext->m_StructProxy->m_CustomDrawCallback = CChartExt::DrawCB;
+		ext->m_StructProxy->m_CustomMouseMotionCallback = CChartExt::MouseMotionCB;
+		ext->m_StructProxy->m_CustomMouseLeaveCallback = CChartExt::MouseLeaveCB;
+	}
+}
+
+void ANT_CALL CChartExt::InitHistogramCB(void *_ExtValue, void *_ClientData) {
+	CChartExt *ext = static_cast<CChartExt *>(_ExtValue);
+	if (ext)
+		_chart_init_common(ext, CHART_HISTOGRAM, _ClientData);
+}
+
+void ANT_CALL CChartExt::InitLineChartCB(void *_ExtValue, void *_ClientData) {
+	CChartExt *ext = static_cast<CChartExt *>(_ExtValue);
+	if (ext)
+		_chart_init_common(ext, CHART_LINECHART, _ClientData);
+}
+
+void ANT_CALL CChartExt::InitFlameGraphCB(void *_ExtValue, void *_ClientData) {
+	CChartExt *ext = static_cast<CChartExt *>(_ExtValue);
+	if (ext)
+		_chart_init_common(ext, CHART_FLAMEGRAPH, _ClientData);
+}
+
+void ANT_CALL CChartExt::CopyVarFromExtCB(void *_VarValue, const void *_ExtValue, unsigned int _ExtMemberIndex, void *_ClientData) {
+	// Charts are read-only display widgets — the ext data pointer is copied to the var
+	const CChartExt *ext = static_cast<const CChartExt *>(_ExtValue);
+	if (_ExtMemberIndex == 0 && _VarValue && ext) {
+		*(void **)_VarValue = ext->m_DataPtr;
+	}
+}
+
+void ANT_CALL CChartExt::CopyVarToExtCB(const void *_VarValue, void *_ExtValue, unsigned int _ExtMemberIndex, void *_ClientData) {
+	CChartExt *ext = static_cast<CChartExt *>(_ExtValue);
+	if (_ExtMemberIndex == 0 && _VarValue && ext) {
+		ext->m_DataPtr = *(void **)_VarValue;
+	}
+}
+
+void ANT_CALL CChartExt::SummaryCB(char *_SummaryString, size_t _SummaryMaxLength, const void *_ExtValue, void * /*_ClientData*/) {
+	const CChartExt *ext = static_cast<const CChartExt *>(_ExtValue);
+	if (ext && ext->m_DataPtr) {
+		int count = TwChartGetValueCount(ext->m_DataPtr);
+		switch (ext->m_ChartType) {
+			case CHART_HISTOGRAM:
+				snprintf(_SummaryString, _SummaryMaxLength, "Histogram (%d)", count);
+				break;
+			case CHART_LINECHART:
+				snprintf(_SummaryString, _SummaryMaxLength, "Line (%d)", count);
+				break;
+			case CHART_FLAMEGRAPH:
+				snprintf(_SummaryString, _SummaryMaxLength, "Flame (%d)", TwChartGetFlameEntryCount(ext->m_DataPtr));
+				break;
+			default:
+				snprintf(_SummaryString, _SummaryMaxLength, "Chart");
+				break;
+		}
+	} else {
+		snprintf(_SummaryString, _SummaryMaxLength, "(empty)");
+	}
+}
+
+void ANT_CALL CChartExt::DrawCB(int w, int h, void *_ExtValue, void *_ClientData, TwBar *_Bar, CTwVarGroup *varGrp) {
+	if (g_TwMgr == nullptr || g_TwMgr->m_Graph == nullptr)
+		return;
+	DEV_ASSERT(g_TwMgr->m_Graph->IsDrawing());
+	CChartExt *ext = static_cast<CChartExt *>(_ExtValue);
+	if (!ext || !ext->m_DataPtr)
+		return;
+	(void)_ClientData;
+	(void)_Bar;
+	(void)varGrp;
+
+	const int pad = 2;
+
+	// Background
+	g_TwMgr->m_Graph->DrawRect(0, 0, w - 1, h - 1, 0x40000000);
+
+	// Depth-based color palette for flame graph
+	const color32 depth_palette[] = {
+		0xff8cbfe6, // depth 0: light blue
+		0xffe6b366, // depth 1: warm orange
+		0xffb3d980, // depth 2: green
+		0xffd98ca6, // depth 3: pink
+		0xffa699d9, // depth 4: lavender
+		0xffcccc73, // depth 5: yellow
+	};
+	const int num_palette = sizeof(depth_palette) / sizeof(depth_palette[0]);
+
+	if (ext->m_ChartType == CHART_HISTOGRAM) {
+		int count = TwChartGetValueCount(ext->m_DataPtr);
+		if (count <= 0)
+			return;
+
+		float scale_min = TwChartGetScaleMin(ext->m_DataPtr);
+		float scale_max = TwChartGetScaleMax(ext->m_DataPtr);
+
+		// Auto-range
+		if (scale_min >= scale_max) {
+			scale_min = 1e30f;
+			scale_max = -1e30f;
+			for (int i = 0; i < count; i++) {
+				float v = TwChartGetValue(ext->m_DataPtr, i);
+				if (v < scale_min) scale_min = v;
+				if (v > scale_max) scale_max = v;
+			}
+			if (scale_min >= scale_max) {
+				scale_min = 0;
+				scale_max = 1;
+			}
+		}
+
+		float inv_scale = (scale_max > scale_min) ? 1.0f / (scale_max - scale_min) : 1.0f;
+		int inner_w = w - pad * 2;
+		int inner_h = h - pad * 2;
+
+		// Grid lines (3 horizontal)
+		for (int g = 1; g <= 3; g++) {
+			int gy = pad + inner_h - (int)(inner_h * g / 4.0f);
+			g_TwMgr->m_Graph->DrawLine(pad, gy, pad + inner_w, gy, 0x30ffffff);
+		}
+
+		// Bars
+		color32 bar_color = 0xffe6b300; // warm yellow-orange
+		color32 bar_hover = 0xffff9933;
+		for (int i = 0; i < count; i++) {
+			float v = TwChartGetValue(ext->m_DataPtr, i);
+			float norm = (v - scale_min) * inv_scale;
+			if (norm < 0) norm = 0;
+			if (norm > 1) norm = 1;
+
+			int bar_h = (int)(norm * inner_h);
+			int bar_x0 = pad + (int)((float)i * inner_w / count);
+			int bar_x1 = pad + (int)((float)(i + 1) * inner_w / count) - 1;
+			int bar_y0 = pad + inner_h - bar_h;
+			int bar_y1 = pad + inner_h;
+
+			if (bar_x1 > bar_x0) {
+				g_TwMgr->m_Graph->DrawRect(bar_x0, bar_y0, bar_x1, bar_y1, (i == ext->m_HoverIndex) ? bar_hover : bar_color);
+			}
+		}
+
+	} else if (ext->m_ChartType == CHART_LINECHART) {
+		int count = TwChartGetValueCount(ext->m_DataPtr);
+		if (count < 2)
+			return;
+
+		float scale_min = TwChartGetScaleMin(ext->m_DataPtr);
+		float scale_max = TwChartGetScaleMax(ext->m_DataPtr);
+
+		// Auto-range
+		if (scale_min >= scale_max) {
+			scale_min = 1e30f;
+			scale_max = -1e30f;
+			for (int i = 0; i < count; i++) {
+				float v = TwChartGetValue(ext->m_DataPtr, i);
+				if (v < scale_min) scale_min = v;
+				if (v > scale_max) scale_max = v;
+			}
+			if (scale_min >= scale_max) {
+				scale_min = 0;
+				scale_max = 1;
+			}
+		}
+
+		float inv_scale = (scale_max > scale_min) ? 1.0f / (scale_max - scale_min) : 1.0f;
+		int inner_w = w - pad * 2;
+		int inner_h = h - pad * 2;
+
+		// Grid lines
+		for (int g = 1; g <= 3; g++) {
+			int gy = pad + inner_h - (int)(inner_h * g / 4.0f);
+			g_TwMgr->m_Graph->DrawLine(pad, gy, pad + inner_w, gy, 0x30ffffff);
+		}
+
+		// Lines
+		color32 line_color = 0xff9c9c9c; // grey
+		color32 line_hover = 0xffff6e59;
+		for (int i = 0; i < count - 1; i++) {
+			float v0 = TwChartGetValue(ext->m_DataPtr, i);
+			float v1 = TwChartGetValue(ext->m_DataPtr, i + 1);
+			float n0 = (v0 - scale_min) * inv_scale;
+			float n1 = (v1 - scale_min) * inv_scale;
+			if (n0 < 0) n0 = 0;
+			if (n0 > 1) n0 = 1;
+			if (n1 < 0) n1 = 0;
+			if (n1 > 1) n1 = 1;
+
+			int x0 = pad + (int)((float)i * inner_w / (count - 1));
+			int y0 = pad + inner_h - (int)(n0 * inner_h);
+			int x1 = pad + (int)((float)(i + 1) * inner_w / (count - 1));
+			int y1 = pad + inner_h - (int)(n1 * inner_h);
+
+			bool hovered = (i == ext->m_HoverIndex || i + 1 == ext->m_HoverIndex);
+			g_TwMgr->m_Graph->DrawLine(x0, y0, x1, y1, hovered ? line_hover : line_color, true);
+		}
+
+	} else if (ext->m_ChartType == CHART_FLAMEGRAPH) {
+		int entry_count = TwChartGetFlameEntryCount(ext->m_DataPtr);
+		if (entry_count <= 0)
+			return;
+
+		// Find max depth and time range
+		int max_depth = 0;
+		float time_min = 1e30f, time_max = -1e30f;
+		for (int i = 0; i < entry_count; i++) {
+			float start, end;
+			int level;
+			TwChartGetFlameEntry(ext->m_DataPtr, i, &start, &end, &level, nullptr, 0);
+			if (level > max_depth) max_depth = level;
+			if (start < time_min) time_min = start;
+			if (end > time_max) time_max = end;
+		}
+
+		float duration = time_max - time_min;
+		if (duration <= 0)
+			return;
+
+		int inner_w = w - pad * 2;
+		int inner_h = h - pad * 2;
+		float block_height = (float)inner_h / (max_depth + 1);
+		if (block_height < 3) block_height = 3;
+
+		for (int i = 0; i < entry_count; i++) {
+			float start, end;
+			int level;
+			char caption[64] = { 0 };
+			TwChartGetFlameEntry(ext->m_DataPtr, i, &start, &end, &level, caption, sizeof(caption));
+
+			int x0 = pad + (int)((start - time_min) / duration * inner_w);
+			int x1 = pad + (int)((end - time_min) / duration * inner_w);
+			int y0 = pad + inner_h - (int)((level + 1) * block_height);
+			int y1 = y0 + (int)block_height - 1;
+
+			color32 col = depth_palette[level % num_palette];
+			if (i == ext->m_HoverIndex) {
+				// Lighten on hover
+				int r = (col >> 16) & 0xff;
+				int g = (col >> 8) & 0xff;
+				int b = col & 0xff;
+				r = r + (255 - r) * 3 / 10;
+				g = g + (255 - g) * 3 / 10;
+				b = b + (255 - b) * 3 / 10;
+				col = 0xff000000 | (r << 16) | (g << 8) | b;
+			}
+
+			if (x1 > x0) {
+				g_TwMgr->m_Graph->DrawRect(x0, y0, x1, y1, col);
+				// Outline
+				g_TwMgr->m_Graph->DrawLine(x0, y0, x1, y0, 0x50000000);
+				g_TwMgr->m_Graph->DrawLine(x0, y1, x1, y1, 0x50000000);
+				g_TwMgr->m_Graph->DrawLine(x0, y0, x0, y1, 0x50000000);
+				g_TwMgr->m_Graph->DrawLine(x1, y0, x1, y1, 0x50000000);
+			}
+		}
+	}
+
+	// Border
+	g_TwMgr->m_Graph->DrawLine(0, 0, w - 1, 0, 0x40ffffff);
+	g_TwMgr->m_Graph->DrawLine(w - 1, 0, w - 1, h - 1, 0x40ffffff);
+	g_TwMgr->m_Graph->DrawLine(w - 1, h - 1, 0, h - 1, 0x40ffffff);
+	g_TwMgr->m_Graph->DrawLine(0, h - 1, 0, 0, 0x40ffffff);
+}
+
+bool ANT_CALL CChartExt::MouseMotionCB(int mouseX, int mouseY, int w, int h, void *structExtValue, void *clientData, TwBar *bar, CTwVarGroup *varGrp) {
+	CChartExt *ext = static_cast<CChartExt *>(structExtValue);
+	if (!ext || !ext->m_DataPtr)
+		return false;
+	(void)clientData;
+	(void)bar;
+	(void)varGrp;
+
+	ext->m_Highlighted = true;
+	const int pad = 2;
+	int inner_w = w - pad * 2;
+
+	if (ext->m_ChartType == CHART_HISTOGRAM) {
+		int count = TwChartGetValueCount(ext->m_DataPtr);
+		if (count > 0 && mouseX >= pad && mouseX < pad + inner_w) {
+			ext->m_HoverIndex = (mouseX - pad) * count / inner_w;
+			if (ext->m_HoverIndex >= count) ext->m_HoverIndex = count - 1;
+		} else {
+			ext->m_HoverIndex = -1;
+		}
+	} else if (ext->m_ChartType == CHART_LINECHART) {
+		int count = TwChartGetValueCount(ext->m_DataPtr);
+		if (count > 1 && mouseX >= pad && mouseX < pad + inner_w) {
+			ext->m_HoverIndex = (mouseX - pad) * (count - 1) / inner_w;
+			if (ext->m_HoverIndex >= count) ext->m_HoverIndex = count - 1;
+		} else {
+			ext->m_HoverIndex = -1;
+		}
+	} else if (ext->m_ChartType == CHART_FLAMEGRAPH) {
+		// Hit-test flame blocks
+		ext->m_HoverIndex = -1;
+		int entry_count = TwChartGetFlameEntryCount(ext->m_DataPtr);
+		if (entry_count > 0) {
+			int max_depth = 0;
+			float time_min = 1e30f, time_max = -1e30f;
+			for (int i = 0; i < entry_count; i++) {
+				float start, end;
+				int level;
+				TwChartGetFlameEntry(ext->m_DataPtr, i, &start, &end, &level, nullptr, 0);
+				if (level > max_depth) max_depth = level;
+				if (start < time_min) time_min = start;
+				if (end > time_max) time_max = end;
+			}
+			float duration = time_max - time_min;
+			if (duration > 0) {
+				int inner_h = h - pad * 2;
+				float block_height = (float)inner_h / (max_depth + 1);
+				if (block_height < 3) block_height = 3;
+				for (int i = 0; i < entry_count; i++) {
+					float start, end;
+					int level;
+					TwChartGetFlameEntry(ext->m_DataPtr, i, &start, &end, &level, nullptr, 0);
+					int x0 = pad + (int)((start - time_min) / duration * inner_w);
+					int x1 = pad + (int)((end - time_min) / duration * inner_w);
+					int y0 = pad + inner_h - (int)((level + 1) * block_height);
+					int y1 = y0 + (int)block_height - 1;
+					if (mouseX >= x0 && mouseX <= x1 && mouseY >= y0 && mouseY <= y1) {
+						ext->m_HoverIndex = i;
+						break;
+					}
+				}
+			}
+		}
+	}
+	return true;
+}
+
+void ANT_CALL CChartExt::MouseLeaveCB(void *structExtValue, void *clientData, TwBar *bar) {
+	CChartExt *ext = static_cast<CChartExt *>(structExtValue);
+	if (ext) {
+		ext->m_Highlighted = false;
+		ext->m_HoverIndex = -1;
+	}
+	(void)clientData;
+	(void)bar;
+}
+
+void CChartExt::CreateTypes() {
+	if (g_TwMgr == nullptr)
+		return;
+
+	// Use a custom type placeholder for the widget rows (same approach as CQuaternionExt)
+	TwType customType = (TwType)(TW_TYPE_CUSTOM_BASE + (int)g_TwMgr->m_Customs.size());
+	g_TwMgr->m_Customs.push_back(NULL);
+
+	// 4 dummy sub-members -> 4 rows tall custom draw area
+	TwStructMember chartMembers[] = {
+		{ "0", customType, 0, "" },
+		{ "1", customType, 0, "" },
+		{ "2", customType, 0, "" },
+		{ "3", customType, 0, "" },
+	};
+	int nbMembers = sizeof(chartMembers) / sizeof(chartMembers[0]);
+
+	g_TwMgr->m_TypeHistogram = TwDefineStructExt("HISTOGRAM",
+			chartMembers, nbMembers, sizeof(void *), sizeof(CChartExt),
+			CChartExt::InitHistogramCB, CChartExt::CopyVarFromExtCB, CChartExt::CopyVarToExtCB,
+			CChartExt::SummaryCB, CTwMgr::CStruct::s_PassProxyAsClientData, "Inline histogram chart");
+
+	g_TwMgr->m_TypeLineChart = TwDefineStructExt("LINECHART",
+			chartMembers, nbMembers, sizeof(void *), sizeof(CChartExt),
+			CChartExt::InitLineChartCB, CChartExt::CopyVarFromExtCB, CChartExt::CopyVarToExtCB,
+			CChartExt::SummaryCB, CTwMgr::CStruct::s_PassProxyAsClientData, "Inline line chart");
+
+	// Flame graph: 6 rows for more vertical space
+	TwStructMember flameMembers[] = {
+		{ "0", customType, 0, "" },
+		{ "1", customType, 0, "" },
+		{ "2", customType, 0, "" },
+		{ "3", customType, 0, "" },
+		{ "4", customType, 0, "" },
+		{ "5", customType, 0, "" },
+	};
+	int nbFlameMembers = sizeof(flameMembers) / sizeof(flameMembers[0]);
+
+	g_TwMgr->m_TypeFlameGraph = TwDefineStructExt("FLAMEGRAPH",
+			flameMembers, nbFlameMembers, sizeof(void *), sizeof(CChartExt),
+			CChartExt::InitFlameGraphCB, CChartExt::CopyVarFromExtCB, CChartExt::CopyVarToExtCB,
+			CChartExt::SummaryCB, CTwMgr::CStruct::s_PassProxyAsClientData, "Inline flame graph");
+}
+
 void CQuaternionExt::ConvertToAxisAngle() {
 	if (fabs(Qs) > (1.0 + FLOAT_EPS)) {
 		//Vx = Vy = Vz = 0; // no, keep the previous value
@@ -7338,6 +7773,7 @@ static int TwInitMgr() {
 
 	CColorExt::CreateTypes();
 	CQuaternionExt::CreateTypes();
+	CChartExt::CreateTypes();
 
 	return 1;
 }
@@ -7662,6 +8098,9 @@ CTwMgr::CTwMgr(void *_Device, int _WndID) {
 	m_TypeColor32 = TW_TYPE_UNDEF;
 	m_TypeColor3F = TW_TYPE_UNDEF;
 	m_TypeColor4F = TW_TYPE_UNDEF;
+	m_TypeHistogram = TW_TYPE_UNDEF;
+	m_TypeLineChart = TW_TYPE_UNDEF;
+	m_TypeFlameGraph = TW_TYPE_UNDEF;
 	m_LastMousePressedTime = 0;
 	m_LastMousePressedButtonID = TW_MOUSE_MIDDLE;
 	m_LastMousePressedPosition[0] = -1000;
@@ -9072,6 +9511,14 @@ static int AddVar(TwBar *_Bar, const char *_Name, ETwType _Type, void *_VarPtr, 
 		_Type = g_TwMgr->m_TypeDir3F;
 	else if (_Type == TW_TYPE_DIR3D)
 		_Type = g_TwMgr->m_TypeDir3D;
+
+	// Convert chart types
+	if (_Type == TW_TYPE_HISTOGRAM)
+		_Type = g_TwMgr->m_TypeHistogram;
+	else if (_Type == TW_TYPE_LINECHART)
+		_Type = g_TwMgr->m_TypeLineChart;
+	else if (_Type == TW_TYPE_FLAMEGRAPH)
+		_Type = g_TwMgr->m_TypeFlameGraph;
 
 	// VC++ uses a different definition of std::string in Debug and Release modes.
 	// sizeof(std::string) is encoded in TW_TYPE_STDSTRING to overcome this issue.

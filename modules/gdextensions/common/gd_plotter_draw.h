@@ -38,13 +38,13 @@
 typedef real_t (*ValuesGetter)(void *data, int idx);
 typedef void (*SeriesGetter)(real_t *start, real_t *end, uint8_t *level, const String &caption, const void *data, int idx);
 
-void PlotLines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride);
-void PlotLines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const char *overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect);
+void plot_lines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride);
+void plot_lines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect);
 
-void PlotHistogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride);
-void PlotHistogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const char *overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect);
+void plot_histogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride);
+void plot_histogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect);
 
-void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride);
-void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, SeriesGetter values_getter, void *data, int values_count, int values_offset, const char *overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect);
+void plot_flame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride);
+void plot_flame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, SeriesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect);
 
 #endif // GD_PLOTTER_DRAW_H

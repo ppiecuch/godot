@@ -31,29 +31,28 @@
 #include "gd_plotter_draw.h"
 
 #include "common/gd_core.h"
-#include "gd_core.h"
 
 // Reference:
 // ----------
 // 1. https://github.com/bwrsandman/imgui-flame-graph
 
 enum PlotType {
-	PlotType_Lines,
-	PlotType_Histogram,
+	PLOT_TYPE_LINES,
+	PLOT_TYPE_HISTOGRAM,
 };
 
-const Color GuiColor_PlotLines = Color(0.61, 0.61, 0.61, 1.00);
-const Color GuiColor_PlotLinesHovered = Color(1.00, 0.43, 0.35, 1.00);
-const Color GuiColor_PlotHistogram = Color(0.90, 0.70, 0.00, 1.00);
-const Color GuiColor_PlotHistogramHovered = Color(1.00, 0.60, 0.00, 1.00);
+const Color COLOR_PLOT_LINES = Color(0.61, 0.61, 0.61, 1.00);
+const Color COLOR_PLOT_LINES_HOVERED = Color(1.00, 0.43, 0.35, 1.00);
+const Color COLOR_PLOT_HISTOGRAM = Color(0.90, 0.70, 0.00, 1.00);
+const Color COLOR_PLOT_HISTOGRAM_HOVERED = Color(1.00, 0.60, 0.00, 1.00);
 
-const int GuiStyle_FramePadding = 2;
-const int GuiStyle_ItemInnerSpacing = 2;
+const int STYLE_FRAME_PADDING = 2;
+const int STYLE_ITEM_INNER_SPACING = 2;
 
-static _ALWAYS_INLINE_ Vector2 LERP(const Vector2 &a, const Vector2 &b, const Vector2 &t) { return Vector2(a.x + (b.x - a.x) * t.x, a.y + (b.y - a.y) * t.y); }
-static _ALWAYS_INLINE_ real_t SATURATE(real_t f) { return (f < 0 ? 0 : (f > 1 ? 1 : f)); }
+static _ALWAYS_INLINE_ Vector2 _lerp_v2(const Vector2 &a, const Vector2 &b, const Vector2 &t) { return Vector2(a.x + (b.x - a.x) * t.x, a.y + (b.y - a.y) * t.y); }
+static _ALWAYS_INLINE_ real_t _saturate(real_t f) { return (f < 0 ? 0 : (f > 1 ? 1 : f)); }
 
-static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, void (*values_getter)(real_t *start, real_t *end, uint8_t *level, const String &caption, const void *data, int idx), const void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, const Point2 *tooltip_pos = nullptr) {
+static void _plot_flame_internal(CanvasItem *canvas, Ref<Font> &text_font, const String &label, void (*values_getter)(real_t *start, real_t *end, uint8_t *level, const String &caption, const void *data, int idx), const void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, const Point2 *tooltip_pos = nullptr) {
 	ERR_FAIL_NULL(canvas);
 	ERR_FAIL_NULL(text_font);
 
@@ -65,12 +64,12 @@ static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &la
 		max_depth = MAX(max_depth, depth);
 	}
 
-	const real_t block_height = text_font->get_height() + (GuiStyle_FramePadding * 2);
+	const real_t block_height = text_font->get_height() + (STYLE_FRAME_PADDING * 2);
 	const String label_text = string_ellipsis(text_font, label, frame_rect.size.width);
 	const Size2 label_size = text_font->get_string_size(label_text);
 
 	const Rect2 frame_bb = Rect2(frame_rect.position, frame_rect.size - Size2(0, label_size.y)); // label on the bottom
-	const Rect2 inner_bb(frame_bb.shrink(GuiStyle_FramePadding));
+	const Rect2 inner_bb(frame_bb.shrink(STYLE_FRAME_PADDING));
 
 	// determine scale from values if not specified
 	if (scale_min == FLT_MAX || scale_max == FLT_MAX) {
@@ -94,12 +93,21 @@ static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &la
 		}
 	}
 
+	// Depth-based color palette for flame chart
+	const Color depth_colors[] = {
+		Color(0.55, 0.75, 0.90), // depth 0: light blue
+		Color(0.90, 0.70, 0.40), // depth 1: warm orange
+		Color(0.70, 0.85, 0.50), // depth 2: green
+		Color(0.85, 0.55, 0.65), // depth 3: pink
+		Color(0.65, 0.60, 0.85), // depth 4: lavender
+		Color(0.80, 0.80, 0.45), // depth 5: yellow
+	};
+	const int num_depth_colors = sizeof(depth_colors) / sizeof(depth_colors[0]);
+
 	bool any_hovered = false;
 	if (values_count - values_offset >= 1) {
-		const Color col_base = GuiColor_PlotHistogram.lightened(0.75);
-		const Color col_hovered = GuiColor_PlotHistogramHovered.lightened(0.75);
-		const Color col_outline_base = GuiColor_PlotHistogram.lightened(0.75);
-		const Color col_outline_hovered = GuiColor_PlotHistogramHovered.lightened(0.75);
+		const Color col_outline_base = Color(0.3, 0.3, 0.3, 0.8);
+		const Color col_outline_hovered = COLOR_PLOT_HISTOGRAM_HOVERED;
 
 		String tooltip;
 
@@ -109,6 +117,9 @@ static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &la
 			String caption;
 
 			values_getter(&stage_start, &stage_end, &depth, caption, data, i);
+
+			const Color col_base = depth_colors[depth % num_depth_colors];
+			const Color col_hovered = col_base.lightened(0.3);
 
 			const real_t duration = scale_max - scale_min;
 			if (duration == 0) {
@@ -122,10 +133,10 @@ static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &la
 			const real_t end_x = end / duration;
 
 			const real_t width = inner_bb.size.width;
-			const real_t height = block_height * (max_depth - depth + 1) - GuiStyle_FramePadding;
+			const real_t height = block_height * (max_depth - depth + 1) - STYLE_FRAME_PADDING;
 
-			const Point2 pos0 = inner_bb.position + Vector2(start_x * width, height);
-			const Point2 pos1 = inner_bb.position + Vector2(end_x * width, height + block_height);
+			const Point2 pos0 = inner_bb.position + Vector2(start_x * width + 1, height);
+			const Point2 pos1 = inner_bb.position + Vector2(end_x * width - 1, height + block_height - 1);
 			const Rect2 rc = Rect2(pos0, pos1 - pos0);
 
 			bool v_hovered = false;
@@ -151,11 +162,11 @@ static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &la
 		if (!overlay_text.empty()) {
 			const String text = string_ellipsis(text_font, overlay_text, frame_bb.size.width);
 			const Size2 size = text_font->get_string_size(text);
-			canvas->draw_string(text_font, frame_bb.position - Vector2(size.x / 2, -GuiStyle_FramePadding), overlay_text); // center
+			canvas->draw_string(text_font, frame_bb.position + Vector2((frame_bb.size.width - size.x) / 2, STYLE_FRAME_PADDING), text);
 		}
 
 		if (label_size.x > 0) {
-			canvas->draw_string(text_font, Vector2(frame_bb.position.x + GuiStyle_ItemInnerSpacing, inner_bb.position.y), label_text);
+			canvas->draw_string(text_font, Vector2(frame_bb.position.x + STYLE_ITEM_INNER_SPACING, inner_bb.position.y), label_text);
 		}
 
 		if (!tooltip.empty()) {
@@ -171,12 +182,15 @@ static void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &la
 	}
 }
 
-static void PlotGraph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_type, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, const Point2 *tooltip_pos = nullptr) {
+static void _plot_graph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_type, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, const Point2 *tooltip_pos = nullptr) {
 	const String label_text = string_ellipsis(text_font, label, frame_rect.size.width);
 	const Size2 label_size = text_font->get_string_size(label_text);
 
 	const Rect2 frame_bb = Rect2(frame_rect.position, frame_rect.size - Size2(0, label_size.y)); // label on the bottom
-	const Rect2 inner_bb(frame_bb.shrink(GuiStyle_FramePadding));
+	const Rect2 inner_bb(frame_bb.shrink(STYLE_FRAME_PADDING));
+
+	const Vector2 inner_min = inner_bb.position;
+	const Vector2 inner_max = inner_bb.position + inner_bb.size;
 
 	// Determine scale from values if not specified
 	if (scale_min == FLT_MAX || scale_max == FLT_MAX) {
@@ -198,12 +212,12 @@ static void PlotGraph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_ty
 		}
 	}
 
-	const int values_count_min = (plot_type == PlotType_Lines) ? 2 : 1;
+	const int values_count_min = (plot_type == PLOT_TYPE_LINES) ? 2 : 1;
 	String tooltip;
 	int idx_hovered = -1;
 	if (values_count >= values_count_min) {
-		const int res_w = MIN((int)inner_bb.size.width, values_count) + ((plot_type == PlotType_Lines) ? -1 : 0);
-		const int item_count = values_count + ((plot_type == PlotType_Lines) ? -1 : 0);
+		const int res_w = MIN((int)inner_bb.size.width, values_count) + ((plot_type == PLOT_TYPE_LINES) ? -1 : 0);
+		const int item_count = values_count + ((plot_type == PLOT_TYPE_LINES) ? -1 : 0);
 
 		// Tooltip on hover
 		if (tooltip_pos && inner_bb.has_point(*tooltip_pos)) {
@@ -214,10 +228,10 @@ static void PlotGraph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_ty
 
 			const real_t v0 = values_getter(data, (v_idx + values_offset) % values_count);
 			const real_t v1 = values_getter(data, (v_idx + 1 + values_offset) % values_count);
-			if (plot_type == PlotType_Lines) {
-				tooltip + string_format("%d: %8.4g\n%d: %8.4g", v_idx, v0, v_idx + 1, v1);
-			} else if (plot_type == PlotType_Histogram) {
-				tooltip + string_format("%d: %8.4g", v_idx, v0);
+			if (plot_type == PLOT_TYPE_LINES) {
+				tooltip += string_format("%d: %8.4g\n%d: %8.4g", v_idx, v0, v_idx + 1, v1);
+			} else if (plot_type == PLOT_TYPE_HISTOGRAM) {
+				tooltip += string_format("%d: %8.4g", v_idx, v0);
 			}
 			idx_hovered = v_idx;
 		}
@@ -227,24 +241,24 @@ static void PlotGraph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_ty
 
 		real_t v0 = values_getter(data, (0 + values_offset) % values_count);
 		real_t t0 = 0;
-		Vector2 tp0 = Vector2(t0, 1 - SATURATE((v0 - scale_min) * inv_scale)); // point in the normalized space of our target rectangle
+		Vector2 tp0 = Vector2(t0, 1 - _saturate((v0 - scale_min) * inv_scale)); // point in the normalized space of our target rectangle
 		const real_t zero_line = (scale_min * scale_max < 0) ? (1 + scale_min * inv_scale) : (scale_min < 0 ? 0 : 1); // where does the zero line stands
 
-		const Color col_base = (plot_type == PlotType_Lines) ? GuiColor_PlotLines : GuiColor_PlotHistogram;
-		const Color col_hovered = (plot_type == PlotType_Lines) ? GuiColor_PlotLinesHovered : GuiColor_PlotHistogramHovered;
+		const Color col_base = (plot_type == PLOT_TYPE_LINES) ? COLOR_PLOT_LINES : COLOR_PLOT_HISTOGRAM;
+		const Color col_hovered = (plot_type == PLOT_TYPE_LINES) ? COLOR_PLOT_LINES_HOVERED : COLOR_PLOT_HISTOGRAM_HOVERED;
 
 		for (int n = 0; n < res_w; n++) {
 			const real_t t1 = t0 + t_step;
 			const int v1_idx = (int)(t0 * item_count + 0.5);
-			ERR_FAIL_COND(v1_idx < 0 || v1_idx > values_count);
+			ERR_FAIL_COND(v1_idx < 0 || v1_idx >= values_count);
 			const real_t v1 = values_getter(data, (v1_idx + values_offset + 1) % values_count);
-			const Vector2 tp1 = Vector2(t1, 1 - SATURATE((v1 - scale_min) * inv_scale));
+			const Vector2 tp1 = Vector2(t1, 1 - _saturate((v1 - scale_min) * inv_scale));
 
-			Vector2 pos0 = LERP(inner_bb.min(), inner_bb.max(), tp0);
-			Vector2 pos1 = LERP(inner_bb.min(), inner_bb.max(), (plot_type == PlotType_Lines) ? tp1 : Vector2(tp1.x, zero_line));
-			if (plot_type == PlotType_Lines) {
+			Vector2 pos0 = _lerp_v2(inner_min, inner_max, tp0);
+			Vector2 pos1 = _lerp_v2(inner_min, inner_max, (plot_type == PLOT_TYPE_LINES) ? tp1 : Vector2(tp1.x, zero_line));
+			if (plot_type == PLOT_TYPE_LINES) {
 				canvas->draw_line(pos0, pos1, idx_hovered == v1_idx ? col_hovered : col_base);
-			} else if (plot_type == PlotType_Histogram) {
+			} else if (plot_type == PLOT_TYPE_HISTOGRAM) {
 				if (pos1.x >= pos0.x + 2) {
 					pos1.x -= 1;
 				}
@@ -259,11 +273,11 @@ static void PlotGraph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_ty
 	if (!overlay_text.empty()) {
 		const String text = string_ellipsis(text_font, overlay_text, frame_bb.size.width);
 		const Size2 size = text_font->get_string_size(text);
-		canvas->draw_string(text_font, frame_bb.position - Vector2(size.x / 2, -GuiStyle_FramePadding), overlay_text); // center
+		canvas->draw_string(text_font, frame_bb.position + Vector2((frame_bb.size.width - size.x) / 2, STYLE_FRAME_PADDING), text);
 	}
 
 	if (label_size.x > 0) {
-		canvas->draw_string(text_font, Vector2(frame_bb.position.x + GuiStyle_ItemInnerSpacing, inner_bb.position.y), label_text);
+		canvas->draw_string(text_font, Vector2(frame_bb.position.x + STYLE_ITEM_INNER_SPACING, inner_bb.position.y), label_text);
 	}
 
 	if (!tooltip.empty()) {
@@ -281,7 +295,7 @@ struct PlotArrayGetterData {
 	}
 };
 
-static real_t Plot_ArrayGetter(void *data, int idx) {
+static real_t _plot_array_getter(void *data, int idx) {
 	PlotArrayGetterData *plot_data = (PlotArrayGetterData *)data;
 	const real_t v = *(const real_t *)(const void *)((const unsigned char *)plot_data->values + (size_t)idx * plot_data->stride);
 	return v;
@@ -289,27 +303,28 @@ static real_t Plot_ArrayGetter(void *data, int idx) {
 
 /// Public interface
 
-void PlotLines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride) {
+void plot_lines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride) {
 	PlotArrayGetterData data(values, stride);
-	PlotGraph(canvas, text_font, PlotType_Lines, label, &Plot_ArrayGetter, (void *)&data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
+	_plot_graph(canvas, text_font, PLOT_TYPE_LINES, label, &_plot_array_getter, (void *)&data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
 }
 
-void PlotLines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
-	PlotGraph(canvas, text_font, PlotType_Lines, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
+void plot_lines(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
+	_plot_graph(canvas, text_font, PLOT_TYPE_LINES, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
 }
 
-void PlotHistogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride) {
+void plot_histogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride) {
 	PlotArrayGetterData data(values, stride);
-	PlotGraph(canvas, text_font, PlotType_Histogram, label, &Plot_ArrayGetter, (void *)&data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
+	_plot_graph(canvas, text_font, PLOT_TYPE_HISTOGRAM, label, &_plot_array_getter, (void *)&data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
 }
 
-void PlotHistogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
-	PlotGraph(canvas, text_font, PlotType_Histogram, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
+void plot_histogram(CanvasItem *canvas, Ref<Font> &text_font, const String &label, ValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
+	_plot_graph(canvas, text_font, PLOT_TYPE_HISTOGRAM, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect);
 }
 
-void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride) {
+void plot_flame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, const real_t *values, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, int stride) {
+	WARN_PRINT_ONCE("plot_flame with raw array is not implemented; use the SeriesGetter overload.");
 }
 
-void PlotFlame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, SeriesGetter values_getter, void *data, int values_count, int values_offset, const char *overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
-	PlotFlame(canvas, text_font, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect, nullptr);
+void plot_flame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, SeriesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
+	_plot_flame_internal(canvas, text_font, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect, nullptr);
 }

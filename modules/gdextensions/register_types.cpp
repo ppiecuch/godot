@@ -54,6 +54,8 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 
 #include "common/resources_cache.h"
 #include "common/resources_config.h"
+#include "common/gd_history_plot.h"
+#include "common/gd_plotter_draw_node.h"
 #include "common/sr_graph.h"
 
 #include "core/area_prober.h"
@@ -105,6 +107,10 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 
 #ifdef GDEXT_MAZEGEN_ENABLED
 #include "mazegen/gd_mazegen.h"
+#endif
+
+#ifdef GDEXT_GQMAPS_ENABLED
+#include "gqmaps/gd_qmaps.h"
 #endif
 
 #ifdef GDEXT_BEHAVIORNODE_ENABLED
@@ -256,6 +262,10 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 
 #include "geomfonts//gd_geomfonts.h"
 #include "geomfonts/geom_font_2d.h"
+
+#ifdef GDEXT_GLITEHTML_ENABLED
+#include "glitehtml/gd_lite_html.h"
+#endif
 #include "symbolfonts/gdsymfonts.h"
 
 #ifdef GDEXT_IAP_ENABLED
@@ -392,6 +402,8 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ResCache", memnew(ResCache)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Resources", memnew(Resources)));
 	ClassDB::register_class<SRGraph>();
+	ClassDB::register_class<GdHistoryPlot>();
+	ClassDB::register_class<GdPlotterDraw>();
 #ifdef GDEXT_BULLETKIT_ENABLED
 	register_bulletkit();
 #endif
@@ -484,6 +496,9 @@ void register_gdextensions_types() {
 #ifdef GDEXT_MAZEGEN_ENABLED
 	ClassDB::register_class<GdMazeGenerator>();
 #endif
+#ifdef GDEXT_GQMAPS_ENABLED
+	ClassDB::register_class<GdQMaps>();
+#endif
 #ifdef GDEXT_LANADVERTISER_ENABLED
 	ClassDB::register_class<LanAdvertiser>();
 	ClassDB::register_class<LanListener>();
@@ -533,6 +548,10 @@ void register_gdextensions_types() {
 #ifdef GDEXT_GEOMFONTS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
 	ClassDB::register_class<GeomFont2D>();
+#endif
+
+#ifdef GDEXT_GLITEHTML_ENABLED
+	ClassDB::register_class<GodotLiteHTML>();
 #endif
 
 #ifdef GDEXT_SYMBOLFONTS_ENABLED

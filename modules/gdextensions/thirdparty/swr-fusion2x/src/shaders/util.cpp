@@ -20,6 +20,7 @@
     trenki2@gmx.net
 */
 
+#include "src/context.h"
 #include "util.h"
 
 namespace 

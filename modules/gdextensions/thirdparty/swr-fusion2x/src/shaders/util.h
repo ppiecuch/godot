@@ -23,8 +23,8 @@
 #ifndef SHADERUTIL_H_
 #define SHADERUTIL_H_
 
-#include "../vmath.h"
-#include "../context.h"
+#include "src/vmath.h"
+#include "src/context.h"
 
 inline unsigned short color16_modulate(unsigned short color1, unsigned short color2)
 {

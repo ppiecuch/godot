@@ -27,8 +27,8 @@
 #pragma once
 #endif
 
-#include "../../renderer/irasterizer.h"
-#include "../../gltexobj.h"
+#include "src/renderer/irasterizer.h"
+#include "src/gltexobj.h"
 
 // forward declare
 struct F2X_Context;

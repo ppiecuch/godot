@@ -88,7 +88,7 @@ void ResourceImporterTexture::update_imports() {
 
 	Vector<String> to_reimport;
 	for (Map<StringName, int>::Element *E = make_flags.front(); E; E = E->next()) {
-		DEV_ASSERT_MSG(String(E->key()).empty(), "Empty resource path.");
+		DEV_ASSERT_MSG(!String(E->key()).empty(), "Empty resource path.");
 
 		Ref<ConfigFile> cf = memnew(ConfigFile);
 		String src_path = String(E->key()) + ".import";

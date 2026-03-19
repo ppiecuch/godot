@@ -27,8 +27,8 @@
 #pragma once
 #endif
 
-#include "../../context.h"
-#include "../util.h"
+#include "src/context.h"
+#include "src/shaders/util.h"
 
 template
 <	

@@ -31,7 +31,7 @@
 #include "debug_renderdoc.h"
 #include "core/print_string.h"
 
-#if REDERDOC_APP_ENABLED
+#if RENDERDOC_APP_ENABLED
 
 #if !WINDOWS_ENABLED && !X11_ENABLED
 #error "Only Windows and Linux builds are supported"
@@ -56,6 +56,10 @@ char (&CountOfRequireArrayArgumentT(const Ty (&)[Num]))[Num];
 #define COUNTOF(_x) sizeof(CountOfRequireArrayArgumentT(_x))
 #define UNUSED(x) (void)(x)
 
+#ifndef CONFIG_RENDERDOC_LOG_FILEPATH
+#define CONFIG_RENDERDOC_LOG_FILEPATH "godot_renderdoc_capture"
+#endif // CONFIG_RENDERDOC_LOG_FILEPATH
+
 #ifndef CONFIG_RENDERDOC_CAPTURE_KEYS
 #define CONFIG_RENDERDOC_CAPTURE_KEYS \
 	{ eRENDERDOC_Key_F11 }
@@ -66,7 +70,9 @@ void *_dlopen(const char *p_file_path) {
 	return (void *)::LoadLibraryA(p_file_path);
 #elif X11_ENABLED
 	void *so = ::dlopen(p_file_path, RTLD_LOCAL | RTLD_LAZY);
-	WARN_PRINT(nullptr != so, "dlopen failed: \"%s\".", ::dlerror());
+	if (nullptr == so) {
+		WARN_PRINT(vformat("dlopen failed: \"%s\".", ::dlerror()));
+	}
 	return so;
 #else
 	UNUSED(p_file_path);
@@ -87,17 +93,18 @@ void _dlclose(void *p_handle) {
 #endif
 }
 
-void *_dlsym(void *p_handle, const const *p_symbol) {
+void *_dlsym(void *p_handle, const char *p_symbol) {
 	const int32_t symbol_max = strlen(p_symbol) + 1;
 	char *symbol = (char *)alloca(symbol_max);
-	strncpy(symbol, symbol_max, p_symbol);
+	strncpy(symbol, p_symbol, symbol_max);
 
 #if WINDOWS_ENABLED
 	return (void *)::GetProcAddress((HMODULE)p_handle, symbol);
 #elif X11_ENABLED
 	return ::dlsym(p_handle, symbol);
 #else
-	UNUSED(p_handle, symbol);
+	UNUSED(p_handle);
+	UNUSED(symbol);
 	return nullptr;
 #endif
 }
@@ -164,11 +171,11 @@ void *gdLoadRenderDoc() {
 		RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)_dlsym(render_doc_dll, "RENDERDOC_GetAPI");
 
 		if (nullptr != RENDERDOC_GetAPI && 1 == RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void **)&s_render_doc)) {
-			s_render_doc->SetCaptureFilePathTemplate(BGFX_CONFIG_RENDERDOC_LOG_FILEPATH);
+			s_render_doc->SetCaptureFilePathTemplate(CONFIG_RENDERDOC_LOG_FILEPATH);
 
 			s_render_doc->SetFocusToggleKeys(nullptr, 0);
 
-			RENDERDOC_InputButton capture_keys[] = BGFX_CONFIG_RENDERDOC_CAPTURE_KEYS;
+			RENDERDOC_InputButton capture_keys[] = CONFIG_RENDERDOC_CAPTURE_KEYS;
 			s_render_doc->SetCaptureKeys(capture_keys, COUNTOF(capture_keys));
 
 			s_render_doc->SetCaptureOptionU32(eRENDERDOC_Option_AllowVSync, 1);
@@ -178,7 +185,7 @@ void *gdLoadRenderDoc() {
 
 			s_render_doc_dll = render_doc_dll;
 		} else {
-			dlclose(render_doc_dll);
+			_dlclose(render_doc_dll);
 			render_doc_dll = nullptr;
 		}
 	}
@@ -199,7 +206,7 @@ void gdRenderDocTriggerCapture() {
 	}
 }
 
-#else // REDERDOC_APP_ENABLED
+#else // RENDERDOC_APP_ENABLED
 
 bool gdIsRenderDocModuleCompiled() {
 	return false;
@@ -215,4 +222,4 @@ void gdRenderDocTriggerCapture() {
 	print_verbose("RenderDoc module not compiled.");
 }
 
-#endif // REDERDOC_APP_ENABLED
+#endif // RENDERDOC_APP_ENABLED

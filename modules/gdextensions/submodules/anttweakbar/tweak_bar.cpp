@@ -37,6 +37,59 @@ extern int TwEventGodot(const Ref<InputEvent> &ev);
 extern void TwReplayDrawCommands(CanvasItem *ci);
 
 // ---------------------------------------------------------------------------
+// Chart data accessors — called from CChartExt::DrawCB in AntTweakBar.cpp
+// ---------------------------------------------------------------------------
+
+int TwChartGetValueCount(void *chartData) {
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)chartData;
+	return cd ? (int)cd->values.size() : 0;
+}
+
+float TwChartGetValue(void *chartData, int index) {
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)chartData;
+	if (!cd || index < 0 || index >= (int)cd->values.size())
+		return 0;
+	return cd->values[index];
+}
+
+float TwChartGetScaleMin(void *chartData) {
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)chartData;
+	return cd ? cd->scale_min : 0;
+}
+
+float TwChartGetScaleMax(void *chartData) {
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)chartData;
+	return cd ? cd->scale_max : 0;
+}
+
+int TwChartGetFlameEntryCount(void *chartData) {
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)chartData;
+	return cd ? cd->flame_entries.size() : 0;
+}
+
+void TwChartGetFlameEntry(void *chartData, int index, float *start, float *end, int *level, char *caption, int captionMaxLen) {
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)chartData;
+	if (!cd || index < 0 || index >= cd->flame_entries.size())
+		return;
+	const TweakBar::ChartData::FlameEntry &e = cd->flame_entries[index];
+	if (start) *start = e.start;
+	if (end) *end = e.end;
+	if (level) *level = e.level;
+	if (caption && captionMaxLen > 0) {
+		CharString cs = e.caption.utf8();
+		int len = cs.length();
+		if (len >= captionMaxLen) len = captionMaxLen - 1;
+		memcpy(caption, cs.get_data(), len);
+		caption[len] = '\0';
+	}
+}
+
+int TwChartGetType(void *chartData) {
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)chartData;
+	return cd ? (int)cd->type : 0;
+}
+
+// ---------------------------------------------------------------------------
 // Static callbacks for AntTweakBar variable get/set
 // ---------------------------------------------------------------------------
 
@@ -284,6 +337,9 @@ TweakBar::~TweakBar() {
 	for (int i = 0; i < m_btn_infos.size(); i++)
 		memdelete(m_btn_infos[i]);
 	for (Map<String, PropertyBinding *>::Element *E = m_bindings.front(); E; E = E->next()) {
+		memdelete(E->value());
+	}
+	for (Map<String, ChartData *>::Element *E = m_charts.front(); E; E = E->next()) {
 		memdelete(E->value());
 	}
 
@@ -898,6 +954,109 @@ bool TweakBar::add_variant(const String &p_bar, const String &p_name, const Vari
 }
 
 // ---------------------------------------------------------------------------
+// Chart widgets
+// ---------------------------------------------------------------------------
+
+static void _chart_set_cb(const void *value, void *clientData) {
+	// Charts are display-only — set callback is a no-op
+	(void)value;
+	(void)clientData;
+}
+
+static void _chart_get_cb(void *value, void *clientData) {
+	// Return pointer to ChartData so CChartExt::CopyVarToExtCB can set m_DataPtr
+	TweakBar::ChartData *cd = (TweakBar::ChartData *)clientData;
+	*(void **)value = cd;
+}
+
+bool TweakBar::add_histogram(const String &p_bar, const String &p_name, const String &p_def) {
+	_ensure_init();
+	TwBar *bar = TwGetBarByName(p_bar.utf8().get_data());
+	ERR_FAIL_COND_V(!bar, false);
+
+	String key = _var_key(p_bar, p_name);
+	ChartData *cd = memnew(ChartData);
+	cd->type = ChartData::HISTOGRAM;
+	m_charts[key] = cd;
+
+	return TwAddVarCB(bar, p_name.utf8().get_data(), TW_TYPE_HISTOGRAM, _chart_set_cb, _chart_get_cb, cd, p_def.utf8().get_data()) == 1;
+}
+
+bool TweakBar::add_line_chart(const String &p_bar, const String &p_name, const String &p_def) {
+	_ensure_init();
+	TwBar *bar = TwGetBarByName(p_bar.utf8().get_data());
+	ERR_FAIL_COND_V(!bar, false);
+
+	String key = _var_key(p_bar, p_name);
+	ChartData *cd = memnew(ChartData);
+	cd->type = ChartData::LINE_CHART;
+	m_charts[key] = cd;
+
+	return TwAddVarCB(bar, p_name.utf8().get_data(), TW_TYPE_LINECHART, _chart_set_cb, _chart_get_cb, cd, p_def.utf8().get_data()) == 1;
+}
+
+bool TweakBar::add_flame_graph(const String &p_bar, const String &p_name, const String &p_def) {
+	_ensure_init();
+	TwBar *bar = TwGetBarByName(p_bar.utf8().get_data());
+	ERR_FAIL_COND_V(!bar, false);
+
+	String key = _var_key(p_bar, p_name);
+	ChartData *cd = memnew(ChartData);
+	cd->type = ChartData::FLAME_GRAPH;
+	m_charts[key] = cd;
+
+	return TwAddVarCB(bar, p_name.utf8().get_data(), TW_TYPE_FLAMEGRAPH, _chart_set_cb, _chart_get_cb, cd, p_def.utf8().get_data()) == 1;
+}
+
+void TweakBar::chart_push_value(const String &p_bar, const String &p_name, float p_value) {
+	String key = _var_key(p_bar, p_name);
+	if (!m_charts.has(key))
+		return;
+	ChartData *cd = m_charts[key];
+	cd->values.push_back(p_value);
+	while ((int)cd->values.size() > cd->max_history) {
+		cd->values.pop_front();
+	}
+}
+
+void TweakBar::chart_set_values(const String &p_bar, const String &p_name, const PoolRealArray &p_values) {
+	String key = _var_key(p_bar, p_name);
+	if (!m_charts.has(key))
+		return;
+	ChartData *cd = m_charts[key];
+	cd->values.clear();
+	PoolRealArray::Read r = p_values.read();
+	for (int i = 0; i < p_values.size(); i++) {
+		cd->values.push_back(r[i]);
+	}
+	while ((int)cd->values.size() > cd->max_history) {
+		cd->values.pop_front();
+	}
+}
+
+void TweakBar::chart_add_flame_entry(const String &p_bar, const String &p_name, const Vector2 &p_range, int p_level, const String &p_caption) {
+	String key = _var_key(p_bar, p_name);
+	if (!m_charts.has(key))
+		return;
+	ChartData *cd = m_charts[key];
+	ChartData::FlameEntry entry;
+	entry.start = p_range.x;
+	entry.end = p_range.y;
+	entry.level = p_level;
+	entry.caption = p_caption;
+	cd->flame_entries.push_back(entry);
+}
+
+void TweakBar::chart_clear(const String &p_bar, const String &p_name) {
+	String key = _var_key(p_bar, p_name);
+	if (!m_charts.has(key))
+		return;
+	ChartData *cd = m_charts[key];
+	cd->values.clear();
+	cd->flame_entries.clear();
+}
+
+// ---------------------------------------------------------------------------
 // Info
 // ---------------------------------------------------------------------------
 
@@ -939,6 +1098,14 @@ void TweakBar::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("bind_property", "bar", "name", "object", "property", "def"), &TweakBar::bind_property, DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("add_variant", "bar", "name", "value", "def"), &TweakBar::add_variant, DEFVAL(""));
+
+	ClassDB::bind_method(D_METHOD("add_histogram", "bar", "name", "def"), &TweakBar::add_histogram, DEFVAL(""));
+	ClassDB::bind_method(D_METHOD("add_line_chart", "bar", "name", "def"), &TweakBar::add_line_chart, DEFVAL(""));
+	ClassDB::bind_method(D_METHOD("add_flame_graph", "bar", "name", "def"), &TweakBar::add_flame_graph, DEFVAL(""));
+	ClassDB::bind_method(D_METHOD("chart_push_value", "bar", "name", "value"), &TweakBar::chart_push_value);
+	ClassDB::bind_method(D_METHOD("chart_set_values", "bar", "name", "values"), &TweakBar::chart_set_values);
+	ClassDB::bind_method(D_METHOD("chart_add_flame_entry", "bar", "name", "range", "level", "caption"), &TweakBar::chart_add_flame_entry);
+	ClassDB::bind_method(D_METHOD("chart_clear", "bar", "name"), &TweakBar::chart_clear);
 
 	ClassDB::bind_method(D_METHOD("get_last_error"), &TweakBar::get_last_error);
 	ClassDB::bind_method(D_METHOD("refresh"), &TweakBar::refresh);

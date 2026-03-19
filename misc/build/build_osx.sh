@@ -159,29 +159,14 @@ if [ ! -z "$EDITOR_CODESIGN_IDENTITY" ]; then
 	fi
 
 	if [ -n "$resolved_identity" ]; then
-		# Check if the resolved certificate is still valid
-		cert_line=$(security find-identity -v -p codesigning | grep "$resolved_identity" | head -1)
-		cert_hash=$(echo "$cert_line" | awk '{print $2}')
-		if [ -n "$cert_hash" ]; then
-			expiry=$(security find-certificate -c "$resolved_identity" -p 2>/dev/null \
-				| openssl x509 -noout -enddate 2>/dev/null \
-				| sed 's/notAfter=//')
-			if [ -n "$expiry" ]; then
-				expiry_epoch=$(date -j -f "%b %d %T %Y %Z" "$expiry" +%s 2>/dev/null || echo 0)
-				now_epoch=$(date +%s)
-				if [ "$expiry_epoch" -gt 0 ] && [ "$now_epoch" -gt "$expiry_epoch" ]; then
-					log_error "WARNING: Signing certificate '$resolved_identity' has expired ($expiry)"
-					log_info "Falling back to ad-hoc signature"
-				else
-					codesign_identity="$EDITOR_CODESIGN_IDENTITY"
-					log_info "Codesign identity: $EDITOR_CODESIGN_IDENTITY"
-				fi
-			else
-				codesign_identity="$EDITOR_CODESIGN_IDENTITY"
-				log_info "Codesign identity: $EDITOR_CODESIGN_IDENTITY (could not verify expiry)"
-			fi
+		# security find-identity -v -p codesigning only lists valid (non-expired) certificates.
+		# If the resolved identity appears there, it's valid — no separate expiry check needed.
+		# (Avoid find-certificate -c which can match an older expired cert with the same name.)
+		if security find-identity -v -p codesigning | grep -q "$resolved_identity"; then
+			codesign_identity="$EDITOR_CODESIGN_IDENTITY"
+			log_info "Codesign identity: $EDITOR_CODESIGN_IDENTITY"
 		else
-			log_error "WARNING: Resolved certificate '$resolved_identity' not valid for codesigning"
+			log_error "WARNING: Certificate '$resolved_identity' not found in valid codesigning identities"
 			log_info "Falling back to ad-hoc signature"
 		fi
 	fi
@@ -197,6 +182,24 @@ if ! codesign --verify --deep --strict "$GODOT_DIR/bin/Godot-master.app" 2>/dev/
 		codesign --force --deep --sign - --timestamp --entitlements "$GODOT_DIR/misc/dist/osx/editor.entitlements" "$GODOT_DIR/bin/Godot-master.app"
 	else
 		log_error "WARNING: Code signature verification failed: $verify_err"
+	fi
+fi
+
+# Add firewall exception to suppress "allow incoming connections" dialog.
+# Only attempt in interactive terminals; skip on managed/MDM Macs.
+fw_cmd="/usr/libexec/ApplicationFirewall/socketfilterfw"
+app_path="$GODOT_DIR/bin/Godot-master.app"
+if [ -x "$fw_cmd" ] && [ -t 0 ]; then
+	# Check if app is already allowed (no sudo needed for --getappblocked)
+	if ! "$fw_cmd" --getappblocked "$app_path" 2>/dev/null | grep -q "permitted"; then
+		log_step "Add firewall exception"
+		if sudo -n true 2>/dev/null; then
+			sudo "$fw_cmd" --remove "$app_path" 2>/dev/null || true
+			sudo "$fw_cmd" --add "$app_path" 2>/dev/null || true
+			sudo "$fw_cmd" --unblockapp "$app_path" 2>/dev/null || true
+		else
+			log_info "Skipping firewall exception (sudo requires password — run manually if needed)"
+		fi
 	fi
 fi
 

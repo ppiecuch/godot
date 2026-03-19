@@ -171,6 +171,7 @@ modules = [
     "fontengine3d",
     # G
     "geomfonts",
+    "glitehtml",
     # H
     "httpserver",
     "hydro",
@@ -276,15 +277,15 @@ if env["tools"]:
             + Glob("thirdparty/flowed/akima/akima.cpp")
         )
         modules += ["flowed"]
-    if is_enabled("qmap"):
+    if is_enabled("gqmaps"):
         env_module.Prepend(CPPPATH=["thirdparty/qmap", "thirdparty/qmap/aa2map"])
+        env_module.Append(CPPDEFINES=["AA2MAP_GODOT_EMBEDDED"])
         thirdparty_sources += (
             Glob("thirdparty/qmap/libmap/*.cpp")
+            + Glob("thirdparty/qmap/aa2map/*.c")
             + Glob("thirdparty/qmap/aa2map/**/*.c")
-            + Glob("thirdparty/qmap/qbsp3/*.c")
-            + Glob("thirdparty/qmap/qcommon/*.c")
         )
-        modules += ["qmap"]
+        modules += ["gqmaps"]
 
 if is_enabled("textui"):
     thirdparty_sources += [
@@ -625,9 +626,9 @@ if is_enabled("swrender"):
     if os.path.isdir("thirdparty/swr-fusion2x"):
         env_module.Append(CPPDEFINES=["SWRENDER_FUSION2X"])
         env_module.Append(CPPPATH=[
+            "thirdparty/swr-fusion2x",
             "thirdparty/swr-fusion2x/include",
             "thirdparty/swr-fusion2x/include/fusion2x",
-            "thirdparty/swr-fusion2x/src",
         ])
         f2x_srcs = (
             Glob("thirdparty/swr-fusion2x/src/*.cpp")
@@ -694,6 +695,25 @@ if is_enabled("turbobadger"):
     else:
         env_module.Append(CPPDEFINES=["TB_FONT_RENDERER_STB"])
     thirdparty_sources += Glob("thirdparty/turbobadger/src/**/*.cpp") + Glob("thirdparty/turbobadger/resources/*.c")
+
+if is_enabled("glitehtml"):
+    env_module.Append(CPPPATH=[
+        "thirdparty/litehtml/include",
+        "thirdparty/litehtml/include/litehtml",
+        "thirdparty/litehtml/src/gumbo/include",
+        "thirdparty/litehtml/src/gumbo/include/gumbo",
+    ])
+    # Build litehtml sources - use a clone to add src/ to include path
+    # only for litehtml files (avoids util.h clash with other thirdparty)
+    env_litehtml = env_module.Clone()
+    env_litehtml.Append(CPPPATH=["thirdparty/litehtml/src"])
+    env_litehtml.add_source_files(env.modules_sources, Glob("thirdparty/litehtml/src/*.cpp"))
+    # Gumbo C sources need their own dir for local includes (util.h, etc.)
+    # Prepend to ensure gumbo's util.h is found before swr-fusion2x/src/util.h
+    env_gumbo = env_module.Clone()
+    env_gumbo.Prepend(CPPPATH=["thirdparty/litehtml/src/gumbo"])
+    env_gumbo.disable_warnings()
+    env_gumbo.add_source_files(env.modules_sources, Glob("thirdparty/litehtml/src/gumbo/*.c"))
 
 if is_enabled("keychains"):
     if env["platform"] == "osx" or env["platform"] == "iphone":

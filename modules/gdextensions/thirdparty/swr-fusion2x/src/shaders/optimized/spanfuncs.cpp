@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <map>
 
-#include "../util.h"
+#include "src/shaders/util.h"
 
 namespace
 {

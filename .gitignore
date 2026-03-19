@@ -121,6 +121,8 @@ platform/javascript/node_modules/
 *.debug
 .RData
 .Rhistory
+*.orig.*
+*.rej.*
 
 #############################
 ### IDE and tool specific ###
@@ -239,6 +241,7 @@ xcuserdata/
 .claude*
 CLAUDE.md
 CLAUDE-NOTES.md
+memo.md
 
 ##############################
 ### Visual Studio specific ###
