@@ -72,13 +72,17 @@ void TwChartGetFlameEntry(void *chartData, int index, float *start, float *end, 
 	if (!cd || index < 0 || index >= cd->flame_entries.size())
 		return;
 	const TweakBar::ChartData::FlameEntry &e = cd->flame_entries[index];
-	if (start) *start = e.start;
-	if (end) *end = e.end;
-	if (level) *level = e.level;
+	if (start)
+		*start = e.start;
+	if (end)
+		*end = e.end;
+	if (level)
+		*level = e.level;
 	if (caption && captionMaxLen > 0) {
 		CharString cs = e.caption.utf8();
 		int len = cs.length();
-		if (len >= captionMaxLen) len = captionMaxLen - 1;
+		if (len >= captionMaxLen)
+			len = captionMaxLen - 1;
 		memcpy(caption, cs.get_data(), len);
 		caption[len] = '\0';
 	}

@@ -52,10 +52,10 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 #include "editor/editor_plugin.h"
 #endif
 
-#include "common/resources_cache.h"
-#include "common/resources_config.h"
 #include "common/gd_history_plot.h"
 #include "common/gd_plotter_draw_node.h"
+#include "common/resources_cache.h"
+#include "common/resources_config.h"
 #include "common/sr_graph.h"
 
 #include "core/area_prober.h"

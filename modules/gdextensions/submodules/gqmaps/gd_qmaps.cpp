@@ -43,8 +43,8 @@
 #include "libmap/surface_gatherer.h"
 
 extern "C" {
-#include "aa2map/aa2map_defines.h"
 #include "aa2map/aa2map.h"
+#include "aa2map/aa2map_defines.h"
 #include "aa2map/aa2map_misc.h"
 #include "aa2map/aa2map_parse.h"
 #include "aa2map/aa2map_write.h"
