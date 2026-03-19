@@ -17692,7 +17692,14 @@ void CTwMgr::SetCursor(CCursor _Cursor) {
 		default:
 			break;
 	}
-	Input::get_singleton()->set_default_cursor_shape(shape);
+	// Only update when cursor shape actually changes — set_default_cursor_shape
+	// creates a new InputEventMouseMotion each call, which floods ObjectDB when
+	// called per-bar on every mouse motion event.
+	static Input::CursorShape s_last_shape = Input::CURSOR_ARROW;
+	if (shape != s_last_shape) {
+		s_last_shape = shape;
+		Input::get_singleton()->set_default_cursor_shape(shape);
+	}
 }
 
 //  ---------------------------------------------------------------------------
