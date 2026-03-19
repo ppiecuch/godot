@@ -325,6 +325,24 @@ void TweakBar::_apply_config(Object *p_object, const Dictionary &p_config) {
 			}
 		}
 	}
+
+	if (p_config.has("charts") && p_config["charts"].get_type() == Variant::DICTIONARY) {
+		Dictionary charts = p_config["charts"];
+		Array keys = charts.keys();
+		for (int i = 0; i < keys.size(); i++) {
+			String chart_name = keys[i];
+			Dictionary info = charts[chart_name];
+			String type = info.has("type") ? String(info["type"]) : "histogram";
+			String def = info.has("def") ? String(info["def"]) : "";
+			if (type == "histogram") {
+				add_histogram(bar_name, chart_name, def);
+			} else if (type == "line_chart") {
+				add_line_chart(bar_name, chart_name, def);
+			} else if (type == "flame_graph") {
+				add_flame_graph(bar_name, chart_name, def);
+			}
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
