@@ -289,6 +289,10 @@ INCBIN(vera_ttf, "resources/vera.ttf");
 #include "ccd/gd_ccd.h"
 #endif
 
+#ifdef GDEXT_DETOURNAV_ENABLED
+#include "detournav/register.h"
+#endif
+
 #ifdef GDEXT_SPINNERS_ENABLED
 #include "spinners/gdimspinner.h"
 #endif
@@ -354,17 +358,24 @@ static Ref<ImageLoaderThorSVG> image_loader_thor_svg;
 #include "spacemouse/spacemouse.h"
 #endif
 
+#ifdef GDEXT_LDRDRAW_ENABLED
+#include "ldrdraw/gd_ldr.h"
+static Ref<ResourceFormatLoaderLDR> resource_loader_ldr;
+#endif
+
 #ifdef TOOLS_ENABLED
 static void editor_init_callback() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotErrorHandler", memnew(GodotErrorHandler)));
 	EditorNode *editor = EditorNode::get_singleton();
 	ERR_FAIL_NULL(editor);
 
+#ifdef GDEXT_POLYVECTOR_ENABLED
 	if (Engine::get_singleton()->is_editor_hint()) {
 		Ref<ResourceImporterSWF> swfdata;
 		swfdata.instance();
 		ResourceFormatImporter::get_singleton()->add_importer(swfdata);
 	}
+#endif
 
 #ifdef GDEXT_VISUAL_ENABLED
 	editor->add_editor_plugin(memnew(Cable2DEditorPlugin(editor))); /* Cable2D */
@@ -774,6 +785,10 @@ void register_gdextensions_types() {
 	ClassDB::register_class<CCDCylinder>();
 #endif // GDEXT_CCD_ENABLED
 
+#ifdef GDEXT_DETOURNAV_ENABLED
+	register_detournav();
+#endif
+
 #ifdef GDEXT_POLYVECTOR_ENABLED
 	ClassDB::register_class<PolyVector>();
 	ClassDB::register_class<JSONVector>();
@@ -818,6 +833,23 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_SPACEMOUSE_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("SpaceMouse", memnew(SpaceMouse)));
+#endif
+
+#ifdef GDEXT_LDRDRAW_ENABLED
+	ClassDB::register_class<GdLdrModel>();
+	ClassDB::register_class<LdrView3D>();
+	ClassDB::register_class<LdrView2D>();
+
+	resource_loader_ldr.instance();
+	ResourceLoader::add_resource_format_loader(resource_loader_ldr);
+
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint()) {
+		Ref<ResourceImporterLDR> ldr_import;
+		ldr_import.instance();
+		ResourceFormatImporter::get_singleton()->add_importer(ldr_import);
+	}
+#endif
 #endif
 
 #ifdef TOOLS_ENABLED
@@ -915,4 +947,8 @@ void unregister_gdextensions_types() {
 	GdInAppStore::release_store();
 #endif
 #endif // GDEXT_IAP_ENABLED
+#ifdef GDEXT_LDRDRAW_ENABLED
+	ResourceLoader::remove_resource_format_loader(resource_loader_ldr);
+	resource_loader_ldr.unref();
+#endif
 }

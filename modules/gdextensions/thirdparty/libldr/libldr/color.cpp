@@ -203,7 +203,7 @@ color::~color()
 void color::link()
 {
   if (!m_initialized)
-    throw exception(__func__, exception::user_error, "Color table is not initialized! run color::init() first.");
+    throw exception(__func__, user_error, "Color table is not initialized! run color::init() first.");
 
   auto pos = std::find(color_index.begin(), color_index.end(), m_id);
   if (pos == color_index.end())

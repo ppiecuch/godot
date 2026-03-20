@@ -86,6 +86,7 @@ public:
 
 class extension
 {
+protected:
 	model *m_model;
 	void *m_arg;
 

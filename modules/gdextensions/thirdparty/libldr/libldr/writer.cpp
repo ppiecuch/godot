@@ -20,7 +20,7 @@ writer::writer(const std::string &filename)
 {
 	m_filestream->open(filename.c_str(), std::ios::out);
 	if (!m_filestream->is_open())
-		throw exception(__func__, exception::user_error, std::string("Could not open file for writing: ") + filename);
+		throw exception(__func__, user_error, std::string("Could not open file for writing: ") + filename);
 }
 
 writer::writer(std::ostream &stream)
@@ -47,14 +47,14 @@ void writer::write(const model *model)
 
 	if (model->custom_data<bfc_certification>()) {
 		bfc_certification *c = model->custom_data<bfc_certification>();
-		if (c->certification() == bfc_certification::certified) {
+		if (c->certification() == certified) {
 			m_stream << "0 BFC";
 			
-			if (c->orientation() == bfc_certification::cw)
+			if (c->orientation() == cw)
 				m_stream << " CW";
 
 			m_stream << std::endl << std::endl;;
-		} else if (c->certification() == bfc_certification::uncertified) {
+		} else if (c->certification() == uncertified) {
 			m_stream << "0 BFC NOCERTIFY" << std::endl << std::endl;
 		}
 	}
@@ -125,16 +125,16 @@ void writer::serialize_state(const element_state *e)
 	m_stream << "0 ";
 
 	switch (e->get_state()) {
-		case element_state::state_step:
+		case state_step:
 			m_stream << "STEP";
 			break;
-		case element_state::state_pause:
+		case state_pause:
 			m_stream << "PAUSE";
 			break;
-		case element_state::state_clear:
+		case state_clear:
 			m_stream << "CLEAR";
 			break;
-		case element_state::state_save:
+		case state_save:
 			m_stream << "SAVE";
 			break;
 	}
@@ -205,25 +205,25 @@ void writer::serialize_bfc(const element_bfc *e)
 	m_stream << "0 BFC ";
 	
 	switch (e->get_command()) {
-		case element_bfc::cw:
+		case set_cw:
 			m_stream << "CW";
 			break;
-		case element_bfc::ccw:
+		case set_ccw:
 			m_stream << "CCW";
 			break;
-		case element_bfc::clip:
+		case clip:
 			m_stream << "CLIP";
 			break;
-		case element_bfc::clip_cw:
+		case clip_cw:
 			m_stream << "CLIP CW";
 			break;
-		case element_bfc::clip_ccw:
+		case clip_ccw:
 			m_stream << "CLIP CCW";
 			break;
-		case element_bfc::noclip:
+		case no_clip:
 			m_stream << "NOCLIP";
 			break;
-		case element_bfc::invertnext:
+		case invert_next:
 			m_stream << "INVERTNEXT";
 			break;
 	}

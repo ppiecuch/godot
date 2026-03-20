@@ -61,7 +61,7 @@ part_library::part_library()
   }
   
 #ifndef LDR_ARCHIVE_SUPPORT
-  throw exception(__func__, exception::fatal, "Couldn't find LDraw part library. Please install valid LDraw part library and make sure that \"LDRAWDIR\" environment variable is set!");
+  throw exception(__func__, fatal, "Couldn't find LDraw part library. Please install valid LDraw part library and make sure that \"LDRAWDIR\" environment variable is set!");
 #endif
 }
 
@@ -70,7 +70,7 @@ part_library::part_library(const std::string &path)
   m_unlink_policy = parts | primitives;
   
   if(!read_fs(path))
-    throw exception(__func__, exception::fatal, "Couldn't find LDraw part library.");
+    throw exception(__func__, fatal, "Couldn't find LDraw part library.");
 }
 
 part_library::~part_library()
@@ -150,10 +150,10 @@ bool part_library::link_element(element_ref *r)
   // 3. find the primitive list
   std::map<std::string, std::string>::iterator it2 = m_primlist.find(fn);
   if (it2 != m_primlist.end()) {
-    item_refcount *n = nil.load_with_cache(m_ldrawpath + DIRECTORY_SEPARATOR + m_primdir + DIRECTORY_SEPARATOR + (*it2).second, fn, model::primitive);
+    item_refcount *n = nil.load_with_cache(m_ldrawpath + DIRECTORY_SEPARATOR + m_primdir + DIRECTORY_SEPARATOR + (*it2).second, fn, primitive);
     link(n->model());
     r->set_model(n->model()->main_model());
-    n->model()->main_model()->set_modeltype(model::primitive);
+    n->model()->main_model()->set_modeltype(primitive);
     m_data[fn] = n;
     m_data[fn]->acquire();
     r->resolve(this);
@@ -163,10 +163,10 @@ bool part_library::link_element(element_ref *r)
   // 4. find the parts list
   std::map<std::string, std::string>::iterator it3 = m_partlist.find(fn);
   if (it3 != m_partlist.end()) {
-      item_refcount *n = nil.load_with_cache(m_ldrawpath + DIRECTORY_SEPARATOR + m_partsdir + DIRECTORY_SEPARATOR + (*it3).second, fn, model::part);
+      item_refcount *n = nil.load_with_cache(m_ldrawpath + DIRECTORY_SEPARATOR + m_partsdir + DIRECTORY_SEPARATOR + (*it3).second, fn, part);
     link(n->model());
     r->set_model(n->model()->main_model());
-    n->model()->main_model()->set_modeltype(model::part);
+    n->model()->main_model()->set_modeltype(part);
     m_data[fn] = n;
     m_data[fn]->acquire();
     r->resolve(this);
@@ -215,15 +215,15 @@ void part_library::unlink_element(element_ref *r)
   
   std::string fn = utils::translate_string(r->filename());
   
-  if (r->get_model() && (r->get_model()->modeltype() == model::submodel || r->get_model()->modeltype() == model::external_file))
+  if (r->get_model() && (r->get_model()->modeltype() == submodel || r->get_model()->modeltype() == external_file))
     return;
   
   std::map<std::string, item_refcount*>::iterator it = m_data.find(fn);
   if (r->get_model() && it != m_data.end()) {
     (*it).second->release();
     if (!(*it).second->refcount()) {
-      if (((*it).second->model()->main_model()->modeltype() == model::part && m_unlink_policy & parts) ||
-          ((*it).second->model()->main_model()->modeltype() == model::primitive && m_unlink_policy & primitives)) {
+      if (((*it).second->model()->main_model()->modeltype() == part && m_unlink_policy & parts) ||
+          ((*it).second->model()->main_model()->modeltype() == primitive && m_unlink_policy & primitives)) {
         delete (*it).second;
         m_data.erase(it);
       }

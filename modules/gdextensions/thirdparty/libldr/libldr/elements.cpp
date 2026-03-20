@@ -59,7 +59,7 @@ void element_ref::link()
 void element_ref::operator= (element_ref &rhs)
 {
 	m_model = 0L;
-	m_color = rhs.get_color();
+	set_color(rhs.get_color());
 	m_matrix = rhs.get_matrix();
 	m_parent = 0L;
 	m_linkpoint = rhs.linkpoint();
@@ -68,14 +68,14 @@ void element_ref::operator= (element_ref &rhs)
 
 void element_line::operator= (const element_line &rhs)
 {
-	m_color = rhs.get_color();
+	set_color(rhs.get_color());
 	m_pos1 = rhs.pos1();
 	m_pos2 = rhs.pos2();
 }
 
 void element_triangle::operator= (const element_triangle &rhs)
 {
-	m_color = rhs.get_color();
+	set_color(rhs.get_color());
 	m_pos1 = rhs.pos1();
 	m_pos2 = rhs.pos2();
 	m_pos3 = rhs.pos3();
@@ -83,7 +83,7 @@ void element_triangle::operator= (const element_triangle &rhs)
 
 void element_quadrilateral::operator= (const element_quadrilateral &rhs)
 {
-	m_color = rhs.get_color();
+	set_color(rhs.get_color());
 	m_pos1 = rhs.pos1();
 	m_pos2 = rhs.pos2();
 	m_pos3 = rhs.pos3();
@@ -92,7 +92,7 @@ void element_quadrilateral::operator= (const element_quadrilateral &rhs)
 
 void element_condline::operator= (const element_condline &rhs)
 {
-	m_color = rhs.get_color();
+	set_color(rhs.get_color());
 	m_pos1 = rhs.pos1();
 	m_pos2 = rhs.pos2();
 	m_pos3 = rhs.pos3();

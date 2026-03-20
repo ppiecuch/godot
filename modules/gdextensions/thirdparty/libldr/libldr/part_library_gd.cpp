@@ -18,7 +18,7 @@ namespace ldraw
 
 static DirAccess *_opendir(const String &path) {
 	DirAccess *da;
-	if (!(da = DirAccess:: DirAccess::create_for_path(path))) {
+	if (!(da = DirAccess::create_for_path(path))) {
 		return nullptr;
 	}
 	if (da->list_dir_begin() != OK) {
@@ -27,17 +27,17 @@ static DirAccess *_opendir(const String &path) {
 	return da;
 }
 
-static std::string _readdir(DirAccessRef &da) {
-	return da->get_next().utf8().c_str();
+static std::string _readdir(DirAccess *da) {
+	return da->get_next().utf8().get_data();
 }
-static void _closedir(DirAccessRef &da) {
+static void _closedir(DirAccess *da) {
 	da->list_dir_end();
 }
 
 bool part_library::read_fs(const std::string &path)
 {
 	// TODO recursive subdirectory handling
-	DirAccessRef de;
+	DirAccess *de;
 	std::string dn1, dn2;
 	std::string pdir, partsdir;
 
@@ -45,9 +45,8 @@ bool part_library::read_fs(const std::string &path)
 	if (!(de = _opendir(path.c_str())))
 		return false;
 
-	std::string dn1;
 	while ((dn1 = _readdir(de)) != "") {
-		if (da->current_is_dir()) {
+		if (de->current_is_dir()) {
 			dn2 = utils::translate_string(dn1.c_str());
 
 			if (dn2 == "p") pdir = dn1;
@@ -55,6 +54,7 @@ bool part_library::read_fs(const std::string &path)
 		}
 	}
 	_closedir(de);
+	memdelete(de);
 
 	if (pdir.empty() || partsdir.empty()) {
 		std::cerr << "[libLDR] No p/ or parts/ found." << std::endl;
@@ -76,15 +76,15 @@ bool part_library::read_fs(const std::string &path)
 			std::cerr << "[libLDR] Couldn't open p/." << std::endl;
 			return false;
 		}
-		std::string dn1;
 		while ((dn1 = _readdir(de)) != "") {
 			dn2 = utils::translate_string(dn1);
 
-			if (dn2.length() > 4 && dn2.substr(dn1.length()-4, 4) == ".dat")
+			if (dn2.length() > 4 && dn2.substr(dn2.length()-4, 4) == ".dat")
 			if (!m_primlist.count(dn2)) // skip duplicates
 				m_primlist[dn2] = dn1;
 		}
 		_closedir(de);
+		memdelete(de);
 	}
 
 	// 3. look into p/XX directory
@@ -92,15 +92,15 @@ bool part_library::read_fs(const std::string &path)
 		if (!(de = _opendir((m_ldrawpath + DIRECTORY_SEPARATOR + pdir + DIRECTORY_SEPARATOR + p).c_str())))
 			std::cerr << "[libLDR] Couldn't open p/" << p << "/" << std::endl;
 		else {
-			String dn1;
 			while ((dn1 = _readdir(de)) != "") {
 				dn1 = p + DIRECTORY_SEPARATOR + dn1;
-				dn2 = utils::translate_string(dn1.utf8().c_str());
+				dn2 = utils::translate_string(dn1);
 
 				if (dn2.length() > 4 && dn2.substr(dn2.length()-4, 4) == ".dat")
 					m_primlist[dn2] = dn1;
 			}
 			_closedir(de);
+			memdelete(de);
 		}
 	}
 
@@ -109,15 +109,15 @@ bool part_library::read_fs(const std::string &path)
 		std::cerr << "[libLDR] Couldn't open parts/." << std::endl;
 		return false;
 	}
-	std::string dn1;
 	while ((dn1 = _readdir(de)) != "") {
 		dn2 = utils::translate_string(dn1);
 		if (dn2.length() > 4 && dn2.substr(dn2.length() - 4, 4) == ".dat")
 		m_partlist[dn2] = dn1;
 	}
 	_closedir(de);
+	memdelete(de);
 
-	// 6. look into parts/s directory
+	// 5. look into parts/s directory
 	std::string s;
 	de = _opendir((m_ldrawpath + DIRECTORY_SEPARATOR + m_partsdir + DIRECTORY_SEPARATOR + "s").c_str());
 	s = "s";
@@ -130,7 +130,6 @@ bool part_library::read_fs(const std::string &path)
 	if(!de)
 		std::cerr << "[libLDR] Couldn't open parts/s/." << std::endl;
 	else {
-		std::string dn1;
 		while ((dn1 = _readdir(de)) != "") {
 			dn1 = s + DIRECTORY_SEPARATOR + dn1;
 			dn2 = utils::translate_string(dn1);
@@ -139,11 +138,10 @@ bool part_library::read_fs(const std::string &path)
 				m_partlist[dn2] = dn1;
 		}
 		_closedir(de);
+		memdelete(de);
 	}
 
 	return true;
 }
 
 } // ldraw
-
-#endif // _MSC_VER

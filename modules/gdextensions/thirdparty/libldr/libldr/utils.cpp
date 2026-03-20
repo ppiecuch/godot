@@ -79,7 +79,7 @@ bool _affected_model(const model *target, const model *m)
 
 			if (cm == target)
 				return true;
-			else if (cm->modeltype() == model::submodel && m->parent() == target->parent()) {
+			else if (cm->modeltype() == submodel && m->parent() == target->parent()) {
 				if (_affected_model(target, cm))
 					return true;
 			}

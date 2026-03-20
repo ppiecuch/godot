@@ -23,7 +23,7 @@
 #ifdef LDR_ARCHIVE_SUPPORT
 # include "ldrawlib/catalog.inl"
 #define HANDLE_NOT_FOUND 0xffff
-static ldcatalog::handle_t _ldraw_hnd_from_hash(const ldcatalog::hash_t search)
+static lcatalog::handle_t _ldraw_hnd_from_hash(const lcatalog::hash_t search)
 {
     static unsigned int middle = _ldraw_size/2;
     unsigned int first=0, last=_ldraw_size;
@@ -65,7 +65,7 @@ model_multipart* reader::load_from_file(const std::string &path, const std::stri
   std::ifstream file;
   file.open((path).c_str(), std::ios::in);
   if (!file.is_open())
-    throw exception(__func__, exception::user_error, std::string("Could not open file for reading: ") + name);
+    throw exception(__func__, user_error, std::string("Could not open file for reading: ") + name);
   
   model_multipart *model = load_from_stream(file, name);
   
@@ -74,7 +74,7 @@ model_multipart* reader::load_from_file(const std::string &path, const std::stri
   return model;
 }
 
-item_refcount* reader::load_with_cache(const std::string &path, const std::string &name, const model::model_type mtype) const
+item_refcount* reader::load_with_cache(const std::string &path, const std::string &name, const model_type mtype) const
 {
   // check the global cache first
   if (m_global_cache) {
@@ -87,15 +87,15 @@ item_refcount* reader::load_with_cache(const std::string &path, const std::strin
   std::ifstream file;
   file.open(path.c_str(), std::ios::in);
   if (!file.is_open())
-    throw exception(__func__, exception::user_error, std::string("Could not open file for reading: ") + name);
+    throw exception(__func__, user_error, std::string("Could not open file for reading: ") + name);
 
 #ifdef LDR_ARCHIVE_CREATE
     if (archive *bb = archiver())
-        if (mtype==model::part || mtype==model::part)
+        if (mtype==part || mtype==part)
             (*bb)
                 .line_info(0)
                 .write_bits(0, format::ID_LINE_TYPE)
-                .write_bits(mtype==model::part?format::MetaCmd_Model_Part:format::MetaCmd_Model_Prim, format::ID_META_CMD);
+                .write_bits(mtype==part?format::MetaCmd_Model_Part:format::MetaCmd_Model_Prim, format::ID_META_CMD);
 #endif
   model_multipart *model = load_from_stream(file, name);
 
@@ -115,7 +115,7 @@ model_multipart* reader::load_from_file(const std::string &name) const
   std::ifstream file;
   file.open((m_basepath + name).c_str(), std::ios::in);
   if (!file.is_open())
-    throw exception(__func__, exception::user_error, std::string("Could not open file for reading: ") + name);
+    throw exception(__func__, user_error, std::string("Could not open file for reading: ") + name);
 
   model_multipart *model = load_from_stream(file, name);
 
@@ -137,7 +137,7 @@ item_refcount* reader::load_with_cache(const std::string &name) const
   std::ifstream file;
   file.open((m_basepath + name).c_str(), std::ios::in);
   if (!file.is_open())
-    throw exception(__func__, exception::user_error, std::string("Could not open file for reading: ") + name);
+    throw exception(__func__, user_error, std::string("Could not open file for reading: ") + name);
 
   model_multipart *model = load_from_stream(file, name);
 
@@ -209,7 +209,7 @@ model_multipart* reader::load_from_stream(std::istream &stream, std::string name
     model *m = new model;
     
     m->set_parent(nm);
-    m->set_modeltype(model::submodel);
+    m->set_modeltype(submodel);
     loop = parse_stream(m, stream, true, &fn);
     m->set_name(keyname);
     
@@ -228,16 +228,16 @@ model_multipart* reader::load_from_stream(std::istream &stream, std::string name
           build_dependencies(bb, sm.first, sm.second);
 
   if (utils::cyclic_reference_test(nm->main_model()))
-    throw exception(__func__, exception::fatal, "Cyclic reference detected. This model file may be corrupted.");
+    throw exception(__func__, fatal, "Cyclic reference detected. This model file may be corrupted.");
   for(auto &sm : nm->submodel_list())
     if (utils::cyclic_reference_test(sm.second))
-      throw exception(__func__, exception::fatal, "Cyclic reference detected. This model file may be corrupted.");
+      throw exception(__func__, fatal, "Cyclic reference detected. This model file may be corrupted.");
   
   return nm;
 }
 
 #ifdef LDR_ARCHIVE_SUPPORT
-item_refcount* reader::load_from_archive(const ldcatalog::handle_t &h) const
+item_refcount* reader::load_from_archive(const lcatalog::handle_t &h) const
 {
     return load_from_archive(_ldraw_cat[h].file);
 }
@@ -259,7 +259,7 @@ item_refcount* reader::load_from_archive(const std::string &name) const
 
     archive::Hash h(utils::translate_string(name).c_str());
 
-    ldcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
+    lcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
     if (hnd == HANDLE_NOT_FOUND) return 0;
 
     // found in archive
@@ -267,7 +267,7 @@ item_refcount* reader::load_from_archive(const std::string &name) const
     bb.set_bit_pos(offs);
 
 #ifdef LDR_TESTER
-    std::vector<ldcatalog::handle_t> deps = get_archive_deps(name);
+    std::vector<lcatalog::handle_t> deps = get_archive_deps(name);
 #endif
 
     mm = new model_multipart;
@@ -295,25 +295,25 @@ item_refcount* reader::load_from_archive(const std::string &name) const
                 else {
                     int cert = -1, winding = -1;
                     switch(cmd) {
-                        case MetaCmd_Bfc_ccw: base = new element_bfc(element_bfc::ccw); break;
-                        case MetaCmd_Bfc_cw: base = new element_bfc(element_bfc::cw); break;
-                        case MetaCmd_Bfc_clip: base = new element_bfc(element_bfc::clip); break;
-                        case MetaCmd_Bfc_clip_cw: base = new element_bfc(element_bfc::clip_cw); break;
-                        case MetaCmd_Bfc_clip_ccw: base = new element_bfc(element_bfc::clip_ccw); break;
-                        case MetaCmd_Bfc_noclip: base = new element_bfc(element_bfc::noclip); break;
-                        case MetaCmd_Bfc_invertnext: base = new element_bfc(element_bfc::invertnext); break;
+                        case MetaCmd_Bfc_ccw: base = new element_bfc(set_ccw); break;
+                        case MetaCmd_Bfc_cw: base = new element_bfc(set_cw); break;
+                        case MetaCmd_Bfc_clip: base = new element_bfc(clip); break;
+                        case MetaCmd_Bfc_clip_cw: base = new element_bfc(clip_cw); break;
+                        case MetaCmd_Bfc_clip_ccw: base = new element_bfc(clip_ccw); break;
+                        case MetaCmd_Bfc_noclip: base = new element_bfc(no_clip); break;
+                        case MetaCmd_Bfc_invertnext: base = new element_bfc(invert_next); break;
                         case MetaCmd_Bfc_uncert:
-                            cert = bfc_certification::uncertified; break;
+                            cert = uncertified; break;
                         case MetaCmd_Bfc_cert_cw:
-                            cert = bfc_certification::certified, winding = bfc_certification::cw; break;
+                            cert = certified, winding = cw; break;
                         case MetaCmd_Bfc_cert_ccw:
-                            cert = bfc_certification::certified, winding = bfc_certification::ccw; break;
+                            cert = certified, winding = ccw; break;
                     }
                     if (m && cert != -1) {
                         bfc_certification *c = m->init_custom_data<bfc_certification>();
-                        c->set_certification((bfc_certification::cert_status)cert);
+                        c->set_certification((cert_status)cert);
                         if (winding != -1)
-                            c->set_orientation((bfc_certification::winding)winding);
+                            c->set_orientation((ldraw::winding)winding);
                     }
                 }
             }; break;
@@ -529,13 +529,13 @@ element_base* reader::parse_line(const std::string &command, model *m)
       if (m && pos != std::string::npos)
         m->set_header(cont.substr(1, pos - 1), cont.substr(pos + 1));
     } else if (contlc == "step") {
-      return new element_state(element_state::state_step);
+      return new element_state(state_step);
     } else if (contlc == "pause") {
-      return new element_state(element_state::state_pause);
+      return new element_state(state_pause);
     } else if (contlc == "clear") {
-      return new element_state(element_state::state_clear);
+      return new element_state(state_clear);
     } else if (contlc == "save") {
-      return new element_state(element_state::state_save);
+      return new element_state(state_save);
     } else if (contlc.length() > 6 && (contlc.substr(0, 5) == "print" || contlc.substr(0, 5) == "write")) {
       return new element_print(cont.substr(6, line.length()-6));
     } else if (contlc.length() > 3 && contlc.substr(0, 3) == "bfc") {
@@ -547,58 +547,58 @@ element_base* reader::parse_line(const std::string &command, model *m)
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_ccw);
 #endif
-        return new element_bfc(element_bfc::ccw);
+        return new element_bfc(set_ccw);
       } else if (subs == "cw") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_cw);
 #endif
-        return new element_bfc(element_bfc::cw);
+        return new element_bfc(set_cw);
       } else if (subs == "clip") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_clip);
 #endif
-        return new element_bfc(element_bfc::clip);
+        return new element_bfc(clip);
       } else if (subs == "clip cw" || subs == "cw clip") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_clip_cw);
 #endif
-        return new element_bfc(element_bfc::clip_cw);
+        return new element_bfc(clip_cw);
       } else if (subs == "clip ccw" || subs == "ccw clip") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_clip_ccw);
 #endif
-        return new element_bfc(element_bfc::clip_ccw);
+        return new element_bfc(clip_ccw);
       } else if (subs == "noclip") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_noclip);
 #endif
-        return new element_bfc(element_bfc::noclip);
+        return new element_bfc(no_clip);
       } else if (subs == "invertnext") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_invertnext);
 #endif
-        return new element_bfc(element_bfc::invertnext);
+        return new element_bfc(invert_next);
       } else if (subs == "certify" || subs == "certify ccw") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_cert_ccw);
 #endif
-        cert = bfc_certification::certified, winding = bfc_certification::ccw;
+        cert = certified, winding = ccw;
       } else if (subs == "certify cw") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_cert_cw);
 #endif
-        cert = bfc_certification::certified, winding = bfc_certification::cw;
+        cert = certified, winding = cw;
       } else if (subs == "nocertify") {
 #ifdef LDR_ARCHIVE_CREATE
         WriteMeta(MetaCmd_Bfc_uncert);
 #endif
-        cert = bfc_certification::uncertified;
+        cert = uncertified;
       }
       if (m && cert != -1) {
         bfc_certification *c = m->init_custom_data<bfc_certification>();
-        c->set_certification((bfc_certification::cert_status)cert);
+        c->set_certification((cert_status)cert);
         if (winding != -1)
-          c->set_orientation((bfc_certification::winding)winding);
+          c->set_orientation((ldraw::winding)winding);
       }
       return 0L;
     } else if (contlc.length() > 0) {
@@ -783,45 +783,45 @@ element_base* reader::parse_line(const std::string &command, model *m)
 off_t reader::get_archive_offs(const std::string &n) const
 {
     archive::Hash h(n.c_str());
-    ldcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
+    lcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
     if (hnd != HANDLE_NOT_FOUND)
         return get_archive_offs(_ldraw_cat[hnd].off);
     std::cout << "[libLDR] offset not found for: " << n << std::endl;
     return 0;
 }
-off_t reader::get_archive_offs(const ldcatalog::handle_t &h) const
+off_t reader::get_archive_offs(const lcatalog::handle_t &h) const
 {
     return _ldraw_cat[h].off;
 }
 
-const std::vector<ldcatalog::handle_t> reader::get_archive_deps(const std::string &n) const
+const std::vector<lcatalog::handle_t> reader::get_archive_deps(const std::string &n) const
 {
-    static_assert(sizeof(wchar_t)==sizeof(ldcatalog::handle_t), "handle_t != wchar_t");
-    static std::vector<ldcatalog::handle_t> _empty;
+    static_assert(sizeof(wchar_t)==sizeof(lcatalog::handle_t), "handle_t != wchar_t");
+    static std::vector<lcatalog::handle_t> _empty;
     for(auto &p : std::vector<std::string>{"","48/","8/"}) {
       archive::Hash h((p+n).c_str());
-      ldcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
+      lcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
       if (hnd == HANDLE_NOT_FOUND) continue;
       if (const wchar_t *ws = _ldraw_cat[hnd].deps)
-        return std::vector<ldcatalog::handle_t>(reinterpret_cast<const ldcatalog::handle_t*>(ws), reinterpret_cast<const ldcatalog::handle_t*>(ws+wcslen(ws)));
+        return std::vector<lcatalog::handle_t>(reinterpret_cast<const lcatalog::handle_t*>(ws), reinterpret_cast<const lcatalog::handle_t*>(ws+wcslen(ws)));
     }
 #ifdef DEBUG
     std::cout << "[libLDR] dependency not found for: " << n << std::endl;
 #endif
     return _empty;
 }
-const std::vector<ldcatalog::handle_t> reader::get_archive_deps(const ldcatalog::handle_t &h) const
+const std::vector<lcatalog::handle_t> reader::get_archive_deps(const lcatalog::handle_t &h) const
 {
     return get_archive_deps(_ldraw_cat[h].file);
 }
-const char *reader::get_archive_model(const ldcatalog::handle_t &h) const
+const char *reader::get_archive_model(const lcatalog::handle_t &h) const
 {
     return _ldraw_cat[h].file;
 }
-ldcatalog::handle_t reader::get_archive_handle(const std::string &n) const
+lcatalog::handle_t reader::get_archive_handle(const std::string &n) const
 {
     archive::Hash h(n.c_str());
-    ldcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
+    lcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
     if (hnd != HANDLE_NOT_FOUND) return hnd;
     std::cout << "[libLDR] handle not found for: " << n << std::endl;
     return 0;
@@ -829,7 +829,7 @@ ldcatalog::handle_t reader::get_archive_handle(const std::string &n) const
 bool reader::get_archive_exists(const std::string &n) const
 {
     archive::Hash h(n.c_str());
-    ldcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
+    lcatalog::handle_t hnd = _ldraw_hnd_from_hash(h);
     return hnd != HANDLE_NOT_FOUND;
 }
 #endif

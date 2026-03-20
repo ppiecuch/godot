@@ -406,9 +406,10 @@ if not env["disable_3d"]:
                 "#thirdparty/recastnavigation/Recast/Include",
             ]
         )
-        sources += Glob("submodules/detournav/src/util/*.cpp") + Glob("submodules/detournav/src/util/*.c")
+        env_module.Append(CPPPATH=["submodules/detournav"])
+        sources += Glob("submodules/detournav/util/*.cpp") + Glob("submodules/detournav/util/*.c")
         thirdparty_sources += (
-            Glob("thirparty/recastnavigation/DebugUtils/Source/*.cpp")
+            Glob("thirdparty/recastnavigation/DebugUtils/Source/*.cpp")
             + Glob("thirdparty/recastnavigation/Detour/Source/*.cpp")
             + Glob("thirdparty/recastnavigation/DetourCrowd/Source/*.cpp")
             + Glob("thirdparty/recastnavigation/DetourTileCache/Source/*.cpp")
@@ -429,8 +430,14 @@ if not env["disable_3d"]:
             sources += Glob("submodules/meshslicer/utils/*.cpp")
 
 if is_enabled("ldrdraw"):
-    env_module.Append(CPPPATH=["thirdparty/libldr"])
-    sources += Glob("thirdparty/libldr/*.c") + Glob("thirdparty/libldr/*.cpp") + Glob("thirdparty/libldr/*.c")
+    env_module.Append(CPPPATH=["thirdparty/libldr", "thirdparty/libldr/ldrawlib", "thirdparty/misc"])
+    env_module.Append(CPPDEFINES=["LDR_ARCHIVE_SUPPORT"])
+    thirdparty_sources += (
+        Glob("thirdparty/libldr/libldr/*.cpp")
+        + Glob("thirdparty/libldr/libldr/*.c")
+        + ["thirdparty/libldr/ldrawlib/ldraw_lib_mem.c"]
+    )
+    modules += ["ldrdraw"]
 if env["os_family"] in ["os_windows", "os_unix"]:
     modules += ["unqlite"]
     thirdparty_sources += Glob("thirdparty/unqlite/*.c")

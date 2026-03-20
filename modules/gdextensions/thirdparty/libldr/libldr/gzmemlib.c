@@ -248,7 +248,7 @@ local void gz_reset(gz_statep state)
 }
 
 /* Open a gzip file either by name or file descriptor. */
-local gzFile gz_open(const char *mem, size_t mem_size, const char *mode)
+local gzFile gz_open(const unsigned char *mem, size_t mem_size, const char *mode)
 {
     gz_statep state;
     z_size_t len;

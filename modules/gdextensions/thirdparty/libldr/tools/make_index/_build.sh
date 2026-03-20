@@ -2,7 +2,7 @@
 
 set -e
 
-QT=$HOME/Qt/5.15-static/clang_64
+QT=$HOME/Qt/6.8-static/clang_64
 
 if [ -d "$QT" ]; then
 	$QT/bin/qmake -r Tools.pro

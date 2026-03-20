@@ -38,7 +38,7 @@ bfc_certification& bfc_certification::operator= (cert_status cert)
 	return *this;
 }
 
-element_bfc::element_bfc(element_bfc::command cmd)
+element_bfc::element_bfc(command cmd)
 {
 	m_cmd = cmd;
 }
@@ -48,12 +48,12 @@ element_bfc::element_bfc(const element_bfc &b)
 	m_cmd = b.get_command();
 }
 
-element_bfc::command element_bfc::get_command() const
+command element_bfc::get_command() const
 {
 	return m_cmd;
 }
 
-void element_bfc::set_command(element_bfc::command cmd)
+void element_bfc::set_command(command cmd)
 {
 	m_cmd = cmd;
 }
@@ -94,13 +94,13 @@ bool bfc_state_tracker::localinverted() const
 
 void bfc_state_tracker::accumulate_culling(bool b)
 {
-	m_cullstack.push(culling() & b ? 1 : 0);
+	m_cullstack.push((culling() & b) ? 1 : 0);
 }
 	
 void bfc_state_tracker::accumulate_invert(bool b, bool r)
 {
-	m_invertstack.push(inverted() ^ (b ^ r) ? 1 : 0);
-	m_localinvertstack.push(localinverted() ^ b ? 1 : 0);
+	m_invertstack.push((inverted() ^ (b ^ r)) ? 1 : 0);
+	m_localinvertstack.push((localinverted() ^ b) ? 1 : 0);
 }
 
 void bfc_state_tracker::pop_culling()

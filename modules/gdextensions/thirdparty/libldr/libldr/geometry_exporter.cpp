@@ -13,6 +13,7 @@
 
 namespace lexporter
 {
+using namespace ldraw;
 
 int geometry_exporter::s_memory_usage = 0;
 
@@ -415,18 +416,18 @@ void geometry_exporter::fill_color(const std::stack<ldraw::color> &colorstack, c
 void geometry_exporter::fill_elements_recursive(std::stack<ldraw::color> &colorstack, ldraw::model *m, const ldraw::matrix &transform)
 {
 	bool invertnext = false;
-	ldraw::bfc_certification::winding winding = ldraw::bfc_certification::ccw; // default
-	ldraw::bfc_certification::cert_status cert;
+	ldraw::winding cur_winding = ldraw::ccw; // default
+	ldraw::cert_status cert;
 	const ldraw::bfc_certification *cext = m->custom_data<ldraw::bfc_certification>();
 
 	if (!cext)
-		cert = ldraw::bfc_certification::unknown;
+		cert = ldraw::unknown;
 	else {
 		cert = cext->certification();
-		if (cert == ldraw::bfc_certification::certified) {
-			winding = cext->orientation();
+		if (cert == ldraw::certified) {
+			cur_winding = cext->orientation();
 			if (m_bfc_tracker.localinverted()) {
-				winding = winding == ldraw::bfc_certification::ccw ? ldraw::bfc_certification::cw : ldraw::bfc_certification::ccw;
+				cur_winding = cur_winding == ldraw::ccw ? ldraw::cw : ldraw::ccw;
             }
 		}
 	}
@@ -456,8 +457,8 @@ void geometry_exporter::fill_elements_recursive(std::stack<ldraw::color> &colors
 			const ldraw::element_triangle *l = CAST_AS_CONST_TRIANGLE(it);
 
 			bool flip_winding =
-				(winding == ldraw::bfc_certification::ccw && flipped) ||
-				(winding == ldraw::bfc_certification::cw && !flipped);
+				(cur_winding == ldraw::ccw && flipped) ||
+				(cur_winding == ldraw::cw && !flipped);
 
 			if (flip_winding) {
 				fill_element_atomic(transform * l->pos3(), m_vertices[1], &m_vertptr[1]);
@@ -480,8 +481,8 @@ void geometry_exporter::fill_elements_recursive(std::stack<ldraw::color> &colors
 			const ldraw::element_quadrilateral *l = CAST_AS_CONST_QUADRILATERAL(it);
 
 			bool flip_winding =
-				(winding == ldraw::bfc_certification::ccw && flipped) ||
-				(winding == ldraw::bfc_certification::cw && !flipped);
+				(cur_winding == ldraw::ccw && flipped) ||
+				(cur_winding == ldraw::cw && !flipped);
 
 			if (flip_winding) {
 				fill_element_atomic(transform * l->pos4(), m_vertices[2], &m_vertptr[2]);
@@ -539,15 +540,15 @@ void geometry_exporter::fill_elements_recursive(std::stack<ldraw::color> &colors
 			// Back Face Culling (BFC)
 			const ldraw::element_bfc *l = CAST_AS_CONST_BFC(it);
 
-			if (l->get_command() & ldraw::element_bfc::cw)
-				winding = ldraw::bfc_certification::cw;
-			else if (l->get_command() & ldraw::element_bfc::ccw)
-				winding = ldraw::bfc_certification::ccw;
+			if (l->get_command() & ldraw::set_cw)
+				cur_winding = ldraw::cw;
+			else if (l->get_command() & ldraw::set_ccw)
+				cur_winding = ldraw::ccw;
 
 			if (m_bfc_tracker.inverted())
-				winding = winding == ldraw::bfc_certification::cw ? ldraw::bfc_certification::ccw : ldraw::bfc_certification::cw;
+				cur_winding = cur_winding == ldraw::cw ? ldraw::ccw : ldraw::cw;
 
-			if (l->get_command() == ldraw::element_bfc::invertnext)
+			if (l->get_command() == ldraw::invert_next)
 				invertnext = true;
 		}
 		++i;
