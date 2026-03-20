@@ -408,13 +408,29 @@ if not env["disable_3d"]:
         )
         env_module.Append(CPPPATH=["submodules/detournav"])
         sources += Glob("submodules/detournav/util/*.cpp") + Glob("submodules/detournav/util/*.c")
-        thirdparty_sources += (
-            Glob("thirdparty/recastnavigation/DebugUtils/Source/*.cpp")
-            + Glob("thirdparty/recastnavigation/Detour/Source/*.cpp")
-            + Glob("thirdparty/recastnavigation/DetourCrowd/Source/*.cpp")
-            + Glob("thirdparty/recastnavigation/DetourTileCache/Source/*.cpp")
-            + Glob("thirdparty/recastnavigation/Recast/Source/*.cpp")
-        )
+        # DebugUtils, Detour, DetourCrowd, DetourTileCache are only used by detournav.
+        # Recast sources are already compiled by modules/navigation, so not listed here.
+        thirdparty_sources += [
+            "#thirdparty/recastnavigation/DebugUtils/Source/DebugDraw.cpp",
+            "#thirdparty/recastnavigation/DebugUtils/Source/DetourDebugDraw.cpp",
+            "#thirdparty/recastnavigation/DebugUtils/Source/RecastDebugDraw.cpp",
+            "#thirdparty/recastnavigation/DebugUtils/Source/RecastDump.cpp",
+            "#thirdparty/recastnavigation/Detour/Source/DetourAlloc.cpp",
+            "#thirdparty/recastnavigation/Detour/Source/DetourAssert.cpp",
+            "#thirdparty/recastnavigation/Detour/Source/DetourCommon.cpp",
+            "#thirdparty/recastnavigation/Detour/Source/DetourNavMesh.cpp",
+            "#thirdparty/recastnavigation/Detour/Source/DetourNavMeshBuilder.cpp",
+            "#thirdparty/recastnavigation/Detour/Source/DetourNavMeshQuery.cpp",
+            "#thirdparty/recastnavigation/Detour/Source/DetourNode.cpp",
+            "#thirdparty/recastnavigation/DetourCrowd/Source/DetourCrowd.cpp",
+            "#thirdparty/recastnavigation/DetourCrowd/Source/DetourLocalBoundary.cpp",
+            "#thirdparty/recastnavigation/DetourCrowd/Source/DetourObstacleAvoidance.cpp",
+            "#thirdparty/recastnavigation/DetourCrowd/Source/DetourPathCorridor.cpp",
+            "#thirdparty/recastnavigation/DetourCrowd/Source/DetourPathQueue.cpp",
+            "#thirdparty/recastnavigation/DetourCrowd/Source/DetourProximityGrid.cpp",
+            "#thirdparty/recastnavigation/DetourTileCache/Source/DetourTileCache.cpp",
+            "#thirdparty/recastnavigation/DetourTileCache/Source/DetourTileCacheBuilder.cpp",
+        ]
     if env["tools"]:
         if is_enabled("generator"):
             modules += ["generator"]

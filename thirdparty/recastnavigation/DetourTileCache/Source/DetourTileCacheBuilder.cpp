@@ -1424,6 +1424,8 @@ static bool canRemoveVertex(dtTileCachePolyMesh& mesh, const unsigned short rem)
 		}
 	}
 	
+	(void)numRemovedVerts; // Diagnostic: total verts removed from touched polys.
+
 	// There would be too few edges remaining to create a polygon.
 	// This can happen for example when a tip of a triangle is marked
 	// as deletion, but there are no other polys that share the vertex.
@@ -1510,13 +1512,15 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 		}
 	}
 	
+	(void)numRemovedVerts; // Diagnostic: total verts referencing the removed vertex.
+
 	int nedges = 0;
 	unsigned short edges[MAX_REM_EDGES*3];
 	int nhole = 0;
 	unsigned short hole[MAX_REM_EDGES];
 	int nharea = 0;
 	unsigned short harea[MAX_REM_EDGES];
-	
+
 	for (int i = 0; i < mesh.npolys; ++i)
 	{
 		unsigned short* p = &mesh.polys[i*MAX_VERTS_PER_POLY*2];
