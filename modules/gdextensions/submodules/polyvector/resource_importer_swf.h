@@ -169,6 +169,13 @@ public:
 	virtual bool handles_type(const String &p_type) const { return (p_type == "JSONVector"); }
 };
 
+// Sprite data for nested animations
+struct PolyVectorSprite {
+	uint16_t id = 0;
+	uint16_t frame_count = 0;
+	List<PolyVectorFrame> frames;
+};
+
 class JSONVector : public Resource {
 	GDCLASS(JSONVector, Resource);
 	OBJ_SAVE_TYPE(JSONVector);
@@ -178,6 +185,8 @@ class JSONVector : public Resource {
 	Vector2 dimensions;
 	List<PolyVectorCharacter> dictionary;
 	List<PolyVectorFrame> frames;
+	Map<String, int> frame_labels;
+	List<PolyVectorSprite> sprites;
 
 	MeshDictionaryMap mesh_dictionary;
 
@@ -189,6 +198,25 @@ public:
 	void add_frame(PolyVectorFrame p_data) { frames.push_back(p_data); }
 	PolyVectorFrame get_frame(uint16_t i) { return frames[i]; }
 	List<PolyVectorFrame> get_frames() { return frames; }
+
+	// Frame labels
+	void set_frame_label(const String &label, int frame) { frame_labels[label] = frame; }
+	int get_frame_for_label(const String &label) const {
+		if (frame_labels.has(label))
+			return frame_labels[label];
+		return -1;
+	}
+	Map<String, int> get_frame_labels() const { return frame_labels; }
+	PoolStringArray get_label_names() const {
+		PoolStringArray names;
+		for (const Map<String, int>::Element *E = frame_labels.front(); E; E = E->next())
+			names.push_back(E->key());
+		return names;
+	}
+
+	// Sprites
+	void add_sprite(PolyVectorSprite p_sprite) { sprites.push_back(p_sprite); }
+	List<PolyVectorSprite> get_sprites() { return sprites; }
 
 	void set_fps(real_t f) { fps = f; }
 	real_t get_fps() { return fps; }
@@ -219,5 +247,8 @@ public:
 #define PV_JSON_NAME_DEPTH "dep"
 #define PV_JSON_NAME_TRANSFORM "xf"
 #define PV_JSON_NAME_CXFORM "cx"
+#define PV_JSON_NAME_LABELS "lbl"
+#define PV_JSON_NAME_ASSETS "ast"
+#define PV_JSON_NAME_SPRITES "spr"
 
 #endif // RESOURCE_IMPORTER_SWF_H

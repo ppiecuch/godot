@@ -88,6 +88,57 @@ GodotJavaWrapper::GodotJavaWrapper(JNIEnv *p_env, jobject p_activity, jobject p_
 
 	// get some Activity method pointers...
 	_get_class_loader = p_env->GetMethodID(activity_class, "getClassLoader", "()Ljava/lang/ClassLoader;");
+
+	// Location/GPS (optional - methods may not exist in older Java implementations)
+	_start_location_updates = p_env->GetMethodID(godot_class, "startLocationUpdates", "(IFZ)V");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_start_location_updates = nullptr;
+	}
+	_stop_location_updates = p_env->GetMethodID(godot_class, "stopLocationUpdates", "()V");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_stop_location_updates = nullptr;
+	}
+	_get_last_known_location = p_env->GetMethodID(godot_class, "getLastKnownLocation", "(Z)[D");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_get_last_known_location = nullptr;
+	}
+	_has_location_permission = p_env->GetMethodID(godot_class, "hasLocationPermission", "()Z");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_has_location_permission = nullptr;
+	}
+
+	// Background work service (optional)
+	_start_background_service = p_env->GetMethodID(godot_class, "startBackgroundService", "(Ljava/lang/String;)V");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_start_background_service = nullptr;
+	}
+	_stop_background_service = p_env->GetMethodID(godot_class, "stopBackgroundService", "()V");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_stop_background_service = nullptr;
+	}
+	_is_background_service_running = p_env->GetMethodID(godot_class, "isBackgroundServiceRunning", "()Z");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_is_background_service_running = nullptr;
+	}
+	_update_background_service_notification = p_env->GetMethodID(godot_class, "updateBackgroundServiceNotification", "(Ljava/lang/String;)V");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_update_background_service_notification = nullptr;
+	}
+
+	// Advanced joypad (optional)
+	_get_joy_axis_info = p_env->GetMethodID(godot_class, "getJoyAxisInfo", "(II)[F");
+	if (p_env->ExceptionCheck()) {
+		p_env->ExceptionClear();
+		_get_joy_axis_info = nullptr;
+	}
 }
 
 GodotJavaWrapper::~GodotJavaWrapper() {
@@ -415,4 +466,110 @@ void GodotJavaWrapper::dump_benchmark(const String &benchmark_file) {
 		jstring j_benchmark_file = env->NewStringUTF(benchmark_file.utf8().get_data());
 		env->CallVoidMethod(godot_instance, _dump_benchmark, j_benchmark_file);
 	}
+}
+
+// --- Location/GPS ---
+
+void GodotJavaWrapper::start_location_updates(int p_min_time_ms, float p_min_distance, bool p_use_gps) {
+	if (_start_location_updates) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL(env);
+		env->CallVoidMethod(godot_instance, _start_location_updates, p_min_time_ms, p_min_distance, (jboolean)p_use_gps);
+	}
+}
+
+void GodotJavaWrapper::stop_location_updates() {
+	if (_stop_location_updates) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL(env);
+		env->CallVoidMethod(godot_instance, _stop_location_updates);
+	}
+}
+
+bool GodotJavaWrapper::has_location_permission() {
+	if (_has_location_permission) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL_V(env, false);
+		return env->CallBooleanMethod(godot_instance, _has_location_permission);
+	}
+	return false;
+}
+
+Vector<double> GodotJavaWrapper::get_last_known_location(bool p_use_gps) {
+	Vector<double> result;
+	if (_get_last_known_location) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL_V(env, result);
+		jdoubleArray arr = (jdoubleArray)env->CallObjectMethod(godot_instance, _get_last_known_location, (jboolean)p_use_gps);
+		if (arr) {
+			jsize len = env->GetArrayLength(arr);
+			if (len >= 6) {
+				jdouble *data = env->GetDoubleArrayElements(arr, nullptr);
+				for (int i = 0; i < len; i++) {
+					result.push_back(data[i]);
+				}
+				env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
+			}
+			env->DeleteLocalRef(arr);
+		}
+	}
+	return result;
+}
+
+// --- Background Work Service ---
+
+void GodotJavaWrapper::start_background_service(const String &p_notification_text) {
+	if (_start_background_service) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL(env);
+		jstring j_text = env->NewStringUTF(p_notification_text.utf8().get_data());
+		env->CallVoidMethod(godot_instance, _start_background_service, j_text);
+	}
+}
+
+void GodotJavaWrapper::stop_background_service() {
+	if (_stop_background_service) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL(env);
+		env->CallVoidMethod(godot_instance, _stop_background_service);
+	}
+}
+
+bool GodotJavaWrapper::is_background_service_running() {
+	if (_is_background_service_running) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL_V(env, false);
+		return env->CallBooleanMethod(godot_instance, _is_background_service_running);
+	}
+	return false;
+}
+
+void GodotJavaWrapper::update_background_service_notification(const String &p_notification_text) {
+	if (_update_background_service_notification) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL(env);
+		jstring j_text = env->NewStringUTF(p_notification_text.utf8().get_data());
+		env->CallVoidMethod(godot_instance, _update_background_service_notification, j_text);
+	}
+}
+
+// --- Advanced Joypad Axis Discovery ---
+
+Vector<float> GodotJavaWrapper::get_joy_axis_info(int p_device_id, int p_axis) {
+	Vector<float> result;
+	if (_get_joy_axis_info) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL_V(env, result);
+		jfloatArray arr = (jfloatArray)env->CallObjectMethod(godot_instance, _get_joy_axis_info, p_device_id, p_axis);
+		if (arr) {
+			jsize len = env->GetArrayLength(arr);
+			jfloat *data = env->GetFloatArrayElements(arr, nullptr);
+			for (int i = 0; i < len; i++) {
+				result.push_back(data[i]);
+			}
+			env->ReleaseFloatArrayElements(arr, data, JNI_ABORT);
+			env->DeleteLocalRef(arr);
+		}
+	}
+	return result;
 }

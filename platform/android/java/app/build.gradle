@@ -293,10 +293,21 @@ task copyAndRenameReleaseAab(type: Copy) {
 
 /**
  * Used to validate the version of the Java SDK used for the Godot gradle builds.
+ * Requires JDK 17 to 23 — older JDKs cannot compile Java 17 bytecode, and
+ * JDK 24+ is not yet supported by this version of the Gradle build tools.
  */
 task validateJavaVersion {
-    if (JavaVersion.current() != versions.javaVersion) {
-        throw new GradleException("Invalid Java version ${JavaVersion.current()}. Version ${versions.javaVersion} is the required Java version for Godot gradle builds.")
+    def current = JavaVersion.current()
+    if (!current.isCompatibleWith(versions.javaVersion)) {
+        throw new GradleException("Java version ${current} is too old. JDK ${versions.javaVersion} or newer is required for Godot gradle builds.")
+    }
+    // Gradle 8.x does not support JDK 24+ (class file major version 68).
+    // Update this upper bound when upgrading to a Gradle version that adds support.
+    def maxSupported = JavaVersion.VERSION_23
+    if (current > maxSupported) {
+        throw new GradleException("Java version ${current} is too new for Gradle ${gradle.gradleVersion}. " +
+            "JDK ${versions.javaVersion} to ${maxSupported} is supported. " +
+            "Install JDK 17 via: brew install openjdk@17")
     }
 }
 

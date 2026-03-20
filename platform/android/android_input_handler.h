@@ -68,6 +68,8 @@ private:
 	Vector<TouchPos> touch;
 	MouseEventInfo mouse_event_info;
 	Point2 hover_prev_pos; // needed to calculate the relative position on hover events
+	Point2 touchpad_prev_pos; // needed for touchpad scroll emulation
+	bool touchpad_dragging = false; // tracking two-finger touchpad scroll
 
 	bool alt_mem = false;
 	bool shift_mem = false;
@@ -103,6 +105,7 @@ public:
 	void process_key_event(int p_scancode, int p_physical_scancode, int p_unicode, bool p_pressed);
 	void process_mouse_event(int p_event_action, int p_event_android_buttons_mask, Point2 p_event_pos, Vector2 p_delta, bool p_double_click, bool p_source_mouse_relative);
 	void process_touch_event(int p_event, int p_pointer, const Vector<TouchPos> &p_points, bool p_double_tap);
+	void process_touchpad_event(int p_event_action, int p_event_android_buttons_mask, Point2 p_event_pos, Vector2 p_delta, float p_screen_min_dim);
 	void process_magnify(Point2 p_pos, float p_factor);
 	void process_pan(Point2 p_pos, Vector2 p_delta);
 	void joy_connection_changed(int p_device, bool p_connected, String p_name);

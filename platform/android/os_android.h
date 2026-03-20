@@ -218,6 +218,21 @@ public:
 	virtual String get_joy_guid(int p_device) const;
 	void vibrate_handheld(int p_duration_ms);
 
+	// Location/GPS services
+	void start_location_updates(int p_min_time_ms = 1000, float p_min_distance = 1.0f, bool p_use_gps = true);
+	void stop_location_updates();
+	bool has_location_permission();
+	Dictionary get_last_known_location(bool p_use_gps = true);
+
+	// Background work service
+	void start_background_service(const String &p_notification_text = "App running in background");
+	void stop_background_service();
+	bool is_background_service_running();
+	void update_background_service_notification(const String &p_notification_text);
+
+	// Advanced joypad axis discovery
+	Dictionary get_joy_axis_info(int p_device_id, int p_axis);
+
 	virtual String get_config_path() const;
 
 	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = nullptr, String *r_pipe = nullptr, int *r_exitcode = nullptr, bool read_stderr = false, Mutex *p_pipe_mutex = nullptr, bool p_open_console = false);

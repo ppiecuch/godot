@@ -410,6 +410,56 @@ int AndroidInputHandler::_android_button_mask_to_godot_button_mask(int android_b
 	return godot_button_mask;
 }
 
+void AndroidInputHandler::process_touchpad_event(int p_event_action, int p_event_android_buttons_mask, Point2 p_event_pos, Vector2 p_delta, float p_screen_min_dim) {
+	// Touchpad scroll emulation: detect two-finger drag on touchpad (no buttons pressed during MOVE)
+	// and convert to mouse wheel events, similar to playcorenative/android.cpp approach.
+	int event_buttons_mask = _android_button_mask_to_godot_button_mask(p_event_android_buttons_mask);
+
+	switch (p_event_action) {
+		case AMOTION_EVENT_ACTION_MOVE: {
+			if (event_buttons_mask == 0 && touchpad_dragging) {
+				// No buttons pressed during move = touchpad scroll gesture
+				const float mul = (p_screen_min_dim > 0) ? (16.0f / p_screen_min_dim) : 0.02f;
+
+				Ref<InputEventMouseButton> ev;
+				ev.instance();
+				_set_key_modifier_state(ev);
+				ev->set_position(hover_prev_pos);
+				ev->set_global_position(hover_prev_pos);
+				ev->set_pressed(true);
+
+				float wheel_x = -(p_event_pos.x - touchpad_prev_pos.x) * mul;
+				float wheel_y = (p_event_pos.y - touchpad_prev_pos.y) * mul;
+
+				if (wheel_y > 0) {
+					_wheel_button_click(0, ev, BUTTON_WHEEL_UP, wheel_y);
+				} else if (wheel_y < 0) {
+					_wheel_button_click(0, ev, BUTTON_WHEEL_DOWN, -wheel_y);
+				}
+				if (wheel_x > 0) {
+					_wheel_button_click(0, ev, BUTTON_WHEEL_RIGHT, wheel_x);
+				} else if (wheel_x < 0) {
+					_wheel_button_click(0, ev, BUTTON_WHEEL_LEFT, -wheel_x);
+				}
+
+				touchpad_prev_pos = p_event_pos;
+			}
+		} break;
+
+		case AMOTION_EVENT_ACTION_DOWN: {
+			if (event_buttons_mask == 0) {
+				touchpad_dragging = true;
+				touchpad_prev_pos = p_event_pos;
+			}
+		} break;
+
+		case AMOTION_EVENT_ACTION_UP:
+		case AMOTION_EVENT_ACTION_CANCEL: {
+			touchpad_dragging = false;
+		} break;
+	}
+}
+
 void AndroidInputHandler::joy_connection_changed(int p_device, bool p_connected, String p_name) {
 	input->joy_connection_changed(p_device, p_connected, p_name, "");
 }

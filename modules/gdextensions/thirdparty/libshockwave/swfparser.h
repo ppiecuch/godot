@@ -7,8 +7,11 @@
 #include <cmath>
 #include <cassert>
 
+#ifndef LIBSHOCKWAVE_STANDALONE
 #include "core/typedefs.h"
+#endif
 #include "swftypedefs.h"
+#include "swfaction.h"
 
 #define FLOAT16_EXPONENT_BASE 15
 
@@ -158,7 +161,6 @@ namespace SWF
 		_FORCE_INLINE_ RGBA readRGBA();
 		_FORCE_INLINE_ RGBA readARGB();
 		_FORCE_INLINE_ Matrix readMATRIX();
-		//_FORCE_INLINE_ ClipActions readCLIPACTIONS();
 		CXForm readCXFORM(bool alpha = false);
 		CXForm readCXFORMWITHALPHA() { return readCXFORM(true); }
 
@@ -188,6 +190,17 @@ namespace SWF
 		_FORCE_INLINE_ uint64_t readBytesAlignedBigEndian(uint8_t);
 		_FORCE_INLINE_ uint32_t readBits(uint8_t);
 		_FORCE_INLINE_ uint32_t readEncodedU32();
+
+		// Phase 1: ActionScript parsing
+		_FORCE_INLINE_ ActionRecord readACTIONRECORD();
+		_FORCE_INLINE_ void readACTIONBLOCK(uint16_t sprite_id, uint16_t frame, bool is_init, uint32_t tag_length);
+		_FORCE_INLINE_ ClipActions readCLIPACTIONS();
+		_FORCE_INLINE_ uint32_t readCLIPEVENTFLAGS();
+		_FORCE_INLINE_ ClipActionRecord readCLIPACTIONRECORD();
+
+		// Phase 2: Additional tag parsing
+		_FORCE_INLINE_ ButtonRecord readBUTTONRECORD(uint16_t tag);
+		_FORCE_INLINE_ TextRecord readTEXTRECORD(uint16_t tag, uint8_t glyph_bits, uint8_t advance_bits);
 
 		friend class Parser;
 	};

@@ -562,4 +562,21 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onRendererPaused(JNIE
 JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onMainActivityResult(JNIEnv *env, jclass clazz, jint requestCode, jint resultCode, jobject data) {
 	processActivityResult(requestCode, resultCode, data);
 }
+
+JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onLocationUpdate(JNIEnv *env, jclass clazz, jdouble latitude, jdouble longitude, jdouble altitude, jfloat accuracy, jfloat speed, jlong timestamp, jboolean is_gps) {
+	if (step.get() <= 0) {
+		return;
+	}
+	if (os_android && os_android->get_main_loop()) {
+		Array args;
+		args.push_back(latitude);
+		args.push_back(longitude);
+		args.push_back(altitude);
+		args.push_back((double)accuracy);
+		args.push_back((double)speed);
+		args.push_back((int64_t)timestamp);
+		args.push_back((bool)is_gps);
+		os_android->get_main_loop()->emit_signal("on_location_update", args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+	}
+}
 }

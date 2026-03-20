@@ -289,6 +289,18 @@ uint32_t PolyVector::get_vertex_count() {
 }
 #endif // POLYVECTOR_DEBUG
 
+int PolyVector::get_frame_for_label(const String &label) const {
+	if (data_vec_file.is_valid())
+		return data_vec_file->get_frame_for_label(label);
+	return -1;
+}
+
+PoolStringArray PolyVector::get_label_names() const {
+	if (data_vec_file.is_valid())
+		return data_vec_file->get_label_names();
+	return PoolStringArray();
+}
+
 void PolyVector::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_vector_image"), &PolyVector::set_vector_image);
 	ClassDB::bind_method(D_METHOD("get_vector_image"), &PolyVector::get_vector_image);
@@ -324,6 +336,10 @@ void PolyVector::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_max_tessellation_angle"), &PolyVector::set_max_tessellation_angle);
 	ClassDB::bind_method(D_METHOD("get_max_tessellation_angle"), &PolyVector::get_max_tessellation_angle);
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_tessellation_angle", PROPERTY_HINT_RANGE, "1.0, 10.0, 0.1, 4.0"), "set_max_tessellation_angle", "get_max_tessellation_angle");
+
+	// Frame label methods
+	ClassDB::bind_method(D_METHOD("get_frame_for_label", "label"), &PolyVector::get_frame_for_label);
+	ClassDB::bind_method(D_METHOD("get_label_names"), &PolyVector::get_label_names);
 
 #ifdef POLYVECTOR_DEBUG
 	ADD_GROUP("Debug", "");
@@ -399,10 +415,146 @@ Ref<JSONVector> PolyVector2D::get_vector_image() const {
 
 void PolyVector2D::set_time(real_t p_time) {
 	frame_time = p_time;
-	// draw_current_frame();
+	update();
 }
 real_t PolyVector2D::get_time() {
 	return frame_time;
+}
+
+void PolyVector2D::set_curve_quality(int8_t p_quality) {
+	curve_quality = p_quality;
+	update();
+}
+int8_t PolyVector2D::get_curve_quality() {
+	return curve_quality;
+}
+
+void PolyVector2D::set_max_tessellation_angle(real_t f) {
+	max_tessellation_angle = f;
+}
+real_t PolyVector2D::get_max_tessellation_angle() {
+	return max_tessellation_angle;
+}
+
+int PolyVector2D::get_frame_for_label(const String &label) const {
+	if (data_vec_file.is_valid())
+		return data_vec_file->get_frame_for_label(label);
+	return -1;
+}
+
+PoolStringArray PolyVector2D::get_label_names() const {
+	if (data_vec_file.is_valid())
+		return data_vec_file->get_label_names();
+	return PoolStringArray();
+}
+
+void PolyVector2D::draw_current_frame() {
+	if (data_vec_file.is_null() || frame_data.size() == 0)
+		return;
+
+	uint16_t frameno = CLAMP((fps * frame_time), 0, frame_data.size() - 1);
+	PolyVectorFrame *framedata = &frame_data[frameno];
+
+	for (PolyVectorFrame::Element *c = framedata->front(); c; c = c->next()) {
+		PolyVectorSymbol &symbol = c->get();
+		PolyVectorCharacter *pvchar = &dictionary_data[symbol.id];
+
+		Transform2D xform;
+		xform[0] = Vector2(symbol.matrix.ScaleX, symbol.matrix.Skew0);
+		xform[1] = Vector2(symbol.matrix.Skew1, symbol.matrix.ScaleY);
+		xform[2] = Vector2(symbol.matrix.TranslateX, symbol.matrix.TranslateY);
+
+		for (PolyVectorCharacter::Element *s = pvchar->front(); s; s = s->next()) {
+			PolyVectorShape &shape = s->get();
+			if (shape.fillcolour == nullptr && shape.strokecolour == nullptr)
+				continue;
+
+			PoolVector<Vector2> tess = shape.path.curve.tessellate(curve_quality, max_tessellation_angle);
+			if (tess.size() < 2)
+				continue;
+
+			// Transform tessellated points
+			PoolVector<Vector2> transformed;
+			transformed.resize(tess.size());
+			{
+				PoolVector<Vector2>::Read tr = tess.read();
+				PoolVector<Vector2>::Write tw = transformed.write();
+				for (int i = 0; i < tess.size(); i++) {
+					tw[i] = xform.xform(tr[i]);
+				}
+			}
+
+			if (shape.path.closed && shape.fillcolour != nullptr) {
+				// Draw filled polygon
+				Color fill = *shape.fillcolour;
+				if (symbol.tint) {
+					fill.r = fill.r * symbol.tint->RedMultiplier + symbol.tint->RedAdd;
+					fill.g = fill.g * symbol.tint->GreenMultiplier + symbol.tint->GreenAdd;
+					fill.b = fill.b * symbol.tint->BlueMultiplier + symbol.tint->BlueAdd;
+					fill.a = fill.a * symbol.tint->AlphaMultiplier + symbol.tint->AlphaAdd;
+				}
+
+				// Build polygon for earcut (skip last point if closed since it duplicates first)
+				std::vector<std::vector<Vector2>> polygons;
+				std::vector<Vector2> poly;
+				{
+					PoolVector<Vector2>::Read pr = transformed.read();
+					for (int i = 1; i < transformed.size(); i++)
+						poly.push_back(pr[i]);
+				}
+				polygons.push_back(poly);
+
+				// Add holes
+				for (List<uint16_t>::Element *hole = shape.holes.front(); hole; hole = hole->next()) {
+					PoolVector<Vector2> holetess = (*pvchar)[hole->get()].path.curve.tessellate(curve_quality, max_tessellation_angle);
+					std::vector<Vector2> holepoly;
+					{
+						PoolVector<Vector2>::Read hr = holetess.read();
+						for (int j = 0; j < holetess.size(); j++)
+							holepoly.push_back(xform.xform(hr[j]));
+					}
+					polygons.push_back(holepoly);
+				}
+
+				// Collect all vertices for earcut
+				std::vector<Vector2> allverts;
+				for (auto &p : polygons)
+					allverts.insert(allverts.end(), p.begin(), p.end());
+
+				std::vector<N> indices = mapbox::earcut<N>(polygons);
+				if (!indices.empty()) {
+					Vector<Point2> triverts;
+					Vector<Color> tricolours;
+					triverts.resize(indices.size());
+					tricolours.resize(indices.size());
+					for (size_t i = 0; i < indices.size(); i++) {
+						triverts.write[i] = allverts[indices[i]];
+						tricolours.write[i] = fill;
+					}
+					draw_polygon(triverts, tricolours);
+				}
+			}
+
+			if (shape.strokecolour != nullptr) {
+				// Draw stroke as polyline
+				Color stroke = *shape.strokecolour;
+				if (symbol.tint) {
+					stroke.r = stroke.r * symbol.tint->RedMultiplier + symbol.tint->RedAdd;
+					stroke.g = stroke.g * symbol.tint->GreenMultiplier + symbol.tint->GreenAdd;
+					stroke.b = stroke.b * symbol.tint->BlueMultiplier + symbol.tint->BlueAdd;
+				}
+				// Convert PoolVector to Vector<Point2> for draw_polyline
+				Vector<Point2> points;
+				{
+					PoolVector<Vector2>::Read pr = transformed.read();
+					for (int i = 0; i < transformed.size(); i++)
+						points.push_back(pr[i]);
+				}
+				if (points.size() >= 2)
+					draw_polyline(points, stroke, 1.0, true);
+			}
+		}
+	}
 }
 
 void PolyVector2D::_notification(int p_what) {
@@ -414,16 +566,39 @@ void PolyVector2D::_notification(int p_what) {
 			update();
 		} break;
 		case NOTIFICATION_DRAW: {
+			draw_current_frame();
 		} break;
 	}
 }
 
 void PolyVector2D::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_vector_image"), &PolyVector::set_vector_image);
-	ClassDB::bind_method(D_METHOD("get_vector_image"), &PolyVector::get_vector_image);
+	ClassDB::bind_method(D_METHOD("set_vector_image"), &PolyVector2D::set_vector_image);
+	ClassDB::bind_method(D_METHOD("get_vector_image"), &PolyVector2D::get_vector_image);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "vector", PROPERTY_HINT_RESOURCE_TYPE, "JSONVector"), "set_vector_image", "get_vector_image");
+
+	ADD_GROUP("Display", "");
+	ClassDB::bind_method(D_METHOD("set_time"), &PolyVector2D::set_time);
+	ClassDB::bind_method(D_METHOD("get_time"), &PolyVector2D::get_time);
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "timecode", PROPERTY_HINT_RANGE, "0.0, 1000.0, 0.01, 0.0"), "set_time", "get_time");
+
+	ClassDB::bind_method(D_METHOD("set_curve_quality"), &PolyVector2D::set_curve_quality);
+	ClassDB::bind_method(D_METHOD("get_curve_quality"), &PolyVector2D::get_curve_quality);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "curve_quality", PROPERTY_HINT_RANGE, "0,10,1,2"), "set_curve_quality", "get_curve_quality");
+
+	ADD_GROUP("Advanced", "");
+	ClassDB::bind_method(D_METHOD("set_max_tessellation_angle"), &PolyVector2D::set_max_tessellation_angle);
+	ClassDB::bind_method(D_METHOD("get_max_tessellation_angle"), &PolyVector2D::get_max_tessellation_angle);
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_tessellation_angle", PROPERTY_HINT_RANGE, "1.0, 10.0, 0.1, 4.0"), "set_max_tessellation_angle", "get_max_tessellation_angle");
+
+	// Frame label methods
+	ClassDB::bind_method(D_METHOD("get_frame_for_label", "label"), &PolyVector2D::get_frame_for_label);
+	ClassDB::bind_method(D_METHOD("get_label_names"), &PolyVector2D::get_label_names);
 }
 
 PolyVector2D::PolyVector2D() {
 	viewSize = Size2(100, 100);
+	frame_time = 0;
+	curve_quality = 2;
+	max_tessellation_angle = 4;
+	fps = 0;
 }

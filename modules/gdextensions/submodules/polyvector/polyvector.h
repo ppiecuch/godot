@@ -117,6 +117,10 @@ public:
 	void set_max_tessellation_angle(real_t);
 	real_t get_max_tessellation_angle();
 
+	// Frame label access
+	int get_frame_for_label(const String &label) const;
+	PoolStringArray get_label_names() const;
+
 	virtual AABB get_aabb() const;
 	virtual PoolVector<Face3> get_faces(uint32_t p_usage_flags) const;
 
@@ -141,10 +145,14 @@ class PolyVector2D : public CanvasItem {
 	Size2 viewSize;
 
 	real_t frame_time;
+	int8_t curve_quality;
+	real_t max_tessellation_angle;
 
 	List<PolyVectorFrame> frame_data;
 	List<PolyVectorCharacter> dictionary_data;
 	real_t fps;
+
+	void draw_current_frame();
 
 protected:
 	static void _bind_methods();
@@ -164,6 +172,15 @@ public:
 	Ref<JSONVector> get_vector_image() const;
 	void set_time(real_t p_time);
 	real_t get_time();
+
+	void set_curve_quality(int8_t p_quality);
+	int8_t get_curve_quality();
+	void set_max_tessellation_angle(real_t);
+	real_t get_max_tessellation_angle();
+
+	// Frame label access
+	int get_frame_for_label(const String &label) const;
+	PoolStringArray get_label_names() const;
 
 	PolyVector2D();
 };

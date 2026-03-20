@@ -41,6 +41,7 @@
 #include "misc/incbin.h"
 
 INCBIN(vera_ttf, "resources/vera.ttf");
+INCBIN(slate_ttf, "resources/slate.ttf");
 
 #undef INCBIN_PREFIX
 #undef INCBIN_STYLE

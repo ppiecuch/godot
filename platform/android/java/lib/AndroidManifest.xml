@@ -3,6 +3,11 @@
     android:versionCode="1"
     android:versionName="1.0">
 
+    <!-- Required for GodotBackgroundService foreground service on Android 9+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Android 14+ requires declaring the foreground service type -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <application>
 
         <!-- Records the version of the Godot library -->
@@ -11,6 +16,11 @@
             android:value="${godotLibraryVersion}" />
 
         <service android:name=".GodotDownloaderService" />
+
+        <service
+            android:name=".GodotBackgroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
         <activity
             android:name=".utils.ProcessPhoenix"

@@ -80,6 +80,21 @@ private:
 	jmethodID _end_benchmark_measure = nullptr;
 	jmethodID _dump_benchmark = nullptr;
 
+	// Location/GPS
+	jmethodID _start_location_updates = nullptr;
+	jmethodID _stop_location_updates = nullptr;
+	jmethodID _get_last_known_location = nullptr;
+	jmethodID _has_location_permission = nullptr;
+
+	// Background work
+	jmethodID _start_background_service = nullptr;
+	jmethodID _stop_background_service = nullptr;
+	jmethodID _is_background_service_running = nullptr;
+	jmethodID _update_background_service_notification = nullptr;
+
+	// Advanced joypad
+	jmethodID _get_joy_axis_info = nullptr;
+
 public:
 	GodotJavaWrapper(JNIEnv *p_env, jobject p_activity, jobject p_godot_instance);
 	~GodotJavaWrapper();
@@ -119,6 +134,23 @@ public:
 	void begin_benchmark_measure(const String &p_label);
 	void end_benchmark_measure(const String &p_label);
 	void dump_benchmark(const String &benchmark_file);
+
+	// Location/GPS
+	void start_location_updates(int p_min_time_ms, float p_min_distance, bool p_use_gps);
+	void stop_location_updates();
+	bool has_location_permission();
+	// Returns [latitude, longitude, altitude, accuracy, speed, timestamp] or empty array
+	Vector<double> get_last_known_location(bool p_use_gps);
+
+	// Background work service
+	void start_background_service(const String &p_notification_text);
+	void stop_background_service();
+	bool is_background_service_running();
+	void update_background_service_notification(const String &p_notification_text);
+
+	// Advanced joypad axis discovery
+	// Returns [has_axis, min_value, max_value] for a given device and axis
+	Vector<float> get_joy_axis_info(int p_device_id, int p_axis);
 };
 
 #endif // JAVA_GODOT_WRAPPER_H

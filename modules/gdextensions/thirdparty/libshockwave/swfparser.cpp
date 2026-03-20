@@ -158,7 +158,7 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 			{
 				int readlength = swfstream->get_pos();
 
-				/* bool placeflaghasclipactions = */ swfstream->readUB(1);
+				bool placeflaghasclipactions = swfstream->readUB(1);
 				bool placeflaghasclipdepth = swfstream->readUB(1);
 				bool placeflaghasname = swfstream->readUB(1);
 				bool placeflaghasratio = swfstream->readUB(1);
@@ -201,7 +201,6 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 					if (placeflaghasvisible) swfstream->readUI8();
 					if (placeflaghasvisible) swfstream->readRGBA();
 				}
-				// if(placeflaghasclipactions) swfstream->readCLIPACTIONS();
 				_ignore_(characterid);
 
 				if (placeflaghascharacter) {
@@ -211,6 +210,11 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 				}
 				if (placeflaghasmatrix) currentdisplaystack[depth].transform = matrix;
 				if (placeflaghascolourtransform) currentdisplaystack[depth].colourtransform = colourxform;
+				if (placeflaghasname) currentdisplaystack[depth].name = name;
+				if (placeflaghasclipactions) {
+					ClipActions *ca = new ClipActions(swfstream->readCLIPACTIONS());
+					currentdisplaystack[depth].clip_actions = ca;
+				}
 
 				readlength = (swfstream->get_pos()-readlength);
 				if ((rh.length-readlength)>0) swfstream->skipBytes(rh.length-readlength);
@@ -248,9 +252,291 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
 			case TagType::FrameLabel:
 			{
 				int readlength = swfstream->get_pos();
-				swfstream->readSTRING();	// Name
+				const char *label = swfstream->readSTRING();
 				readlength = (swfstream->get_pos()-readlength);
 				if ((rh.length-readlength)>0)	swfstream->readUI8();	// Named Anchor Flag
+				dictionary->FrameLabels[label] = framecounter;
+				break;
+			}
+			// Phase 1: ActionScript tags
+			case TagType::DoAction:
+			{
+				swfstream->readACTIONBLOCK(0, framecounter, false, rh.length);
+				break;
+			}
+			case TagType::DoInitAction:
+			{
+				uint16_t spriteid = swfstream->readUI16();
+				swfstream->readACTIONBLOCK(spriteid, framecounter, true, rh.length - 2);
+				break;
+			}
+			// Phase 2: Buttons
+			case TagType::DefineButton:
+			{
+				int btn_start = swfstream->get_pos();
+				Button btn;
+				btn.id = swfstream->readUI16();
+				while (true) {
+					ButtonRecord br = swfstream->readBUTTONRECORD(rh.tag);
+					if (br.state_flags == 0) break;
+					btn.records.push_back(br);
+				}
+				dictionary->Buttons[btn.id] = btn;
+				// Skip remaining action bytes
+				int btn_consumed = swfstream->get_pos() - btn_start;
+				if ((int)rh.length - btn_consumed > 0)
+					swfstream->skipBytes(rh.length - btn_consumed);
+				break;
+			}
+			case TagType::DefineButton2:
+			{
+				int tag_start = swfstream->get_pos();
+				uint16_t btnid = swfstream->readUI16();
+				Button btn;
+				btn.id = btnid;
+				btn.track_as_menu = (swfstream->readUI8() != 0);
+				uint16_t action_offset = swfstream->readUI16();
+				while (true) {
+					ButtonRecord br = swfstream->readBUTTONRECORD(rh.tag);
+					if (br.state_flags == 0) break;
+					btn.records.push_back(br);
+				}
+				dictionary->Buttons[btnid] = btn;
+				// Skip button condition actions
+				int consumed = swfstream->get_pos() - tag_start;
+				if ((int)rh.length - consumed > 0)
+					swfstream->skipBytes(rh.length - consumed);
+				break;
+			}
+			// Phase 2: Text
+			case TagType::DefineText:
+			case TagType::DefineText2:
+			{
+				TextDef td;
+				td.id = swfstream->readUI16();
+				td.bounds = swfstream->readRECT();
+				td.matrix = swfstream->readMATRIX();
+				uint8_t glyph_bits = swfstream->readUI8();
+				uint8_t advance_bits = swfstream->readUI8();
+				while (true) {
+					TextRecord tr = swfstream->readTEXTRECORD(rh.tag, glyph_bits, advance_bits);
+					if (tr.glyphs.empty() && !tr.has_font && !tr.has_color && !tr.has_x_offset && !tr.has_y_offset)
+						break;
+					td.records.push_back(tr);
+				}
+				dictionary->Texts[td.id] = td;
+				break;
+			}
+			case TagType::DefineEditText:
+			{
+				int tag_start = swfstream->get_pos();
+				EditTextDef etd;
+				etd.id = swfstream->readUI16();
+				etd.bounds = swfstream->readRECT();
+				uint16_t flags = swfstream->readUI16();
+				etd.has_text = (flags & 0x0080) != 0;
+				etd.wordwrap = (flags & 0x0040) != 0;
+				etd.multiline = (flags & 0x0020) != 0;
+				etd.password = (flags & 0x0010) != 0;
+				etd.readonly = (flags & 0x0008) != 0;
+				etd.has_text_color = (flags & 0x0004) != 0;
+				etd.has_max_length = (flags & 0x0002) != 0;
+				etd.has_font = (flags & 0x0001) != 0;
+				etd.has_font_class = (flags & 0x8000) != 0;
+				etd.auto_size = (flags & 0x4000) != 0;
+				etd.has_layout = (flags & 0x2000) != 0;
+				etd.no_select = (flags & 0x1000) != 0;
+				etd.border = (flags & 0x0800) != 0;
+				etd.was_static = (flags & 0x0400) != 0;
+				etd.html = (flags & 0x0200) != 0;
+				etd.use_outlines = (flags & 0x0100) != 0;
+				if (etd.has_font) etd.font_id = swfstream->readUI16();
+				if (etd.has_font_class) etd.font_class = swfstream->readSTRING();
+				if (etd.has_font) etd.font_height = swfstream->readUI16();
+				if (etd.has_text_color) etd.text_color = swfstream->readRGBA();
+				if (etd.has_max_length) etd.max_length = swfstream->readUI16();
+				if (etd.has_layout) {
+					etd.align = swfstream->readUI8();
+					etd.left_margin = swfstream->readUI16();
+					etd.right_margin = swfstream->readUI16();
+					etd.indent = swfstream->readUI16();
+					etd.leading = swfstream->readSI16();
+				}
+				etd.variable_name = swfstream->readSTRING();
+				if (etd.has_text) etd.initial_text = swfstream->readSTRING();
+				dictionary->EditTexts[etd.id] = etd;
+				break;
+			}
+			// Phase 2: Bitmaps
+			case TagType::DefineBits:
+			{
+				BitmapDef bd;
+				bd.id = swfstream->readUI16();
+				bd.tag_type = rh.tag;
+				bd.data = &swfstream->data[swfstream->pos];
+				bd.data_length = rh.length - 2;
+				swfstream->skipBytes(bd.data_length);
+				dictionary->Bitmaps[bd.id] = bd;
+				break;
+			}
+			case TagType::JPEGTables:
+			{
+				dictionary->jpeg_tables = &swfstream->data[swfstream->pos];
+				dictionary->jpeg_tables_length = rh.length;
+				swfstream->skipBytes(rh.length);
+				break;
+			}
+			case TagType::DefineBitsJPEG2:
+			{
+				BitmapDef bd;
+				bd.id = swfstream->readUI16();
+				bd.tag_type = rh.tag;
+				bd.data = &swfstream->data[swfstream->pos];
+				bd.data_length = rh.length - 2;
+				swfstream->skipBytes(bd.data_length);
+				dictionary->Bitmaps[bd.id] = bd;
+				break;
+			}
+			case TagType::DefineBitsJPEG3:
+			case TagType::DefineBitsJPEG4:
+			{
+				int jpeg_start = swfstream->get_pos();
+				BitmapDef bd;
+				bd.id = swfstream->readUI16();
+				bd.tag_type = rh.tag;
+				uint32_t alpha_offset = swfstream->readUI32();
+				if (rh.tag == TagType::DefineBitsJPEG4)
+					swfstream->readUI16(); // deblock param
+				bd.data = &swfstream->data[swfstream->pos];
+				bd.data_length = alpha_offset;
+				bd.alpha_data = &swfstream->data[swfstream->pos + alpha_offset];
+				bd.alpha_data_length = rh.length - (swfstream->get_pos() - jpeg_start) - alpha_offset;
+				swfstream->skipBytes(rh.length - (swfstream->get_pos() - jpeg_start));
+				dictionary->Bitmaps[bd.id] = bd;
+				break;
+			}
+			case TagType::DefineBitsLossless:
+			case TagType::DefineBitsLossless2:
+			{
+				BitmapDef bd;
+				bd.id = swfstream->readUI16();
+				bd.tag_type = rh.tag;
+				bd.format = swfstream->readUI8();
+				bd.width = swfstream->readUI16();
+				bd.height = swfstream->readUI16();
+				bd.data = &swfstream->data[swfstream->pos];
+				bd.data_length = rh.length - 7;
+				swfstream->skipBytes(bd.data_length);
+				dictionary->Bitmaps[bd.id] = bd;
+				break;
+			}
+			// Phase 2: Fonts
+			case TagType::DefineFont:
+			{
+				FontDef fd;
+				fd.id = swfstream->readUI16();
+				// Skip glyph shape data
+				swfstream->skipBytes(rh.length - 2);
+				dictionary->Fonts[fd.id] = fd;
+				break;
+			}
+			case TagType::DefineFont2:
+			case TagType::DefineFont3:
+			{
+				int tag_start = swfstream->get_pos();
+				FontDef fd;
+				fd.id = swfstream->readUI16();
+				fd.flags = swfstream->readUI8();
+				swfstream->readUI8(); // language code
+				uint8_t name_len = swfstream->readUI8();
+				if (name_len > 0) {
+					// Read font name bytes
+					char *name = new char[name_len + 1];
+					for (uint8_t i = 0; i < name_len; i++)
+						name[i] = swfstream->readUI8();
+					name[name_len] = 0;
+					fd.name = name;
+				}
+				fd.num_glyphs = swfstream->readUI16();
+				// Skip offset table and glyph shapes, read code table
+				bool wide_offsets = (fd.flags & 0x08) != 0;
+				bool wide_codes = (fd.flags & 0x04) != 0;
+				if (fd.num_glyphs > 0) {
+					// Skip offset table
+					if (wide_offsets)
+						swfstream->skipBytes(fd.num_glyphs * 4 + 4); // offsets + code offset
+					else
+						swfstream->skipBytes(fd.num_glyphs * 2 + 2);
+				}
+				// Skip shape table - we need code table offset
+				// Just skip to end of tag for now and read remaining
+				int consumed = swfstream->get_pos() - tag_start;
+				if ((int)rh.length - consumed > 0)
+					swfstream->skipBytes(rh.length - consumed);
+				dictionary->Fonts[fd.id] = fd;
+				break;
+			}
+			// Phase 2: Sound
+			case TagType::DefineSound:
+			{
+				SoundDef sd;
+				sd.id = swfstream->readUI16();
+				uint8_t flags = swfstream->readUI8();
+				sd.format = (flags >> 4) & 0x0F;
+				sd.rate = (flags >> 2) & 0x03;
+				sd.is_16bit = (flags & 0x02) != 0;
+				sd.is_stereo = (flags & 0x01) != 0;
+				sd.sample_count = swfstream->readUI32();
+				sd.data = &swfstream->data[swfstream->pos];
+				sd.data_length = rh.length - 7;
+				swfstream->skipBytes(sd.data_length);
+				dictionary->Sounds[sd.id] = sd;
+				break;
+			}
+			case TagType::StartSound:
+			{
+				swfstream->readUI16(); // sound id
+				swfstream->skipBytes(rh.length - 2); // SOUNDINFO
+				break;
+			}
+			// Phase 2: MorphShapes
+			case TagType::DefineMorphShape:
+			case TagType::DefineMorphShape2:
+			{
+				int morph_start = swfstream->get_pos();
+				MorphShapeDef msd;
+				msd.id = swfstream->readUI16();
+				msd.start_bounds = swfstream->readRECT();
+				msd.end_bounds = swfstream->readRECT();
+				dictionary->MorphShapes[msd.id] = msd;
+				// Skip remaining shape data
+				int morph_consumed = swfstream->get_pos() - morph_start;
+				if ((int)rh.length - morph_consumed > 0)
+					swfstream->skipBytes(rh.length - morph_consumed);
+				break;
+			}
+			// Phase 2: Export/Import Assets
+			case TagType::ExportAssets:
+			{
+				uint16_t count = swfstream->readUI16();
+				for (uint16_t i = 0; i < count; i++) {
+					AssetEntry ae;
+					ae.id = swfstream->readUI16();
+					ae.name = swfstream->readSTRING();
+					dictionary->ExportedAssets.push_back(ae);
+				}
+				break;
+			}
+			case TagType::ImportAssets:
+			{
+				swfstream->readSTRING(); // URL
+				uint16_t count = swfstream->readUI16();
+				for (uint16_t i = 0; i < count; i++) {
+					AssetEntry ae;
+					ae.id = swfstream->readUI16();
+					ae.name = swfstream->readSTRING();
+					dictionary->ImportedAssets.push_back(ae);
+				}
 				break;
 			}
 			case TagType::FileAttributes:
@@ -287,9 +573,11 @@ SWF::Error Parser::tag_loop(Stream *swfstream, Sprite *sprite)
                 else
                     dictionary->Frames.push_back(currentdisplaystack);
 				framecounter++;
+				break;
 			default:
 				if (rh.length)
                     swfstream->skipBytes(rh.length);
+				break;
 		}
 		tagcounter++;
 		rh = swfstream->readRECORDHEADER();
@@ -786,11 +1074,308 @@ CXForm inline Stream::readCXFORM(bool alpha)
 	return cx;
 }
 
-//ClipActions inline Stream::readCLIPACTIONS()
-//{
-//	ClipActions ca;
-//	return ca;
-//}
+// Phase 1: ActionScript bytecode parsing
+
+ActionRecord inline Stream::readACTIONRECORD()
+{
+	ActionRecord ar;
+	ar.offset = pos;
+	ar.opcode = readUI8();
+
+	if (ar.opcode == 0) return ar; // End of actions
+
+	if (ar.opcode >= 0x80) {
+		ar.length = readUI16();
+	}
+
+	uint32_t start_pos = pos;
+
+	switch (ar.opcode) {
+		case ActionPush:
+		{
+			uint32_t end_pos = start_pos + ar.length;
+			while (pos < end_pos) {
+				PushValue pv;
+				pv.type = static_cast<PushType>(readUI8());
+				switch (pv.type) {
+					case PUSH_STRING:
+						pv.string_value = readSTRING();
+						break;
+					case PUSH_FLOAT:
+					{
+						uint32_t bits = readUI32();
+						memcpy(&pv.float_value, &bits, 4);
+						break;
+					}
+					case PUSH_NULL:
+					case PUSH_UNDEFINED:
+						break;
+					case PUSH_REGISTER:
+						pv.register_index = readUI8();
+						break;
+					case PUSH_BOOLEAN:
+						pv.boolean_value = readUI8() != 0;
+						break;
+					case PUSH_DOUBLE:
+					{
+						// SWF stores doubles with swapped 32-bit halves
+						uint32_t lo = readUI32();
+						uint32_t hi = readUI32();
+						uint64_t full = ((uint64_t)hi) | ((uint64_t)lo << 32);
+						memcpy(&pv.double_value, &full, 8);
+						break;
+					}
+					case PUSH_INTEGER:
+						pv.integer_value = readSI32();
+						break;
+					case PUSH_CONSTANT8:
+						pv.constant8 = readUI8();
+						break;
+					case PUSH_CONSTANT16:
+						pv.constant16 = readUI16();
+						break;
+				}
+				ar.push_values.push_back(pv);
+			}
+			break;
+		}
+		case ActionJump:
+		case ActionIf:
+			ar.branch_offset = readSI16();
+			break;
+		case ActionGotoFrame:
+			ar.frame = readUI16();
+			break;
+		case ActionGetURL:
+			ar.string1 = readSTRING();
+			ar.string2 = readSTRING();
+			break;
+		case ActionConstantPool:
+		{
+			uint16_t count = readUI16();
+			for (uint16_t i = 0; i < count; i++)
+				ar.constant_pool.push_back(readSTRING());
+			break;
+		}
+		case ActionStoreRegister:
+			ar.register_index = readUI8();
+			break;
+		case ActionDefineFunction:
+		{
+			ar.function_def.name = readSTRING();
+			ar.function_def.num_params = readUI16();
+			for (uint16_t i = 0; i < ar.function_def.num_params; i++) {
+				FunctionParam fp;
+				fp.name = readSTRING();
+				ar.function_def.params.push_back(fp);
+			}
+			ar.function_def.code_size = readUI16();
+			// Parse nested action body
+			uint32_t body_end = pos + ar.function_def.code_size;
+			while (pos < body_end) {
+				ActionRecord nested = readACTIONRECORD();
+				ar.function_def.body.push_back(nested);
+				if (nested.opcode == 0) break;
+			}
+			pos = body_end; // ensure alignment
+			break;
+		}
+		case ActionDefineFunction2:
+		{
+			ar.function_def.name = readSTRING();
+			ar.function_def.num_params = readUI16();
+			ar.function_def.register_count = readUI8();
+			ar.function_def.preload_flags = readUI16();
+			for (uint16_t i = 0; i < ar.function_def.num_params; i++) {
+				FunctionParam fp;
+				fp.register_index = readUI8();
+				fp.name = readSTRING();
+				ar.function_def.params.push_back(fp);
+			}
+			ar.function_def.code_size = readUI16();
+			// Parse nested action body
+			uint32_t body_end = pos + ar.function_def.code_size;
+			while (pos < body_end) {
+				ActionRecord nested = readACTIONRECORD();
+				ar.function_def.body.push_back(nested);
+				if (nested.opcode == 0) break;
+			}
+			pos = body_end;
+			break;
+		}
+		case ActionTry:
+		{
+			uint8_t flags = readUI8();
+			ar.try_def.has_catch = (flags & 0x01) != 0;
+			ar.try_def.has_finally = (flags & 0x02) != 0;
+			ar.try_def.catch_in_register = (flags & 0x04) != 0;
+			ar.try_def.try_size = readUI16();
+			ar.try_def.catch_size = readUI16();
+			ar.try_def.finally_size = readUI16();
+			if (ar.try_def.catch_in_register)
+				ar.try_def.catch_register = readUI8();
+			else
+				ar.try_def.catch_name = readSTRING();
+			break;
+		}
+		case ActionWith:
+			ar.with_size = readUI16();
+			break;
+		case ActionGetURL2:
+			ar.url2_flags = readUI8();
+			break;
+		case ActionGotoFrame2:
+		{
+			uint8_t flags = readUI8();
+			ar.play_flag = (flags & 0x01) != 0;
+			bool has_bias = (flags & 0x02) != 0;
+			if (has_bias)
+				ar.scene_bias = readUI16();
+			break;
+		}
+		case ActionSetTarget:
+		case ActionGoToLabel:
+			ar.string1 = readSTRING();
+			break;
+		case ActionWaitForFrame:
+			ar.frame = readUI16();
+			ar.skip_count = readUI8();
+			break;
+		case ActionWaitForFrame2:
+			ar.skip_count = readUI8();
+			break;
+		default:
+			// Unknown action with data - skip remaining bytes
+			if (ar.opcode >= 0x80 && ar.length > 0) {
+				uint32_t consumed = pos - start_pos;
+				if (consumed < ar.length)
+					skipBytes(ar.length - consumed);
+			}
+			break;
+	}
+
+	return ar;
+}
+
+void inline Stream::readACTIONBLOCK(uint16_t sprite_id, uint16_t frame, bool is_init, uint32_t tag_length)
+{
+	ActionBlock block;
+	block.sprite_id = sprite_id;
+	block.frame = frame;
+	block.is_init = is_init;
+
+	uint32_t end_pos = pos + tag_length;
+	while (pos < end_pos) {
+		ActionRecord ar = readACTIONRECORD();
+		block.actions.push_back(ar);
+		if (ar.opcode == 0) break;
+	}
+	pos = end_pos; // ensure alignment
+
+	dict->Actions.push_back(block);
+}
+
+uint32_t inline Stream::readCLIPEVENTFLAGS()
+{
+	if (swfversion >= 6)
+		return readUI32();
+	else
+		return readUI16();
+}
+
+ClipActionRecord inline Stream::readCLIPACTIONRECORD()
+{
+	ClipActionRecord car;
+	car.event_flags = readCLIPEVENTFLAGS();
+	if (car.event_flags == 0) return car; // End sentinel
+
+	uint32_t action_record_size = readUI32();
+	if (car.event_flags & ClipEventKeyPress)
+		car.key_code = readUI8();
+
+	uint32_t end_pos = pos + action_record_size - ((car.event_flags & ClipEventKeyPress) ? 1 : 0);
+	while (pos < end_pos) {
+		ActionRecord ar = readACTIONRECORD();
+		car.actions.push_back(ar);
+		if (ar.opcode == 0) break;
+	}
+	pos = end_pos;
+
+	return car;
+}
+
+ClipActions inline Stream::readCLIPACTIONS()
+{
+	ClipActions ca;
+	readUI16(); // Reserved
+	ca.all_event_flags = readCLIPEVENTFLAGS();
+
+	while (true) {
+		ClipActionRecord car = readCLIPACTIONRECORD();
+		if (car.event_flags == 0) break; // End sentinel
+		ca.records.push_back(car);
+	}
+
+	return ca;
+}
+
+// Phase 2: Additional tag parsing helpers
+
+ButtonRecord inline Stream::readBUTTONRECORD(uint16_t tag)
+{
+	ButtonRecord br;
+	uint8_t flags = readUI8();
+	if (flags == 0) {
+		br.state_flags = 0;
+		return br;
+	}
+	br.state_flags = flags;
+	br.has_blend_mode = (tag == TagType::DefineButton2) && (flags & 0x20);
+	br.has_filter_list = (tag == TagType::DefineButton2) && (flags & 0x10);
+	br.character_id = readUI16();
+	br.depth = readUI16();
+	br.matrix = readMATRIX();
+	if (tag == TagType::DefineButton2)
+		br.color_transform = readCXFORMWITHALPHA();
+	if (br.has_filter_list)
+		readFILTERLIST();
+	if (br.has_blend_mode)
+		br.blend_mode = readUI8();
+	return br;
+}
+
+TextRecord inline Stream::readTEXTRECORD(uint16_t tag, uint8_t glyph_bits, uint8_t advance_bits)
+{
+	TextRecord tr;
+	uint8_t flags = readUI8();
+	if (flags == 0) return tr; // End sentinel
+
+	tr.has_font = (flags & 0x08) != 0;
+	tr.has_color = (flags & 0x04) != 0;
+	tr.has_y_offset = (flags & 0x02) != 0;
+	tr.has_x_offset = (flags & 0x01) != 0;
+
+	if (tr.has_font) tr.font_id = readUI16();
+	if (tr.has_color) {
+		if (tag == TagType::DefineText2)
+			tr.color = readRGBA();
+		else
+			tr.color = readRGB();
+	}
+	if (tr.has_x_offset) tr.x_offset = readSI16();
+	if (tr.has_y_offset) tr.y_offset = readSI16();
+	if (tr.has_font) tr.text_height = readUI16();
+
+	uint8_t glyph_count = readUI8();
+	for (uint8_t i = 0; i < glyph_count; i++) {
+		GlyphEntry ge;
+		ge.index = readUB(glyph_bits);
+		ge.advance = readSB(advance_bits);
+		tr.glyphs.push_back(ge);
+	}
+
+	return tr;
+}
 
 
 
@@ -992,3 +1577,582 @@ uint32_t inline Stream::readEncodedU32()
 	}
 	return result;
 }
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#include "swfexport.h"
+
+TEST_SUITE("[[libshockwave]] SWF Stream Reading") {
+
+	TEST_CASE("[swf] readUI8") {
+		uint8_t data[] = { 0x00, 0x42, 0xFF };
+		Stream s(data, sizeof(data));
+		CHECK(s.readUI8() == 0x00);
+		CHECK(s.readUI8() == 0x42);
+		CHECK(s.readUI8() == 0xFF);
+	}
+
+	TEST_CASE("[swf] readUI16") {
+		uint8_t data[] = { 0x34, 0x12, 0xFF, 0xFF, 0x00, 0x00 };
+		Stream s(data, sizeof(data));
+		CHECK(s.readUI16() == 0x1234);
+		CHECK(s.readUI16() == 0xFFFF);
+		CHECK(s.readUI16() == 0x0000);
+	}
+
+	TEST_CASE("[swf] readUI32") {
+		uint8_t data[] = { 0x78, 0x56, 0x34, 0x12 };
+		Stream s(data, sizeof(data));
+		CHECK(s.readUI32() == 0x12345678);
+	}
+
+	TEST_CASE("[swf] readSI8") {
+		uint8_t data[] = { 0x00, 0x7F, 0x80, 0xFF };
+		Stream s(data, sizeof(data));
+		CHECK(s.readSI8() == 0);
+		CHECK(s.readSI8() == 127);
+		CHECK(s.readSI8() == -128);
+		CHECK(s.readSI8() == -1);
+	}
+
+	TEST_CASE("[swf] readSI16") {
+		uint8_t data[] = { 0x00, 0x00, 0xFF, 0x7F, 0x00, 0x80, 0xFF, 0xFF };
+		Stream s(data, sizeof(data));
+		CHECK(s.readSI16() == 0);
+		CHECK(s.readSI16() == 32767);
+		CHECK(s.readSI16() == -32768);
+		CHECK(s.readSI16() == -1);
+	}
+
+	TEST_CASE("[swf] readFIXED") {
+		uint8_t data[] = { 0x00, 0x00, 0x01, 0x00 };
+		Stream s(data, sizeof(data));
+		CHECK(s.readFIXED() == doctest::Approx(1.0f));
+	}
+
+	TEST_CASE("[swf] readFIXED8") {
+		uint8_t data[] = { 0x00, 0x01 };
+		Stream s(data, sizeof(data));
+		CHECK(s.readFIXED8() == doctest::Approx(1.0f));
+	}
+
+	TEST_CASE("[swf] readBits") {
+		uint8_t data[] = { 0xA5, 0xFF };
+		Stream s(data, sizeof(data));
+		CHECK(s.readBits(1) == 1);
+		CHECK(s.readBits(1) == 0);
+		CHECK(s.readBits(2) == 2);
+		CHECK(s.readBits(4) == 5);
+		CHECK(s.readBits(8) == 0xFF);
+	}
+
+	TEST_CASE("[swf] readSB") {
+		uint8_t data[] = { 0xE0 }; // 11100000
+		Stream s(data, sizeof(data));
+		CHECK(s.readSB(3) == -1);
+	}
+
+	TEST_CASE("[swf] readSTRING") {
+		uint8_t data[] = { 'H', 'e', 'l', 'l', 'o', 0x00 };
+		Stream s(data, sizeof(data));
+		const char *str = s.readSTRING();
+		CHECK(strcmp(str, "Hello") == 0);
+		delete[] str;
+	}
+
+	TEST_CASE("[swf] readSTRING empty") {
+		uint8_t data[] = { 0x00 };
+		Stream s(data, sizeof(data));
+		const char *str = s.readSTRING();
+		CHECK(strcmp(str, "") == 0);
+		delete[] str;
+	}
+
+	TEST_CASE("[swf] readEncodedU32") {
+		SUBCASE("1-byte") {
+			uint8_t data[] = { 0x3F };
+			Stream s(data, sizeof(data));
+			CHECK(s.readEncodedU32() == 63);
+		}
+		SUBCASE("2-byte") {
+			uint8_t data[] = { 0x80, 0x01 };
+			Stream s(data, sizeof(data));
+			CHECK(s.readEncodedU32() == 128);
+		}
+	}
+
+	TEST_CASE("[swf] seek and get_pos") {
+		uint8_t data[] = { 0xAA, 0xBB, 0xCC, 0xDD };
+		Stream s(data, sizeof(data));
+		CHECK(s.get_pos() == 0);
+		s.seek(2);
+		CHECK(s.get_pos() == 2);
+		CHECK(s.readUI8() == 0xCC);
+	}
+}
+
+TEST_SUITE("[[libshockwave]] SWF Record Header") {
+
+	TEST_CASE("[swf] short header") {
+		uint16_t header = (1 << 6) | 0;
+		uint8_t data[] = { (uint8_t)(header & 0xFF), (uint8_t)(header >> 8), 0, 0 };
+		Stream s(data, sizeof(data));
+		RecordHeader rh = s.readRECORDHEADER();
+		CHECK(rh.tag == 1);
+		CHECK(rh.length == 0);
+	}
+
+	TEST_CASE("[swf] short header with length") {
+		uint16_t header = (9 << 6) | 3;
+		uint8_t data[] = { (uint8_t)(header & 0xFF), (uint8_t)(header >> 8), 0, 0 };
+		Stream s(data, sizeof(data));
+		RecordHeader rh = s.readRECORDHEADER();
+		CHECK(rh.tag == 9);
+		CHECK(rh.length == 3);
+	}
+
+	TEST_CASE("[swf] long header") {
+		uint16_t header = (2 << 6) | 0x3F;
+		uint8_t data[6];
+		data[0] = header & 0xFF;
+		data[1] = header >> 8;
+		data[2] = 100; data[3] = 0; data[4] = 0; data[5] = 0;
+		Stream s(data, sizeof(data));
+		RecordHeader rh = s.readRECORDHEADER();
+		CHECK(rh.tag == 2);
+		CHECK(rh.length == 100);
+	}
+}
+
+TEST_SUITE("[[libshockwave]] SWF Data Structures") {
+
+	TEST_CASE("[swf] readRGB") {
+		uint8_t data[] = { 0xFF, 0x80, 0x40 };
+		Stream s(data, sizeof(data));
+		RGBA c = s.readRGB();
+		CHECK(c.r == 0xFF);
+		CHECK(c.g == 0x80);
+		CHECK(c.b == 0x40);
+		CHECK(c.a == 0xFF);
+	}
+
+	TEST_CASE("[swf] readRGBA") {
+		uint8_t data[] = { 0xFF, 0x80, 0x40, 0xC0 };
+		Stream s(data, sizeof(data));
+		RGBA c = s.readRGBA();
+		CHECK(c.r == 0xFF);
+		CHECK(c.g == 0x80);
+		CHECK(c.b == 0x40);
+		CHECK(c.a == 0xC0);
+	}
+
+	TEST_CASE("[swf] readMATRIX identity") {
+		uint8_t data[] = { 0x00, 0x00 };
+		Stream s(data, sizeof(data));
+		Matrix m = s.readMATRIX();
+		CHECK(m.ScaleX == doctest::Approx(1.0f));
+		CHECK(m.ScaleY == doctest::Approx(1.0f));
+		CHECK(m.TranslateX == doctest::Approx(0.0f));
+		CHECK(m.TranslateY == doctest::Approx(0.0f));
+	}
+
+	TEST_CASE("[swf] CXForm IsModified") {
+		CXForm cx;
+		CHECK_FALSE(cx.IsModified());
+		cx.RedAddTerm = 10;
+		CHECK(cx.IsModified());
+	}
+}
+
+static void swf_append_ui16_le(std::vector<uint8_t> &buf, uint16_t val) {
+	buf.push_back(val & 0xFF);
+	buf.push_back((val >> 8) & 0xFF);
+}
+static void swf_append_si16_le(std::vector<uint8_t> &buf, int16_t val) {
+	swf_append_ui16_le(buf, (uint16_t)val);
+}
+static void swf_append_string(std::vector<uint8_t> &buf, const char *s) {
+	while (*s) buf.push_back(*s++);
+	buf.push_back(0);
+}
+
+TEST_SUITE("[[libshockwave]] SWF ActionScript Parsing") {
+
+	TEST_CASE("[swf] simple actions") {
+		uint8_t data[] = { ActionPlay, ActionStop, ActionNextFrame, 0x00 };
+		Stream s(data, sizeof(data));
+		CHECK(s.readACTIONRECORD().opcode == ActionPlay);
+		CHECK(s.readACTIONRECORD().opcode == ActionStop);
+		CHECK(s.readACTIONRECORD().opcode == ActionNextFrame);
+	}
+
+	TEST_CASE("[swf] ActionPush string") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionPush);
+		std::vector<uint8_t> payload;
+		payload.push_back(PUSH_STRING);
+		swf_append_string(payload, "hello");
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		REQUIRE(ar.push_values.size() == 1);
+		CHECK(ar.push_values[0].type == PUSH_STRING);
+		CHECK(strcmp(ar.push_values[0].string_value, "hello") == 0);
+	}
+
+	TEST_CASE("[swf] ActionPush integer") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionPush);
+		std::vector<uint8_t> payload;
+		payload.push_back(PUSH_INTEGER);
+		payload.push_back(42); payload.push_back(0); payload.push_back(0); payload.push_back(0);
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		REQUIRE(ar.push_values.size() == 1);
+		CHECK(ar.push_values[0].integer_value == 42);
+	}
+
+	TEST_CASE("[swf] ActionPush multiple values") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionPush);
+		std::vector<uint8_t> payload;
+		payload.push_back(PUSH_NULL);
+		payload.push_back(PUSH_BOOLEAN);
+		payload.push_back(1);
+		payload.push_back(PUSH_UNDEFINED);
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		REQUIRE(ar.push_values.size() == 3);
+		CHECK(ar.push_values[0].type == PUSH_NULL);
+		CHECK(ar.push_values[1].type == PUSH_BOOLEAN);
+		CHECK(ar.push_values[1].boolean_value == true);
+		CHECK(ar.push_values[2].type == PUSH_UNDEFINED);
+	}
+
+	TEST_CASE("[swf] ActionPush float") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionPush);
+		std::vector<uint8_t> payload;
+		payload.push_back(PUSH_FLOAT);
+		float val = 1.5f;
+		uint32_t bits;
+		memcpy(&bits, &val, 4);
+		payload.push_back(bits & 0xFF);
+		payload.push_back((bits >> 8) & 0xFF);
+		payload.push_back((bits >> 16) & 0xFF);
+		payload.push_back((bits >> 24) & 0xFF);
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		REQUIRE(ar.push_values.size() == 1);
+		CHECK(ar.push_values[0].float_value == doctest::Approx(1.5f));
+	}
+
+	TEST_CASE("[swf] ActionPush register") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionPush);
+		std::vector<uint8_t> payload;
+		payload.push_back(PUSH_REGISTER);
+		payload.push_back(3);
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		REQUIRE(ar.push_values.size() == 1);
+		CHECK(ar.push_values[0].register_index == 3);
+	}
+
+	TEST_CASE("[swf] ActionPush constant8 and constant16") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionPush);
+		std::vector<uint8_t> payload;
+		payload.push_back(PUSH_CONSTANT8);
+		payload.push_back(5);
+		payload.push_back(PUSH_CONSTANT16);
+		payload.push_back(0x00); payload.push_back(0x01);
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		REQUIRE(ar.push_values.size() == 2);
+		CHECK(ar.push_values[0].constant8 == 5);
+		CHECK(ar.push_values[1].constant16 == 256);
+	}
+
+	TEST_CASE("[swf] ActionConstantPool") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionConstantPool);
+		std::vector<uint8_t> payload;
+		swf_append_ui16_le(payload, 2);
+		swf_append_string(payload, "foo");
+		swf_append_string(payload, "bar");
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		REQUIRE(ar.constant_pool.size() == 2);
+		CHECK(strcmp(ar.constant_pool[0], "foo") == 0);
+		CHECK(strcmp(ar.constant_pool[1], "bar") == 0);
+	}
+
+	TEST_CASE("[swf] ActionJump") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionJump);
+		swf_append_ui16_le(data, 2);
+		swf_append_si16_le(data, 10);
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(ar.opcode == ActionJump);
+		CHECK(ar.branch_offset == 10);
+	}
+
+	TEST_CASE("[swf] ActionIf negative offset") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionIf);
+		swf_append_ui16_le(data, 2);
+		swf_append_si16_le(data, -5);
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(ar.branch_offset == -5);
+	}
+
+	TEST_CASE("[swf] ActionGotoFrame") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionGotoFrame);
+		swf_append_ui16_le(data, 2);
+		swf_append_ui16_le(data, 42);
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(ar.frame == 42);
+	}
+
+	TEST_CASE("[swf] ActionGetURL") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionGetURL);
+		std::vector<uint8_t> payload;
+		swf_append_string(payload, "http://example.com");
+		swf_append_string(payload, "_blank");
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(strcmp(ar.string1, "http://example.com") == 0);
+		CHECK(strcmp(ar.string2, "_blank") == 0);
+	}
+
+	TEST_CASE("[swf] ActionStoreRegister") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionStoreRegister);
+		swf_append_ui16_le(data, 1);
+		data.push_back(2);
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(ar.register_index == 2);
+	}
+
+	TEST_CASE("[swf] ActionDefineFunction") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionDefineFunction);
+		std::vector<uint8_t> payload;
+		swf_append_string(payload, "myFunc");
+		swf_append_ui16_le(payload, 1);
+		swf_append_string(payload, "x");
+		swf_append_ui16_le(payload, 1);
+		payload.push_back(ActionPlay);
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(strcmp(ar.function_def.name, "myFunc") == 0);
+		CHECK(ar.function_def.num_params == 1);
+		REQUIRE(ar.function_def.params.size() == 1);
+		CHECK(strcmp(ar.function_def.params[0].name, "x") == 0);
+	}
+
+	TEST_CASE("[swf] ActionTry") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionTry);
+		std::vector<uint8_t> payload;
+		payload.push_back(0x07);
+		swf_append_ui16_le(payload, 10);
+		swf_append_ui16_le(payload, 5);
+		swf_append_ui16_le(payload, 3);
+		payload.push_back(2);
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(ar.try_def.has_catch == true);
+		CHECK(ar.try_def.has_finally == true);
+		CHECK(ar.try_def.catch_in_register == true);
+		CHECK(ar.try_def.try_size == 10);
+		CHECK(ar.try_def.catch_register == 2);
+	}
+
+	TEST_CASE("[swf] ActionGotoFrame2 with play flag") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionGotoFrame2);
+		swf_append_ui16_le(data, 1);
+		data.push_back(0x01);
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(ar.play_flag == true);
+	}
+
+	TEST_CASE("[swf] ActionSetTarget") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionSetTarget);
+		std::vector<uint8_t> payload;
+		swf_append_string(payload, "/mc1");
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(strcmp(ar.string1, "/mc1") == 0);
+	}
+
+	TEST_CASE("[swf] ActionGoToLabel") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionGoToLabel);
+		std::vector<uint8_t> payload;
+		swf_append_string(payload, "start");
+		swf_append_ui16_le(data, (uint16_t)payload.size());
+		data.insert(data.end(), payload.begin(), payload.end());
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(strcmp(ar.string1, "start") == 0);
+	}
+
+	TEST_CASE("[swf] ActionWaitForFrame") {
+		std::vector<uint8_t> data;
+		data.push_back(ActionWaitForFrame);
+		swf_append_ui16_le(data, 3);
+		swf_append_ui16_le(data, 10);
+		data.push_back(2);
+		data.push_back(0);
+
+		Stream s(data.data(), data.size());
+		ActionRecord ar = s.readACTIONRECORD();
+		CHECK(ar.frame == 10);
+		CHECK(ar.skip_count == 2);
+	}
+}
+
+TEST_SUITE("[[libshockwave]] SWF Shape Export") {
+
+	static Dictionary make_test_dict() {
+		Dictionary dict;
+		Character ch;
+		ch.bounds.xmin = 0; ch.bounds.ymin = 0;
+		ch.bounds.xmax = 100; ch.bounds.ymax = 100;
+
+		Shape shape;
+		shape.fill1 = 1; shape.stroke = 1; shape.closed = true;
+
+		Vertex v1; v1.anchor.x = 0; v1.anchor.y = 0; v1.control.x = 0; v1.control.y = 0;
+		Vertex v2; v2.anchor.x = 100; v2.anchor.y = 0; v2.control.x = 100; v2.control.y = 0;
+		Vertex v3; v3.anchor.x = 100; v3.anchor.y = 100; v3.control.x = 100; v3.control.y = 100;
+		Vertex v4; v4.anchor.x = 0; v4.anchor.y = 0; v4.control.x = 0; v4.control.y = 0;
+		shape.vertices.push_back(v1);
+		shape.vertices.push_back(v2);
+		shape.vertices.push_back(v3);
+		shape.vertices.push_back(v4);
+
+		ch.shapes.push_back(shape);
+		dict.CharacterList[1] = ch;
+
+		FillStyle fs;
+		fs.StyleType = FillStyle::Type::SOLID;
+		fs.Color.r = 255; fs.Color.g = 0; fs.Color.b = 0; fs.Color.a = 255;
+		dict.FillStyles[1].push_back(fs);
+
+		LineStyle ls;
+		ls.Width = 1.0f;
+		ls.Color.r = 0; ls.Color.g = 0; ls.Color.b = 0; ls.Color.a = 255;
+		dict.LineStyles[1].push_back(ls);
+		return dict;
+	}
+
+	TEST_CASE("[swf] SVG export produces valid SVG") {
+		Dictionary dict = make_test_dict();
+		std::string svg = SVGExporter::export_shape(dict, 1);
+		CHECK(svg.find("<svg") != std::string::npos);
+		CHECK(svg.find("<path") != std::string::npos);
+		CHECK(svg.find("</svg>") != std::string::npos);
+	}
+
+	TEST_CASE("[swf] SVG fill solid color") {
+		Dictionary dict = make_test_dict();
+		std::string svg = SVGExporter::export_shape(dict, 1);
+		CHECK(svg.find("fill=\"rgb(255,0,0)\"") != std::string::npos);
+	}
+
+	TEST_CASE("[swf] SVG stroke") {
+		Dictionary dict = make_test_dict();
+		std::string svg = SVGExporter::export_shape(dict, 1);
+		CHECK(svg.find("stroke=\"rgb(0,0,0)\"") != std::string::npos);
+	}
+
+	TEST_CASE("[swf] JSON export produces valid JSON") {
+		Dictionary dict = make_test_dict();
+		std::string json = JSONExporter::export_shape(dict, 1);
+		CHECK(json.find("\"bounds\"") != std::string::npos);
+		CHECK(json.find("\"shapes\"") != std::string::npos);
+		CHECK(json.find("\"commands\"") != std::string::npos);
+	}
+
+	TEST_CASE("[swf] JSON structure has expected keys") {
+		Dictionary dict = make_test_dict();
+		std::string json = JSONExporter::export_shape(dict, 1);
+		CHECK(json.find("\"type\": \"M\"") != std::string::npos);
+		CHECK(json.find("\"type\": \"L\"") != std::string::npos);
+		CHECK(json.find("\"closed\": true") != std::string::npos);
+	}
+
+	TEST_CASE("[swf] JSON non-existent character") {
+		Dictionary dict = make_test_dict();
+		CHECK(JSONExporter::export_shape(dict, 999) == "{}");
+	}
+}
+
+#endif // DOCTEST

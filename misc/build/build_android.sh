@@ -21,39 +21,74 @@ fi
 export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 export ANDROID_NDK_ROOT=$HOME/Library/Android/ndk
 
-# Godot gradle builds require JDK 17
-if [[ "$OSTYPE" == "darwin"* ]]; then
-	JAVA17=$(/usr/libexec/java_home -v 17 2>/dev/null)
-	if [ -z "$JAVA17" ] || [ ! -d "$JAVA17" ]; then
-		echo ""
-		echo "ERROR: JDK 17 is required for Godot gradle builds but was not found."
-		echo ""
-		echo "  Installed JDKs:"
-		/usr/libexec/java_home -V 2>&1 | grep -v "^$" | sed 's/^/    /'
-		echo ""
-		echo "  Install JDK 17 via one of:"
-		echo "    brew install openjdk@17"
-		echo "    https://adoptium.net/"
-		echo ""
-		exit 1
-	fi
-	export JAVA_HOME="$JAVA17"
-	echo "Using JDK 17: $JAVA_HOME"
-elif [[ "$OSTYPE" == "linux"* ]]; then
-	if [ -z "$JAVA_HOME" ]; then
-		for jdk in /usr/lib/jvm/java-17-* /usr/lib/jvm/temurin-17-*; do
-			if [ -d "$jdk" ]; then
+# Godot gradle builds require JDK 17 to 23.
+# JDK 24+ is not supported by Gradle 8.x (class file major version 68).
+MIN_JDK=17
+MAX_JDK=23
+
+get_java_major_version() {
+	"$1/bin/java" -version 2>&1 | head -1 | sed 's/.*"\([0-9]*\)\..*/\1/'
+}
+
+is_jdk_compatible() {
+	local jdk_home="$1"
+	[ -d "$jdk_home" ] && [ -x "$jdk_home/bin/java" ] || return 1
+	local ver=$(get_java_major_version "$jdk_home")
+	[ -n "$ver" ] && [ "$ver" -ge $MIN_JDK ] && [ "$ver" -le $MAX_JDK ] 2>/dev/null
+}
+
+# Try to find a compatible JDK
+if ! is_jdk_compatible "$JAVA_HOME"; then
+	unset JAVA_HOME
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		# Try preferred versions via java_home, validate each result
+		for ver in 17 21 23 22 20 19 18; do
+			candidate=$(/usr/libexec/java_home -v $ver 2>/dev/null)
+			if is_jdk_compatible "$candidate"; then
+				export JAVA_HOME="$candidate"
+				break
+			fi
+		done
+		# Try common Homebrew locations as fallback
+		if [ -z "$JAVA_HOME" ]; then
+			for ver in 17 21 23 22 20 19 18; do
+				for prefix in /opt/homebrew/opt /usr/local/opt; do
+					candidate="$prefix/openjdk@$ver/libexec/openjdk.jdk/Contents/Home"
+					if is_jdk_compatible "$candidate"; then
+						export JAVA_HOME="$candidate"
+						break 2
+					fi
+				done
+			done
+		fi
+	elif [[ "$OSTYPE" == "linux"* ]]; then
+		for jdk in /usr/lib/jvm/java-17-* /usr/lib/jvm/java-21-* /usr/lib/jvm/temurin-17-* /usr/lib/jvm/temurin-21-*; do
+			if is_jdk_compatible "$jdk"; then
 				export JAVA_HOME="$jdk"
 				break
 			fi
 		done
 	fi
-	if [ -z "$JAVA_HOME" ] || ! "$JAVA_HOME/bin/java" -version 2>&1 | grep -q '"17\.'; then
-		echo "ERROR: JDK 17 is required. Set JAVA_HOME to a JDK 17 installation."
-		exit 1
-	fi
-	echo "Using JDK 17: $JAVA_HOME"
 fi
+
+if [ -z "$JAVA_HOME" ] || ! is_jdk_compatible "$JAVA_HOME"; then
+	echo ""
+	echo "ERROR: JDK $MIN_JDK to $MAX_JDK is required for Godot gradle builds."
+	if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+		echo "  Found JDK $(get_java_major_version "$JAVA_HOME") at $JAVA_HOME (not compatible)"
+	fi
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		echo ""
+		echo "  Installed JDKs:"
+		/usr/libexec/java_home -V 2>&1 | grep -v "^$" | sed 's/^/    /'
+		echo ""
+		echo "  Install a compatible JDK via:"
+		echo "    brew install openjdk@17"
+	fi
+	echo ""
+	exit 1
+fi
+echo "Using JDK $(get_java_major_version "$JAVA_HOME"): $JAVA_HOME"
 
 export SCONS="scons -j$CPU verbose=yes warnings=no progress=no"
 export OPTIONS="debug_symbols=yes debug_experimental=no"
@@ -149,7 +184,7 @@ if [ "$cmd" != "skip_plugins" ]; then
 				mkdir -p "${install_dir}"
 			fi
 			(pushd "platform_plugins/android"
-				for plugin in godot-direct godot-google-play-billing godot-bluetooth godot-device-info; do
+				for plugin in godot-direct godot-google-play-billing godot-bluetooth godot-device-info godot-pad; do
 				(if [[ $plugin == -* ]]; then
 					echo_bold "*** Skipping plugin: $plugin"
 				elif [ -d $plugin ]; then

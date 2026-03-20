@@ -233,4 +233,9 @@ public class GodotLib {
 	 * @see Activity#onMainActivityResult()
 	 */
 	public static native void onMainActivityResult(int requestCode, int resultCode, Intent data);
+
+	/**
+	 * Forward location update from GPS/Network provider to native code.
+	 */
+	public static native void onLocationUpdate(double latitude, double longitude, double altitude, float accuracy, float speed, long timestamp, boolean isGps);
 }

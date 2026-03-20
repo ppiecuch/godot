@@ -69,6 +69,8 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_requestPermissionResu
 JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onRendererResumed(JNIEnv *env, jclass clazz);
 JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onRendererPaused(JNIEnv *env, jclass clazz);
 JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onMainActivityResult(JNIEnv *env, jclass clazz, jint requestCode, jint resultCode, jobject data);
+// Location callback from Java
+JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_onLocationUpdate(JNIEnv *env, jclass clazz, jdouble latitude, jdouble longitude, jdouble altitude, jfloat accuracy, jfloat speed, jlong timestamp, jboolean is_gps);
 }
 
 #endif // JAVA_GODOT_LIB_JNI_H

@@ -2,6 +2,14 @@
 * lua-all.c -- Lua core, libraries, and interpreter in a single file (Lua 5.3)
 */
 
+/* Android: fseeko/ftello require API level 24+ but Godot targets API 21.
+   Override Lua's l_fseek/l_ftell to use standard fseek/ftell instead. */
+#if defined(__ANDROID__)
+#define l_fseek(f,o,w)  fseek(f,(long)(o),w)
+#define l_ftell(f)       (long)ftell(f)
+#define l_seeknum        long
+#endif
+
 /* choose suitable platform-specific features */
 /* some of these may need extra libraries such as -ldl -lreadline -lncurses */
 #ifdef __linux__

@@ -695,6 +695,65 @@ void OS_Android::vibrate_handheld(int p_duration_ms) {
 	godot_java->vibrate(p_duration_ms);
 }
 
+// --- Location/GPS Services ---
+
+void OS_Android::start_location_updates(int p_min_time_ms, float p_min_distance, bool p_use_gps) {
+	godot_java->start_location_updates(p_min_time_ms, p_min_distance, p_use_gps);
+}
+
+void OS_Android::stop_location_updates() {
+	godot_java->stop_location_updates();
+}
+
+bool OS_Android::has_location_permission() {
+	return godot_java->has_location_permission();
+}
+
+Dictionary OS_Android::get_last_known_location(bool p_use_gps) {
+	Dictionary result;
+	Vector<double> loc = godot_java->get_last_known_location(p_use_gps);
+	if (loc.size() >= 6) {
+		result["latitude"] = loc[0];
+		result["longitude"] = loc[1];
+		result["altitude"] = loc[2];
+		result["accuracy"] = loc[3];
+		result["speed"] = loc[4];
+		result["timestamp"] = loc[5];
+	}
+	return result;
+}
+
+// --- Background Work Service ---
+
+void OS_Android::start_background_service(const String &p_notification_text) {
+	godot_java->start_background_service(p_notification_text);
+}
+
+void OS_Android::stop_background_service() {
+	godot_java->stop_background_service();
+}
+
+bool OS_Android::is_background_service_running() {
+	return godot_java->is_background_service_running();
+}
+
+void OS_Android::update_background_service_notification(const String &p_notification_text) {
+	godot_java->update_background_service_notification(p_notification_text);
+}
+
+// --- Advanced Joypad Axis Discovery ---
+
+Dictionary OS_Android::get_joy_axis_info(int p_device_id, int p_axis) {
+	Dictionary result;
+	Vector<float> info = godot_java->get_joy_axis_info(p_device_id, p_axis);
+	if (info.size() >= 3) {
+		result["has_axis"] = info[0] > 0.5f;
+		result["min_value"] = info[1];
+		result["max_value"] = info[2];
+	}
+	return result;
+}
+
 String OS_Android::get_config_path() const {
 	return get_user_data_dir().plus_file("config");
 }

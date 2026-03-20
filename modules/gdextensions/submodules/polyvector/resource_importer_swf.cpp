@@ -102,7 +102,20 @@ Error ResourceImporterSWF::import(const String &p_source_file, const String &p_s
 		print_verbose(">> " + p_source_file.get_basename() + " parse results:");
 		print_verbose(vformat("  FillStyles: %d", uint64_t(swfparser->get_dict()->FillStyles.size())));
 		print_verbose(vformat("  LineStyles: %d", uint64_t(swfparser->get_dict()->LineStyles.size())));
+		print_verbose(vformat("  Characters: %d", uint64_t(swfparser->get_dict()->CharacterList.size())));
+		print_verbose(vformat("  Sprites: %d", uint64_t(swfparser->get_dict()->SpriteList.size())));
 		print_verbose(vformat("  Frames: %d", uint64_t(swfparser->get_dict()->Frames.size())));
+		print_verbose(vformat("  Actions: %d", uint64_t(swfparser->get_dict()->Actions.size())));
+		print_verbose(vformat("  Buttons: %d", uint64_t(swfparser->get_dict()->Buttons.size())));
+		print_verbose(vformat("  Texts: %d", uint64_t(swfparser->get_dict()->Texts.size())));
+		print_verbose(vformat("  EditTexts: %d", uint64_t(swfparser->get_dict()->EditTexts.size())));
+		print_verbose(vformat("  Bitmaps: %d", uint64_t(swfparser->get_dict()->Bitmaps.size())));
+		print_verbose(vformat("  Fonts: %d", uint64_t(swfparser->get_dict()->Fonts.size())));
+		print_verbose(vformat("  Sounds: %d", uint64_t(swfparser->get_dict()->Sounds.size())));
+		print_verbose(vformat("  MorphShapes: %d", uint64_t(swfparser->get_dict()->MorphShapes.size())));
+		print_verbose(vformat("  FrameLabels: %d", uint64_t(swfparser->get_dict()->FrameLabels.size())));
+		print_verbose(vformat("  ExportedAssets: %d", uint64_t(swfparser->get_dict()->ExportedAssets.size())));
+		print_verbose(vformat("  ImportedAssets: %d", uint64_t(swfparser->get_dict()->ImportedAssets.size())));
 
 		const real_t sc = real_t(p_options["scale"]) / 1000.0;
 		SWF::Dictionary *dict = swfparser->get_dict();
@@ -121,10 +134,34 @@ Error ResourceImporterSWF::import(const String &p_source_file, const String &p_s
 						fillstyledef[PV_JSON_NAME_COLOUR] += fillstyle.Color.b;
 						if (fillstyle.Color.a < 255)
 							fillstyledef[PV_JSON_NAME_COLOUR] += fillstyle.Color.a;
-					} else { // Placeholder for unsupported fill types
-						fillstyledef[PV_JSON_NAME_COLOUR] += 255;
-						fillstyledef[PV_JSON_NAME_COLOUR] += 0;
-						fillstyledef[PV_JSON_NAME_COLOUR] += 255;
+					} else if (fillstyle.StyleType == SWF::FillStyle::Type::LINEARGRADIENT ||
+							fillstyle.StyleType == SWF::FillStyle::Type::RADIALGRADIENT ||
+							fillstyle.StyleType == SWF::FillStyle::Type::FOCALRADIALGRADIENT) {
+						// Approximate gradient with dominant color (largest ratio stop)
+						SWF::RGBA dominant = { 128, 128, 128, 255 };
+						if (!fillstyle.Gradient.GradientRecords.empty()) {
+							// Use the gradient stop at the midpoint (ratio closest to 128)
+							uint8_t best_dist = 255;
+							for (auto &gr : fillstyle.Gradient.GradientRecords) {
+								uint8_t dist = (gr.Ratio > 128) ? (gr.Ratio - 128) : (128 - gr.Ratio);
+								if (dist < best_dist) {
+									best_dist = dist;
+									dominant = gr.Color;
+								}
+							}
+						}
+						fillstyledef[PV_JSON_NAME_COLOUR] += dominant.r;
+						fillstyledef[PV_JSON_NAME_COLOUR] += dominant.g;
+						fillstyledef[PV_JSON_NAME_COLOUR] += dominant.b;
+						if (dominant.a < 255)
+							fillstyledef[PV_JSON_NAME_COLOUR] += dominant.a;
+						fillstyledef["grd"] = (int)fillstyle.StyleType; // Store gradient type for future use
+					} else { // Bitmap fills and other unsupported types
+						fillstyledef[PV_JSON_NAME_COLOUR] += fillstyle.Color.r > 0 ? fillstyle.Color.r : 200;
+						fillstyledef[PV_JSON_NAME_COLOUR] += fillstyle.Color.g > 0 ? fillstyle.Color.g : 200;
+						fillstyledef[PV_JSON_NAME_COLOUR] += fillstyle.Color.b > 0 ? fillstyle.Color.b : 200;
+						if (fillstyle.BitmapId > 0)
+							fillstyledef["bid"] = fillstyle.BitmapId; // Store bitmap ID for future use
 					}
 					fillstylearray += fillstyledef;
 				}
@@ -222,6 +259,75 @@ Error ResourceImporterSWF::import(const String &p_source_file, const String &p_s
 			}
 			root[PV_JSON_NAME_FRAMES] += jdisplaylist;
 		}
+		// Frame labels
+		if (!dict->FrameLabels.empty()) {
+			json labels;
+			for (auto &fl : dict->FrameLabels) {
+				labels[fl.first] = fl.second;
+			}
+			root[PV_JSON_NAME_LABELS] = labels;
+		}
+
+		// Exported assets (symbol names)
+		if (!dict->ExportedAssets.empty()) {
+			json assets;
+			for (auto &ae : dict->ExportedAssets) {
+				json entry;
+				entry[PV_JSON_NAME_ID] = ae.id;
+				entry["name"] = ae.name ? ae.name : "";
+				assets.push_back(entry);
+			}
+			root[PV_JSON_NAME_ASSETS] = assets;
+		}
+
+		// Sprites (nested animations)
+		if (!dict->SpriteList.empty()) {
+			json sprites;
+			for (auto &sp : dict->SpriteList) {
+				json spritedef;
+				spritedef[PV_JSON_NAME_ID] = sp.first;
+				spritedef["fc"] = sp.second.frame_count;
+				json spriteframes;
+				for (auto &sf : sp.second.Frames) {
+					json sdl;
+					for (auto &sdlc : sf) {
+						SWF::DisplayChar &dc = sdlc.second;
+						if (dc.id > 0) {
+							json scharout;
+							scharout[PV_JSON_NAME_ID] = charactermap.count(dc.id) ? charactermap[dc.id] : 0;
+							scharout[PV_JSON_NAME_DEPTH] = sdlc.first;
+							scharout[PV_JSON_NAME_TRANSFORM] += JV(dc.transform.TranslateX * sc);
+							scharout[PV_JSON_NAME_TRANSFORM] += JV(dc.transform.TranslateY * sc);
+							if ((Math::round(dc.transform.ScaleX * 100) != 100 || Math::round(dc.transform.ScaleY * 100) != 100) ||
+									(Math::round(dc.transform.RotateSkew0 * 100) != 0 || Math::round(dc.transform.RotateSkew1 * 100) != 0)) {
+								scharout[PV_JSON_NAME_TRANSFORM] += JV(dc.transform.ScaleX);
+								scharout[PV_JSON_NAME_TRANSFORM] += JV(dc.transform.ScaleY);
+								if (Math::round(dc.transform.RotateSkew0 * 100) != 0 || Math::round(dc.transform.RotateSkew1 * 100) != 0) {
+									scharout[PV_JSON_NAME_TRANSFORM] += JV(-dc.transform.RotateSkew0 * sc);
+									scharout[PV_JSON_NAME_TRANSFORM] += JV(-dc.transform.RotateSkew1 * sc);
+								}
+							}
+							if (dc.colourtransform.IsModified()) {
+								json cxe;
+								cxe += (dc.colourtransform.RedAddTerm / 256.0);
+								cxe += dc.colourtransform.RedMultTerm;
+								cxe += (dc.colourtransform.GreenAddTerm / 256.0);
+								cxe += dc.colourtransform.GreenMultTerm;
+								cxe += (dc.colourtransform.BlueAddTerm / 256.0);
+								cxe += dc.colourtransform.BlueMultTerm;
+								scharout[PV_JSON_NAME_CXFORM] = cxe;
+							}
+							sdl += scharout;
+						}
+					}
+					spriteframes += sdl;
+				}
+				spritedef[PV_JSON_NAME_FRAMES] = spriteframes;
+				sprites += spritedef;
+			}
+			root[PV_JSON_NAME_SPRITES] = sprites;
+		}
+
 		root[PV_JSON_NAME_FPS] = JV(swfparser->get_properties()->framerate);
 		root[PV_JSON_NAME_DIMS].push_back(int(swfparser->get_properties()->dimensions.xmax));
 		root[PV_JSON_NAME_DIMS].push_back(int(swfparser->get_properties()->dimensions.ymax));
@@ -445,6 +551,47 @@ RES ResourceLoaderJSONVector::load(const String &p_path, const String &p_origina
 			frame.push_back(pvom);
 		}
 		vectordata->add_frame(frame);
+	}
+
+	// Load frame labels
+	if (jsondata.contains(PV_JSON_NAME_LABELS)) {
+		json jlabels = jsondata[PV_JSON_NAME_LABELS];
+		for (auto it = jlabels.begin(); it != jlabels.end(); ++it) {
+			vectordata->set_frame_label(String(it.key().c_str()), it.value());
+		}
+	}
+
+	// Load sprites
+	if (jsondata.contains(PV_JSON_NAME_SPRITES)) {
+		json jsprites = jsondata[PV_JSON_NAME_SPRITES];
+		for (auto &jsp : jsprites) {
+			PolyVectorSprite pvsprite;
+			pvsprite.id = jsp[PV_JSON_NAME_ID];
+			pvsprite.frame_count = jsp["fc"];
+			for (auto &jsf : jsp[PV_JSON_NAME_FRAMES]) {
+				PolyVectorFrame spriteframe;
+				for (auto &jsc : jsf) {
+					PolyVectorSymbol pvsym;
+					pvsym.id = jsc[PV_JSON_NAME_ID];
+					pvsym.depth = jsc[PV_JSON_NAME_DEPTH];
+					if (jsc[PV_JSON_NAME_TRANSFORM].size() >= 2) {
+						pvsym.matrix.TranslateX = jsc[PV_JSON_NAME_TRANSFORM][0];
+						pvsym.matrix.TranslateY = jsc[PV_JSON_NAME_TRANSFORM][1];
+					}
+					if (jsc[PV_JSON_NAME_TRANSFORM].size() >= 4) {
+						pvsym.matrix.ScaleX = jsc[PV_JSON_NAME_TRANSFORM][2];
+						pvsym.matrix.ScaleY = jsc[PV_JSON_NAME_TRANSFORM][3];
+					}
+					if (jsc[PV_JSON_NAME_TRANSFORM].size() >= 6) {
+						pvsym.matrix.Skew0 = jsc[PV_JSON_NAME_TRANSFORM][4];
+						pvsym.matrix.Skew1 = jsc[PV_JSON_NAME_TRANSFORM][5];
+					}
+					spriteframe.push_back(pvsym);
+				}
+				pvsprite.frames.push_back(spriteframe);
+			}
+			vectordata->add_sprite(pvsprite);
+		}
 	}
 
 	vectordata->set_fps(jsondata[PV_JSON_NAME_FPS]);

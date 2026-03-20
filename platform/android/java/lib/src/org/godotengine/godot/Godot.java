@@ -548,6 +548,184 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		}
 	}
 
+	// --- Location/GPS Services ---
+
+	private android.location.LocationManager locationManager;
+	private android.location.LocationListener locationListener;
+
+	/**
+	 * Start receiving location updates.
+	 * @param minTimeMs Minimum time between updates in milliseconds
+	 * @param minDistance Minimum distance between updates in meters
+	 * @param useGps If true, use GPS provider; otherwise, use network provider
+	 */
+	@SuppressLint("MissingPermission")
+	@Keep
+	private void startLocationUpdates(int minTimeMs, float minDistance, boolean useGps) {
+		if (!hasLocationPermission()) {
+			Log.w("Godot", "Location permission not granted");
+			return;
+		}
+		final Activity activity = getActivity();
+		if (activity == null)
+			return;
+
+		if (locationManager == null) {
+			locationManager = (android.location.LocationManager)activity.getSystemService(Context.LOCATION_SERVICE);
+		}
+		if (locationManager == null)
+			return;
+
+		if (locationListener == null) {
+			locationListener = new android.location.LocationListener() {
+				@Override
+				public void onLocationChanged(android.location.Location location) {
+					GodotLib.onLocationUpdate(
+							location.getLatitude(),
+							location.getLongitude(),
+							location.getAltitude(),
+							location.getAccuracy(),
+							location.getSpeed(),
+							location.getTime(),
+							location.getProvider().equals(android.location.LocationManager.GPS_PROVIDER));
+				}
+				@Override
+				public void onStatusChanged(String provider, int status, Bundle extras) {}
+				@Override
+				public void onProviderEnabled(String provider) {}
+				@Override
+				public void onProviderDisabled(String provider) {}
+			};
+		}
+
+		try {
+			String provider = useGps
+					? android.location.LocationManager.GPS_PROVIDER
+					: android.location.LocationManager.NETWORK_PROVIDER;
+			locationManager.requestLocationUpdates(provider, minTimeMs, minDistance, locationListener);
+		} catch (Exception e) {
+			Log.e("Godot", "Failed to start location updates: " + e.getMessage());
+		}
+	}
+
+	@SuppressLint("MissingPermission")
+	@Keep
+	private void stopLocationUpdates() {
+		if (locationManager != null && locationListener != null) {
+			locationManager.removeUpdates(locationListener);
+		}
+	}
+
+	@Keep
+	private boolean hasLocationPermission() {
+		final Activity activity = getActivity();
+		if (activity == null)
+			return false;
+		return activity.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || activity.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+	}
+
+	@SuppressLint("MissingPermission")
+	@Keep
+	private double[] getLastKnownLocation(boolean useGps) {
+		if (!hasLocationPermission())
+			return null;
+		final Activity activity = getActivity();
+		if (activity == null)
+			return null;
+
+		if (locationManager == null) {
+			locationManager = (android.location.LocationManager)activity.getSystemService(Context.LOCATION_SERVICE);
+		}
+		if (locationManager == null)
+			return null;
+
+		try {
+			String provider = useGps
+					? android.location.LocationManager.GPS_PROVIDER
+					: android.location.LocationManager.NETWORK_PROVIDER;
+			android.location.Location loc = locationManager.getLastKnownLocation(provider);
+			if (loc != null) {
+				return new double[] {
+					loc.getLatitude(), loc.getLongitude(), loc.getAltitude(),
+					loc.getAccuracy(), loc.getSpeed(), loc.getTime()
+				};
+			}
+		} catch (Exception e) {
+			Log.e("Godot", "Failed to get last known location: " + e.getMessage());
+		}
+		return null;
+	}
+
+	// --- Background Work Service ---
+
+	/**
+	 * Start a foreground service that keeps the app alive in the background.
+	 * Uses GodotBackgroundService with a persistent notification (required on Android 8.0+).
+	 * Modeled after playcorenative/android.cpp APP_WORK_IN_BACKGROUND pattern.
+	 * @param notificationText Text shown in the notification while running
+	 */
+	@Keep
+	private void startBackgroundService(String notificationText) {
+		final Context context = getContext();
+		if (context == null) {
+			Log.e("Godot", "Cannot start background service: no context");
+			return;
+		}
+		GodotBackgroundService.start(context, notificationText);
+	}
+
+	/**
+	 * Stop the background foreground service.
+	 */
+	@Keep
+	private void stopBackgroundService() {
+		final Context context = getContext();
+		if (context == null)
+			return;
+		GodotBackgroundService.stop(context);
+	}
+
+	/**
+	 * Check whether the background service is currently running.
+	 */
+	@Keep
+	private boolean isBackgroundServiceRunning() {
+		return GodotBackgroundService.isRunning();
+	}
+
+	/**
+	 * Update the notification text of the running background service.
+	 * @param notificationText New text to display
+	 */
+	@Keep
+	private void updateBackgroundServiceNotification(String notificationText) {
+		final Context context = getContext();
+		if (context == null)
+			return;
+		GodotBackgroundService.updateNotification(context, notificationText);
+	}
+
+	// --- Advanced Joypad Axis Discovery ---
+
+	/**
+	 * Query axis info for a given input device.
+	 * @param deviceId The device ID
+	 * @param axis The axis code (e.g. MotionEvent.AXIS_*)
+	 * @return float[] {hasAxis (1.0/0.0), minValue, maxValue} or null
+	 */
+	@Keep
+	private float[] getJoyAxisInfo(int deviceId, int axis) {
+		android.view.InputDevice device = android.view.InputDevice.getDevice(deviceId);
+		if (device == null)
+			return null;
+
+		android.view.InputDevice.MotionRange range = device.getMotionRange(axis);
+		if (range != null) {
+			return new float[] { 1.0f, range.getMin(), range.getMax() };
+		}
+		return new float[] { 0.0f, 0.0f, 0.0f };
+	}
+
 	public void restart() {
 		if (godotHost != null) {
 			godotHost.onGodotRestartRequested(this);
@@ -879,6 +1057,16 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 	@Override
 	public void onDestroy() {
+		// Stop background service if running — app is being destroyed
+		if (GodotBackgroundService.isRunning()) {
+			final Context context = getContext();
+			if (context != null) {
+				GodotBackgroundService.stop(context);
+			}
+		}
+		// Stop location updates if active
+		stopLocationUpdates();
+
 		for (int i = 0; i < singleton_count; i++) {
 			singletons[i].onMainDestroy();
 		}
