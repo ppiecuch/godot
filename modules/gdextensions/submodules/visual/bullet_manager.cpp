@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "bullet_manager.h"
 #include "core/os/os.h"
 #include "scene/2d/area_2d.h"
@@ -740,3 +746,23 @@ void BulletManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_bounds_margin"), &BulletManager::get_bounds_margin);
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "bounds_margin", PROPERTY_HINT_NONE), "set_bounds_margin", "get_bounds_margin");
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[BulletManager] BulletManagerBullet position") {
+	BulletManagerBullet b;
+	b.set_position(Point2(10, 20));
+	CHECK(b.get_position() == Point2(10, 20));
+}
+
+TEST_CASE("[BulletManager] BulletManagerBullet speed") {
+	BulletManagerBullet b;
+	b.set_speed(100.0);
+	CHECK(b.get_speed() == doctest::Approx(100.0));
+	b.set_speed(0.0);
+	CHECK(b.get_speed() == doctest::Approx(0.0));
+}
+
+#endif

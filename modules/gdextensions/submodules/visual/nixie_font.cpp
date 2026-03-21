@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "nixie_font.h"
 #include "nixie_font_res.h"
 
@@ -489,3 +495,13 @@ NixieFont::NixieFont() {
 
 NixieFont::~NixieFont() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[NixieFont] placeholder") {
+	CHECK(true);
+}
+
+#endif

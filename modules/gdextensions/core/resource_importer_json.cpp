@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "resource_importer_json.h"
 #include "core/io/file_access_pack.h"
 
@@ -81,3 +87,22 @@ Error ResourceImporterJSON::import(const String &p_source_file, const String &p_
 	json_data->set_data(data);
 	return ResourceSaver::save(p_save_path + ".res", json_data);
 }
+
+#ifdef DOCTEST
+TEST_CASE("[ResourceImporterJSON] importer metadata") {
+	ResourceImporterJSON importer;
+	CHECK(importer.get_importer_name() == "JSON");
+	CHECK(importer.get_visible_name() == "JSON");
+	CHECK(importer.get_save_extension() == "res");
+	CHECK(importer.get_resource_type() == "JSONData");
+	CHECK(importer.get_preset_count() == 0);
+}
+
+TEST_CASE("[ResourceImporterJSON] recognized extensions") {
+	ResourceImporterJSON importer;
+	List<String> exts;
+	importer.get_recognized_extensions(&exts);
+	CHECK(exts.size() == 1);
+	CHECK(exts.front()->get() == "json");
+}
+#endif

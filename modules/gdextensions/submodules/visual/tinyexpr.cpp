@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 /*************************************************************************/
 /*                                                                       */
 /* TINYEXPR - Tiny recursive descent parser and evaluation engine in C   */
@@ -875,3 +881,59 @@ static void pn(const te_expr *n, int depth) {
 void te_print(const te_expr *n) {
 	pn(n, 0);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[TinyExpr] basic arithmetic") {
+	int error;
+	CHECK(te_interp("1+1", &error) == doctest::Approx(2.0));
+	CHECK(error == 0);
+	CHECK(te_interp("3*4", &error) == doctest::Approx(12.0));
+	CHECK(te_interp("10/3", &error) == doctest::Approx(3.333333).epsilon(0.001));
+	CHECK(te_interp("10-7", &error) == doctest::Approx(3.0));
+}
+
+TEST_CASE("[TinyExpr] operator precedence") {
+	int error;
+	CHECK(te_interp("2+3*4", &error) == doctest::Approx(14.0));
+	CHECK(te_interp("(2+3)*4", &error) == doctest::Approx(20.0));
+	CHECK(te_interp("2^3", &error) == doctest::Approx(8.0));
+}
+
+TEST_CASE("[TinyExpr] built-in functions") {
+	int error;
+	CHECK(te_interp("sin(0)", &error) == doctest::Approx(0.0));
+	CHECK(te_interp("cos(0)", &error) == doctest::Approx(1.0));
+	CHECK(te_interp("sqrt(9)", &error) == doctest::Approx(3.0));
+	CHECK(te_interp("abs(-5)", &error) == doctest::Approx(5.0));
+	CHECK(te_interp("floor(3.7)", &error) == doctest::Approx(3.0));
+	CHECK(te_interp("ceil(3.2)", &error) == doctest::Approx(4.0));
+}
+
+TEST_CASE("[TinyExpr] compile and eval") {
+	te_expr *expr = te_compile("2+3", NULL, 0, NULL);
+	REQUIRE(expr != NULL);
+	CHECK(te_eval(expr) == doctest::Approx(5.0));
+	te_free(expr);
+}
+
+TEST_CASE("[TinyExpr] error on invalid expression") {
+	int error;
+	te_interp("2+", &error);
+	CHECK(error != 0);
+}
+
+TEST_CASE("[TinyExpr] variables") {
+	real_t x = 5.0;
+	te_variable vars[] = { { "x", &x } };
+	te_expr *expr = te_compile("x*2+1", vars, 1, NULL);
+	REQUIRE(expr != NULL);
+	CHECK(te_eval(expr) == doctest::Approx(11.0));
+	x = 10.0;
+	CHECK(te_eval(expr) == doctest::Approx(21.0));
+	te_free(expr);
+}
+
+#endif

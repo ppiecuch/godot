@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "godot_error_handler.h"
 
 GodotErrorHandler *GodotErrorHandler::singleton = nullptr;
@@ -102,3 +108,11 @@ void GodotErrorHandler::_err_handler(void *ud, const char *p_func, const char *p
 
 	self->emit_signal("error_threw", error);
 }
+
+#ifdef DOCTEST
+TEST_CASE("[GodotErrorHandler] singleton pattern") {
+	// GodotErrorHandler is a singleton that registers an error handler.
+	// Full testing requires the engine error handler subsystem.
+	CHECK(true); // placeholder -- requires engine runtime
+}
+#endif

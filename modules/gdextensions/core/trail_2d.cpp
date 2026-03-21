@@ -32,6 +32,12 @@
 // Created by Gen on 2016/1/5.
 //
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "trail_2d.h"
 
 void TrailPoint2D::_update_frame(bool minus) {
@@ -478,3 +484,24 @@ void TrailLine2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "terminal"), "set_terminal", "get_terminal");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "line_color", PROPERTY_HINT_RESOURCE_TYPE, "Gradient"), "set_line_color", "get_line_color");
 }
+
+#ifdef DOCTEST
+TEST_CASE("[trail_2d] determinant helper") {
+	CHECK(determinant(Vector2(1, 0), Vector2(0, 1)) == doctest::Approx(1.0));
+	CHECK(determinant(Vector2(0, 1), Vector2(1, 0)) == doctest::Approx(-1.0));
+	CHECK(determinant(Vector2(1, 0), Vector2(1, 0)) == doctest::Approx(0.0));
+}
+
+TEST_CASE("[trail_2d] intersect helper") {
+	Point2 result;
+	// Crossing segments
+	int r = intersect(Point2(0, 0), Point2(1, 1), Point2(0, 1), Point2(1, 0), &result);
+	CHECK(r == 1);
+	CHECK(result.x == doctest::Approx(0.5f));
+	CHECK(result.y == doctest::Approx(0.5f));
+
+	// Parallel, non-intersecting
+	r = intersect(Point2(0, 0), Point2(1, 0), Point2(0, 1), Point2(1, 1), &result);
+	CHECK(r == 0);
+}
+#endif

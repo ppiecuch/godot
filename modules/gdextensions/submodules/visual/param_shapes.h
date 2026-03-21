@@ -109,7 +109,7 @@ void draw_param_shape(CanvasItem *canvas, real_t radius1 = 150, real_t radius2 =
 	// Drawing shapes
 
 	if (opts.filled) {
-		canvas->draw_polygon(p, Color(Math::randf(), Math::randf(), Math::randf());
+		canvas->draw_polygon(p, Color(Math::randf(), Math::randf(), Math::randf()));
 	} else {
 		if (opts.random_colors) {
 			canvas->draw_polyline_colors(p, colors);

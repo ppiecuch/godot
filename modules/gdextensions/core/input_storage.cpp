@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "input_storage.h"
 
 #include "core/os/input.h"
@@ -294,3 +300,41 @@ void InputStorageNode::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "input_storage_node/storage_size"), "set_storage_size", "get_storage_size");
 	ADD_PROPERTY(PropertyInfo(Variant::POOL_STRING_ARRAY, "input_storage_node/events"), "set_events", "get_events");
 }
+
+#ifdef DOCTEST
+TEST_CASE("[InputNode] pressed and down actions") {
+	InputNode node;
+	CHECK(node.is_pressed("jump") == false);
+	CHECK(node.is_down("jump") == false);
+
+	node.pressed_action("jump");
+	CHECK(node.is_pressed("jump") == true);
+	CHECK(node.is_down("jump") == false);
+
+	node.down_action("jump");
+	CHECK(node.is_down("jump") == true);
+}
+
+TEST_CASE("[InputNode] is_pressed with multiple actions") {
+	InputNode node;
+	node.pressed_action("up");
+	node.pressed_action("attack");
+
+	PoolStringArray actions;
+	actions.append("up");
+	actions.append("attack");
+	CHECK(node.is_pressed(actions) == true);
+
+	PoolStringArray partial;
+	partial.append("up");
+	partial.append("missing");
+	CHECK(node.is_pressed(partial) == false);
+}
+
+TEST_CASE("[InputNode] duplicate pressed_action is idempotent") {
+	InputNode node;
+	node.pressed_action("fire");
+	node.pressed_action("fire");
+	CHECK(node.is_pressed("fire") == true);
+}
+#endif

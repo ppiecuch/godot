@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include <algorithm>
 #include <iterator>
 #include <limits>
@@ -620,3 +626,30 @@ ElasticSimulation::~ElasticSimulation() {
 	if (sim3::Simulation *sim = _sim.release())
 		delete sim;
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[ElasticSimulation] create and query simulation") {
+	Ref<ElasticSimulation> sim = memnew(ElasticSimulation);
+	int id = sim->make_sim(Size2(100, 50), 4, false, ElasticSimulation::SIM_ANCHOR_TOP);
+	CHECK(id >= 0);
+	CHECK(sim->get_sim_particles_count(id) > 0);
+}
+
+TEST_CASE("[ElasticSimulation] simulation state") {
+	Ref<ElasticSimulation> sim = memnew(ElasticSimulation);
+	int id = sim->make_sim(Size2(100, 50), 4, false, ElasticSimulation::SIM_ANCHOR_TOP);
+	sim->set_sim_state(id, ElasticSimulation::SIM_STATE_PAUSED);
+	CHECK(sim->get_sim_state(id) == ElasticSimulation::SIM_STATE_PAUSED);
+}
+
+TEST_CASE("[ElasticSimulation] reset clears simulations") {
+	Ref<ElasticSimulation> sim = memnew(ElasticSimulation);
+	sim->make_sim(Size2(100, 50), 4, false, ElasticSimulation::SIM_ANCHOR_TOP);
+	sim->reset_sim();
+	CHECK(true);
+}
+
+#endif

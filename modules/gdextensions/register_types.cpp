@@ -155,6 +155,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "visual/destructible_sprite.h"
 #include "visual/explosion_particles.h"
 #include "visual/figure_2d.h"
+#include "visual/filo_cable.h"
 #include "visual/foliage_2d_animation.h"
 #include "visual/grid_rect.h"
 #include "visual/nixie_font.h"
@@ -615,6 +616,14 @@ void register_gdextensions_types() {
 	ClassDB::register_class<TexturePanning>();
 	ClassDB::register_class<ThumbWheelH>();
 	ClassDB::register_class<ThumbWheelV>();
+	ClassDB::register_class<filo::ConvexHull2D>();
+	ClassDB::register_virtual_class<filo::CableBody>();
+	ClassDB::register_class<filo::CablePoint>();
+	ClassDB::register_class<filo::CableDisc>();
+	ClassDB::register_class<filo::CableShape>();
+	ClassDB::register_class<filo::Cable>();
+	ClassDB::register_class<filo::CableSolver>();
+	ClassDB::register_class<filo::CableSection>();
 #ifdef TOOLS_ENABLED
 	ClassDB::register_class<ControlWidget>();
 #endif

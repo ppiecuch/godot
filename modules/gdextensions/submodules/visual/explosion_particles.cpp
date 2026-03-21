@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 // Reference:
 // ----------
 // https://github.com/danboo/godot-RigidBodyParticles2D/blob/master/examples/sparks/Particle.gd
@@ -652,3 +658,13 @@ RigidBodyParticles2D::RigidBodyParticles2D() {
 }
 
 #undef rand_range
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[ExplosionParticles] placeholder") {
+	CHECK(true);
+}
+
+#endif

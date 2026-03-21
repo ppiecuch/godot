@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "thumb_wheel.h"
 
 #include "core/math/math_funcs.h"
@@ -483,3 +489,13 @@ ThumbWheelV::ThumbWheelV() {
 	disabled = false;
 	_state = { false };
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[ThumbWheel] placeholder") {
+	CHECK(true);
+}
+
+#endif

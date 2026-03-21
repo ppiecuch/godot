@@ -32,6 +32,12 @@
 //    Copyright (c) 2020-2021 Benjamin 'drwhut' Beddows
 //
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "error_reporter.h"
 
 ErrorReporter::ErrorReporter() {
@@ -65,3 +71,29 @@ void ErrorReporter::_error_handler(void *p_self, const char *p_func, const char 
 		self->emit_signal("error_received", func_str, file_str, p_line, error_str, errorexp_str);
 	}
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[ErrorReporter] lifecycle") {
+	ErrorReporter *reporter = memnew(ErrorReporter);
+	// Should register error handler on construction
+	REQUIRE(reporter != nullptr);
+
+	// deinit removes the handler
+	reporter->deinit();
+
+	memdelete(reporter);
+}
+
+TEST_CASE("[ErrorReporter] init and deinit are safe") {
+	// Multiple init/deinit cycles should not crash
+	for (int i = 0; i < 3; i++) {
+		ErrorReporter *reporter = memnew(ErrorReporter);
+		reporter->deinit();
+		memdelete(reporter);
+	}
+}
+
+#endif

@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "raw_packer.h"
 
 static const CharType TerminatingZero('\0');
@@ -434,6 +440,127 @@ Array RawPacker::unpack(const String &fmt, const PoolByteArray &array) {
 }
 
 void RawPacker::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("pack"), &RawPacker::pack);
-	ClassDB::bind_method(D_METHOD("unpack"), &RawPacker::unpack);
+	ClassDB::bind_method(D_METHOD("pack", "format", "values"), &RawPacker::pack);
+	ClassDB::bind_method(D_METHOD("unpack", "format", "data"), &RawPacker::unpack);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[RawPacker] pack and unpack integers") {
+	RawPacker packer;
+
+	SUBCASE("byte") {
+		Array input;
+		input.push_back(42);
+		PoolByteArray packed = packer.pack("b", input);
+		REQUIRE(packed.size() == 1);
+		Array unpacked = packer.unpack("b", packed);
+		REQUIRE(unpacked.size() == 1);
+		CHECK(int(unpacked[0]) == 42);
+	}
+
+	SUBCASE("unsigned byte") {
+		Array input;
+		input.push_back(200);
+		PoolByteArray packed = packer.pack("B", input);
+		REQUIRE(packed.size() == 1);
+		Array unpacked = packer.unpack("B", packed);
+		REQUIRE(unpacked.size() == 1);
+		CHECK(int(unpacked[0]) == 200);
+	}
+
+	SUBCASE("short") {
+		Array input;
+		input.push_back(0x1234);
+		PoolByteArray packed = packer.pack("h", input);
+		REQUIRE(packed.size() == 2);
+		Array unpacked = packer.unpack("h", packed);
+		REQUIRE(unpacked.size() == 1);
+		CHECK(int(unpacked[0]) == 0x1234);
+	}
+
+	SUBCASE("int32") {
+		Array input;
+		input.push_back(0x12345678);
+		PoolByteArray packed = packer.pack("i", input);
+		REQUIRE(packed.size() == 4);
+		Array unpacked = packer.unpack("i", packed);
+		REQUIRE(unpacked.size() == 1);
+		CHECK(int(unpacked[0]) == 0x12345678);
+	}
+
+	SUBCASE("int64") {
+		Array input;
+		input.push_back((int64_t)0x123456789ABCLL);
+		PoolByteArray packed = packer.pack("q", input);
+		REQUIRE(packed.size() == 8);
+		Array unpacked = packer.unpack("q", packed);
+		REQUIRE(unpacked.size() == 1);
+		CHECK(int64_t(unpacked[0]) == (int64_t)0x123456789ABCLL);
+	}
+}
+
+TEST_CASE("[RawPacker] pack and unpack float/double") {
+	RawPacker packer;
+
+	SUBCASE("float") {
+		Array input;
+		input.push_back(3.14f);
+		PoolByteArray packed = packer.pack("f", input);
+		REQUIRE(packed.size() == 4);
+		Array unpacked = packer.unpack("f", packed);
+		REQUIRE(unpacked.size() == 1);
+		CHECK(float(unpacked[0]) == doctest::Approx(3.14f).epsilon(0.001));
+	}
+
+	SUBCASE("double") {
+		Array input;
+		input.push_back(2.718281828);
+		PoolByteArray packed = packer.pack("d", input);
+		REQUIRE(packed.size() == 8);
+		Array unpacked = packer.unpack("d", packed);
+		REQUIRE(unpacked.size() == 1);
+		CHECK(double(unpacked[0]) == doctest::Approx(2.718281828).epsilon(0.0001));
+	}
+}
+
+TEST_CASE("[RawPacker] pack and unpack bool") {
+	RawPacker packer;
+	Array input;
+	input.push_back(true);
+	input.push_back(false);
+	PoolByteArray packed = packer.pack("??", input);
+	REQUIRE(packed.size() == 2);
+	Array unpacked = packer.unpack("??", packed);
+	REQUIRE(unpacked.size() == 2);
+	CHECK(bool(unpacked[0]) == true);
+	CHECK(bool(unpacked[1]) == false);
+}
+
+TEST_CASE("[RawPacker] pack multiple types") {
+	RawPacker packer;
+	Array input;
+	input.push_back(1);      // byte
+	input.push_back(1000);   // short
+	input.push_back(3.14f);  // float
+	PoolByteArray packed = packer.pack("bhf", input);
+	REQUIRE(packed.size() == 1 + 2 + 4);
+	Array unpacked = packer.unpack("bhf", packed);
+	REQUIRE(unpacked.size() == 3);
+	CHECK(int(unpacked[0]) == 1);
+	CHECK(int(unpacked[1]) == 1000);
+	CHECK(float(unpacked[2]) == doctest::Approx(3.14f).epsilon(0.001));
+}
+
+TEST_CASE("[RawPacker] empty input") {
+	RawPacker packer;
+	Array input;
+	PoolByteArray packed = packer.pack("", input);
+	CHECK(packed.size() == 0);
+	Array unpacked = packer.unpack("", packed);
+	CHECK(unpacked.size() == 0);
+}
+
+#endif

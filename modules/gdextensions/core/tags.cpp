@@ -31,6 +31,12 @@
 // Copyright (c) 2019 Windy Darian. MIT License.
 // Custom script library for things.
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "tags.h"
 
 using tag_t = int32_t;
@@ -166,3 +172,81 @@ Tags::~Tags() {
 	memdelete(impl);
 	impl = nullptr;
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Tags] define and retrieve") {
+	tags_impl_t ti;
+	ti.define_tag("enemy");
+	tag_t t = ti.get_tag("enemy");
+	CHECK(t != k_tag_null);
+}
+
+TEST_CASE("[Tags] hierarchical tags") {
+	tags_impl_t ti;
+	ti.define_tag("creature");
+	ti.define_tag("creature.enemy");
+	ti.define_tag("creature.friendly");
+
+	tag_t creature = ti.get_tag("creature");
+	tag_t enemy = ti.get_tag("creature.enemy");
+	tag_t friendly = ti.get_tag("creature.friendly");
+
+	CHECK(creature != k_tag_null);
+	CHECK(enemy != k_tag_null);
+	CHECK(friendly != k_tag_null);
+
+	SUBCASE("child matches parent") {
+		CHECK(ti.match_tag(enemy, creature));
+		CHECK(ti.match_tag(friendly, creature));
+	}
+
+	SUBCASE("parent does not match child") {
+		CHECK_FALSE(ti.match_tag(creature, enemy));
+		CHECK_FALSE(ti.match_tag(creature, friendly));
+	}
+
+	SUBCASE("siblings do not match") {
+		CHECK_FALSE(ti.match_tag(enemy, friendly));
+		CHECK_FALSE(ti.match_tag(friendly, enemy));
+	}
+
+	SUBCASE("self matches self") {
+		CHECK(ti.match_tag(enemy, enemy));
+		CHECK(ti.match_tag(creature, creature));
+	}
+}
+
+TEST_CASE("[Tags] multi-level hierarchy") {
+	tags_impl_t ti;
+	ti.define_tag("a");
+	ti.define_tag("a.b");
+	ti.define_tag("a.b.c");
+
+	tag_t a = ti.get_tag("a");
+	tag_t ab = ti.get_tag("a.b");
+	tag_t abc = ti.get_tag("a.b.c");
+
+	CHECK(ti.match_tag(abc, ab));
+	CHECK(ti.match_tag(abc, a));
+	CHECK(ti.match_tag(ab, a));
+	CHECK_FALSE(ti.match_tag(a, ab));
+	CHECK_FALSE(ti.match_tag(a, abc));
+}
+
+TEST_CASE("[Tags] distinct root tags") {
+	tags_impl_t ti;
+	ti.define_tag("alpha");
+	ti.define_tag("beta");
+
+	tag_t alpha = ti.get_tag("alpha");
+	tag_t beta = ti.get_tag("beta");
+
+	CHECK(alpha != beta);
+	CHECK_FALSE(ti.match_tag(alpha, beta));
+	CHECK_FALSE(ti.match_tag(beta, alpha));
+}
+
+#endif

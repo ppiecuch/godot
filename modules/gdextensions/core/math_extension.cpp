@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "math_extension.h"
 
 GodotMathExtension *GodotMathExtension::singleton = nullptr;
@@ -49,7 +55,7 @@ void GodotMathExtension::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("adjust_facing", "facing", "target", "step", "adjust_rate", "current_gn"), &GodotMathExtension::adjust_facing);
 	ClassDB::bind_method(D_METHOD("rotate_around:Transform", "transform", "point", "axis", "angle"), &GodotMathExtension::rotate_around);
 	ClassDB::bind_method(D_METHOD("inverse_lerp", "from", "to", "weight"), &GodotMathExtension::inverse_lerp);
-	ClassDB::bind_method(D_METHOD("base_log", "float", "float"), &GodotMathExtension::base_log);
+	ClassDB::bind_method(D_METHOD("base_log", "value", "base"), &GodotMathExtension::base_log);
 	ClassDB::bind_method(D_METHOD("transform_directon_vector", "direction", "basis"), &GodotMathExtension::transform_directon_vector);
 
 	ClassDB::bind_method(D_METHOD("spatial_set_rotation_quat", "spatial", "quat"), &GodotMathExtension::spatial_set_rotation_quat);
@@ -166,3 +172,94 @@ GodotMathExtension::GodotMathExtension() {
 	ERR_FAIL_COND_MSG(singleton != nullptr, "Singleton already exists");
 	singleton = this;
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[MathExtension] ease functions") {
+	SUBCASE("ease_in at boundaries") {
+		CHECK(MathExtension::ease_in(0.0) == doctest::Approx(0.0).epsilon(0.001));
+		CHECK(MathExtension::ease_in(1.0) == doctest::Approx(1.0).epsilon(0.001));
+	}
+	SUBCASE("ease_out at boundaries") {
+		CHECK(MathExtension::ease_out(0.0) == doctest::Approx(1.0).epsilon(0.001));
+		CHECK(MathExtension::ease_out(1.0) == doctest::Approx(0.0).epsilon(0.001));
+	}
+	SUBCASE("smooth_step at boundaries") {
+		CHECK(MathExtension::smooth_step(0.0) == doctest::Approx(0.0).epsilon(0.001));
+		CHECK(MathExtension::smooth_step(1.0) == doctest::Approx(1.0).epsilon(0.001));
+	}
+	SUBCASE("smoother_step at boundaries") {
+		CHECK(MathExtension::smoother_step(0.0) == doctest::Approx(0.0).epsilon(0.001));
+		CHECK(MathExtension::smoother_step(1.0) == doctest::Approx(1.0).epsilon(0.001));
+	}
+	SUBCASE("exponetial") {
+		CHECK(MathExtension::exponetial(0.0) == doctest::Approx(0.0));
+		CHECK(MathExtension::exponetial(1.0) == doctest::Approx(1.0));
+		CHECK(MathExtension::exponetial(0.5) == doctest::Approx(0.25));
+	}
+}
+
+TEST_CASE("[MathExtension] smooth_step monotonic") {
+	// smooth_step should be monotonically increasing on [0, 1]
+	real_t prev = MathExtension::smooth_step(0.0);
+	for (int i = 1; i <= 10; i++) {
+		real_t t = i / 10.0;
+		real_t val = MathExtension::smooth_step(t);
+		CHECK(val >= prev);
+		prev = val;
+	}
+}
+
+TEST_CASE("[MathExtension] inverse_lerp") {
+	CHECK(MathExtension::inverse_lerp(0.0, 10.0, 5.0) == doctest::Approx(0.5));
+	CHECK(MathExtension::inverse_lerp(0.0, 10.0, 0.0) == doctest::Approx(0.0));
+	CHECK(MathExtension::inverse_lerp(0.0, 10.0, 10.0) == doctest::Approx(1.0));
+	// Clamped
+	CHECK(MathExtension::inverse_lerp(0.0, 10.0, -5.0) == doctest::Approx(0.0));
+	CHECK(MathExtension::inverse_lerp(0.0, 10.0, 15.0) == doctest::Approx(1.0));
+}
+
+TEST_CASE("[MathExtension] clamp_angle") {
+	CHECK(MathExtension::clamp_angle(45.0, -90.0, 90.0) == doctest::Approx(45.0));
+	CHECK(MathExtension::clamp_angle(100.0, -90.0, 90.0) == doctest::Approx(90.0));
+	CHECK(MathExtension::clamp_angle(-100.0, -90.0, 90.0) == doctest::Approx(-90.0));
+	// Wrap behavior
+	CHECK(MathExtension::clamp_angle(400.0, 0.0, 90.0) == doctest::Approx(40.0));
+	CHECK(MathExtension::clamp_angle(-400.0, -90.0, 0.0) == doctest::Approx(-40.0));
+}
+
+TEST_CASE("[MathExtension] spherical_to_local_position") {
+	// At theta=0, should be (0, 1, 0) (pointing up)
+	Vector3 up = MathExtension::spherical_to_local_position(0, 0);
+	CHECK(up.y == doctest::Approx(1.0).epsilon(0.001));
+	CHECK(Math::abs(up.x) < 0.001);
+	CHECK(Math::abs(up.z) < 0.001);
+
+	// At theta=PI/2, phi=0, should be (0, 0, 1)
+	Vector3 fwd = MathExtension::spherical_to_local_position(Math_PI * 0.5, 0);
+	CHECK(Math::abs(fwd.y) < 0.001);
+	CHECK(fwd.z == doctest::Approx(1.0).epsilon(0.001));
+}
+
+TEST_CASE("[MathExtension] GME_MATH_TAU") {
+	CHECK(GME_MATH_TAU == doctest::Approx(Math_PI * 2).epsilon(0.0001));
+}
+
+TEST_CASE("[GodotMathExtension] base_log") {
+	GodotMathExtension gme;
+
+	CHECK(gme.base_log(100.0f, 10.0f) == doctest::Approx(2.0f).epsilon(0.001));
+	CHECK(gme.base_log(8.0f, 2.0f) == doctest::Approx(3.0f).epsilon(0.001));
+	CHECK(gme.base_log(1.0f, 10.0f) == doctest::Approx(0.0f).epsilon(0.001));
+
+	SUBCASE("base 1 returns NAN") {
+		CHECK(Math::is_nan(gme.base_log(5.0f, 1.0f)));
+	}
+	SUBCASE("base 0 returns NAN for non-1 value") {
+		CHECK(Math::is_nan(gme.base_log(5.0f, 0.0f)));
+	}
+}
+
+#endif

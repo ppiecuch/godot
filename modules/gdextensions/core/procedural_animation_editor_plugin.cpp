@@ -50,6 +50,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "procedural_animation_editor_plugin.h"
 
 #include "editor/editor_properties.h"
@@ -784,3 +790,10 @@ ProceduralAnimationEditorPlugin::~ProceduralAnimationEditorPlugin() {
 }
 
 // E  --------        ProceduralAnimationEditorPlugin        --------
+
+#ifdef DOCTEST
+TEST_CASE("[ProceduralAnimationEditorPlugin] minimal test") {
+	// Editor plugin requires EditorNode to construct.
+	CHECK(true); // placeholder -- requires editor runtime
+}
+#endif

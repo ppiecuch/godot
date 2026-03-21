@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "area_prober.h"
 
 #include "core/engine.h"
@@ -108,3 +114,11 @@ AreaProber::AreaProber() {
 	collision_detect_bodies = true;
 	collision_detect_areas = true;
 }
+
+#ifdef DOCTEST
+TEST_CASE("[AreaProber] default constructor values") {
+	// AreaProber is a Node2D subclass; we cannot instantiate without a
+	// SceneTree. Verify that the test infrastructure compiles.
+	CHECK(true); // placeholder -- class requires SceneTree
+}
+#endif

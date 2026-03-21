@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "texture_panning.h"
 #include "scene/main/viewport.h"
 
@@ -326,3 +332,13 @@ TexturePanning::TexturePanning() {
 //         current_position.y = 0 - _texture_size.get_height() * _scale
 //
 //     spriteNode.set_pos(current_position)
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[TexturePanning] placeholder") {
+	CHECK(true);
+}
+
+#endif

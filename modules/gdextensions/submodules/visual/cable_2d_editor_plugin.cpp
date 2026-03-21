@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "cable_2d_editor_plugin.h"
 
 Node2D *Cable2DEditor::_get_node() const {
@@ -63,3 +69,13 @@ Cable2DEditor::Cable2DEditor(EditorNode *p_editor) :
 Cable2DEditorPlugin::Cable2DEditorPlugin(EditorNode *p_node) :
 		AbstractPolygon2DEditorPlugin(p_node, memnew(Cable2DEditor(p_node)), "Cable2D") {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Cable2DEditorPlugin] placeholder") {
+	CHECK(true);
+}
+
+#endif

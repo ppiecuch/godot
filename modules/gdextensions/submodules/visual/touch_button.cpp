@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 /*
 Copyright (c) 2019-2020 Péter Magyar
 
@@ -153,3 +159,13 @@ bool TouchButton::_is_point_inside(const Vector2 &vec) {
 
 	return get_global_rect().has_point(point);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[TouchButton] placeholder") {
+	CHECK(true);
+}
+
+#endif

@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 // Reference:
 // ----------
 //  - https://stackoverflow.com/questions/7687148/
@@ -842,3 +848,13 @@ ControlWidget::ControlWidget() {
 	_state.active = false;
 	_mesh = newref(ArrayMesh);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[WidgetControls] placeholder") {
+	CHECK(true);
+}
+
+#endif

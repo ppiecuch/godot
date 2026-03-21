@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include <map>
 #include <vector>
 
@@ -245,7 +251,7 @@ void SimulationController2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_simulation_paused"), &SimulationController2D::is_simulation_paused);
 	ClassDB::bind_method(D_METHOD("set_simulation_precision", "precision"), &SimulationController2D::set_simulation_precision);
 	ClassDB::bind_method(D_METHOD("get_simulation_precision"), &SimulationController2D::get_simulation_precision);
-	ClassDB::bind_method(D_METHOD("set_simulation_force", "precision"), &SimulationController2D::set_simulation_force);
+	ClassDB::bind_method(D_METHOD("set_simulation_force", "force"), &SimulationController2D::set_simulation_force);
 	ClassDB::bind_method(D_METHOD("get_simulation_force"), &SimulationController2D::get_simulation_force);
 	ClassDB::bind_method(D_METHOD("set_noise_modulation", "state"), &SimulationController2D::set_noise_modulation);
 	ClassDB::bind_method(D_METHOD("is_noise_modulation_active"), &SimulationController2D::is_noise_modulation_active);

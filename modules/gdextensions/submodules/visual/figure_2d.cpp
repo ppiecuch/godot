@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "figure_2d.h"
 
 #include "core/message_queue.h"
@@ -799,3 +805,13 @@ Figure2D::Figure2D() :
 
 Figure2D::~Figure2D() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Figure2D] placeholder") {
+	CHECK(true);
+}
+
+#endif

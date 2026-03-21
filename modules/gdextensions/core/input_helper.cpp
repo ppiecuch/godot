@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "input_helper.h"
 
 const String DEVICE_KEYBOARD = "keyboard";
@@ -110,3 +116,13 @@ InputHelper::~InputHelper() {
 //       return input.button_index
 //
 //   return -1
+
+#ifdef DOCTEST
+TEST_CASE("[InputHelper] device name constants") {
+	CHECK(DEVICE_KEYBOARD == "keyboard");
+	CHECK(DEVICE_XBOX_CONTROLLER == "xbox");
+	CHECK(DEVICE_SWITCH_CONTROLLER == "switch");
+	CHECK(DEVICE_PLAYSTATION_CONTROLLER == "playstation");
+	CHECK(DEVICE_GENERIC == "generic");
+}
+#endif

@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "scatter_multi_mesh_2d.h"
 
 #include "common/gd_core.h"
@@ -221,3 +227,13 @@ ScatterMultiMesh2D::ScatterMultiMesh2D() {
 
 ScatterMultiMesh2D::~ScatterMultiMesh2D() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[ScatterMultiMesh2D] placeholder") {
+	CHECK(true);
+}
+
+#endif

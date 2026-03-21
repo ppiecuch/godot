@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "pixel_spaceships.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -144,15 +150,15 @@ void PixelSpaceshipsOptions::set_colored(bool _colored) {
 }
 
 float PixelSpaceshipsOptions::get_edge_brightness() {
-	return edge_brightnes;
+	return edge_brightness;
 }
 
 void PixelSpaceshipsOptions::set_edge_brightness(float _brightnes) {
-	edge_brightnes = _brightnes;
-	if (edge_brightnes < 0)
-		edge_brightnes = 0;
-	if (edge_brightnes > 1)
-		edge_brightnes = 1;
+	edge_brightness = _brightnes;
+	if (edge_brightness < 0)
+		edge_brightness = 0;
+	if (edge_brightness > 1)
+		edge_brightness = 1;
 }
 
 float PixelSpaceshipsOptions::get_color_variation() {
@@ -205,7 +211,7 @@ void PixelSpaceshipsOptions::set_hue(float _hue) {
 
 void PixelSpaceshipsOptions::setup_options(bool _colored, float _edge_brightness, float _col_variations, float _brightness_noise, float _saturation) {
 	colored = _colored;
-	edge_brightnes = _edge_brightness;
+	edge_brightness = _edge_brightness;
 	color_variation = _col_variations;
 	brightness_noise = _brightness_noise;
 	saturation = _saturation;
@@ -235,7 +241,7 @@ void PixelSpaceshipsOptions::_bind_methods() {
 
 PixelSpaceshipsOptions::PixelSpaceshipsOptions() {
 	colored = true;
-	edge_brightnes = 0.3;
+	edge_brightness = 0.3;
 	color_variation = 0.2;
 	brightness_noise = 0.3;
 	saturation = 0.5;
@@ -549,3 +555,69 @@ PixelSpaceships::PixelSpaceships() {
 
 PixelSpaceships::~PixelSpaceships() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[PixelSpaceships] options default values") {
+	Ref<PixelSpaceshipsOptions> opts = memnew(PixelSpaceshipsOptions);
+	CHECK(opts->get_edge_brightness() == doctest::Approx(0.3));
+	CHECK(opts->get_colored() == true);
+}
+
+TEST_CASE("[PixelSpaceships] options clamping") {
+	Ref<PixelSpaceshipsOptions> opts = memnew(PixelSpaceshipsOptions);
+
+	SUBCASE("edge_brightness clamped to 0-1") {
+		opts->set_edge_brightness(-0.5f);
+		CHECK(opts->get_edge_brightness() == doctest::Approx(0.0));
+		opts->set_edge_brightness(1.5f);
+		CHECK(opts->get_edge_brightness() == doctest::Approx(1.0));
+		opts->set_edge_brightness(0.5f);
+		CHECK(opts->get_edge_brightness() == doctest::Approx(0.5));
+	}
+
+	SUBCASE("color_variation clamped to 0-1") {
+		opts->set_color_variation(-1.0f);
+		CHECK(opts->get_color_variation() == doctest::Approx(0.0));
+		opts->set_color_variation(2.0f);
+		CHECK(opts->get_color_variation() == doctest::Approx(1.0));
+	}
+
+	SUBCASE("saturation clamped to 0-1") {
+		opts->set_saturation(-1.0f);
+		CHECK(opts->get_saturation() == doctest::Approx(0.0));
+		opts->set_saturation(2.0f);
+		CHECK(opts->get_saturation() == doctest::Approx(1.0));
+	}
+
+	SUBCASE("hue clamped to -1..1") {
+		opts->set_hue(-1.0f);
+		CHECK(opts->get_hue() == doctest::Approx(-1.0));
+		opts->set_hue(2.0f);
+		CHECK(opts->get_hue() == doctest::Approx(1.0));
+		opts->set_hue(0.5f);
+		CHECK(opts->get_hue() == doctest::Approx(0.5));
+	}
+}
+
+TEST_CASE("[PixelSpaceships] options setup_options") {
+	Ref<PixelSpaceshipsOptions> opts = memnew(PixelSpaceshipsOptions);
+	opts->setup_options(false, 0.5f, 0.3f, 0.4f, 0.6f);
+	CHECK(opts->get_colored() == false);
+	CHECK(opts->get_edge_brightness() == doctest::Approx(0.5));
+	CHECK(opts->get_color_variation() == doctest::Approx(0.3));
+	CHECK(opts->get_brightness_noise() == doctest::Approx(0.4));
+	CHECK(opts->get_saturation() == doctest::Approx(0.6));
+}
+
+TEST_CASE("[PixelSpaceships] mask properties") {
+	Ref<PixelSpaceshipsMask> mask = memnew(PixelSpaceshipsMask);
+	mask->set_mirror_x(true);
+	CHECK(mask->get_mirror_x() == true);
+	mask->set_mirror_y(true);
+	CHECK(mask->get_mirror_y() == true);
+}
+
+#endif

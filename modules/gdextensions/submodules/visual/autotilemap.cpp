@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "core/io/json.h"
 #include "core/os/os.h"
 #include "core/ustring.h"
@@ -452,3 +458,54 @@ void Autotilemap::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_height"), &Autotilemap::get_height);
 	ClassDB::bind_method(D_METHOD("get_data"), &Autotilemap::get_data);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Autotilemap] encode and decode tile") {
+	int code = encode_tile_and_flipping(42, 0, 0, 0);
+	CHECK(compute_tile_id(code) == 42);
+	CHECK(compute_atlas_id(code) == 0);
+}
+
+TEST_CASE("[Autotilemap] encode with atlas id") {
+	int code = encode_tile_and_flipping(100, 0, 0, 5);
+	CHECK(compute_tile_id(code) == 100);
+	CHECK(compute_atlas_id(code) == 5);
+}
+
+TEST_CASE("[Autotilemap] encode flip flags") {
+	SUBCASE("no flips") {
+		int code = encode_tile_and_flipping(1, 0, 0);
+		CHECK_FALSE(compute_flip_h(code));
+		CHECK_FALSE(compute_flip_v(code));
+	}
+	SUBCASE("flip x only") {
+		int code = encode_tile_and_flipping(1, 1, 0);
+		CHECK(compute_flip_v(code));
+	}
+	SUBCASE("flip y only") {
+		int code = encode_tile_and_flipping(1, 0, 1);
+		CHECK(compute_flip_h(code));
+	}
+}
+
+TEST_CASE("[Autotilemap] subtile coordinates") {
+	int code = encode_tile_and_flipping(0, 0, 0);
+	CHECK(compute_subtile_coords(code) == Vector2(0, 0));
+
+	code = encode_tile_and_flipping(7, 0, 0);
+	CHECK(compute_subtile_coords(code) == Vector2(0, 1));
+
+	code = encode_tile_and_flipping(15, 0, 0);
+	CHECK(compute_subtile_coords(code) == Vector2(1, 2));
+}
+
+TEST_CASE("[Autotilemap] tile id range") {
+	int code = encode_tile_and_flipping(0xFFFF, 0, 0, 0xFF);
+	CHECK(compute_tile_id(code) == 0xFFFF);
+	CHECK(compute_atlas_id(code) == 0xFF);
+}
+
+#endif

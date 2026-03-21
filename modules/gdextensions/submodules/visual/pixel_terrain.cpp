@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "core/image.h"
 #include "core/math/math_funcs.h"
 
@@ -152,3 +158,13 @@ PixelTerrain::PixelTerrain() {
 	py = tofixed(300);
 	pa = 0;
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[PixelTerrain] placeholder") {
+	CHECK(true);
+}
+
+#endif

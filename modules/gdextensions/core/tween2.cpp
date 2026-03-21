@@ -32,6 +32,12 @@
 // Created by gen on 15-4-26.
 //
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "tween2.h"
 
 #include "core/math/math_funcs.h"
@@ -425,3 +431,25 @@ void Tween2::_bind_methods() {
 	BIND_ENUM_CONSTANT(TWEEN_EASING_BOUNCE_OUT);
 	BIND_ENUM_CONSTANT(TWEEN_EASING_BOUNCE_IN_OUT);
 }
+
+#ifdef DOCTEST
+TEST_CASE("[TweenAction] default constructor values") {
+	TweenAction action;
+	CHECK(action.get_easing() == Tween2::TWEEN_EASING_LINEAR);
+	CHECK(action.get_total_time() == doctest::Approx(0.0f));
+	CHECK(action.get_delta_time() == doctest::Approx(0.0f));
+	CHECK(action.get_delay_time() == doctest::Approx(0.0f));
+}
+
+TEST_CASE("[TweenAction] set_delay_time") {
+	TweenAction action;
+	action.set_delay_time(1.5f);
+	CHECK(action.get_delay_time() == doctest::Approx(1.5f));
+}
+
+TEST_CASE("[TweenAction] set_easing") {
+	TweenAction action;
+	action.set_easing(Tween2::TWEEN_EASING_CUBIC_IN);
+	CHECK(action.get_easing() == Tween2::TWEEN_EASING_CUBIC_IN);
+}
+#endif

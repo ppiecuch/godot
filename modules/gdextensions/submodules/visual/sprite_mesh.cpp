@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include <map>
 #include <string>
 #include <vector>
@@ -2438,3 +2444,13 @@ SpriteMeshLightEditorPlugin::SpriteMeshLightEditorPlugin(EditorNode *p_node) {
 
 SpriteMeshLightEditorPlugin::~SpriteMeshLightEditorPlugin() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[SpriteMesh] placeholder") {
+	CHECK(true);
+}
+
+#endif

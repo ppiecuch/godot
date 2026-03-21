@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "heatmap.h"
 
 #include <core/os/os.h>
@@ -326,3 +332,23 @@ Heatmap::Heatmap() :
 
 Heatmap::~Heatmap() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Heatmap] HeatCell equality") {
+	HeatCell a(Vector2(1, 2), 0);
+	HeatCell b(Vector2(1, 2), 0);
+	HeatCell c(Vector2(3, 4), 0);
+	CHECK(a.operator==(b));
+	CHECK_FALSE(a.operator==(c));
+}
+
+TEST_CASE("[Heatmap] HeatCell inequality") {
+	HeatCell a(Vector2(1, 2), 0);
+	HeatCell b(Vector2(1, 3), 0);
+	CHECK(a.operator!=(b));
+}
+
+#endif

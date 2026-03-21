@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "grid_rect.h"
 
 #include "core/engine.h"
@@ -452,3 +458,13 @@ void GridRect::_bind_methods() {
 GridRect::GridRect() {
 	set_clip_contents(true);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[GridRect] placeholder") {
+	CHECK(true);
+}
+
+#endif

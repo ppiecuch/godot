@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 // Reference:
 // ----------
 // https://github.com/mjholtzem/Unity-2D-Destruction.git
@@ -943,3 +949,13 @@ DestructibleSprite::DestructibleSprite() {
 
 DestructibleSprite::~DestructibleSprite() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[DestructibleSprite] placeholder") {
+	CHECK(true);
+}
+
+#endif

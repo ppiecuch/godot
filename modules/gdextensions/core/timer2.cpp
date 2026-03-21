@@ -32,6 +32,12 @@
 // Created by gen on 15-4-26.
 //
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "timer2.h"
 #include "core/bind/core_bind.h"
 #include "core/os/main_loop.h"
@@ -133,7 +139,6 @@ Ref<TimerObject> Timer2::wait_trigger(float p_time, Object *p_target, String p_m
 
 	Viewport *viewport = tree->get_root();
 	ERR_FAIL_COND_V(viewport == nullptr, nullptr);
-	TimerNode *timer_node = nullptr;
 	if (timer_node == nullptr) {
 		timer_node = memnew(TimerNode);
 		timer_node->set_name(timer_key);
@@ -142,9 +147,6 @@ Ref<TimerObject> Timer2::wait_trigger(float p_time, Object *p_target, String p_m
 		vector.push_back(Variant(timer_node));
 
 		tree->connect("idle_frame", this, "_add_node", vector, 0);
-
-	} else {
-		timer_node = cast_to<TimerNode>(viewport->get_node(timer_key));
 	}
 
 	Ref<TimerObject> obj = memnew(TimerObject);
@@ -175,3 +177,55 @@ void Timer2::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("wait", "time"), &Timer2::wait);
 	ClassDB::bind_method(D_METHOD("_add_node", "node"), &Timer2::_add_node);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[TimerObject] step countdown") {
+	Ref<TimerObject> obj = memnew(TimerObject);
+	obj->time = 1.0f;
+	obj->target = nullptr;
+
+	SUBCASE("not done before time") {
+		CHECK_FALSE(obj->step(0.5f));
+		CHECK(obj->time == doctest::Approx(0.5f));
+	}
+
+	SUBCASE("fires after time elapses") {
+		obj->step(0.5f);
+		obj->step(0.6f); // total 1.1 > 1.0
+		// After timeout, is_cancel should be set
+		CHECK(obj->step(0.0f)); // should return true (cancelled)
+	}
+}
+
+TEST_CASE("[TimerObject] cancel") {
+	Ref<TimerObject> obj = memnew(TimerObject);
+	obj->time = 10.0f;
+	obj->target = nullptr;
+
+	obj->cancel();
+	// After cancel, step should return true immediately
+	CHECK(obj->step(0.0f));
+}
+
+TEST_CASE("[TimerObject] step returns correctly") {
+	Ref<TimerObject> obj = memnew(TimerObject);
+	obj->time = 0.1f;
+	obj->target = nullptr;
+
+	// Before timeout
+	bool result1 = obj->step(0.05f);
+	CHECK_FALSE(result1);
+
+	// Trigger timeout
+	bool result2 = obj->step(0.1f);
+	CHECK_FALSE(result2); // returns false on timeout frame
+
+	// Next step after timeout (is_cancel now true)
+	bool result3 = obj->step(0.0f);
+	CHECK(result3); // returns true = remove me
+}
+
+#endif

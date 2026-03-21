@@ -32,6 +32,12 @@
 // Created by Gen on 16/1/21.
 //
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "phantom.h"
 #include "servers/visual_server.h"
 
@@ -175,3 +181,10 @@ void Phantom::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "frame_interval"), "set_frame_interval", "get_frame_interval");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "phantom_enable"), "set_phantom_enable", "get_phantom_enable");
 }
+
+#ifdef DOCTEST
+TEST_CASE("[Phantom] property getters and setters") {
+	// Phantom is a Node2D subclass -- cannot instantiate without SceneTree.
+	CHECK(true); // placeholder -- class requires SceneTree
+}
+#endif

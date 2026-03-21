@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "http_pool.h"
 
 /// HTTPState
@@ -145,3 +151,11 @@ void HTTPState::release() {
 		http.unref();
 	}
 }
+
+#ifdef DOCTEST
+TEST_CASE("[HTTPState] default state values") {
+	// HTTPState and HTTPPool are Node/Reference subclasses.
+	// Full testing requires the engine HTTP subsystem.
+	CHECK(HTTPState::YIELD_PERIOD_MS == 50);
+}
+#endif

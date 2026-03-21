@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include <algorithm>
 #include <type_traits>
 
@@ -271,3 +277,125 @@ void Voronoi::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("relax_points", "iterations"), &Voronoi::relax_points);
 	ClassDB::bind_method(D_METHOD("generate_diagram"), &Voronoi::generate_diagram);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Voronoi] basic diagram generation") {
+	Voronoi v;
+	Vector<Vector2> points;
+	points.push_back(Vector2(0, 0));
+	points.push_back(Vector2(10, 0));
+	points.push_back(Vector2(5, 10));
+
+	v.set_points(points);
+	Ref<VoronoiDiagram> diagram = v.generate_diagram();
+
+	REQUIRE(diagram.is_valid());
+
+	SUBCASE("sites count matches points") {
+		Vector<Variant> sites = diagram->sites();
+		CHECK(sites.size() == 3);
+	}
+
+	SUBCASE("edges exist") {
+		Vector<Variant> edges = diagram->edges();
+		CHECK(edges.size() > 0);
+	}
+
+	SUBCASE("site centers are near input points") {
+		Vector<Variant> sites = diagram->sites();
+		for (int i = 0; i < sites.size(); i++) {
+			VoronoiSite *site = Object::cast_to<VoronoiSite>(sites[i]);
+			REQUIRE(site != nullptr);
+			Vector2 center = site->center();
+			// Center should match one of the input points
+			bool found = false;
+			for (int j = 0; j < points.size(); j++) {
+				if (center.distance_to(points[j]) < 0.001) {
+					found = true;
+					break;
+				}
+			}
+			CHECK(found);
+		}
+	}
+}
+
+TEST_CASE("[Voronoi] with boundaries") {
+	Voronoi v;
+	Vector<Vector2> points;
+	points.push_back(Vector2(2, 2));
+	points.push_back(Vector2(8, 8));
+	v.set_points(points);
+	v.set_boundaries(Rect2(0, 0, 10, 10));
+
+	Ref<VoronoiDiagram> diagram = v.generate_diagram();
+	REQUIRE(diagram.is_valid());
+
+	Vector<Variant> sites = diagram->sites();
+	CHECK(sites.size() == 2);
+
+	Vector<Variant> edges = diagram->edges();
+	CHECK(edges.size() > 0);
+
+	SUBCASE("edge endpoints within boundaries") {
+		for (int i = 0; i < edges.size(); i++) {
+			VoronoiEdge *edge = Object::cast_to<VoronoiEdge>(edges[i]);
+			REQUIRE(edge != nullptr);
+			Vector2 s = edge->start();
+			Vector2 e = edge->end();
+			CHECK(s.x >= -0.1);
+			CHECK(s.y >= -0.1);
+			CHECK(s.x <= 10.1);
+			CHECK(s.y <= 10.1);
+			CHECK(e.x >= -0.1);
+			CHECK(e.y >= -0.1);
+			CHECK(e.x <= 10.1);
+			CHECK(e.y <= 10.1);
+		}
+	}
+}
+
+TEST_CASE("[Voronoi] relax points") {
+	Voronoi v;
+	Vector<Vector2> points;
+	points.push_back(Vector2(0, 0));
+	points.push_back(Vector2(10, 0));
+	points.push_back(Vector2(0, 10));
+	points.push_back(Vector2(10, 10));
+
+	v.set_points(points);
+	v.set_boundaries(Rect2(0, 0, 10, 10));
+	v.relax_points(3);
+
+	Ref<VoronoiDiagram> diagram = v.generate_diagram();
+	REQUIRE(diagram.is_valid());
+	// After relaxation, should still have 4 sites
+	CHECK(diagram->sites().size() == 4);
+}
+
+TEST_CASE("[Voronoi] site neighbors") {
+	Voronoi v;
+	Vector<Vector2> points;
+	points.push_back(Vector2(0, 0));
+	points.push_back(Vector2(10, 0));
+	points.push_back(Vector2(5, 10));
+
+	v.set_points(points);
+	Ref<VoronoiDiagram> diagram = v.generate_diagram();
+	REQUIRE(diagram.is_valid());
+
+	Vector<Variant> sites = diagram->sites();
+	for (int i = 0; i < sites.size(); i++) {
+		VoronoiSite *site = Object::cast_to<VoronoiSite>(sites[i]);
+		REQUIRE(site != nullptr);
+		// Each site in a triangle should have at least 1 neighbor
+		CHECK(site->neighbors().size() >= 1);
+		// Each site should have edges
+		CHECK(site->edges().size() >= 1);
+	}
+}
+
+#endif

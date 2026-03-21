@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "cable_2d.h"
 
 void Cable2D::set_active(bool status) {
@@ -309,3 +315,146 @@ Cable2D::Cable2D() {
 	_color = Color(0.0, 0.0, 0.0, 1.0);
 	set_process_internal(_active);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Cable2D] default constructor values") {
+	Cable2D cable;
+	CHECK(cable.is_active() == true);
+	CHECK(cable.get_width() == 2.0f);
+	CHECK(cable.get_segments() == 5);
+	CHECK(cable.get_restlength_scale() == 1.0f);
+	CHECK(cable.get_iterations() == 10);
+	CHECK(cable.get_color() == Color(0, 0, 0, 1));
+}
+
+TEST_CASE("[Cable2D] set_width clamps negative to zero") {
+	Cable2D cable;
+	cable.set_width(-5);
+	CHECK(cable.get_width() == 0.0f);
+	cable.set_width(3);
+	CHECK(cable.get_width() == 3.0f);
+}
+
+TEST_CASE("[Cable2D] set_segments clamps minimum to 1") {
+	Cable2D cable;
+	cable.set_segments(0);
+	CHECK(cable.get_segments() == 1);
+	cable.set_segments(-3);
+	CHECK(cable.get_segments() == 1);
+	cable.set_segments(8);
+	CHECK(cable.get_segments() == 8);
+}
+
+TEST_CASE("[Cable2D] set_restlength_scale clamps minimum to 0.1") {
+	Cable2D cable;
+	cable.set_restlength_scale(0.05);
+	CHECK(cable.get_restlength_scale() == doctest::Approx(0.1f));
+	cable.set_restlength_scale(-1);
+	CHECK(cable.get_restlength_scale() == doctest::Approx(0.1f));
+	cable.set_restlength_scale(2.5);
+	CHECK(cable.get_restlength_scale() == doctest::Approx(2.5f));
+}
+
+TEST_CASE("[Cable2D] set_iterations clamps minimum to 1") {
+	Cable2D cable;
+	cable.set_iterations(0);
+	CHECK(cable.get_iterations() == 1);
+	cable.set_iterations(-1);
+	CHECK(cable.get_iterations() == 1);
+	cable.set_iterations(20);
+	CHECK(cable.get_iterations() == 20);
+}
+
+TEST_CASE("[Cable2D] set_points with 2 points produces correct rendered point count") {
+	Cable2D cable;
+	cable.set_segments(4);
+
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(100, 0));
+	cable.set_points(pts);
+
+	// 1 span * 4 segments + 1 = 5 rendered points
+	CHECK(cable.get_points().size() == 2);
+}
+
+TEST_CASE("[Cable2D] set_points with 3 points produces correct rendered point count") {
+	Cable2D cable;
+	cable.set_segments(3);
+
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(50, 0));
+	pts.push_back(Vector2(100, 0));
+	cable.set_points(pts);
+
+	// 2 spans * 3 segments + 1 = 7 rendered points
+	CHECK(cable.get_points().size() == 3);
+}
+
+TEST_CASE("[Cable2D] set_points with fewer than 2 points") {
+	Cable2D cable;
+
+	PoolVector<Vector2> pts;
+	cable.set_points(pts);
+	CHECK(cable.get_points().size() == 0);
+
+	pts.push_back(Vector2(10, 20));
+	cable.set_points(pts);
+	CHECK(cable.get_points().size() == 1);
+}
+
+TEST_CASE("[Cable2D] set_points_forces auto-resizes to match points") {
+	Cable2D cable;
+
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(100, 0));
+	pts.push_back(Vector2(200, 0));
+	cable.set_points(pts);
+
+	// Provide wrong-sized forces array — should be resized to match points
+	PoolVector<Vector2> forces;
+	forces.push_back(Vector2(1, 0));
+	cable.set_points_forces(forces);
+	CHECK(cable.get_points_forces().size() == 3);
+}
+
+TEST_CASE("[Cable2D] get_point_force out of bounds returns zero") {
+	Cable2D cable;
+	CHECK(cable.get_point_force(-1) == Vector2());
+	CHECK(cable.get_point_force(0) == Vector2());
+	CHECK(cable.get_point_force(999) == Vector2());
+}
+
+TEST_CASE("[Cable2D] set_point_force within bounds") {
+	Cable2D cable;
+
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(100, 0));
+	cable.set_points(pts);
+
+	cable.set_point_force(0, Vector2(5, 10));
+	CHECK(cable.get_point_force(0).x == doctest::Approx(5));
+	CHECK(cable.get_point_force(0).y == doctest::Approx(10));
+
+	// Out of bounds — should be no-op
+	cable.set_point_force(99, Vector2(1, 1));
+	cable.set_point_force(-1, Vector2(1, 1));
+}
+
+TEST_CASE("[Cable2D] color property") {
+	Cable2D cable;
+	Color c(0.5, 0.3, 0.1, 0.8);
+	cable.set_color(c);
+	CHECK(cable.get_color().r == doctest::Approx(0.5));
+	CHECK(cable.get_color().g == doctest::Approx(0.3));
+	CHECK(cable.get_color().b == doctest::Approx(0.1));
+	CHECK(cable.get_color().a == doctest::Approx(0.8));
+}
+
+#endif

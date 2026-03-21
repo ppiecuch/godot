@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "blitter.h"
 
 Blitter *Blitter::singleton = NULL;
@@ -67,3 +73,33 @@ Blitter::Blitter() {
 Blitter::~Blitter() {
 	singleton = nullptr;
 }
+
+#ifdef DOCTEST
+TEST_CASE("[BlitterOps] calculate_new_rect_from_mins_max") {
+	Vector2 base(100, 200);
+	Vector2 mins(0.1f, 0.2f);
+	Vector2 maxs(0.9f, 0.8f);
+	Rect2 r = BlitterOps::calculate_new_rect_from_mins_max(base, mins, maxs);
+	CHECK(r.position.x == doctest::Approx(10.0f));
+	CHECK(r.position.y == doctest::Approx(40.0f));
+	CHECK(r.size.x == doctest::Approx(80.0f));
+	CHECK(r.size.y == doctest::Approx(120.0f));
+}
+
+TEST_CASE("[BlitterOps] calculate_new_size_from_mins_max") {
+	Vector2 base(200, 100);
+	Vector2 mins(0.0f, 0.0f);
+	Vector2 maxs(1.0f, 1.0f);
+	Vector2 s = BlitterOps::calculate_new_size_from_mins_max(base, mins, maxs);
+	CHECK(s.x == doctest::Approx(200.0f));
+	CHECK(s.y == doctest::Approx(100.0f));
+}
+
+TEST_CASE("[BlitterOps] zero-size mins equal maxs") {
+	Vector2 base(100, 100);
+	Vector2 same(0.5f, 0.5f);
+	Rect2 r = BlitterOps::calculate_new_rect_from_mins_max(base, same, same);
+	CHECK(r.size.x == doctest::Approx(0.0f));
+	CHECK(r.size.y == doctest::Approx(0.0f));
+}
+#endif

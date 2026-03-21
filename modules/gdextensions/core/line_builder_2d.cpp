@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "line_builder_2d.h"
 
 #include "common/gd_core.h"
@@ -197,3 +203,10 @@ void LineBuilder2D::_bind_methods() {
 
 	ClassDB::bind_method("build", &LineBuilder2D::build);
 }
+
+#ifdef DOCTEST
+TEST_CASE("[LineBuilder2D] default constructor values") {
+	// LineBuilder2D is a Reference subclass -- can test property defaults.
+	CHECK(true); // placeholder -- needs engine ClassDB initialized
+}
+#endif

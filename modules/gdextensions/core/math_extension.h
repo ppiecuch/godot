@@ -33,7 +33,7 @@
 #include "core/math/math_funcs.h"
 #include "scene/3d/camera.h"
 
-#define GME_MATH_TAU 3.14159265358979323846 * 2
+#define GME_MATH_TAU (3.14159265358979323846 * 2)
 
 namespace MathExtension {
 static _FORCE_INLINE_ Vector3 spherical_to_local_position(real_t p_theta, real_t p_phi) {

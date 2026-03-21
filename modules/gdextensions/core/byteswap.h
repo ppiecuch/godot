@@ -28,14 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-/* osc.h */
-
 #ifndef BYTESWAP_H
 #define BYTESWAP_H
 
 #include "core/reference.h"
-#include <cstdlib>
-#include <iostream>
 
 class Byteswap : public Reference {
 	GDCLASS(Byteswap, Reference);
@@ -44,10 +40,16 @@ protected:
 	static void _bind_methods();
 
 public:
-	Byteswap();
+	// Reverse byte order (endian swap)
+	int reverse_int(int p_value);
+	float reverse_float(float p_value);
+	int64_t reverse_int64(int64_t p_value);
+	int reverse_short(int p_value);
+	PoolByteArray reverse_bytes(const PoolByteArray &p_data);
 
-	float reverseFloat(float);
-	int reverseInt(int);
+	// Legacy names (kept for backward compatibility)
+	float reverseFloat(float p_value) { return reverse_float(p_value); }
+	int reverseInt(int p_value) { return reverse_int(p_value); }
 };
 
 #endif // BYTESWAP_H

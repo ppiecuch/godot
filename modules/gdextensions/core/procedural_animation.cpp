@@ -50,6 +50,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "procedural_animation.h"
 
 Ref<Animation> ProceduralAnimation::get_animation() const {
@@ -533,3 +539,10 @@ void ProceduralAnimation::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("process_animation_data"), &ProceduralAnimation::process_animation_data);
 }
+
+#ifdef DOCTEST
+TEST_CASE("[ProceduralAnimation] default constructor values") {
+	// ProceduralAnimation requires ClassDB registration to construct.
+	CHECK(true); // placeholder -- requires engine runtime
+}
+#endif

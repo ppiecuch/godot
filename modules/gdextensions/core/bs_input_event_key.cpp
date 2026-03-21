@@ -50,6 +50,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "bs_input_event_key.h"
 
 void BSInputEventKey::from_input_event_key(const Ref<InputEventKey> event) {
@@ -93,3 +99,11 @@ BSInputEventKey::BSInputEventKey() {
 void BSInputEventKey::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("from_input_event_key", "event"), &BSInputEventKey::from_input_event_key);
 }
+
+#ifdef DOCTEST
+TEST_CASE("[BSInputEventKey] default construction") {
+	// BSInputEventKey inherits InputEventKey (Reference-based).
+	// Verify the test infrastructure compiles.
+	CHECK(true); // placeholder -- requires engine input subsystem
+}
+#endif

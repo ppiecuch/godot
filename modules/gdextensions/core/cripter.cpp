@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "thirdparty/mbedtls/include/mbedtls/aes.h"
 #include "thirdparty/mbedtls/include/mbedtls/ctr_drbg.h"
 #include "thirdparty/mbedtls/include/mbedtls/entropy.h"
@@ -232,14 +238,12 @@ PoolByteArray Cripter::encrypt_byte_CBC(const PoolByteArray p_input, const Strin
 		extra_len = 0;
 	}
 
-	uint8_t input[TAG_SIZE];
-	uint8_t output[TAG_SIZE];
+	std::vector<uint8_t> input(total_len, 0);
+	std::vector<uint8_t> output(total_len);
 	for (int g = 0; g < data_len; g++) {
 		input[g] = (uint8_t)p_input[g];
 	}
-	for (int l = data_len; l < total_len; l++) { //fill with zeros couse the input must be multiple of 16
-		input[l] = 0;
-	}
+	// Remaining bytes are already zero-filled by vector constructor
 
 	//Encryptation **
 	mbedtls_aes_context ctx;
@@ -250,7 +254,7 @@ PoolByteArray Cripter::encrypt_byte_CBC(const PoolByteArray p_input, const Strin
 		mbedtls_strerror(_err, erro, sizeof(erro));
 		print_error(erro);
 	}
-	_err = mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_ENCRYPT, total_len, iv, input, output);
+	_err = mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_ENCRYPT, total_len, iv, input.data(), output.data());
 	if (_err != 0) {
 		mbedtls_strerror(_err, erro, sizeof(erro));
 		print_error(erro);
@@ -258,7 +262,7 @@ PoolByteArray Cripter::encrypt_byte_CBC(const PoolByteArray p_input, const Strin
 
 	mbedtls_aes_free(&ctx);
 	//--- Fit data *
-	PoolByteArray ret = char2pool(output, (sizeof(output)));
+	PoolByteArray ret = char2pool(output.data(), output.size());
 	ret.push_back(extra_len);
 	return ret;
 }
@@ -489,3 +493,138 @@ void Cripter::_bind_methods() {
 
 Cripter::Cripter() {
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Cripter] GCM encrypt/decrypt roundtrip") {
+	Cripter c;
+	PoolByteArray data;
+	for (int i = 0; i < 32; i++) {
+		data.push_back(i);
+	}
+	String key = "test_encryption_key_2024";
+
+	SUBCASE("byte roundtrip") {
+		PoolByteArray encrypted = c.encrypt_byte_GCM(data, key);
+		CHECK(encrypted.size() > 0);
+		CHECK(encrypted.size() != data.size()); // should differ (has tag appended)
+
+		PoolByteArray decrypted = c.decrypt_byte_GCM(encrypted, key);
+		REQUIRE(decrypted.size() == data.size());
+		for (int i = 0; i < data.size(); i++) {
+			CHECK(decrypted[i] == data[i]);
+		}
+	}
+
+	SUBCASE("byte roundtrip with additional data") {
+		String add = "additional_auth_data";
+		PoolByteArray encrypted = c.encrypt_byte_GCM(data, key, add);
+		PoolByteArray decrypted = c.decrypt_byte_GCM(encrypted, key, add);
+		REQUIRE(decrypted.size() == data.size());
+		for (int i = 0; i < data.size(); i++) {
+			CHECK(decrypted[i] == data[i]);
+		}
+	}
+
+	SUBCASE("var roundtrip") {
+		Variant input = "Hello, Cripter!";
+		PoolByteArray encrypted = c.encrypt_var_GCM(input, key);
+		CHECK(encrypted.size() > 0);
+		Variant decrypted = c.decrypt_var_GCM(encrypted, key);
+		CHECK(String(decrypted) == "Hello, Cripter!");
+	}
+}
+
+TEST_CASE("[Cripter] CBC encrypt/decrypt roundtrip") {
+	Cripter c;
+	String key = "my_secret_key_for_cbc";
+
+	SUBCASE("16-byte aligned data") {
+		PoolByteArray data;
+		for (int i = 0; i < 16; i++) {
+			data.push_back(i + 10);
+		}
+		PoolByteArray encrypted = c.encrypt_byte_CBC(data, key);
+		CHECK(encrypted.size() > 0);
+		PoolByteArray decrypted = c.decrypt_byte_CBC(encrypted, key);
+		REQUIRE(decrypted.size() == data.size());
+		for (int i = 0; i < data.size(); i++) {
+			CHECK(decrypted[i] == data[i]);
+		}
+	}
+
+	SUBCASE("non-aligned data (padding)") {
+		PoolByteArray data;
+		for (int i = 0; i < 7; i++) {
+			data.push_back(i + 100);
+		}
+		PoolByteArray encrypted = c.encrypt_byte_CBC(data, key);
+		CHECK(encrypted.size() > 0);
+		PoolByteArray decrypted = c.decrypt_byte_CBC(encrypted, key);
+		REQUIRE(decrypted.size() == data.size());
+		for (int i = 0; i < data.size(); i++) {
+			CHECK(decrypted[i] == data[i]);
+		}
+	}
+
+	SUBCASE("var roundtrip") {
+		Variant input = 42;
+		PoolByteArray encrypted = c.encrypt_var_CBC(input, key);
+		Variant decrypted = c.decrypt_var_CBC(encrypted, key);
+		CHECK(int(decrypted) == 42);
+	}
+}
+
+TEST_CASE("[Cripter] wrong key produces different output") {
+	Cripter c;
+	PoolByteArray data;
+	for (int i = 0; i < 16; i++) {
+		data.push_back(i);
+	}
+	PoolByteArray enc1 = c.encrypt_byte_GCM(data, "key_one");
+	PoolByteArray enc2 = c.encrypt_byte_GCM(data, "key_two");
+	// Different keys should produce different ciphertext
+	bool different = false;
+	if (enc1.size() != enc2.size()) {
+		different = true;
+	} else {
+		for (int i = 0; i < enc1.size(); i++) {
+			if (enc1[i] != enc2[i]) {
+				different = true;
+				break;
+			}
+		}
+	}
+	CHECK(different);
+}
+
+TEST_CASE("[Cripter] encode/decode var helpers") {
+	Cripter c;
+	// Test via GCM roundtrip with different variant types
+	String key = "variant_test_key";
+
+	SUBCASE("string variant") {
+		Variant v = "test string";
+		PoolByteArray enc = c.encrypt_var_GCM(v, key);
+		Variant dec = c.decrypt_var_GCM(enc, key);
+		CHECK(String(dec) == "test string");
+	}
+
+	SUBCASE("int variant") {
+		Variant v = 12345;
+		PoolByteArray enc = c.encrypt_var_GCM(v, key);
+		Variant dec = c.decrypt_var_GCM(enc, key);
+		CHECK(int(dec) == 12345);
+	}
+
+	SUBCASE("float variant") {
+		Variant v = 3.14;
+		PoolByteArray enc = c.encrypt_var_GCM(v, key);
+		Variant dec = c.decrypt_var_GCM(enc, key);
+		CHECK(double(dec) == doctest::Approx(3.14).epsilon(0.001));
+	}
+}
+
+#endif

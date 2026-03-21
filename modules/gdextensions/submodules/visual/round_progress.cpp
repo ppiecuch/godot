@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 /*************************************************************************/
 /* Authors and contributors:                                             */
 /*                                                                       */
@@ -90,3 +96,13 @@ RoundProgress::RoundProgress() {
 	set_v_size_flags(0);
 	value_visible = true;
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[RoundProgress] placeholder") {
+	CHECK(true);
+}
+
+#endif

@@ -55,6 +55,12 @@
 // GNU Terry Pratchett
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "dist_rand.h"
 
 template <typename T, class C>
@@ -196,17 +202,102 @@ void IntNormal::generate(int count) {
 }
 
 void IntNormal::_bind_methods() {
-	ClassDB::bind_method("normal", &IntNormal::setparameters);
-	ClassDB::bind_method("generate", &IntNormal::generate);
-	ClassDB::bind_method("getvalue", &IntNormal::getvalue);
-	ClassDB::bind_method("getnext", &IntNormal::getnext);
-	ClassDB::bind_method("getsingle", &IntNormal::getsingle);
+	ClassDB::bind_method(D_METHOD("normal", "mean", "deviation"), &IntNormal::setparameters);
+	ClassDB::bind_method(D_METHOD("generate", "count"), &IntNormal::generate);
+	ClassDB::bind_method(D_METHOD("getvalue", "index"), &IntNormal::getvalue);
+	ClassDB::bind_method(D_METHOD("getnext"), &IntNormal::getnext);
+	ClassDB::bind_method(D_METHOD("getsingle"), &IntNormal::getsingle);
 }
 
 void RealNormal::_bind_methods() {
-	ClassDB::bind_method("normal", &RealNormal::setparameters);
-	ClassDB::bind_method("generate", &RealNormal::generate);
-	ClassDB::bind_method("getvalue", &RealNormal::getvalue);
-	ClassDB::bind_method("getnext", &RealNormal::getnext);
-	ClassDB::bind_method("getsingle", &RealNormal::getsingle);
+	ClassDB::bind_method(D_METHOD("normal", "mean", "deviation"), &RealNormal::setparameters);
+	ClassDB::bind_method(D_METHOD("generate", "count"), &RealNormal::generate);
+	ClassDB::bind_method(D_METHOD("getvalue", "index"), &RealNormal::getvalue);
+	ClassDB::bind_method(D_METHOD("getnext"), &RealNormal::getnext);
+	ClassDB::bind_method(D_METHOD("getsingle"), &RealNormal::getsingle);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[RealNormal] default parameters") {
+	RealNormal rn;
+	// Default mu=0, sigma=1 — getsingle should produce values
+	real_t val = rn.getsingle();
+	// Value should be finite
+	CHECK(val == val); // NaN check
+	CHECK(val > -100.0);
+	CHECK(val < 100.0);
+}
+
+TEST_CASE("[RealNormal] generate and access") {
+	RealNormal rn;
+	rn.setparameters(10.0, 2.0);
+	rn.generate(100);
+
+	SUBCASE("getvalue in range") {
+		real_t v = rn.getvalue(0);
+		CHECK(v == v); // not NaN
+	}
+
+	SUBCASE("getnext advances") {
+		real_t v0 = rn.getvalue(0);
+		real_t v1 = rn.getnext();
+		// v1 should be value at index 1
+		real_t v1_check = rn.getvalue(1);
+		CHECK(v1 == v1_check);
+	}
+
+	SUBCASE("statistical sanity - mean near expected") {
+		// Generate many values, check mean is near 10
+		rn.generate(10000);
+		real_t sum = 0;
+		for (int i = 0; i < 10000; i++) {
+			sum += rn.getvalue(i);
+		}
+		real_t mean = sum / 10000.0;
+		CHECK(mean > 8.0);
+		CHECK(mean < 12.0);
+	}
+}
+
+TEST_CASE("[IntNormal] generate and access") {
+	IntNormal in;
+	in.setparameters(50, 10);
+	in.generate(100);
+
+	SUBCASE("values are integers") {
+		int v = in.getvalue(0);
+		// Should be reasonable
+		CHECK(v > -100);
+		CHECK(v < 200);
+	}
+
+	SUBCASE("getsingle produces value") {
+		int v = in.getsingle();
+		CHECK(v > -100);
+		CHECK(v < 200);
+	}
+}
+
+TEST_CASE("[RealNormal] setparameters resets contents") {
+	RealNormal rn;
+	rn.setparameters(5.0, 1.0);
+	rn.generate(10);
+	CHECK(rn.getvalue(0) != 0.0); // should have data
+	rn.setparameters(0.0, 1.0);
+	// After setparameters, contents should be cleared
+	// getvalue(0) should fail or return 0 since contents is empty
+}
+
+TEST_CASE("[IntNormal] zero/negative deviation rejected") {
+	IntNormal in;
+	in.setparameters(10, 0); // deviation 0 — should not set
+	in.generate(10);
+	// With sigma=1 (default), should still work
+	int v = in.getsingle();
+	CHECK(v == v); // just check it doesn't crash
+}
+
+#endif

@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 // Ported from Unity C# Foliage2D system.
 // Reference: https://assetstore.unity.com/packages/tools/animation/foliage-2d-45660
 
@@ -922,7 +928,6 @@ FoliageAnimation2D::FoliageAnimation2D() {
 // ==========================================================================
 
 #ifdef DOCTEST
-#include "doctest/doctest.h"
 
 TEST_SUITE("[[foliage_2d_animation]]") {
 	// --- FoliageMesh2D ---
@@ -1413,6 +1418,10 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 		CHECK(mid.distance_to(Vector2(50, 50)) < 20.0);
 		memdelete(path);
 	}
+}
+
+TEST_CASE("[Foliage2DAnimation] placeholder") {
+	CHECK(true);
 }
 
 #endif // DOCTEST

@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "stopwatch.h"
 
 #include "core/engine.h"
@@ -145,3 +151,42 @@ void Stopwatch::_bind_methods() {
 	BIND_ENUM_CONSTANT(PROCESS_PHYSICS);
 	BIND_ENUM_CONSTANT(PROCESS_IDLE);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[Stopwatch] initial state") {
+	Stopwatch sw;
+	CHECK(sw.is_stopped());
+	CHECK_FALSE(sw.is_running());
+	CHECK(sw.get_time_elapsed() == 0.0);
+	CHECK_FALSE(sw.has_autostart());
+	CHECK(sw.get_process_mode() == Stopwatch::PROCESS_IDLE);
+}
+
+TEST_CASE("[Stopwatch] autostart property") {
+	Stopwatch sw;
+	sw.set_autostart(true);
+	CHECK(sw.has_autostart());
+	sw.set_autostart(false);
+	CHECK_FALSE(sw.has_autostart());
+}
+
+TEST_CASE("[Stopwatch] process mode") {
+	Stopwatch sw;
+	CHECK(sw.get_process_mode() == Stopwatch::PROCESS_IDLE);
+	sw.set_process_mode(Stopwatch::PROCESS_PHYSICS);
+	CHECK(sw.get_process_mode() == Stopwatch::PROCESS_PHYSICS);
+	sw.set_process_mode(Stopwatch::PROCESS_IDLE);
+	CHECK(sw.get_process_mode() == Stopwatch::PROCESS_IDLE);
+}
+
+TEST_CASE("[Stopwatch] reset when stopped") {
+	Stopwatch sw;
+	// Reset on a stopped watch with zero time should work
+	sw.reset();
+	CHECK(sw.get_time_elapsed() == 0.0);
+}
+
+#endif

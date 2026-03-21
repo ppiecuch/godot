@@ -84,7 +84,7 @@ class PixelSpaceshipsOptions : public Reference {
 
 private:
 	bool colored;
-	float edge_brightnes;
+	float edge_brightness;
 	float color_variation;
 	float brightness_noise;
 	float saturation;

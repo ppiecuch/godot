@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "shaker_node.h"
 
 void ShakerNode::_notification(int p_what) {
@@ -202,5 +208,15 @@ func _get_noise(x: int) -> float:
 #Shake
 func _get_shake(maximum: float, amount: float, x: int) -> float:
 	return maximum * amount * _get_noise(x)
+
+#endif
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[ShakerNode] placeholder") {
+	CHECK(true);
+}
 
 #endif

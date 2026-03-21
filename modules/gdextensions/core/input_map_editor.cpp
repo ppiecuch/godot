@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "input_map_editor.h"
 
 #include "core/global_constants.h"
@@ -956,3 +962,17 @@ InputMapEditor::InputMapEditor() {
 	timer->set_one_shot(true);
 	add_child(timer);
 }
+
+#ifdef DOCTEST
+TEST_CASE("[InputMapEditor] _validate_action_name helper") {
+	// _validate_action_name is a file-local static function defined above.
+	CHECK(_validate_action_name("move_left") == true);
+	CHECK(_validate_action_name("jump") == true);
+	CHECK(_validate_action_name("") == true); // empty passes char check (length guarded elsewhere)
+	CHECK(_validate_action_name("bad/name") == false);
+	CHECK(_validate_action_name("bad:name") == false);
+	CHECK(_validate_action_name("bad\"name") == false);
+	CHECK(_validate_action_name("bad=name") == false);
+	CHECK(_validate_action_name("bad\\name") == false);
+}
+#endif
