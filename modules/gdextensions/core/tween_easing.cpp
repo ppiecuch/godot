@@ -154,8 +154,10 @@ static real_t ease_expo_out(real_t k) {
 }
 
 static real_t ease_expo_in_out(real_t k) {
-	if (k == (real_t)0.0) return (real_t)0.0;
-	if (k == (real_t)1.0) return (real_t)1.0;
+	if (k == (real_t)0.0)
+		return (real_t)0.0;
+	if (k == (real_t)1.0)
+		return (real_t)1.0;
 	k *= (real_t)2.0;
 	if (k < (real_t)1.0) {
 		return (real_t)0.5 * Math::pow((real_t)1024.0, k - (real_t)1.0);
@@ -186,8 +188,10 @@ static real_t ease_circ_in_out(real_t k) {
 // Elastic
 
 static real_t ease_elastic_in(real_t k) {
-	if (k == (real_t)0.0) return (real_t)0.0;
-	if (k == (real_t)1.0) return (real_t)1.0;
+	if (k == (real_t)0.0)
+		return (real_t)0.0;
+	if (k == (real_t)1.0)
+		return (real_t)1.0;
 	real_t p = (real_t)0.4;
 	real_t s = p / (real_t)4.0;
 	k -= (real_t)1.0;
@@ -195,16 +199,20 @@ static real_t ease_elastic_in(real_t k) {
 }
 
 static real_t ease_elastic_out(real_t k) {
-	if (k == (real_t)0.0) return (real_t)0.0;
-	if (k == (real_t)1.0) return (real_t)1.0;
+	if (k == (real_t)0.0)
+		return (real_t)0.0;
+	if (k == (real_t)1.0)
+		return (real_t)1.0;
 	real_t p = (real_t)0.4;
 	real_t s = p / (real_t)4.0;
 	return Math::pow((real_t)2.0, (real_t)-10.0 * k) * Math::sin((k - s) * Math_TAU / p) + (real_t)1.0;
 }
 
 static real_t ease_elastic_in_out(real_t k) {
-	if (k == (real_t)0.0) return (real_t)0.0;
-	if (k == (real_t)1.0) return (real_t)1.0;
+	if (k == (real_t)0.0)
+		return (real_t)0.0;
+	if (k == (real_t)1.0)
+		return (real_t)1.0;
 	real_t p = (real_t)0.4;
 	real_t s = p / (real_t)4.0;
 	k *= (real_t)2.0;
@@ -272,16 +280,36 @@ static real_t ease_bounce_in_out(real_t k) {
 
 Tween_Easing_Func tweenEasingFuncs[] = {
 	ease_linear,
-	ease_quad_in, ease_quad_out, ease_quad_in_out,
-	ease_cubic_in, ease_cubic_out, ease_cubic_in_out,
-	ease_quart_in, ease_quart_out, ease_quart_in_out,
-	ease_quint_in, ease_quint_out, ease_quint_in_out,
-	ease_sine_in, ease_sine_out, ease_sine_in_out,
-	ease_expo_in, ease_expo_out, ease_expo_in_out,
-	ease_circ_in, ease_circ_out, ease_circ_in_out,
-	ease_elastic_in, ease_elastic_out, ease_elastic_in_out,
-	ease_back_in, ease_back_out, ease_back_in_out,
-	ease_bounce_in, ease_bounce_out, ease_bounce_in_out,
+	ease_quad_in,
+	ease_quad_out,
+	ease_quad_in_out,
+	ease_cubic_in,
+	ease_cubic_out,
+	ease_cubic_in_out,
+	ease_quart_in,
+	ease_quart_out,
+	ease_quart_in_out,
+	ease_quint_in,
+	ease_quint_out,
+	ease_quint_in_out,
+	ease_sine_in,
+	ease_sine_out,
+	ease_sine_in_out,
+	ease_expo_in,
+	ease_expo_out,
+	ease_expo_in_out,
+	ease_circ_in,
+	ease_circ_out,
+	ease_circ_in_out,
+	ease_elastic_in,
+	ease_elastic_out,
+	ease_elastic_in_out,
+	ease_back_in,
+	ease_back_out,
+	ease_back_in_out,
+	ease_bounce_in,
+	ease_bounce_out,
+	ease_bounce_in_out,
 };
 
 // -- Convenience functions --
@@ -295,16 +323,36 @@ real_t tween_ease(Tween_Easing p_easing, real_t p_t) {
 
 static const char *_easing_names[] = {
 	"Linear",
-	"QuadraticIn", "QuadraticOut", "QuadraticInOut",
-	"CubicIn", "CubicOut", "CubicInOut",
-	"QuarticIn", "QuarticOut", "QuarticInOut",
-	"QuinticIn", "QuinticOut", "QuinticInOut",
-	"SinusoidalIn", "SinusoidalOut", "SinusoidalInOut",
-	"ExponentialIn", "ExponentialOut", "ExponentialInOut",
-	"CircularIn", "CircularOut", "CircularInOut",
-	"ElasticIn", "ElasticOut", "ElasticInOut",
-	"BackIn", "BackOut", "BackInOut",
-	"BounceIn", "BounceOut", "BounceInOut",
+	"QuadraticIn",
+	"QuadraticOut",
+	"QuadraticInOut",
+	"CubicIn",
+	"CubicOut",
+	"CubicInOut",
+	"QuarticIn",
+	"QuarticOut",
+	"QuarticInOut",
+	"QuinticIn",
+	"QuinticOut",
+	"QuinticInOut",
+	"SinusoidalIn",
+	"SinusoidalOut",
+	"SinusoidalInOut",
+	"ExponentialIn",
+	"ExponentialOut",
+	"ExponentialInOut",
+	"CircularIn",
+	"CircularOut",
+	"CircularInOut",
+	"ElasticIn",
+	"ElasticOut",
+	"ElasticInOut",
+	"BackIn",
+	"BackOut",
+	"BackInOut",
+	"BounceIn",
+	"BounceOut",
+	"BounceInOut",
 };
 
 const char *tween_easing_name(Tween_Easing p_easing) {
@@ -322,7 +370,7 @@ TEST_CASE("[TweenEasing] all functions return 0 at t=0") {
 	for (int i = 0; i < TWEEN_EASING_COUNT; i++) {
 		real_t val = tweenEasingFuncs[i]((real_t)0.0);
 		CHECK_MESSAGE(val == doctest::Approx(0.0).epsilon(0.01),
-			"Easing ", tween_easing_name((Tween_Easing)i), " at t=0 returned ", val);
+				"Easing ", tween_easing_name((Tween_Easing)i), " at t=0 returned ", val);
 	}
 }
 
@@ -330,7 +378,7 @@ TEST_CASE("[TweenEasing] all functions return 1 at t=1") {
 	for (int i = 0; i < TWEEN_EASING_COUNT; i++) {
 		real_t val = tweenEasingFuncs[i]((real_t)1.0);
 		CHECK_MESSAGE(val == doctest::Approx(1.0).epsilon(0.01),
-			"Easing ", tween_easing_name((Tween_Easing)i), " at t=1 returned ", val);
+				"Easing ", tween_easing_name((Tween_Easing)i), " at t=1 returned ", val);
 	}
 }
 
@@ -365,7 +413,7 @@ TEST_CASE("[TweenEasing] in_out symmetry") {
 	for (int idx : in_out_indices) {
 		real_t val = tweenEasingFuncs[idx]((real_t)0.5);
 		CHECK_MESSAGE(val == doctest::Approx(0.5).epsilon(0.01),
-			"InOut easing ", tween_easing_name((Tween_Easing)idx), " at t=0.5 returned ", val);
+				"InOut easing ", tween_easing_name((Tween_Easing)idx), " at t=0.5 returned ", val);
 	}
 }
 

@@ -542,9 +542,9 @@ TEST_CASE("[RawPacker] pack and unpack bool") {
 TEST_CASE("[RawPacker] pack multiple types") {
 	RawPacker packer;
 	Array input;
-	input.push_back(1);      // byte
-	input.push_back(1000);   // short
-	input.push_back(3.14f);  // float
+	input.push_back(1); // byte
+	input.push_back(1000); // short
+	input.push_back(3.14f); // float
 	PoolByteArray packed = packer.pack("bhf", input);
 	REQUIRE(packed.size() == 1 + 2 + 4);
 	Array unpacked = packer.unpack("bhf", packed);

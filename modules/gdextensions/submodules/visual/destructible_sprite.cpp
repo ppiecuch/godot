@@ -42,8 +42,8 @@
 // https://www.reddit.com/r/godot/comments/nimkqg/how_to_break_a_2d_sprite_in_a_cool_and_easy_way/
 // https://github.com/ScyDev/Godot-Scripts/blob/master/polygon-merge.gd
 
-#include "destructible_sprite.h"
 #include "core/io/config_file.h"
+#include "destructible_sprite.h"
 #include "explosion_particles.h"
 #include "scene/2d/collision_polygon_2d.h"
 #include "scene/2d/collision_shape_2d.h"

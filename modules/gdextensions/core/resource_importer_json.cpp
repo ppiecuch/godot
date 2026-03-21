@@ -34,8 +34,8 @@
 #define DOCTEST_CONFIG_DISABLE
 #endif
 
-#include "resource_importer_json.h"
 #include "core/io/file_access_pack.h"
+#include "resource_importer_json.h"
 
 String ResourceImporterJSON::get_preset_name(int p_idx) const {
 	return String();

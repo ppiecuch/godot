@@ -54,8 +54,7 @@ float Byteswap::reverse_float(float p_value) {
 
 int64_t Byteswap::reverse_int64(int64_t p_value) {
 	uint64_t v = (uint64_t)p_value;
-	return (int64_t)(
-			(v >> 56) |
+	return (int64_t)((v >> 56) |
 			((v >> 40) & 0xFF00ULL) |
 			((v >> 24) & 0xFF0000ULL) |
 			((v >> 8) & 0xFF000000ULL) |

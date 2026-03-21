@@ -38,11 +38,11 @@
 #define DOCTEST_CONFIG_DISABLE
 #endif
 
-#include "timer2.h"
 #include "core/bind/core_bind.h"
 #include "core/os/main_loop.h"
 #include "core/os/os.h"
 #include "scene/main/viewport.h"
+#include "timer2.h"
 
 bool TimerObject::step(float delta) {
 	if (is_cancel)

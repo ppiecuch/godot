@@ -34,8 +34,8 @@
 #define DOCTEST_CONFIG_DISABLE
 #endif
 
-#include "texture_panning.h"
 #include "scene/main/viewport.h"
+#include "texture_panning.h"
 
 #ifdef TOOLS_ENABLED
 Dictionary TexturePanning::_edit_get_state() const {
