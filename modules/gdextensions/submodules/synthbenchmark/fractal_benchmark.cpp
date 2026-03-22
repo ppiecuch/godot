@@ -31,6 +31,12 @@
 // simple real_t ALU heavy benchmark
 // no dependency on any math library
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "core/math/math_funcs.h"
 
 static uint32_t EvaluateJuliaFractalAt(real_t x, real_t y) {
@@ -73,3 +79,47 @@ real_t FractalBenchmark() {
 	// Introduce some randomness to avoid this, noting the return value of this function is not used, rather the time it takes to complete
 	return sum / (real_t)(extent * extent) + Math::rand();
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[SynthBenchmark] EvaluateJuliaFractalAt origin") {
+	// At (0,0), the Julia set with c=(-0.73, 0.176) should iterate many times before escaping
+	uint32_t iters = EvaluateJuliaFractalAt(0, 0);
+	CHECK(iters > 0);
+	CHECK(iters <= 300); // max iterations is 300
+}
+
+TEST_CASE("[SynthBenchmark] EvaluateJuliaFractalAt escapes quickly far from origin") {
+	// At a point far from origin, the sequence should escape quickly
+	uint32_t iters = EvaluateJuliaFractalAt(10.0, 10.0);
+	CHECK(iters < 10);
+}
+
+TEST_CASE("[SynthBenchmark] EvaluateJuliaFractalAt deterministic") {
+	// Same input must always produce same output
+	uint32_t a = EvaluateJuliaFractalAt(0.3, -0.5);
+	uint32_t b = EvaluateJuliaFractalAt(0.3, -0.5);
+	CHECK(a == b);
+}
+
+TEST_CASE("[SynthBenchmark] EvaluateJuliaFractalAt boundary behavior") {
+	// Points on the unit circle boundary of this Julia set
+	uint32_t corner = EvaluateJuliaFractalAt(1.0, 1.0);
+	CHECK(corner >= 1);
+	CHECK(corner <= 300);
+
+	uint32_t edge = EvaluateJuliaFractalAt(-1.0, 0.0);
+	CHECK(edge >= 1);
+	CHECK(edge <= 300);
+}
+
+TEST_CASE("[SynthBenchmark] FractalBenchmark returns positive value") {
+	// The benchmark averages iteration counts over a 256x256 grid
+	// The random component makes the exact value unpredictable, but average should be positive
+	real_t result = FractalBenchmark();
+	CHECK(result > 0);
+}
+
+#endif

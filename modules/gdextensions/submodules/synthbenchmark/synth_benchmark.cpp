@@ -28,6 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "synth_benchmark.h"
 
 #include "common/gd_core.h"
@@ -735,3 +741,155 @@ SynthBenchmark::SynthBenchmark() {
 SynthBenchmark::~SynthBenchmark() {
 	memdelete(render);
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[SynthBenchmark] TimeSample stores values correctly") {
+	TimeSample ts(1.5, 0.15);
+	CHECK(ts.total_time == doctest::Approx(1.5));
+	CHECK(ts.normalized_time == doctest::Approx(0.15));
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkStat default state") {
+	SynthBenchmarkStat stat;
+	CHECK(stat.get_measured_total_time() == doctest::Approx(-1));
+	CHECK(stat.get_normalized_time() == doctest::Approx(-1));
+	CHECK(stat.get_confidence() == doctest::Approx(0));
+	CHECK(stat.get_weight() == doctest::Approx(1));
+	CHECK(stat.get_desc() == "");
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkStat parameterized constructor") {
+	SynthBenchmarkStat stat("TestBench", 0.025, "s/Run", 1.5);
+	CHECK(stat.get_desc() == "TestBench");
+	CHECK(stat.get_value_type() == "s/Run");
+	CHECK(stat.get_weight() == doctest::Approx(1.5));
+	CHECK(stat.get_measured_total_time() == doctest::Approx(-1)); // not yet measured
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkStat set_measured_time and compute_perf_index") {
+	// index_normalized_time = 0.025 (baseline hardware)
+	// If measured_normalized_time = 0.025, perf index should be exactly 100
+	SynthBenchmarkStat stat("Test", 0.025, "s/Run", 1.0);
+	stat.set_measured_time(TimeSample(0.25, 0.025), 90);
+
+	CHECK(stat.compute_perf_index() == doctest::Approx(100.0));
+	CHECK(stat.get_measured_total_time() == doctest::Approx(0.25));
+	CHECK(stat.get_normalized_time() == doctest::Approx(0.025));
+	CHECK(stat.get_confidence() == doctest::Approx(90));
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkStat perf index scales inversely") {
+	SynthBenchmarkStat stat("Test", 0.025, "s/Run", 1.0);
+
+	// Hardware twice as fast: 0.0125 normalized time → index 200
+	stat.set_measured_time(TimeSample(0.125, 0.0125));
+	CHECK(stat.compute_perf_index() == doctest::Approx(200.0));
+
+	// Hardware half as fast: 0.05 normalized time → index 50
+	stat.set_measured_time(TimeSample(0.5, 0.05));
+	CHECK(stat.compute_perf_index() == doctest::Approx(50.0));
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkResults compute_cpu_perf_index weighted average") {
+	SynthBenchmarkResults results;
+
+	// stat 0: weight 1.0, index 100
+	results.CPUStats[0] = SynthBenchmarkStat("A", 0.025, "s/Run", 1.0);
+	results.CPUStats[0].set_measured_time(TimeSample(0.25, 0.025));
+
+	// stat 1: weight 1.5, index 200
+	results.CPUStats[1] = SynthBenchmarkStat("B", 0.025, "s/Run", 1.5);
+	results.CPUStats[1].set_measured_time(TimeSample(0.125, 0.0125));
+
+	// Weighted average: (100*1.0 + 200*1.5) / (1.0+1.5) = (100+300)/2.5 = 160
+	real_t cpu_index = results.compute_cpu_perf_index();
+	CHECK(cpu_index == doctest::Approx(160.0));
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkResults compute_cpu_perf_index with individual results") {
+	SynthBenchmarkResults results;
+
+	results.CPUStats[0] = SynthBenchmarkStat("A", 0.025, "s/Run", 1.0);
+	results.CPUStats[0].set_measured_time(TimeSample(0.25, 0.025));
+
+	results.CPUStats[1] = SynthBenchmarkStat("B", 0.025, "s/Run", 1.0);
+	results.CPUStats[1].set_measured_time(TimeSample(0.5, 0.05));
+
+	Vector<real_t> individual;
+	results.compute_cpu_perf_index(&individual);
+
+	REQUIRE(individual.size() == 2);
+	CHECK(individual[0] == doctest::Approx(100.0)); // matches baseline
+	CHECK(individual[1] == doctest::Approx(50.0)); // half speed
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkResults compute_total_gpu_time") {
+	SynthBenchmarkResults results;
+
+	// Default GPUStats have measured_total_time = -1
+	// Total should be 7 * -1 = -7
+	real_t total = results.compute_total_gpu_time();
+	CHECK(total == doctest::Approx(-7.0));
+}
+
+TEST_CASE("[SynthBenchmark] SynthBenchmarkResults default run_time is zero") {
+	SynthBenchmarkResults results;
+	CHECK(results.run_time == doctest::Approx(0));
+}
+
+TEST_CASE("[SynthBenchmark] divide_and_round_up") {
+	CHECK(divide_and_round_up(7, 3) == 3);
+	CHECK(divide_and_round_up(6, 3) == 2);
+	CHECK(divide_and_round_up(1, 3) == 1);
+	CHECK(divide_and_round_up(0, 3) == 0);
+}
+
+TEST_CASE("[SynthBenchmark] divide_and_round_down") {
+	CHECK(divide_and_round_down(7, 3) == 2);
+	CHECK(divide_and_round_down(6, 3) == 2);
+	CHECK(divide_and_round_down(1, 3) == 0);
+}
+
+TEST_CASE("[SynthBenchmark] divide_and_round_nearest") {
+	CHECK(divide_and_round_nearest(7, 3) == 2); // 7/3=2.33 → 2
+	CHECK(divide_and_round_nearest(8, 3) == 3); // 8/3=2.67 → 3
+	CHECK(divide_and_round_nearest(5, 2) == 3); // 5/2=2.5 → 3
+	CHECK(divide_and_round_nearest(4, 3) == 1); // 4/3=1.33 → 1
+}
+
+TEST_CASE("[SynthBenchmark] RunBenchmark produces valid TimeSample") {
+	// Run with minimal work_scale=1
+	TimeSample ts = RunBenchmark(1, FractalBenchmark);
+	CHECK(ts.total_time >= 0);
+	CHECK(ts.normalized_time > 0);
+	CHECK(ts.total_time == doctest::Approx(ts.normalized_time)); // work_scale=1, so total==normalized
+}
+
+TEST_CASE("[SynthBenchmark] RunBenchmark scales with work_scale") {
+	TimeSample ts1 = RunBenchmark(1, RayIntersectBenchmark);
+	TimeSample ts2 = RunBenchmark(2, RayIntersectBenchmark);
+
+	// Total time with 2 runs should be roughly 2x (with tolerance for jitter)
+	CHECK(ts2.total_time > ts1.total_time * 0.5); // at least not wildly wrong
+
+	// Normalized time should be roughly the same regardless of scale
+	CHECK(ts2.normalized_time == doctest::Approx(ts1.normalized_time).epsilon(0.5));
+}
+
+TEST_CASE("[SynthBenchmark] version string format") {
+	SynthBenchmark bench;
+	String ver = bench.get_version_string();
+	CHECK(ver.find("1.0") != -1);
+	CHECK(ver.length() > 0);
+}
+
+TEST_CASE("[SynthBenchmark] initial state not in progress") {
+	SynthBenchmark bench;
+	CHECK(bench.is_benchmark_in_progress() == false);
+	CHECK(bench.get_benchmark_report() == "");
+}
+
+#endif

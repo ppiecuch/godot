@@ -285,6 +285,128 @@ static void _plot_graph(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_
 	}
 }
 
+// Default series color palette (auto-cycled when no custom colors provided).
+static const Color SERIES_PALETTE[] = {
+	Color(0.61, 0.61, 0.90, 1.00), // blue-grey
+	Color(0.90, 0.50, 0.30, 1.00), // warm orange
+	Color(0.40, 0.80, 0.50, 1.00), // green
+	Color(0.85, 0.40, 0.60, 1.00), // pink
+	Color(0.55, 0.55, 0.85, 1.00), // lavender
+	Color(0.80, 0.75, 0.30, 1.00), // yellow
+	Color(0.45, 0.75, 0.80, 1.00), // cyan
+	Color(0.75, 0.50, 0.75, 1.00), // purple
+};
+static const int SERIES_PALETTE_SIZE = sizeof(SERIES_PALETTE) / sizeof(SERIES_PALETTE[0]);
+
+static void _plot_graph_multiseries(CanvasItem *canvas, Ref<Font> &text_font, PlotType plot_type, const String &label, int series_count, MultiSeriesValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, const Color *series_colors, const Point2 *tooltip_pos = nullptr) {
+	const String label_text = string_ellipsis(text_font, label, frame_rect.size.width);
+	const Size2 label_size = text_font->get_string_size(label_text);
+
+	const Rect2 frame_bb = Rect2(frame_rect.position, frame_rect.size - Size2(0, label_size.y));
+	const Rect2 inner_bb(frame_bb.shrink(STYLE_FRAME_PADDING));
+
+	const Vector2 inner_min = inner_bb.position;
+	const Vector2 inner_max = inner_bb.position + inner_bb.size;
+
+	// Determine scale from all series if not specified.
+	if (scale_min == FLT_MAX || scale_max == FLT_MAX) {
+		real_t v_min = FLT_MAX;
+		real_t v_max = -FLT_MAX;
+		for (int s = 0; s < series_count; s++) {
+			for (int i = 0; i < values_count; i++) {
+				const real_t v = values_getter(s, data, i);
+				if (v != v) { // Ignore NaN.
+					continue;
+				}
+				v_min = MIN(v_min, v);
+				v_max = MAX(v_max, v);
+			}
+		}
+		if (scale_min == FLT_MAX) {
+			scale_min = v_min;
+		}
+		if (scale_max == FLT_MAX) {
+			scale_max = v_max;
+		}
+	}
+
+	const int values_count_min = (plot_type == PLOT_TYPE_LINES) ? 2 : 1;
+	String tooltip;
+	int idx_hovered = -1;
+	if (values_count >= values_count_min) {
+		const int res_w = MIN((int)inner_bb.size.width, values_count) + ((plot_type == PLOT_TYPE_LINES) ? -1 : 0);
+		const int item_count = values_count + ((plot_type == PLOT_TYPE_LINES) ? -1 : 0);
+
+		// Tooltip on hover.
+		if (tooltip_pos && inner_bb.has_point(*tooltip_pos)) {
+			const real_t t = CLAMP((tooltip_pos->x - inner_bb.position.x) / inner_bb.size.width, 0, 0.9999);
+			const int v_idx = t * item_count;
+
+			ERR_FAIL_COND(v_idx < 0 || v_idx >= values_count);
+
+			for (int s = 0; s < series_count; s++) {
+				const real_t v0 = values_getter(s, data, (v_idx + values_offset) % values_count);
+				if (plot_type == PLOT_TYPE_LINES) {
+					const real_t v1 = values_getter(s, data, (v_idx + 1 + values_offset) % values_count);
+					tooltip += string_format("S%d %d: %8.4g / %d: %8.4g\n", s, v_idx, v0, v_idx + 1, v1);
+				} else {
+					tooltip += string_format("S%d %d: %8.4g\n", s, v_idx, v0);
+				}
+			}
+			idx_hovered = v_idx;
+		}
+
+		const real_t t_step = 1.0 / res_w;
+		const real_t inv_scale = (scale_min == scale_max) ? 0 : (1 / (scale_max - scale_min));
+
+		for (int s = 0; s < series_count; s++) {
+			const Color col_base = series_colors ? series_colors[s] : SERIES_PALETTE[s % SERIES_PALETTE_SIZE];
+			const Color col_hovered = col_base.lightened(0.35);
+
+			real_t v0 = values_getter(s, data, (0 + values_offset) % values_count);
+			real_t t0 = 0;
+			Vector2 tp0 = Vector2(t0, 1 - _saturate((v0 - scale_min) * inv_scale));
+			const real_t zero_line = (scale_min * scale_max < 0) ? (1 + scale_min * inv_scale) : (scale_min < 0 ? 0 : 1);
+
+			for (int n = 0; n < res_w; n++) {
+				const real_t t1 = t0 + t_step;
+				const int v1_idx = (int)(t0 * item_count + 0.5);
+				ERR_FAIL_COND(v1_idx < 0 || v1_idx >= values_count);
+				const real_t v1 = values_getter(s, data, (v1_idx + values_offset + 1) % values_count);
+				const Vector2 tp1 = Vector2(t1, 1 - _saturate((v1 - scale_min) * inv_scale));
+
+				Vector2 pos0 = _lerp_v2(inner_min, inner_max, tp0);
+				Vector2 pos1 = _lerp_v2(inner_min, inner_max, (plot_type == PLOT_TYPE_LINES) ? tp1 : Vector2(tp1.x, zero_line));
+				if (plot_type == PLOT_TYPE_LINES) {
+					canvas->draw_line(pos0, pos1, idx_hovered == v1_idx ? col_hovered : col_base);
+				} else if (plot_type == PLOT_TYPE_HISTOGRAM) {
+					if (pos1.x >= pos0.x + 2) {
+						pos1.x -= 1;
+					}
+					canvas->draw_rect(Rect2(pos0, pos1 - pos0), idx_hovered == v1_idx ? col_hovered : col_base);
+				}
+
+				t0 = t1;
+				tp0 = tp1;
+			}
+		}
+	}
+
+	if (!overlay_text.empty()) {
+		const String text = string_ellipsis(text_font, overlay_text, frame_bb.size.width);
+		const Size2 size = text_font->get_string_size(text);
+		canvas->draw_string(text_font, frame_bb.position + Vector2((frame_bb.size.width - size.x) / 2, STYLE_FRAME_PADDING), text);
+	}
+
+	if (label_size.x > 0) {
+		canvas->draw_string(text_font, Vector2(frame_bb.position.x + STYLE_ITEM_INNER_SPACING, inner_bb.position.y), label_text);
+	}
+
+	if (!tooltip.empty()) {
+		canvas->draw_string(text_font, *tooltip_pos, tooltip);
+	}
+}
+
 struct PlotArrayGetterData {
 	const real_t *values;
 	int stride;
@@ -327,4 +449,12 @@ void plot_flame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, c
 
 void plot_flame(CanvasItem *canvas, Ref<Font> &text_font, const String &label, SeriesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect) {
 	_plot_flame_internal(canvas, text_font, label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect, nullptr);
+}
+
+void plot_lines_multiseries(CanvasItem *canvas, Ref<Font> &text_font, const String &label, int series_count, MultiSeriesValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, const Color *series_colors) {
+	_plot_graph_multiseries(canvas, text_font, PLOT_TYPE_LINES, label, series_count, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect, series_colors);
+}
+
+void plot_histogram_multiseries(CanvasItem *canvas, Ref<Font> &text_font, const String &label, int series_count, MultiSeriesValuesGetter values_getter, void *data, int values_count, int values_offset, const String &overlay_text, real_t scale_min, real_t scale_max, const Rect2 &frame_rect, const Color *series_colors) {
+	_plot_graph_multiseries(canvas, text_font, PLOT_TYPE_HISTOGRAM, label, series_count, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, frame_rect, series_colors);
 }

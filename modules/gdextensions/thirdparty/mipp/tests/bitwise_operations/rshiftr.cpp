@@ -29,8 +29,7 @@ void test_reg_rshiftr()
 	}
 }
 
-#ifndef MIPP_NO
-#if !defined(MIPP_SSE)
+#if !defined(MIPP_NO) && !defined(MIPP_SVE_LS)
 TEST_CASE("Binary right shift (register) - mipp::reg", "[mipp::rshiftr]")
 {
 #if !defined(MIPP_AVX) || (defined(MIPP_AVX) && MIPP_INSTR_VERSION >= 2)
@@ -48,7 +47,6 @@ TEST_CASE("Binary right shift (register) - mipp::reg", "[mipp::rshiftr]")
 #endif
 #endif
 }
-#endif
 #endif
 
 template <typename T>
@@ -74,7 +72,7 @@ void test_Reg_rshiftr()
 	}
 }
 
-#if !defined(MIPP_SSE)
+#if !defined(MIPP_SVE_LS)
 TEST_CASE("Binary right shift (register) - mipp::Reg", "[mipp::rshiftr]")
 {
 #if !defined(MIPP_AVX) || (defined(MIPP_AVX) && MIPP_INSTR_VERSION >= 2)

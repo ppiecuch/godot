@@ -1,0 +1,16 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+[application]
+
+config/name="ProceduralTree3D Demo"
+config/description="Procedural 3D tree generator. Based on gdTree3D by Artyom Bozhko (JekSun97)."
+run/main_scene="res://tree_3d.tscn"
+config/icon="res://icon.png"

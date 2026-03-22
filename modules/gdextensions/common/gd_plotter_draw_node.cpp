@@ -43,6 +43,22 @@ static real_t _deque_values_getter(void *data, int idx) {
 	return 0;
 }
 
+struct MultiSeriesDequeData {
+	std::deque<real_t> *series;
+	int series_count;
+};
+
+static real_t _multiseries_deque_getter(int series, void *data, int idx) {
+	MultiSeriesDequeData *msdata = (MultiSeriesDequeData *)data;
+	if (series >= 0 && series < msdata->series_count) {
+		const std::deque<real_t> &vals = msdata->series[series];
+		if (idx >= 0 && idx < (int)vals.size()) {
+			return vals[idx];
+		}
+	}
+	return 0;
+}
+
 struct FlameGetterData {
 	const Vector<GdPlotterDraw::FlameEntry> *entries;
 };
@@ -140,10 +156,39 @@ bool GdPlotterDraw::get_draw_background() const {
 	return draw_background;
 }
 
+void GdPlotterDraw::set_series_count(int p_count) {
+	p_count = CLAMP(p_count, 1, MAX_SERIES);
+	if (series_count == p_count)
+		return;
+	series_count = p_count;
+	dirty = true;
+	update();
+}
+
+int GdPlotterDraw::get_series_count() const {
+	return series_count;
+}
+
+void GdPlotterDraw::set_series_color(int p_series, const Color &p_color) {
+	ERR_FAIL_INDEX(p_series, MAX_SERIES);
+	series_colors[p_series] = p_color;
+	update();
+}
+
+Color GdPlotterDraw::get_series_color(int p_series) const {
+	ERR_FAIL_INDEX_V(p_series, MAX_SERIES, Color());
+	return series_colors[p_series];
+}
+
 void GdPlotterDraw::add_sample(real_t p_value) {
-	values.push_back(p_value);
-	while ((int)values.size() > max_history) {
-		values.pop_front();
+	add_sample_to_series(0, p_value);
+}
+
+void GdPlotterDraw::add_sample_to_series(int p_series, real_t p_value) {
+	ERR_FAIL_INDEX(p_series, series_count);
+	series_values[p_series].push_back(p_value);
+	while ((int)series_values[p_series].size() > max_history) {
+		series_values[p_series].pop_front();
 	}
 	dirty = true;
 	update();
@@ -167,7 +212,9 @@ void GdPlotterDraw::clear_flame_entries() {
 }
 
 void GdPlotterDraw::reset() {
-	values.clear();
+	for (int i = 0; i < MAX_SERIES; i++) {
+		series_values[i].clear();
+	}
 	flame_entries.clear();
 	dirty = true;
 	update();
@@ -212,13 +259,42 @@ void GdPlotterDraw::_notification(int p_what) {
 
 			switch (mode) {
 				case MODE_LINES: {
-					if (values.size() >= 2) {
-						plot_lines(this, f, empty_label, &_deque_values_getter, (void *)&values, (int)values.size(), 0, overlay_text, scale_min, scale_max, plot_rc);
+					if (series_count > 1) {
+						// Find the minimum size across all series.
+						int min_count = 0;
+						for (int s = 0; s < series_count; s++) {
+							int sz = (int)series_values[s].size();
+							if (s == 0 || sz < min_count) {
+								min_count = sz;
+							}
+						}
+						if (min_count >= 2) {
+							MultiSeriesDequeData msdata;
+							msdata.series = series_values;
+							msdata.series_count = series_count;
+							plot_lines_multiseries(this, f, empty_label, series_count, &_multiseries_deque_getter, (void *)&msdata, min_count, 0, overlay_text, scale_min, scale_max, plot_rc, series_colors);
+						}
+					} else if (series_values[0].size() >= 2) {
+						plot_lines(this, f, empty_label, &_deque_values_getter, (void *)&series_values[0], (int)series_values[0].size(), 0, overlay_text, scale_min, scale_max, plot_rc);
 					}
 				} break;
 				case MODE_HISTOGRAM: {
-					if (values.size() >= 1) {
-						plot_histogram(this, f, empty_label, &_deque_values_getter, (void *)&values, (int)values.size(), 0, overlay_text, scale_min, scale_max, plot_rc);
+					if (series_count > 1) {
+						int min_count = 0;
+						for (int s = 0; s < series_count; s++) {
+							int sz = (int)series_values[s].size();
+							if (s == 0 || sz < min_count) {
+								min_count = sz;
+							}
+						}
+						if (min_count >= 1) {
+							MultiSeriesDequeData msdata;
+							msdata.series = series_values;
+							msdata.series_count = series_count;
+							plot_histogram_multiseries(this, f, empty_label, series_count, &_multiseries_deque_getter, (void *)&msdata, min_count, 0, overlay_text, scale_min, scale_max, plot_rc, series_colors);
+						}
+					} else if (series_values[0].size() >= 1) {
+						plot_histogram(this, f, empty_label, &_deque_values_getter, (void *)&series_values[0], (int)series_values[0].size(), 0, overlay_text, scale_min, scale_max, plot_rc);
 					}
 				} break;
 				case MODE_FLAME: {
@@ -252,12 +328,19 @@ void GdPlotterDraw::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_draw_background", "draw"), &GdPlotterDraw::set_draw_background);
 	ClassDB::bind_method(D_METHOD("get_draw_background"), &GdPlotterDraw::get_draw_background);
 
+	ClassDB::bind_method(D_METHOD("set_series_count", "count"), &GdPlotterDraw::set_series_count);
+	ClassDB::bind_method(D_METHOD("get_series_count"), &GdPlotterDraw::get_series_count);
+	ClassDB::bind_method(D_METHOD("set_series_color", "series", "color"), &GdPlotterDraw::set_series_color);
+	ClassDB::bind_method(D_METHOD("get_series_color", "series"), &GdPlotterDraw::get_series_color);
+
 	ClassDB::bind_method(D_METHOD("add_sample", "value"), &GdPlotterDraw::add_sample);
+	ClassDB::bind_method(D_METHOD("add_sample_to_series", "series", "value"), &GdPlotterDraw::add_sample_to_series);
 	ClassDB::bind_method(D_METHOD("add_flame_entry", "start", "end", "level", "caption"), &GdPlotterDraw::add_flame_entry);
 	ClassDB::bind_method(D_METHOD("clear_flame_entries"), &GdPlotterDraw::clear_flame_entries);
 	ClassDB::bind_method(D_METHOD("reset"), &GdPlotterDraw::reset);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "mode", PROPERTY_HINT_ENUM, "Lines,Histogram,Flame"), "set_mode", "get_mode");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "series_count", PROPERTY_HINT_RANGE, "1,8,1"), "set_series_count", "get_series_count");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "label"), "set_label", "get_label");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "overlay_text"), "set_overlay_text", "get_overlay_text");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "scale_min"), "set_scale_min", "get_scale_min");
@@ -278,6 +361,22 @@ GdPlotterDraw::GdPlotterDraw() {
 	max_history = 200;
 	bg_color = Color(0.15, 0.15, 0.15);
 	draw_background = true;
+	series_count = 1;
 	dirty = true;
 	set_size(Size2(250, 120));
+
+	// Default series colors from the palette.
+	const Color default_palette[] = {
+		Color(0.61, 0.61, 0.90, 1.00),
+		Color(0.90, 0.50, 0.30, 1.00),
+		Color(0.40, 0.80, 0.50, 1.00),
+		Color(0.85, 0.40, 0.60, 1.00),
+		Color(0.55, 0.55, 0.85, 1.00),
+		Color(0.80, 0.75, 0.30, 1.00),
+		Color(0.45, 0.75, 0.80, 1.00),
+		Color(0.75, 0.50, 0.75, 1.00),
+	};
+	for (int i = 0; i < MAX_SERIES; i++) {
+		series_colors[i] = default_palette[i];
+	}
 }

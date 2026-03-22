@@ -20,7 +20,7 @@ void test_reg_lrot()
 		REQUIRE(mipp::get<T>(r2, i) == (i == N-1 ? inputs1[0] : inputs1[i+1]));
 }
 
-#ifndef MIPP_NO
+#if !defined(MIPP_NO) && !defined(MIPP_SVE_LS)
 TEST_CASE("Left rotation (cyclic permutation) - mipp::reg", "[mipp::lrot]")
 {
 #if defined(MIPP_64BIT)
@@ -33,9 +33,11 @@ TEST_CASE("Left rotation (cyclic permutation) - mipp::reg", "[mipp::lrot]")
 #endif
 	SECTION("datatype = int32_t") { test_reg_lrot<int32_t>(); }
 #if defined(MIPP_BW)
-#if (!defined(MIPP_SSE) && !defined(MIPP_AVX512)) || (defined(MIPP_SSE) && MIPP_INSTR_VERSION >= 31) || (defined(MIPP_AVX512) && defined(MIPP_AVX512VBMI))
+#if (!defined(MIPP_SSE) && !defined(MIPP_AVX512)) || (defined(MIPP_SSE) && MIPP_INSTR_VERSION >= 31) || (defined(MIPP_AVX512) && defined(MIPP_AVX512BW))
 	SECTION("datatype = int16_t") { test_reg_lrot<int16_t>(); }
+#if !defined(MIPP_AVX512) || (defined(MIPP_AVX512) && defined(MIPP_AVX512VBMI))
 	SECTION("datatype = int8_t") { test_reg_lrot<int8_t>(); }
+#endif
 #endif
 #endif
 }
@@ -55,6 +57,7 @@ void test_Reg_lrot()
 		REQUIRE(r2[i] == (i == N-1 ? inputs1[0] : inputs1[i+1]));
 }
 
+#if !defined(MIPP_SVE_LS)
 TEST_CASE("Left rotation (cyclic permutation) - mipp::Reg", "[mipp::lrot]")
 {
 #if defined(MIPP_64BIT)
@@ -67,9 +70,12 @@ TEST_CASE("Left rotation (cyclic permutation) - mipp::Reg", "[mipp::lrot]")
 #endif
 	SECTION("datatype = int32_t") { test_Reg_lrot<int32_t>(); }
 #if defined(MIPP_BW)
-#if (!defined(MIPP_SSE) && !defined(MIPP_AVX512)) || (defined(MIPP_SSE) && MIPP_INSTR_VERSION >= 31) || (defined(MIPP_AVX512) && defined(MIPP_AVX512VBMI))
+#if (!defined(MIPP_SSE) && !defined(MIPP_AVX512)) || (defined(MIPP_SSE) && MIPP_INSTR_VERSION >= 31) || (defined(MIPP_AVX512) && defined(MIPP_AVX512BW))
 	SECTION("datatype = int16_t") { test_Reg_lrot<int16_t>(); }
+#if !defined(MIPP_AVX512) || (defined(MIPP_AVX512) && defined(MIPP_AVX512VBMI))
 	SECTION("datatype = int8_t") { test_Reg_lrot<int8_t>(); }
 #endif
 #endif
+#endif
 }
+#endif

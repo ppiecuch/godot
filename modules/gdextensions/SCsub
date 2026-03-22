@@ -161,6 +161,7 @@ modules = [
     "environment/spider_anim",
     "environment/starfield",
     "environment/tree_2d",
+    "environment/tree_3d",
     "environment/water_splash",
     "environment/water_2d",
     "environment/waterfall",
@@ -246,8 +247,10 @@ if env["tools"]:
         modules += ["qrcodetexture"]
     if is_enabled("texturepacker"):
         modules += ["texturepacker"]
-    if is_enabled("goxel"):
-        modules += ["goxel"]
+    if is_enabled("ggoxel"):
+        modules += ["ggoxel"]
+        env_module.Append(CPPPATH=["thirdparty/goxel", "thirdparty/goxel/utils"])
+        thirdparty_sources += ["thirdparty/goxel/marchingcube.c"]
     if is_enabled("spacemouse"):
         if env["platform"] == "windows":
             thirdparty_sources += Glob("thirdparty/hidapi/windows/*.c")
@@ -357,18 +360,22 @@ if is_enabled("cpufeatures"):
         thirdparty_sources += ["thirdparty/cpu_features/hwcaps.c"]
 
 if is_enabled("breakpad"):
+    # Breakpad wrapper compiles on all platforms — uses stubs where no prebuilt library is available.
+    # Headers are in thirdparty/breakpad_client/{client,common}/ for platform-specific handler includes.
+    env_module.Append(CPPPATH=["thirdparty/breakpad_client"])
     arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
     if arch == "x64":
         arch = "x86_64"
     elif arch == "mips":
         arch = "mips32"
+    # Link prebuilt libbreakpad_client where available (Linux x86_64/aarch64).
+    # When linked, define BREAKPAD_HAS_LIBRARY to enable real crash handler backend.
     if env["platform"] == "x11" and arch in ["aarch64", "x86_64"]:
         env_module.Append(CPPPATH=["thirdparty/breakpad_client/linux/include"])
         env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/thirdparty/breakpad_client/linux/%s" % arch])
         add_external_libs(env, ["breakpad_client"])
-    else:
-        print("(GDextensions) Breakpad crash reporter is not supported on platform '%s/%s'." % (env["platform"], arch))
-        env["enable_gdextensions_submodules"].remove("breakpad")
+        env_module.Append(CPPDEFINES=["BREAKPAD_HAS_LIBRARY"])
+    modules += ["breakpad"]
 
 if env["platform"] == "iphone" or env["platform"] == "osx":
     modules += ["multipeer"]
@@ -514,7 +521,9 @@ if is_enabled("environment/spider_anim"):
         modules.remove("environment/spider_anim")
 
 if not env["disable_3d"]:
-    modules += ["environment/vegetation_instance", "environment/proc_rocks"]
+    modules += ["environment/vegetation_instance", "environment/proc_rocks", "environment/tree_3d"]
+    if is_enabled("environment/tree_3d"):
+        thirdparty_sources += ["submodules/environment/tree_3d/proctree.cpp"]
     if is_enabled("environment/proc_rocks"):
         thirdparty_sources += [
             "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
@@ -693,6 +702,7 @@ if is_enabled("tileengine"):
     env_module.Append(CPPDEFINES=["TLN_EXCLUDE_WINDOW", "TLN_STATIC_BUILD"])
     env_module.Append(CPPPATH=["thirdparty/Tilengine/include"])
     thirdparty_sources += Glob("thirdparty/Tilengine/src/*.c")
+    sources += Glob("submodules/tilengine/*.cpp")
 
 if is_enabled("opensteer"):
     thirdparty_sources += (

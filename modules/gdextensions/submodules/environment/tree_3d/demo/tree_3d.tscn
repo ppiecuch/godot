@@ -1,0 +1,189 @@
+[gd_scene load_steps=16 format=2]
+
+[ext_resource path="res://grass.png" type="Texture" id=1]
+[ext_resource path="res://trunk_mat.tres" type="Material" id=2]
+[ext_resource path="res://twig_mat.tres" type="Material" id=3]
+[ext_resource path="res://Branches1.png" type="Texture" id=4]
+[ext_resource path="res://Branches2.png" type="Texture" id=5]
+[ext_resource path="res://Branches3.png" type="Texture" id=6]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends DirectionalLight
+
+func _process(delta):
+	rotate_y(0.1 * delta)
+"
+
+[sub_resource type="CubeMesh" id=2]
+
+[sub_resource type="SpatialMaterial" id=3]
+flags_unshaded = true
+albedo_texture = ExtResource( 1 )
+uv1_scale = Vector3( 24, 24, 24 )
+
+[sub_resource type="SpatialMaterial" id=4]
+flags_transparent = true
+albedo_texture = ExtResource( 4 )
+
+[sub_resource type="SpatialMaterial" id=5]
+params_use_alpha_scissor = true
+params_alpha_scissor_threshold = 0.612
+albedo_texture = ExtResource( 4 )
+
+[sub_resource type="SpatialMaterial" id=6]
+params_use_alpha_scissor = true
+params_alpha_scissor_threshold = 0.624
+albedo_texture = ExtResource( 5 )
+
+[sub_resource type="SpatialMaterial" id=7]
+flags_transparent = true
+params_cull_mode = 2
+albedo_color = Color( 0.909, 0.61, 0.26, 1 )
+albedo_texture = ExtResource( 6 )
+
+[sub_resource type="SpatialMaterial" id=8]
+params_use_alpha_scissor = true
+params_alpha_scissor_threshold = 0.244
+params_cull_mode = 2
+flags_unshaded = true
+params_specular_mode = 2
+albedo_color = Color( 1, 0.529, 0.213, 1 )
+albedo_texture = ExtResource( 6 )
+
+[sub_resource type="ProceduralSky" id=9]
+sky_top_color = Color( 0.562, 0.757, 0.894, 1 )
+sky_horizon_color = Color( 0.628, 0.64, 0.803, 1 )
+
+[sub_resource type="Environment" id=10]
+background_mode = 2
+background_color = Color( 0.891, 0.943, 0.984, 1 )
+background_sky = SubResource( 9 )
+ambient_light_color = Color( 0.3, 0.3, 0.3, 1 )
+ssao_enabled = true
+ssao_intensity = 12.27
+adjustment_enabled = true
+adjustment_brightness = 1.51
+adjustment_contrast = 1.25
+adjustment_saturation = 1.34
+
+[node name="Demo" type="Spatial"]
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 0.551853, 0.833343, 0.0315978, -0.588053, 0.361993, 0.723294, 0.591314, -0.417733, 0.689817, 0, 3.76065, 7.80258 )
+shadow_enabled = true
+script = SubResource( 1 )
+
+[node name="Grass" type="MeshInstance" parent="."]
+transform = Transform( 142.255, 0, 0, 0, 1, 0, 0, 0, 149.965, 0, -0.076, 0 )
+mesh = SubResource( 2 )
+material/0 = SubResource( 3 )
+
+[node name="Tree1" type="ProceduralTree3D" parent="."]
+transform = Transform( -0.048, 0, 0.999, 0, 1, 0, -0.999, 0, -0.048, -24.129, 0.398, -2.063 )
+seed = 696
+trunk_steps = 9
+trunk_length = 3.21
+trunk_max_radius = 0.22
+branch_initial_length = 0.79
+twig_scale = 0.55
+material_trunk = ExtResource( 2 )
+material_twig = ExtResource( 3 )
+
+[node name="Tree2" type="ProceduralTree3D" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -18.406, 0, -1.648 )
+seed = 264
+trunk_levels = 4
+trunk_steps = 9
+trunk_length = 1.79
+trunk_max_radius = 0.05
+trunk_radius_falloff_rate = 0.7
+trunk_twist_rate = 2.62
+branch_initial_length = 0.59
+branch_length_falloff_factor = 0.57
+branch_drop_amount = 0.4
+twig_scale = 0.4
+material_trunk = ExtResource( 2 )
+material_twig = SubResource( 4 )
+
+[node name="Tree3" type="ProceduralTree3D" parent="."]
+transform = Transform( -0.126, 0, -0.992, 0, 1, 0, 0.992, 0, -0.126, -12.761, 0.344, -1.851 )
+seed = 264
+trunk_levels = 3
+trunk_steps = 0
+trunk_length = 0.38
+trunk_max_radius = 0.04
+trunk_radius_falloff_rate = 0.58
+trunk_twist_rate = 5.0
+branch_initial_length = 0.19
+branch_drop_amount = 0.2
+twig_scale = 0.65
+material_trunk = ExtResource( 2 )
+material_twig = ExtResource( 3 )
+
+[node name="Tree4" type="ProceduralTree3D" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -5.487, 0, -1.737 )
+trunk_levels = 7
+trunk_length = 7.05
+trunk_max_radius = 0.18
+trunk_radius_falloff_rate = 0.61
+trunk_climb_rate = 0.2
+trunk_kink = -0.37
+trunk_twist_rate = 1.41
+branch_initial_length = 0.59
+branch_length_falloff_factor = 0.95
+branch_drop_amount = -0.3
+branch_grow_amount = 0.03
+twig_scale = 0.65
+material_trunk = ExtResource( 2 )
+material_twig = SubResource( 5 )
+
+[node name="Tree5" type="ProceduralTree3D" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.782, 0.283, -1.851 )
+trunk_steps = 30
+trunk_length = 3.61
+trunk_max_radius = 0.2
+trunk_climb_rate = 0.3
+trunk_kink = 0.01
+trunk_twist_rate = -2.47
+branch_drop_amount = 0.0
+twig_scale = 1.0
+material_trunk = ExtResource( 2 )
+material_twig = SubResource( 6 )
+
+[node name="Tree6" type="ProceduralTree3D" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16.478, 0.349, -1.645 )
+seed = 264
+trunk_levels = 4
+trunk_steps = 12
+trunk_length = 11.52
+trunk_max_radius = 0.6
+trunk_radius_falloff_rate = 0.57
+trunk_climb_rate = 2.02
+trunk_kink = 0.0
+branch_initial_length = 2.19
+branch_drop_amount = 0.0
+branch_grow_amount = -0.38
+twig_scale = 2.0
+material_trunk = ExtResource( 2 )
+material_twig = SubResource( 7 )
+
+[node name="Tree7" type="ProceduralTree3D" parent="."]
+transform = Transform( 0.973, 0, -0.233, 0, 1, 0, 0.233, 0, 0.973, -30.963, 0.351, -2.109 )
+seed = 325
+trunk_levels = 7
+trunk_steps = 4
+trunk_length = 4.83
+trunk_max_radius = 0.21
+trunk_climb_rate = 0.37
+trunk_twist_rate = 2.21
+branch_initial_length = 0.89
+branch_drop_amount = 0.151
+branch_grow_amount = 0.033
+twig_scale = 0.7
+material_trunk = ExtResource( 2 )
+material_twig = SubResource( 8 )
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 0.982, 0.188, -0.001, 0, 0.005, 1.0, 0.188, -0.982, 0.005, -23.883, 7.681, -2.564 )
+environment = SubResource( 10 )
+current = true

@@ -37,6 +37,12 @@
 //
 // code duplication to not get a different result if the source gets optimized
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "core/math/math_funcs.h"
 #include "core/math/random_number_generator.h"
 #include "core/math/vector3.h"
@@ -94,3 +100,57 @@ real_t RayIntersectBenchmark() {
 	// to avoid getting optimized out
 	return hit_count / (real_t)step_count;
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+TEST_CASE("[SynthBenchmark] LineCheckWithTriangle direct hit") {
+	// Ray going straight through a triangle in the XY plane
+	Vector3 v1(0, 0, 0), v2(2, 0, 0), v3(1, 2, 0);
+	Vector3 start(1, 0.5, -1);
+	Vector3 end(1, 0.5, 1);
+	CHECK(LineCheckWithTriangle(v1, v2, v3, start, end) == true);
+}
+
+TEST_CASE("[SynthBenchmark] LineCheckWithTriangle clear miss") {
+	// Ray parallel and offset from triangle
+	Vector3 v1(0, 0, 0), v2(2, 0, 0), v3(1, 2, 0);
+	Vector3 start(10, 10, -1);
+	Vector3 end(10, 10, 1);
+	CHECK(LineCheckWithTriangle(v1, v2, v3, start, end) == false);
+}
+
+TEST_CASE("[SynthBenchmark] LineCheckWithTriangle ray from behind") {
+	// Ray pointing away from triangle (negative t)
+	Vector3 v1(0, 0, 0), v2(2, 0, 0), v3(1, 2, 0);
+	Vector3 start(1, 0.5, 1);
+	Vector3 end(1, 0.5, 2); // moving away
+	CHECK(LineCheckWithTriangle(v1, v2, v3, start, end) == false);
+}
+
+TEST_CASE("[SynthBenchmark] LineCheckWithTriangle edge case - ray along edge") {
+	// Ray along triangle edge - degenerate, should not crash
+	Vector3 v1(0, 0, 0), v2(1, 0, 0), v3(0, 1, 0);
+	Vector3 start(0, 0, 0);
+	Vector3 end(1, 0, 0);
+	// Result doesn't matter, just must not crash
+	(void)LineCheckWithTriangle(v1, v2, v3, start, end);
+	CHECK(true);
+}
+
+TEST_CASE("[SynthBenchmark] RayIntersectBenchmark returns hit ratio") {
+	// Result is hit_count / step_count, should be between 0 and 1
+	real_t result = RayIntersectBenchmark();
+	CHECK(result >= 0);
+	CHECK(result <= 1.0);
+}
+
+TEST_CASE("[SynthBenchmark] RayIntersectBenchmark deterministic") {
+	// Uses fixed seed, so results should be identical
+	real_t a = RayIntersectBenchmark();
+	real_t b = RayIntersectBenchmark();
+	CHECK(a == b);
+}
+
+#endif

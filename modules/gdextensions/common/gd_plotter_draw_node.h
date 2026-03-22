@@ -46,13 +46,14 @@ public:
 		MODE_FLAME,
 	};
 
-public:
 	struct FlameEntry {
 		real_t start;
 		real_t end;
 		uint8_t level;
 		String caption;
 	};
+
+	static const int MAX_SERIES = 8;
 
 private:
 	PlotMode mode;
@@ -65,7 +66,9 @@ private:
 	bool draw_background;
 
 	Ref<Font> font;
-	std::deque<real_t> values;
+	int series_count;
+	std::deque<real_t> series_values[MAX_SERIES];
+	Color series_colors[MAX_SERIES];
 	Vector<FlameEntry> flame_entries;
 	bool dirty;
 
@@ -96,7 +99,13 @@ public:
 	void set_draw_background(bool p_draw);
 	bool get_draw_background() const;
 
+	void set_series_count(int p_count);
+	int get_series_count() const;
+	void set_series_color(int p_series, const Color &p_color);
+	Color get_series_color(int p_series) const;
+
 	void add_sample(real_t p_value);
+	void add_sample_to_series(int p_series, real_t p_value);
 	void add_flame_entry(real_t p_start, real_t p_end, int p_level, const String &p_caption);
 	void clear_flame_entries();
 	void reset();

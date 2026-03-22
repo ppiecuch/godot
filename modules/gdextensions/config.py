@@ -87,7 +87,7 @@ def configure(env):
         "geomfonts",
         "symbolfonts",
         "generator",
-        "goxel",
+        "ggoxel",
         "fontengine3d",
         "gqmaps",
         "spinners",

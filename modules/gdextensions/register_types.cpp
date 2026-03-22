@@ -177,6 +177,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "environment/spider_anim/stage.h"
 #include "environment/starfield/starfield_2d.h"
 #include "environment/tree_2d/tree_2d.h"
+#include "environment/tree_3d/gd_proctree.h"
 #include "environment/vegetation_instance/vegetation_instance.h"
 #include "environment/water_2d/gd_water_2d.h"
 #include "environment/water_splash/gd_water_splash.h"
@@ -220,6 +221,18 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #endif
 #ifdef GDEXT_MEDIA_BMFIMPORTER_ENABLED
 #include "media/bmfimporter/bmf_bitmap_font.h"
+#endif
+
+#ifdef GDEXT_GGOXEL_ENABLED
+#include "ggoxel/gd_goxel.h"
+#endif
+
+#ifdef GDEXT_TILEENGINE_ENABLED
+#include "tilengine/gd_tilengine.h"
+#endif
+
+#ifdef GDEXT_BREAKPAD_ENABLED
+#include "breakpad/gd_breakpad.h"
 #endif
 
 #ifdef GDEXT_SYNTHBENCHMARK_ENABLED
@@ -688,6 +701,9 @@ void register_gdextensions_types() {
 #ifdef GDEXT_ENVIRONMENT_PROC_ROCKS_ENABLED
 	ClassDB::register_class<ProcRockMesh>();
 #endif
+#ifdef GDEXT_ENVIRONMENT_TREE_3D_ENABLED
+	ClassDB::register_class<ProceduralTree3D>();
+#endif
 
 #ifdef TOOLS_ENABLED
 #ifdef GDEXT_MEDIA_FLAC_ENABLED
@@ -716,6 +732,10 @@ void register_gdextensions_types() {
 	Ref<BmfFontImporter> bmf_font = memnew(BmfFontImporter);
 	ResourceFormatImporter::get_singleton()->add_importer(bmf_font);
 #endif
+#endif
+
+#ifdef GDEXT_BREAKPAD_ENABLED
+	ClassDB::register_class<GdBreakpad>();
 #endif
 
 #ifdef GDEXT_SYNTHBENCHMARK_ENABLED
@@ -843,6 +863,27 @@ void register_gdextensions_types() {
 
 #ifdef GDEXT_SPACEMOUSE_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("SpaceMouse", memnew(SpaceMouse)));
+#endif
+
+#ifdef GDEXT_GGOXEL_ENABLED
+	ClassDB::register_class<GoxelVolume>();
+	ClassDB::register_class<GoxelMeshBuilder>();
+	ClassDB::register_class<VoxelMeshInstance>();
+	ClassDB::register_class<GoxelPathTracer>();
+	ClassDB::register_class<GoxelFileIO>();
+	ClassDB::register_class<GoxelFilters>();
+#endif
+
+#ifdef GDEXT_TILEENGINE_ENABLED
+	ClassDB::register_class<TLNPalette>();
+	ClassDB::register_class<TLNBitmap>();
+	ClassDB::register_class<TLNTileset>();
+	ClassDB::register_class<TLNTilemap>();
+	ClassDB::register_class<TLNSpriteset>();
+	ClassDB::register_class<TLNSequence>();
+	ClassDB::register_class<TLNSequencePack>();
+	ClassDB::register_class<TLNObjectList>();
+	ClassDB::register_class<TLNEngine>();
 #endif
 
 #ifdef GDEXT_LDRDRAW_ENABLED
