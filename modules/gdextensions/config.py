@@ -16,6 +16,7 @@ def configure(env):
         # low-level extensions
         "benchmark",
         "breakpad",
+        "consoleaddons",
         "cpufeatures",
         "debugdraw",
         "flashdb",

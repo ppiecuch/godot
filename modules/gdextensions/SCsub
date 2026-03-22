@@ -149,6 +149,7 @@ modules = [
     "bulletkit",
     # C
     "canvasraster",
+    "consoleaddons",
     "cpufeatures",
     "cyberelements",
     # D

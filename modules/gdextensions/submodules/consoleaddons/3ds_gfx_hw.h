@@ -59,7 +59,7 @@ enum NdsBackgroundBitmapSize {
 class NdsCtru : public Object {
 	GDCLASS(NdsCtru, Object)
 
-	static NdsCtru *instance = nullptr;
+	static NdsCtru *instance;
 
 protected:
 	NdsCtru();
@@ -119,7 +119,7 @@ public:
 };
 
 class NdsBackground : public Node2D {
-	GDCLASS(NdsSprite, Node2D);
+	GDCLASS(NdsBackground, Node2D);
 
 public:
 	NdsBackground();

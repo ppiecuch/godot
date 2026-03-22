@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  linux_hw.cpp                                                          */
+/*  hw_psp.h                                                              */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,18 +28,25 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-// Reference:
-// ----------
-// 1. https://github.com/AmberELEC/AmberELEC/blob/main/packages/games/tools/SDL2/patches/rotation/0005-SDL-2.24.0.odroidgoa-support.patch
-// 2. https://forums.raspberrypi.com/viewtopic.php?t=315565
-// 3. https://github.com/honeydatax/linux-directX
+#ifndef HW_PSP_H
+#define HW_PSP_H
 
-#ifdef __linux__
-#include "acc/arm_2d.h"
-#include "acc/dingux_ipu.h"
-#include "acc/rk_rga.h"
+#include "core/math/math_funcs.h"
 
-#include "linux_hw.h"
+#ifdef PSP
+#include <pspmath.h>
 
-LinuxHw *LinuxHw::instance = nullptr;
-#endif // __linux__
+// VFPU hardware math — faster than software libm on PSP
+static float hw_psp_vfpu_sqrt(float p_value) { return vfpu_sqrtf(p_value); }
+static float hw_psp_vfpu_sin(float p_value) { return vfpu_sinf(p_value); }
+static float hw_psp_vfpu_cos(float p_value) { return vfpu_cosf(p_value); }
+
+#else // !PSP — software fallbacks
+
+static float hw_psp_vfpu_sqrt(float p_value) { return Math::sqrt(p_value); }
+static float hw_psp_vfpu_sin(float p_value) { return Math::sin(p_value); }
+static float hw_psp_vfpu_cos(float p_value) { return Math::cos(p_value); }
+
+#endif // PSP
+
+#endif // HW_PSP_H

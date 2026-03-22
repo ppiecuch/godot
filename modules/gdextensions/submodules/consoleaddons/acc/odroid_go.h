@@ -69,7 +69,8 @@ uint32_t odroid_display_backlight_get() {
 		close(fd);
 	}
 
-	return (percent = value / (float)max * 100.0);
+	float percent = value / (float)max * 100.0f;
+	return (uint32_t)percent;
 }
 
 void odroid_display_backlight_set(uint32_t value) {

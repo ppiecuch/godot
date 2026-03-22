@@ -187,6 +187,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "hydro/register.h"
 #endif
 
+#ifdef GDEXT_CONSOLEADDONS_ENABLED
+#include "consoleaddons/console_hw.h"
+#endif
+
 #ifdef GDEXT_HWINFO_ENABLED
 #include "hwinfo/gd_hwinfo.h"
 #endif
@@ -545,6 +549,9 @@ void register_gdextensions_types() {
 #endif // GDEXT_CORE_ENABLED
 #ifdef GDEXT_SETTINGS_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Settings", memnew(Settings)));
+#endif
+#ifdef GDEXT_CONSOLEADDONS_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("ConsoleHw", memnew(ConsoleHw)));
 #endif
 #ifdef GDEXT_FLASHDB_ENABLED
 	ClassDB::register_class<FlashKVDB>();
@@ -962,6 +969,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_SETTINGS_ENABLED
 	RemoveSingleton(Settings);
+#endif
+#ifdef GDEXT_CONSOLEADDONS_ENABLED
+	RemoveSingleton(ConsoleHw);
 #endif
 #ifdef GDEXT_NAKAMA1_ENABLED
 	RemoveSingleton(GdNakama1);

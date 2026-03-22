@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef _3DS
+
 #include "3ds_gfx_hw.h"
 
 #include <3ds.h>
@@ -104,10 +106,10 @@ int NdsCtru::acu_get_security_mode() {
 }
 
 String NdsCtru::acu_get_ssid() {
-	char *ssid = "";
+	char ssid[33] = {};
 	Result result = ACU_GetSSID(ssid);
 	_CTRU_WARN_IPC_FAIL(result);
-	return ssid;
+	return String(ssid);
 }
 
 int NdsCtru::acu_get_ssid_length() {
@@ -132,17 +134,17 @@ int NdsCtru::acu_get_proxy_port() {
 }
 
 String NdsCtru::acu_get_proxy_user_name() {
-	char *username = "";
+	char username[256] = {};
 	Result result = ACU_GetProxyUserName(username);
 	_CTRU_WARN_IPC_FAIL(result);
-	return username;
+	return String(username);
 }
 
 String NdsCtru::acu_get_proxy_password() {
-	char *password = "";
+	char password[256] = {};
 	Result result = ACU_GetProxyPassword(password);
 	_CTRU_WARN_IPC_FAIL(result);
-	return password;
+	return String(password);
 }
 
 int NdsCtru::acu_get_last_error_code() {
@@ -226,22 +228,22 @@ Array NdsCtru::hiduser_get_handles() {
 	return varray(out_mem_handle, eventpad0, eventpad1, eventaccel, eventgyro, eventdebugpad);
 }
 
-Error NdsCtru::ctru_hiduser_enable_accelerometer() {
+Error NdsCtru::hiduser_enable_accelerometer() {
 	Result result = HIDUSER_EnableAccelerometer();
 	return R_FAILED(result) ? FAILED : OK;
 }
 
-Error NdsCtru::ctru_hiduser_disable_accelerometer() {
+Error NdsCtru::hiduser_disable_accelerometer() {
 	Result result = HIDUSER_DisableAccelerometer();
 	return R_FAILED(result) ? FAILED : OK;
 }
 
-NdsCtru::hiduser_enable_gyroscope() {
+Error NdsCtru::hiduser_enable_gyroscope() {
 	Result result = HIDUSER_EnableGyroscope();
 	return R_FAILED(result) ? FAILED : OK;
 }
 
-NdsCtru::hiduser_disable_gyroscope() {
+Error NdsCtru::hiduser_disable_gyroscope() {
 	Result result = HIDUSER_DisableGyroscope();
 	return R_FAILED(result) ? FAILED : OK;
 }
@@ -295,3 +297,5 @@ void NdsSprite::set_visibility(SpriteEntry *p_sprite_entry, bool p_hidden, bool 
 		}
 	}
 }
+
+#endif // _3DS

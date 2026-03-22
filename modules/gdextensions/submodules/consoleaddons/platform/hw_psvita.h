@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  linux_hw.cpp                                                          */
+/*  hw_psvita.h                                                           */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,18 +28,32 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-// Reference:
-// ----------
-// 1. https://github.com/AmberELEC/AmberELEC/blob/main/packages/games/tools/SDL2/patches/rotation/0005-SDL-2.24.0.odroidgoa-support.patch
-// 2. https://forums.raspberrypi.com/viewtopic.php?t=315565
-// 3. https://github.com/honeydatax/linux-directX
+#ifndef HW_PSVITA_H
+#define HW_PSVITA_H
 
-#ifdef __linux__
-#include "acc/arm_2d.h"
-#include "acc/dingux_ipu.h"
-#include "acc/rk_rga.h"
+#ifdef PSVITA
+#include <psp2/power.h>
 
-#include "linux_hw.h"
+static int hw_psvita_get_battery_level() {
+	return scePowerGetBatteryLifePercent();
+}
 
-LinuxHw *LinuxHw::instance = nullptr;
-#endif // __linux__
+static int hw_psvita_get_backlight() {
+	// Vita doesn't expose backlight level directly through a simple API;
+	// would need sceAVConfig which requires more setup
+	return -1;
+}
+
+static void hw_psvita_set_backlight(int p_percent) {
+	// Placeholder — requires sceAVConfigSetDisplayBrightness
+}
+
+#else // !PSVITA — stubs
+
+static int hw_psvita_get_battery_level() { return -1; }
+static int hw_psvita_get_backlight() { return -1; }
+static void hw_psvita_set_backlight(int p_percent) {}
+
+#endif // PSVITA
+
+#endif // HW_PSVITA_H

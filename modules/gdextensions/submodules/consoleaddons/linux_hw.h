@@ -50,7 +50,7 @@
 class LinuxHw : public Object {
 	GDCLASS(LinuxHw, Object)
 
-	static LinuxHw *instance = nullptr;
+	static LinuxHw *instance;
 
 protected:
 	LinuxHw();
