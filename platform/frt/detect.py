@@ -134,7 +134,7 @@ def configure_misc(env):
         env.Append(CPPFLAGS=["-DGLES3_DISABLED"])
     env.Append(CPPFLAGS=["-DFRT_ENABLED"])
     env.Append(CFLAGS=["-std=gnu11"])  # for libwebp (maybe more in the future)
-    env.Append(LIBS=["pthread", "z", "dl"])
+    env.Append(LIBS=["pthread", "z", "dl", "EGL"])
     if env["frt_arch"] == "arm32v6" and version.minor >= 4:
         env.Append(LIBS=["atomic"])
     if env["CXX"] == "clang++":
