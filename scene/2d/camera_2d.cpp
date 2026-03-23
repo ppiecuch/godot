@@ -104,6 +104,10 @@ void Camera2D::_setup_viewport() {
 		viewport = get_viewport();
 	}
 
+	if (!viewport) {
+		return;
+	}
+
 	RID vp = viewport->get_viewport_rid();
 	group_name = "__cameras_" + itos(vp.get_id());
 	canvas_group_name = "__cameras_c" + itos(canvas.get_id());
@@ -316,13 +320,18 @@ void Camera2D::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			ERR_FAIL_COND(!is_inside_tree());
 
-			if (is_current()) {
+			// Initialise canvas and viewport before anything that may
+			// dereference them.  Previously viewport was used before
+			// _setup_viewport() had a chance to assign it, which caused
+			// a nullptr crash when Camera2D entered the tree with
+			// current == true.
+			canvas = get_canvas();
+			_setup_viewport();
+
+			if (viewport && is_current()) {
 				viewport->_camera_2d_set(this);
 			}
 
-			canvas = get_canvas();
-
-			_setup_viewport();
 			_update_process_mode();
 
 			// if a camera enters the tree that is set to current,
