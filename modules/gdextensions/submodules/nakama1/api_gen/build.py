@@ -9,7 +9,7 @@ Usage:
     python3 build.py [--flatbuffers-only] [--protobuf-only] [--skip-compile]
 
 Requirements:
-    - flatc binary in ./flatbuffers-1_12/flatc (bundled)
+    - flatc binary in thirdparty/bin/flatbuffers-1_12/ (shared module tools)
     - protoc binary (optional, for protobuf generation -- searched in PATH
       or specify via PROTOC env var)
 """
@@ -23,8 +23,9 @@ import subprocess
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Bundled FlatBuffers tools
-FLATB_DIR = os.path.join(SCRIPT_DIR, "flatbuffers-1_12")
+# FlatBuffers tools (shared across modules in thirdparty/bin/)
+GDEXT_DIR = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+FLATB_DIR = os.path.join(GDEXT_DIR, "thirdparty", "bin", "flatbuffers-1_12")
 FLATC = os.path.join(FLATB_DIR, "flatc")
 FLATB_INCLUDE = os.path.join(FLATB_DIR, "include")
 
