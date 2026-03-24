@@ -134,6 +134,7 @@ make_index/parts.txt
 make_index/Makefile
 make_index/mkindex
 make_index/tester
+build/
 
 #############################
 ### IDE and tool specific ###

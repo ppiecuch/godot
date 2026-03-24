@@ -59,6 +59,46 @@ log_error() {
 }
 
 # ---------------------------------------------------------------------------
+# Google Drive download helper
+# ---------------------------------------------------------------------------
+
+_gdrive_download() {
+	local file_id="$1"
+	local dest="$2"
+	local base_url="https://drive.google.com/uc?export=download&id=${file_id}"
+	local cookie_jar="$(mktemp)"
+
+	# First request — may return a confirmation page for large files
+	local confirm_code
+	confirm_code=$(curl -fsSL -c "${cookie_jar}" "${base_url}" \
+		-o /dev/null -w '%{http_code}' 2>/dev/null || true)
+
+	# Extract confirm token from cookies if present (large file warning)
+	local confirm_token
+	confirm_token=$(awk '/download_warning|NID/ {print $NF}' "${cookie_jar}" 2>/dev/null || true)
+
+	if [ -n "${confirm_token}" ]; then
+		curl -fSL -b "${cookie_jar}" \
+			"${base_url}&confirm=${confirm_token}" \
+			-o "${dest}"
+	else
+		curl -fSL -b "${cookie_jar}" \
+			"${base_url}" \
+			-o "${dest}"
+	fi
+
+	rm -f "${cookie_jar}"
+
+	# Sanity check — Google Drive may return an HTML error page
+	if file "${dest}" | grep -q "HTML"; then
+		log_error "Download appears to be an HTML error page, not an archive."
+		log_error "Try downloading manually: https://drive.google.com/file/d/${file_id}"
+		rm -f "${dest}"
+		exit 1
+	fi
+}
+
+# ---------------------------------------------------------------------------
 # Source shared functions
 # ---------------------------------------------------------------------------
 
@@ -85,6 +125,7 @@ BUILD_TARGET="${1:-all}"
 
 TOOLCHAINS_DIR="/Volumes/WORKSPACE/build-private/macos-cross-toolchains"
 TOOLCHAIN_ARCHIVE="${TOOLCHAINS_DIR}/output/aarch64-unknown-linux-gnu-aarch64-darwin.tar.gz"
+TOOLCHAIN_ARCHIVE_NAME="aarch64-unknown-linux-gnu-aarch64-darwin.tar.gz"
 
 WORK_DIR="${GODOT_DIR}/build/frt-cross"
 SOURCES_DIR="${GODOT_DIR}/build/src"
@@ -96,6 +137,9 @@ OUR_TRIPLE="aarch64-unknown-linux-gnu"
 SDL2_VERSION="2.32.10"
 SDK_URL="https://github.com/godotengine/buildroot/releases/download/godot-2023.08.x-4/aarch64-godot-linux-gnu_sdk-buildroot.tar.bz2"
 SDL2_URL="https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-${SDL2_VERSION}.tar.gz"
+
+# Google Drive file ID for the GNU cross-toolchain (aarch64-unknown-linux-gnu)
+TOOLCHAIN_GDRIVE_ID="1Kb0MIC-gsABudm7kZI1Y995PrSH9OllL"
 
 NJOBS="${CPU}"
 
@@ -118,8 +162,15 @@ if [ ! -f "${GODOT_DIR}/platform/frt/detect.py" ]; then
 fi
 
 if [ ! -f "${TOOLCHAIN_ARCHIVE}" ]; then
-	log_error "Toolchain archive not found: ${TOOLCHAIN_ARCHIVE}"
-	exit 1
+	# Toolchain not found locally — download from Google Drive
+	TOOLCHAIN_ARCHIVE="${SOURCES_DIR}/${TOOLCHAIN_ARCHIVE_NAME}"
+	if [ ! -f "${TOOLCHAIN_ARCHIVE}" ]; then
+		log_step "Downloading cross-toolchain from Google Drive..."
+		mkdir -p "${SOURCES_DIR}"
+		_gdrive_download "${TOOLCHAIN_GDRIVE_ID}" "${TOOLCHAIN_ARCHIVE}"
+	else
+		log_info "Using cached toolchain archive: ${TOOLCHAIN_ARCHIVE}"
+	fi
 fi
 
 if [ "$(uname)" != "Darwin" ]; then
