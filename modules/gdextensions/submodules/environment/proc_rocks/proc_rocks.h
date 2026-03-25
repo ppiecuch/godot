@@ -60,6 +60,17 @@ class ProcRockMesh : public ArrayMesh {
 	} rockgeneration;
 
 	struct {
+		int rock_type; // 0=Cubic, 1=Boulder, 2=Quartz, 3=Custom
+		int num_vertices;
+		real_t width, height, depth;
+		real_t radius;
+		real_t tip_protrusion, tip_flatness;
+		real_t base_width, base_height;
+		bool tetragonal, one_sided;
+		int randseed;
+	} rockstudio;
+
+	struct {
 		procrock::Pipeline *pipeline;
 	} procrock;
 
@@ -106,9 +117,21 @@ public:
 	void set_rockgeneration_max_planes(uint32_t p_planes);
 	uint32_t get_rockgeneration_max_planes() const;
 
-	// Gen. method 3
-	void set_procrock_generator(uint32_t p_gen);
-	uint32_t get_procrock_generator() const;
+	// Gen. method 3 — RockStudio (convex hull)
+	void set_rockstudio_rock_type(int p_type);
+	int get_rockstudio_rock_type() const;
+	void set_rockstudio_num_vertices(int p_num);
+	int get_rockstudio_num_vertices() const;
+	void set_rockstudio_width(real_t p_val);
+	real_t get_rockstudio_width() const;
+	void set_rockstudio_height(real_t p_val);
+	real_t get_rockstudio_height() const;
+	void set_rockstudio_depth(real_t p_val);
+	real_t get_rockstudio_depth() const;
+	void set_rockstudio_radius(real_t p_val);
+	real_t get_rockstudio_radius() const;
+	void set_rockstudio_randseed(int p_seed);
+	int get_rockstudio_randseed() const;
 
 	Error load_from_file(const String p_path);
 

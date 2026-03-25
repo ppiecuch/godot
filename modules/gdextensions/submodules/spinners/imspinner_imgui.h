@@ -51,7 +51,15 @@
 typedef uint32_t ImU32;
 typedef Vector2 ImVec2;
 typedef Vector2i ImVec2ih;
-typedef Rect2 ImRect;
+// ImGui's ImRect takes (min, max) corners, not (pos, size) like Godot's Rect2
+struct ImRect {
+	ImVec2 Min, Max;
+	ImRect() {}
+	ImRect(const ImVec2 &min, const ImVec2 &max) :
+			Min(min), Max(max) {}
+	ImVec2 GetCenter() const { return (Min + Max) * 0.5f; }
+	ImVec2 GetSize() const { return Max - Min; }
+};
 typedef Color ImVec4;
 typedef uint64_t ImGuiID;
 typedef uint64_t ImDrawListFlags;
@@ -178,8 +186,9 @@ struct ImFont : public Reference {
 };
 
 struct ImFontAtlas : public Reference {
+	Ref<BitmapFont> bfont;
+
 	void GetTexDataAsAlpha8(const unsigned char **out_pixels, int *out_width, int *out_height, int *out_bytes_per_pixel = nullptr) {
-		static Ref<BitmapFont> bfont;
 		if (bfont.is_null()) {
 			bfont.instance();
 			Ref<BitmapFont> _font = memnew(BitmapFont);
@@ -203,7 +212,7 @@ struct ImFontAtlas : public Reference {
 
 struct ImGuiStyle {
 	ImVec2 FramePadding;
-	float Alpha;
+	float Alpha = 1.0f;
 };
 
 struct ImGuiIO {
@@ -406,7 +415,7 @@ struct ImGuiWindow {
 			num_segments = ImClamp(num_segments, 3, IM_DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX);
 			// Because we are filling a closed shape we remove 1 from the count of segments/points
 			const real_t a_max = (IM_PI * 2) * (real_t(num_segments - 1)) / real_t(num_segments);
-			const real_t a_min = radius - 0.5;
+			const real_t a_min = 0;
 			// Note that we are adding a point at both a_min and a_max.
 			// If you are trying to draw a full closed circle you don't want the overlapping points!
 			for (int i = 0; i <= num_segments; i++) {
@@ -469,6 +478,7 @@ struct ImGuiWindow {
 			DrawCanvas(canvas) {
 		DrawList->_Canvas = canvas;
 		DrawList->_Data = &SharedData;
+		DC.StateStorage = Storage.ptr();
 	}
 };
 
@@ -485,9 +495,25 @@ static ImGuiContext *GImGui = nullptr;
 static ImGuiWindow *_CurrentImWindow = nullptr;
 
 namespace ImGui {
+static ImGuiContext *_GImGuiInstance = nullptr;
+
+void DestroyContext() {
+	if (_GImGuiInstance) {
+		memdelete(_GImGuiInstance);
+		_GImGuiInstance = nullptr;
+	}
+	GImGui = nullptr;
+}
 ImGuiContext *GetCurrentContext() {
-	static ImGuiContext GImGui;
-	return &GImGui;
+	if (!_GImGuiInstance) {
+		_GImGuiInstance = memnew(ImGuiContext);
+		if (SceneTree *sc = SceneTree::get_singleton()) {
+			sc->add_exit_callback([]() {
+				DestroyContext();
+			});
+		}
+	}
+	return _GImGuiInstance;
 }
 ImGuiIO &GetIO() {
 	static ImGuiIO GImGuiIO;
@@ -504,7 +530,7 @@ ImVec2 ItemSize() { return Size2(); }
 real_t GetTime() { return OS::get_singleton()->get_ticks_msec() / 1000.0; }
 bool ItemAdd(const ImRect &bb, ImGuiID id) { return true; }
 void ItemSize(const ImVec2 &size, real_t text_baseline_y = -1.0) {}
-_FORCE_INLINE_ void ItemSize(const ImRect &bb, real_t text_baseline_y = -1.0) { ItemSize(bb.get_size(), text_baseline_y); }
+_FORCE_INLINE_ void ItemSize(const ImRect &bb, real_t text_baseline_y = -1.0) { ItemSize(bb.GetSize(), text_baseline_y); }
 _FORCE_INLINE_ void ColorConvertRGBtoHSV(float r, float g, float b, float &out_h, float &out_s, float &out_v) {
 	Color c(r, g, b);
 	out_h = c.get_h();
@@ -535,7 +561,6 @@ ImU32 GetColorU32(const Color &col) {
 } //namespace ImGui
 
 // -----
-#define GetCenter get_center
 #define ImSin(x) Math::sin(real_t(x))
 #define ImCos(x) Math::cos(real_t(x))
 #define ImAbs(x) Math::abs(x)

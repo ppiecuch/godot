@@ -655,6 +655,15 @@ bool TweakBar::remove_all_vars(const String &p_bar) {
 Variant TweakBar::get_value(const String &p_bar, const String &p_name) const {
 	String key = _var_key(p_bar, p_name);
 
+	if (m_bindings.has(key)) {
+		const PropertyBinding *bind = m_bindings[key];
+		Object *obj = ObjectDB::get_instance(bind->object_id);
+		if (obj) {
+			return obj->get(bind->property);
+		}
+		return Variant();
+	}
+
 	if (m_string_vars.has(key)) {
 		return m_string_vars[key];
 	}
@@ -1148,6 +1157,7 @@ void TweakBar::_bind_methods() {
 // ---------------------------------------------------------------------------
 
 #ifdef DOCTEST
+#include "doctest/doctest_godot.h"
 #include "thirdparty/doctest/doctest.h"
 
 TEST_SUITE("[[anttweakbar]] C API") {
@@ -1466,9 +1476,10 @@ TEST_SUITE("[[anttweakbar]] C API") {
 	TEST_CASE("error_handling") {
 		TwInit(NULL);
 
-		CHECK(TwDeleteBar(NULL) == 0);
+		EXPECT_ERROR(CHECK(TwDeleteBar(NULL) == 0));
 		const char *err = TwGetLastError();
 		CHECK(err != NULL);
+		CHECK(String(err) == "Invalid parameter");
 
 		TwTerminate();
 	}
@@ -1619,14 +1630,16 @@ TEST_SUITE("[[anttweakbar]] Godot wrapper") {
 
 	TEST_CASE("wrapper_nonexistent_bar") {
 		TweakBar tw;
-		// Adding to nonexistent bar should fail gracefully
-		CHECK(tw.add_float("NoBar", "val", "") == false);
+		EXPECT_ERROR(CHECK(tw.add_float("NoBar", "val", "") == false)); // expected: bar not found
 	}
 
 	TEST_CASE("wrapper_get_nonexistent_var") {
 		TweakBar tw;
-		tw.new_bar("GetBar");
-		Variant v = tw.get_value("GetBar", "missing");
+		Variant v;
+		EXPECT_ERROR({
+			tw.new_bar("GetBar");
+			v = tw.get_value("GetBar", "missing");
+		});
 		CHECK(v.get_type() == Variant::NIL);
 	}
 
@@ -1724,20 +1737,20 @@ TEST_SUITE("[[anttweakbar]] bind_property") {
 	TEST_CASE("[anttweakbar] bind_property rejects null object") {
 		TweakBar tw;
 		tw.new_bar("BindBar");
-		CHECK_FALSE(tw.bind_property("BindBar", "val", nullptr, "speed"));
+		EXPECT_ERROR(CHECK_FALSE(tw.bind_property("BindBar", "val", nullptr, "speed")));
 	}
 
 	TEST_CASE("[anttweakbar] bind_property rejects nonexistent bar") {
 		TweakBar tw;
 		Node2D node;
-		CHECK_FALSE(tw.bind_property("NoBar", "val", &node, "position"));
+		EXPECT_ERROR(CHECK_FALSE(tw.bind_property("NoBar", "val", &node, "position")));
 	}
 
 	TEST_CASE("[anttweakbar] bind_property to nonexistent bar fails") {
 		TweakBar tw;
 		// Need a bar first
 		Node2D node;
-		CHECK_FALSE(tw.bind_property("NonExistent", "x", &node, "position"));
+		EXPECT_ERROR(CHECK_FALSE(tw.bind_property("NonExistent", "x", &node, "position")));
 	}
 
 	// bind_property with different target objects (tests "object" override path)
@@ -1803,8 +1816,8 @@ TEST_SUITE("[[anttweakbar]] bind_property") {
 		TweakBar tw;
 		tw.new_bar("VarDef");
 
-		CHECK(tw.add_variant("VarDef", "Pi", 3.14, "min=0 max=10 step=0.1"));
-		CHECK(tw.get_value("VarDef", "Pi") == Variant(3.14));
+		CHECK(tw.add_variant("VarDef", "Pi", 3.0, "min=0 max=10 step=0.1"));
+		CHECK(tw.get_value("VarDef", "Pi") == Variant(3.0));
 	}
 }
 

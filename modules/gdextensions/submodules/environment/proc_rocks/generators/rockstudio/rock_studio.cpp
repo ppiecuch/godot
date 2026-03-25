@@ -28,772 +28,248 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-class RockStudio {
-public:
-	// Generation Settings
-	float numberOfVerticesFloat = 25f;
-	const float maximumResolution = 1000f;
-	bool showGenerationInfo;
+#include "rock_studio.h"
 
-	bool generateWithRigidbody;
-	enum MethodOfSeed {
-		Random,
-		Custom
-	};
-	static MethodOfSeed SeedMethod;
-	static int Seed;
-	static int SeedSize = 5000;
+#include "core/math/quick_hull.h"
+#include "servers/visual_server.h"
 
-	// Rock Information
-	Material rockMaterial;
-	Material[] rockMaterials = new Material[4];
-	int materialPickerIndex;
-	int numberOfVerticesInt = 25;
-	float rockYPositionOffset;
-	int rockOrientation; // 0 = X, 1 = Y, 2 = Z
-	string rockName = "ExampleRock";
-	GameObject rockGroup;
-	string rockGroupName = "RockGroup";
-	List<Vector3> points;
+// =========================================================================
+// Point generators
+// =========================================================================
 
-	// Placement Tool
-	RaycastHit mouseHitPoint;
-	static bool currentlyPlacingRock;
-	Transform placementToolLocation;
-	Event currentEvent;
-	Vector3 currentMousePosition = Vector3.zero;
-	float placementToolSize = 1f;
-	Color outerColor = new Color(0.15f, 0.75f, 1f);
-	Color innerColor = new Color(0.15f, 0.75f, 1f, 0.1f);
-
-	// GUIStyles and GUIContents
-	GUIStyle helpbox;
-	GUIStyle centeredLabel;
-	static Texture2D[] materialPreviews;
-	GUIStyle[] materialPickers;
-	GUIContent multipleMaterialsIcon;
-	GUIContent removeSourceMeshIcon;
-	GUIContent meshCountIcon;
-	GUIContent vertexCountIcon;
-	GUIContent basicMenuHeader;
-	GUIContent composeMenuHeader;
-	GUIContent sculptMenuHeader;
-	GUIContent wearMenuHeader;
-	GUIContent combineMenuHeader;
-	GUIContent exportMenuHeader;
-	GUIContent settingsMenuHeader;
-	GUIContent orientationX;
-	GUIContent orientationY;
-	GUIContent orientationZ;
-	GUIStyle smallButton;
-	GUIStyle toolBarButton;
-	GUIContent addrigidbody;
-	bool StylesNotLoaded = true;
-
-	// UI Elements
-	int toolBarIndex = 0;
-	int rowWidth = 76; // row width = (number of columns * 25) + 1
-	int columnHeight = 36; // column height = (6 / number of columns) * 18
-	Texture[] toolbarIcons;
-	int heightOffset = 2;
-	static Color lineDividerColor = new Color(0.6f, 0.6f, 0.6f);
-
-	// Basic Settings
-	string[] rockTypes = { "Cubic", "Boulder", "Quartz", "Custom" };
-	int typeOfrock;
-	float edgeWidth = 1f;
-	float edgeHeight = 1f;
-	float edgeDepth = 1f;
-	float boulderRadius = 1f;
-	float tipProtrusion = 2f;
-	float tipFlatness = 1f;
-	float baseHeight = 2f;
-	float baseWidth = 2f;
-	bool tetragonal;
-	bool oneSided;
-	Mesh meshVolume;
-
-	// Sculpt Settings
-	string[] compositionModes = { "Fill", "Outline" };
-	int modeOfComposition;
-	string sculptureName;
-
-	// Export Settings
-	GameObject ExportObject;
-	string[] exportOptions = { ".fbx" };
-	int exportType;
-	static string DefaultPath = "Assets/";
-
-	// Combine Settings
-	GameObject parentObject;
-	bool multipleMaterials;
-	bool addRigidBody;
-	bool removeSourceMesh;
-	string newMeshName;
-	string[] colliderOptions = { "Box Collider", "Mesh Collider", "None" };
-	int colliderType;
-
-public:
-	// [MenuItem("Tools/RockStudio/RockStudio")]
-	static void Init() {
-		RockStudio window = (RockStudio)GetWindow(typeof(RockStudio));
-		window.Show();
-
-		window.titleContent = new GUIContent("Rocks");
-		window.titleContent.tooltip = "RockStudio v3.0.0";
-		window.position = new Rect(500, 500, 90, 500);
+Vector<Vector3> rock_studio_points_cube(int p_count, real_t p_width, real_t p_height, real_t p_depth) {
+	Vector<Vector3> points;
+	points.resize(p_count);
+	for (int i = 0; i < p_count; i++) {
+		points.write[i] = Vector3(
+				Math::random(-p_depth * 0.5, p_depth * 0.5),
+				Math::random(-p_height * 0.5, p_height * 0.5),
+				Math::random(-p_width * 0.5, p_width * 0.5));
 	}
+	return points;
+}
 
-	void OnEnable() {
-		materialPreviews = new Texture2D[4];
-		for (int i = 0; i < 4; i++) {
-			materialPreviews[i] = new Texture2D(1, 1);
+Vector<Vector3> rock_studio_points_sphere(int p_count, real_t p_radius) {
+	Vector<Vector3> points;
+	points.resize(p_count);
+	for (int i = 0; i < p_count; i++) {
+		// Uniform random point inside unit sphere via rejection sampling
+		Vector3 p;
+		do {
+			p = Vector3(
+					Math::random(-1.0, 1.0),
+					Math::random(-1.0, 1.0),
+					Math::random(-1.0, 1.0));
+		} while (p.length_squared() > 1.0);
+		points.write[i] = p * p_radius;
+	}
+	return points;
+}
+
+Vector<Vector3> rock_studio_points_crystal(int p_count, bool p_tetragonal, bool p_one_sided, real_t p_base_width, real_t p_base_height, real_t p_tip_protrusion, real_t p_tip_flatness) {
+	Vector<Vector3> points;
+
+	// Base points
+	if (p_tetragonal) {
+		for (int i = 0; i < p_count; i++) {
+			points.push_back(Vector3(
+					Math::random(-p_base_height, p_base_height),
+					Math::random(-p_base_width, p_base_width),
+					Math::random(-p_base_width, p_base_width)));
 		}
-
-		materialPickers = new GUIStyle[4];
-		for (int i = 0; i < 4; i++) {
-			materialPickers[i] = new GUIStyle();
+	} else {
+		for (int i = 0; i < p_count; i++) {
+			points.push_back(Vector3(
+					Math::random(-p_base_height, p_base_height),
+					Math::random(-p_base_width * 1.732, p_base_width * 1.732),
+					Math::random(-p_base_width, p_base_width)));
 		}
-
-		minSize = new Vector2(90, 350);
-		maxSize = new Vector2(150, 550);
-
-		if (EditorGUIUtility.isProSkin) {
-			toolBarIndex = 0;
-			toolbarIcons = new Texture[6];
-			toolbarIcons[0] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/basic16.png") as Texture2D;
-			toolbarIcons[1] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/sculpting16.png") as Texture2D;
-			toolbarIcons[2] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/wear16.png") as Texture2D;
-			toolbarIcons[3] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/combine16.png") as Texture2D;
-			toolbarIcons[4] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/save16.png") as Texture2D;
-			toolbarIcons[5] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/settings16.png") as Texture2D;
-
-			basicMenuHeader = new GUIContent("   <b>Basic</b>",
-					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "basic16" + ".png") as Texture2D);
-			combineMenuHeader = new GUIContent(" <b>Combine</b>",
-					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "combine16" + ".png") as Texture2D);
-			sculptMenuHeader = new GUIContent("  <b>Sculpt</b>",
-					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "sculpting16" + ".png") as Texture2D);
-			wearMenuHeader = new GUIContent("  <b> Wear</b>",
-					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "wear16" + ".png") as Texture2D);
-			settingsMenuHeader = new GUIContent(" <b>Settings</b>",
-					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "settings16" + ".png") as Texture2D);
-			exportMenuHeader = new GUIContent("  <b>Save</b>",
-					EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "save16" + ".png") as Texture2D);
-		} else {
-			toolBarIndex = 0;
-			toolbarIcons = new Texture[6];
-			toolbarIcons[0] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/basic16dark.png") as Texture2D;
-			toolbarIcons[1] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/sculpting16dark.png") as Texture2D;
-			toolbarIcons[2] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/wear16dark.png") as Texture2D;
-			toolbarIcons[3] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/combine16dark.png") as Texture2D;
-			toolbarIcons[4] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/save16dark.png") as Texture2D;
-			toolbarIcons[5] = EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/settings16dark.png") as Texture2D;
-
-			basicMenuHeader = new GUIContent("   <b>Basic</b>", EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "basic16dark" + ".png") as Texture2D);
-			combineMenuHeader = new GUIContent(" <b>Combine</b>", EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "combine16dark" + ".png") as Texture2D);
-			sculptMenuHeader = new GUIContent("  <b>Sculpt</b>", EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "sculpting16dark" + ".png") as Texture2D);
-			wearMenuHeader = new GUIContent("  <b> Wear</b>", EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "wear16dark" + ".png") as Texture2D);
-			settingsMenuHeader = new GUIContent(" <b>Settings</b>", EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "settings16dark" + ".png") as Texture2D);
-			exportMenuHeader = new GUIContent("  <b>Save</b>", EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/" + "save16dark" + ".png") as Texture2D);
-		}
-
-		orientationX = new GUIContent("<b>X</b>", "The orientation of the rock when placing.");
-		orientationY = new GUIContent("<b>Y</b>", "The orientation of the rock when placing.");
-		orientationZ = new GUIContent("<b>Z</b>", "The orientation of the rock when placing.");
-
-		meshCountIcon = new GUIContent("", EditorGUIUtility.ObjectContent(null, typeof(MeshFilter)).image, "The number of meshes that will be combined.");
-		vertexCountIcon = new GUIContent("",
-				EditorGUIUtility.Load("Assets/Ameye/RockStudio/Icons/vertex_count_small.png") as Texture2D,
-				"The number of vertices that will be combined.");
-		addrigidbody = new GUIContent("", EditorGUIUtility.IconContent("Rigidbody2D Icon").image,
-				"Add Rigidbody component.");
-		multipleMaterialsIcon = new GUIContent("", EditorGUIUtility.IconContent("PreTextureRGB").image,
-				"Preserve multiple materials.");
-		removeSourceMeshIcon = new GUIContent("", EditorGUIUtility.IconContent("vcs_delete").image,
-				"Remove source mesh.");
-
-		rockMaterial = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Diffuse.mat");
-
-		for (int i = 0; i < 4; i++) {
-			rockMaterials[i] = rockMaterial;
+		for (int i = 0; i < p_count; i++) {
+			points.push_back(Vector3(
+					Math::random(-p_base_height, p_base_height),
+					0,
+					Math::random(-p_base_width * 1.732, p_base_width * 1.732)));
 		}
 	}
 
-private
-	void OnFocus() {
-		SceneView.onSceneGUIDelegate -= OnSceneGUI;
-		SceneView.onSceneGUIDelegate += OnSceneGUI;
-	}
-
-	void LoadStyles() {
-		for (int i = 0; i < 4; i++) {
-			if (rockMaterials[i].mainTexture != null) {
-				materialPreviews[i] = rockMaterials[i].mainTexture as Texture2D;
-			} else {
-				materialPreviews[i].SetPixel(0, 0, rockMaterials[i].color);
-				materialPreviews[i].Apply();
-			}
-
-			materialPickers[i].normal.background = materialPreviews[i];
-			materialPickers[i].margin = new RectOffset(5, 5, 5, 5);
+	// Tip points
+	real_t flat = p_tip_flatness / 10.0;
+	if (p_one_sided) {
+		for (int i = 0; i < p_count; i++) {
+			points.push_back(Vector3(
+					Math::random(-p_base_height, p_base_height + p_tip_protrusion),
+					Math::random(-p_base_width * flat, p_base_width * flat),
+					Math::random(-p_base_width * 1.732 * flat, p_base_width * 1.732 * flat)));
 		}
-
-		helpbox = new GUIStyle(EditorStyles.helpBox){
-			alignment = TextAnchor.MiddleLeft,
-			fontSize = 10,
-			richText = true,
-			contentOffset = new Vector2(5f, 0f),
-		};
-
-		centeredLabel = new GUIStyle(EditorStyles.label){
-			alignment = TextAnchor.MiddleCenter
-		};
-
-		smallButton = new GUIStyle(GUI.skin.button){
-			alignment = TextAnchor.MiddleCenter,
-			margin = new RectOffset(4, 4, 2, 2),
-			richText = true,
-			padding = new RectOffset(1, 1, 1, 1)
-		};
-
-		toolBarButton = new GUIStyle(GUI.skin.button){
-			alignment = TextAnchor.MiddleCenter,
-			margin = new RectOffset(4, 4, 2, 2),
-			richText = true,
-			padding = new RectOffset(2, 2, 2, 2)
-		};
-	}
-
-	void OnGUI() {
-		if (StylesNotLoaded)
-			LoadStyles();
-
-		EditorGUILayout.BeginHorizontal(helpbox);
-		toolBarIndex = GUILayout.SelectionGrid(toolBarIndex, toolbarIcons, 3, toolBarButton,
-				GUILayout.Height(columnHeight));
-		EditorGUILayout.EndHorizontal();
-
-		switch (toolBarIndex) {
-			case 0: // Basic Creation
-				rockYPositionOffset = 0;
-				GUILayout.Label(basicMenuHeader, helpbox, GUILayout.Height(columnHeight - heightOffset));
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Rock", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				typeOfrock = EditorGUILayout.Popup(typeOfrock, rockTypes);
-				EditorGUILayout.Space();
-
-				switch (typeOfrock) {
-					// Cubic
-					case 0:
-						GUILayout.Label("Dimensions");
-						EditorGUILayout.BeginHorizontal();
-						GUILayout.Label("X");
-						edgeWidth = EditorGUILayout.FloatField(edgeWidth);
-						EditorGUILayout.EndHorizontal();
-						EditorGUILayout.BeginHorizontal();
-						GUILayout.Label("Y");
-						edgeHeight = EditorGUILayout.FloatField(edgeHeight);
-						EditorGUILayout.EndHorizontal();
-						EditorGUILayout.BeginHorizontal();
-						GUILayout.Label("Z");
-						edgeDepth = EditorGUILayout.FloatField(edgeDepth);
-						EditorGUILayout.EndHorizontal();
-						break;
-
-					// Boulder
-					case 1:
-						GUILayout.Label("Radius");
-						boulderRadius = EditorGUILayout.FloatField(boulderRadius);
-						break;
-
-					// Quartz
-					case 2:
-						GUILayout.Label("Protrusion");
-						tipProtrusion = EditorGUILayout.FloatField(tipProtrusion);
-						GUILayout.Label("Flat Tip " + Math.Round(tipFlatness * 10) + "%");
-						tipFlatness = GUILayout.HorizontalSlider(tipFlatness, 0.1f, 10f);
-						GUILayout.Label("Height");
-						baseHeight = EditorGUILayout.FloatField(baseHeight);
-						GUILayout.Label("Width");
-						baseWidth = EditorGUILayout.FloatField(baseWidth);
-						EditorGUILayout.Space();
-						tetragonal = GUILayout.Toggle(tetragonal, " Tetragonal");
-						oneSided = GUILayout.Toggle(oneSided, " One Sided");
-						break;
-
-					// Custom
-					case 3:
-						GUILayout.Label("Mesh");
-						meshVolume = (Mesh)EditorGUILayout.ObjectField(meshVolume, typeof(Mesh), true);
-						EditorGUILayout.Space();
-						GUILayout.Label("Do not use complex meshes!", helpbox);
-						break;
-				}
-
-				EditorGUILayout.Space();
-				GUILayout.Label("Materials");
-				EditorGUILayout.BeginHorizontal();
-				if (GUILayout.Button(GUIContent.none, materialPickers[0], GUILayout.Height(17))) {
-					materialPickerIndex = 1;
-					EditorGUIUtility.ShowObjectPicker<Material>(null, true, "", materialPickerIndex);
-				}
-
-				if (GUILayout.Button(GUIContent.none, materialPickers[1], GUILayout.Height(17))) {
-					materialPickerIndex = 2;
-					EditorGUIUtility.ShowObjectPicker<Material>(null, true, "", materialPickerIndex);
-				}
-
-				if (GUILayout.Button(GUIContent.none, materialPickers[2], GUILayout.Height(17))) {
-					materialPickerIndex = 3;
-					EditorGUIUtility.ShowObjectPicker<Material>(null, true, "", materialPickerIndex);
-				}
-
-				if (GUILayout.Button(GUIContent.none, materialPickers[3], GUILayout.Height(17))) {
-					materialPickerIndex = 4;
-					EditorGUIUtility.ShowObjectPicker<Material>(null, true, "", materialPickerIndex);
-				}
-
-				if (Event.current.commandName == "ObjectSelectorUpdated") {
-					currentlyPlacingRock = false;
-				}
-
-				if (Event.current.commandName == "ObjectSelectorClosed") {
-					switch (materialPickerIndex) {
-						case 1:
-							if (EditorGUIUtility.GetObjectPickerObject() != null)
-								rockMaterials[0] = (Material)EditorGUIUtility.GetObjectPickerObject();
-							break;
-						case 2:
-							if (EditorGUIUtility.GetObjectPickerObject() != null)
-								rockMaterials[1] = (Material)EditorGUIUtility.GetObjectPickerObject();
-							break;
-						case 3:
-							if (EditorGUIUtility.GetObjectPickerObject() != null)
-								rockMaterials[2] = (Material)EditorGUIUtility.GetObjectPickerObject();
-							break;
-						case 4:
-							if (EditorGUIUtility.GetObjectPickerObject() != null)
-								rockMaterials[3] = (Material)EditorGUIUtility.GetObjectPickerObject();
-							break;
-					}
-				}
-
-				EditorGUILayout.EndHorizontal();
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Saving", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Name");
-				rockName = EditorGUILayout.TextField("", rockName);
-				EditorGUILayout.Space();
-				GUILayout.Label("Collider");
-
-				if (typeOfrock != 2) {
-					rockOrientation = 2;
-				}
-
-				EditorGUILayout.BeginHorizontal();
-				if (typeOfrock == 2 || typeOfrock == 3) {
-					colliderType = EditorGUILayout.Popup(colliderType, colliderOptions,
-							GUILayout.Height(columnHeight / 2f));
-				} else {
-					colliderType = EditorGUILayout.Popup(colliderType, colliderOptions,
-							GUILayout.Height(columnHeight / 2f));
-				}
-
-				if (rockOrientation == 0 && typeOfrock == 2 || typeOfrock == 3) {
-					smallButton.normal.textColor = new Color(0.8588f, 0.2431f, 0.1137f);
-					if (GUILayout.Button(orientationX, smallButton, GUILayout.Width(rowWidth / 4f),
-								GUILayout.Height(columnHeight / 2 - 3)))
-						rockOrientation = (rockOrientation + 1) % 3;
-				} else if (rockOrientation == 1 && typeOfrock == 2 || typeOfrock == 3) {
-					smallButton.normal.textColor = new Color(0.18f, 0.77f, 0.2f);
-					if (GUILayout.Button(orientationY, smallButton, GUILayout.Width(rowWidth / 4f),
-								GUILayout.Height(columnHeight / 2 - 3)))
-						rockOrientation = (rockOrientation + 1) % 3;
-				} else if (rockOrientation == 2 && typeOfrock == 2 || typeOfrock == 3) {
-					smallButton.normal.textColor = new Color(0f, 0.04f, 0.97f);
-					if (GUILayout.Button(orientationZ, smallButton, GUILayout.Width(rowWidth / 4f),
-								GUILayout.Height(columnHeight / 2 - 3)))
-						rockOrientation = (rockOrientation + 1) % 3;
-				}
-				EditorGUILayout.EndHorizontal();
-
-				if (!currentlyPlacingRock) {
-					if (GUILayout.Button("Generate")) {
-						MeshUtilities.RemoveGameObject("_TemporaryRock");
-						currentlyPlacingRock = !currentlyPlacingRock;
-					}
-				} else {
-					if (GUILayout.Button("Cancel"))
-						CancelPlacement();
-				}
-
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-
-				if (rockName == "") {
-					GUILayout.Label("Rock name was left blank.", helpbox);
-				}
-				break;
-
-			case 1: // Sculpting
-				CancelPlacement();
-				GUILayout.Label(sculptMenuHeader, helpbox, GUILayout.Height(columnHeight - heightOffset));
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Sculpture", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				GUILayout.Label("Mode");
-				modeOfComposition = EditorGUILayout.Popup(modeOfComposition, compositionModes);
-				EditorGUILayout.Space();
-
-				GUILayout.Label("Sculpture");
-				if (GUILayout.Button("New")) {
-					if (GameObject.Find("Sculpture in progress") != null) {
-						DestroyImmediate(GameObject.Find("Sculpture in progress"));
-					}
-					NewSculpture();
-					AddShape();
-					SceneView.lastActiveSceneView.FrameSelected();
-				}
-
-				if (GUILayout.Button("Add Shape")) {
-					if (GameObject.Find("Sculpture in progress") != null) {
-						AddShape();
-					} else {
-						Debug.Log("<color=cyan>[RockStudio] </color>No sculpture was found. Start a new sculpture first.");
-					}
-				}
-
-				if (GUILayout.Button("Generate")) {
-					if (GameObject.Find("Sculpture in progress") != null) {
-						if (modeOfComposition == 1)
-							SculptureCreator.GenerateComposition(numberOfVerticesInt, Vector3.zero, Vector3.zero, rockMaterial);
-						else
-							SculptureCreator.GenerateCompositionFill(numberOfVerticesInt, Vector3.zero, Vector3.zero, rockMaterial);
-
-						DestroyImmediate(GameObject.Find("Sculpture in progress"));
-						Debug.Log("<color=cyan>[RockStudio] </color>Sculpture was generated. Don't forget to save it.");
-					} else
-						Debug.Log("<color=cyan>[RockStudio] </color>No sculpture was found. Start a new sculpture first.");
-				}
-
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Saving", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				GUILayout.Label("Name");
-				sculptureName =
-						EditorGUILayout.TextField("", sculptureName);
-				EditorGUILayout.Space();
-				GUILayout.Label("Collider");
-				colliderType = EditorGUILayout.Popup(colliderType, colliderOptions,
-						GUILayout.Height(columnHeight / 2f));
-
-				if (GUILayout.Button("Save")) {
-					if (GameObject.Find("Sculpture") != null) {
-						GameObject oldStructure = GameObject.Find("Sculpture");
-						if (sculptureName == "")
-							Debug.Log("<color=cyan>[RockStudio] </color>Sculpture name was left empty.");
-						else {
-							GameObject newStructure = MeshCombiner.Combine(sculptureName, oldStructure, true);
-
-							MeshRenderer renderer = newStructure.GetComponent(typeof(MeshRenderer)) as MeshRenderer;
-							renderer.material = rockMaterial;
-
-							if (addRigidBody)
-								newStructure.AddComponent(typeof(Rigidbody));
-
-							if (colliderType == 0) {
-								newStructure.AddComponent(typeof(BoxCollider));
-							}
-							if (colliderType == 1) {
-								MeshCollider meshcollider =
-										newStructure.AddComponent(typeof(MeshCollider)) as MeshCollider;
-								meshcollider.convex = true;
-								meshcollider.sharedMesh = newStructure.GetComponent<MeshFilter>().sharedMesh;
-							}
-
-							DestroyImmediate(GameObject.Find("Sculpture in progress"));
-							DestroyImmediate(GameObject.Find("Sculpture"));
-							Debug.Log("<color=cyan>[RockStudio] </color>No sculpture was found. Start a new sculpture first.");
-						}
-					} else
-						Debug.Log("<color=cyan>[RockStudio] </color>No mesh was found to save. Generate a sculpture mesh first.");
-				}
-
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				break;
-
-			case 2: // Wear
-				CancelPlacement();
-				GUILayout.Label(wearMenuHeader, helpbox,
-						GUILayout.Height(columnHeight - heightOffset));
-				GUI.color = Color.white;
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				GUILayout.Label("Coming in future updates.", helpbox);
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				break;
-
-			case 3: // MESH COMBINING
-				CancelPlacement();
-				GUILayout.Label(combineMenuHeader, helpbox,
-						GUILayout.Height(columnHeight - heightOffset));
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Objects", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				GUILayout.Label("Parent Object");
-				parentObject = (GameObject)EditorGUILayout.ObjectField(parentObject, typeof(GameObject), true);
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Saving", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				GUILayout.Label("Name");
-				newMeshName = EditorGUILayout.TextField("", newMeshName);
-				EditorGUILayout.Space();
-				GUILayout.Label("Options");
-				colliderType = EditorGUILayout.Popup(colliderType, colliderOptions);
-				EditorGUILayout.BeginHorizontal();
-				multipleMaterials = GUILayout.Toggle(multipleMaterials, multipleMaterialsIcon, toolBarButton,
-						GUILayout.Width(rowWidth / 3f), GUILayout.Height(columnHeight / 2f));
-				addRigidBody = GUILayout.Toggle(addRigidBody, addrigidbody, toolBarButton, GUILayout.Width(rowWidth / 3),
-						GUILayout.Height(columnHeight / 2f));
-				removeSourceMesh = GUILayout.Toggle(removeSourceMesh, removeSourceMeshIcon, toolBarButton,
-						GUILayout.Width(rowWidth / 3f), GUILayout.Height(columnHeight / 2f));
-				EditorGUILayout.EndHorizontal();
-				if (GUILayout.Button("Combine")) {
-					if (parentObject != null && MeshUtilities.ChildrenAllGameObjects(parentObject)) {
-						GameObject combinedGameObject =
-								MeshCombiner.Combine(newMeshName, parentObject, multipleMaterials);
-						if (removeSourceMesh)
-							Undo.DestroyObjectImmediate(parentObject);
-						if (addRigidBody)
-							combinedGameObject.AddComponent(typeof(Rigidbody));
-						if (colliderType == 0)
-							combinedGameObject.AddComponent(typeof(BoxCollider));
-						if (colliderType == 1) {
-							MeshCollider meshcollider =
-									combinedGameObject.AddComponent(typeof(MeshCollider)) as MeshCollider;
-							meshcollider.convex = true;
-							meshcollider.sharedMesh = combinedGameObject.GetComponent<MeshFilter>().sharedMesh;
-						}
-						Selection.activeGameObject = combinedGameObject;
-					}
-
-					else
-						Debug.Log("<color=cyan>[RockStudio] </color>Parent object field was left empty.");
-				}
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				if (parentObject && MeshUtilities.ChildrenAllGameObjects(parentObject)) {
-					if (parentObject.transform.childCount != 0) {
-						EditorGUILayout.BeginHorizontal();
-						GUILayout.Label(meshCountIcon, GUILayout.Width(rowWidth / 3),
-								GUILayout.Height(columnHeight / 2));
-						GUILayout.Label(parentObject.transform.childCount.ToString());
-						EditorGUILayout.EndHorizontal();
-
-						EditorGUILayout.BeginHorizontal();
-						GUILayout.Label(vertexCountIcon, GUILayout.Width(rowWidth / 3),
-								GUILayout.Height(columnHeight / 2));
-						GUILayout.Label(MeshUtilities.GetVerts(parentObject).ToString());
-						EditorGUILayout.EndHorizontal();
-						EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-					}
-
-					else {
-						EditorGUILayout.BeginHorizontal();
-						GUILayout.Label(meshCountIcon, GUILayout.Width(rowWidth / 3),
-								GUILayout.Height(columnHeight / 2));
-						GUILayout.Label("1");
-						EditorGUILayout.EndHorizontal();
-
-						EditorGUILayout.BeginHorizontal();
-						GUILayout.Label(vertexCountIcon, GUILayout.Width(rowWidth / 3),
-								GUILayout.Height(columnHeight / 2));
-						GUILayout.Label(parentObject.transform.GetComponent<MeshFilter>().sharedMesh.vertexCount.ToString());
-						EditorGUILayout.EndHorizontal();
-						EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-					}
-				}
-				EditorGUILayout.Space();
-				GUILayout.Label("Add a parent that contains the objects you want to combine.", helpbox);
-				break;
-
-			case 4: // Exporting
-				CancelPlacement();
-				GUILayout.Label(exportMenuHeader, helpbox,
-						GUILayout.Height(columnHeight - heightOffset));
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Objects", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				GUILayout.Label("Type");
-				exportType = EditorGUILayout.Popup(exportType, exportOptions,
-						GUILayout.Height(columnHeight / 2f));
-				EditorGUILayout.Space();
-				GUILayout.Label("Object");
-				ExportObject = (GameObject)EditorGUILayout.ObjectField(ExportObject, typeof(GameObject), true);
-				EditorGUILayout.Space();
-				if (GUILayout.Button("Export")) {
-					Exporter.ExportGameObject(ExportObject, false, false);
-					Debug.Log("<color=cyan>[RockStudio] </color>Mesh exported.");
-				}
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				break;
-
-			case 5: // Settings
-				CancelPlacement();
-				GUILayout.Label(settingsMenuHeader, helpbox,
-						GUILayout.Height(columnHeight - heightOffset));
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Generation", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Resolution");
-				numberOfVerticesFloat = GUILayout.HorizontalSlider(numberOfVerticesFloat, 10f, maximumResolution);
-				numberOfVerticesInt = Mathf.RoundToInt(numberOfVerticesFloat);
-				EditorGUILayout.BeginHorizontal();
-				GUILayout.Label(vertexCountIcon, GUILayout.Width(rowWidth / 3),
-						GUILayout.Height(columnHeight / 2));
-				GUILayout.Label(numberOfVerticesInt.ToString());
-				EditorGUILayout.EndHorizontal();
-				EditorGUILayout.Space();
-				GUILayout.Label("Rigidbody");
-				generateWithRigidbody = GUILayout.Toggle(generateWithRigidbody, " add");
-				EditorGUILayout.Space();
-				GUILayout.Label("Group Name");
-				rockGroupName =
-						EditorGUILayout.TextField("", rockGroupName);
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Seeds", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				GUILayout.Label("Generation");
-				SeedMethod = (MethodOfSeed)EditorGUILayout.EnumPopup("", SeedMethod);
-				EditorGUILayout.Space();
-
-				if (SeedMethod == MethodOfSeed.Custom) {
-					GUILayout.Label("Value");
-					Seed = EditorGUILayout.IntField("", Seed);
-				}
-
-				if (SeedMethod == MethodOfSeed.Random) {
-					GUILayout.Label("Max Value");
-					SeedSize = EditorGUILayout.IntField("", SeedSize);
-				}
-				EditorGUILayout.Space();
-				GUILayout.Label("Debug Info");
-				showGenerationInfo = GUILayout.Toggle(showGenerationInfo, " show");
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				GUILayout.Label("Saving", centeredLabel);
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				EditorGUILayout.Space();
-				EditorGUILayout.LabelField("Folder:");
-				string[] splitString = DefaultPath.Split(new string[]{ "/" }, StringSplitOptions.None);
-				EditorGUILayout.LabelField(splitString[splitString.Length - 1] + "/");
-				if (GUILayout.Button("Change"))
-					DefaultPath = Exporter.ChangePath(DefaultPath);
-				EditorGUILayout.Space();
-				EditorUtilities.DrawUILine(lineDividerColor, 2, 0);
-				break;
+	} else {
+		for (int i = 0; i < p_count; i++) {
+			points.push_back(Vector3(
+					Math::random(-(p_base_height - p_tip_protrusion), p_base_height - p_tip_protrusion),
+					Math::random(-p_base_width * flat, p_base_width * flat),
+					Math::random(-p_base_width * 1.732 * flat, p_base_width * 1.732 * flat)));
 		}
 	}
 
-	void OnSceneGUI(SceneView sceneView) {
-		currentEvent = Event.current;
-		sceneInput();
-		updateMousePos(sceneView);
-		drawGizmo();
+	return points;
+}
 
-		if (toolBarIndex != 0)
-			return;
+// =========================================================================
+// Mesh creation — convex hull from random points
+// =========================================================================
 
-		Event current = Event.current;
-		int controlID = GUIUtility.GetControlID(FocusType.Passive);
+Ref<ArrayMesh> rock_studio_create_mesh(const Vector<Vector3> &p_points) {
+	// Use Godot's built-in convex hull via QuickHull
+	Geometry::MeshData mesh_data;
+	Error err = QuickHull::build(p_points, mesh_data);
 
-		switch (current.type) {
-			case EventType.MouseUp: {
-				if (currentlyPlacingRock && current.button == 0 && !current.alt) {
-					GenerateRock(mouseHitPoint.point, mouseHitPoint.normal);
-					Repaint();
-				}
-				break;
-			}
-			case EventType.Layout:
-				if (currentlyPlacingRock)
-					HandleUtility.AddDefaultControl(controlID);
-				break;
+	if (err != OK || mesh_data.faces.size() == 0) {
+		WARN_PRINT("rock_studio: convex hull generation failed.");
+		return Ref<ArrayMesh>();
+	}
+
+	// Convert MeshData to ArrayMesh
+	Vector<Vector3> vertices;
+	Vector<Vector3> normals;
+	Vector<int> indices;
+
+	for (int f = 0; f < mesh_data.faces.size(); f++) {
+		const Geometry::MeshData::Face &face = mesh_data.faces[f];
+		Vector3 normal = face.plane.normal;
+
+		// Fan triangulation of face polygon
+		for (int j = 1; j + 1 < face.indices.size(); j++) {
+			int i0 = face.indices[0];
+			int i1 = face.indices[j];
+			int i2 = face.indices[j + 1];
+
+			int base = vertices.size();
+			vertices.push_back(mesh_data.vertices[i0]);
+			vertices.push_back(mesh_data.vertices[i1]);
+			vertices.push_back(mesh_data.vertices[i2]);
+			normals.push_back(normal);
+			normals.push_back(normal);
+			normals.push_back(normal);
+			indices.push_back(base);
+			indices.push_back(base + 1);
+			indices.push_back(base + 2);
 		}
 	}
 
-	void NewSculpture() {
-		GameObject newSculpture = new GameObject("Sculpture in progress");
-		Undo.RegisterCompleteObjectUndo(newSculpture, "Create");
+	Array arrays;
+	arrays.resize(VS::ARRAY_MAX);
+	arrays[VS::ARRAY_VERTEX] = vertices;
+	arrays[VS::ARRAY_NORMAL] = normals;
+	arrays[VS::ARRAY_INDEX] = indices;
+
+	Ref<ArrayMesh> mesh;
+	mesh.instance();
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+	return mesh;
+}
+
+// =========================================================================
+// Low-poly conversion — unindex mesh for flat shading
+// =========================================================================
+
+Ref<ArrayMesh> rock_studio_make_low_poly(const Ref<ArrayMesh> &p_mesh) {
+	ERR_FAIL_COND_V(p_mesh.is_null() || p_mesh->get_surface_count() == 0, Ref<ArrayMesh>());
+
+	Array src = p_mesh->surface_get_arrays(0);
+	Vector<Vector3> old_verts = src[VS::ARRAY_VERTEX];
+	Vector<int> old_indices = src[VS::ARRAY_INDEX];
+
+	if (old_indices.size() == 0) {
+		// Already unindexed
+		return p_mesh;
 	}
 
-	void AddShape() {
-		GameObject NewRockShape = new GameObject("Sculpture point");
-		Undo.RegisterCreatedObjectUndo(NewRockShape, "Create");
+	Vector<Vector3> vertices;
+	Vector<Vector3> normals;
+	vertices.resize(old_indices.size());
+	normals.resize(old_indices.size());
 
-		NewRockShape.transform.parent = GameObject.Find("Sculpture in progress").transform;
-		NewRockShape.AddComponent<Handle>();
-		Selection.activeGameObject = NewRockShape;
+	for (int i = 0; i < old_indices.size(); i++) {
+		vertices.write[i] = old_verts[old_indices[i]];
 	}
 
-	void GenerateRock(Vector3 pos, Vector3 nor) {
-		points = new List<Vector3>(numberOfVerticesInt);
-		points.Clear();
-		Random.state = Random.state;
-
-		if (SeedMethod == MethodOfSeed.Random) {
-			Random.state = Random.state;
-			Seed = Random.Range(0, SeedSize);
-			Random.InitState(Seed);
-		} else {
-			Random.InitState(Seed);
-		}
-
-		rockMaterial = rockMaterials[Random.Range(0, 4)];
-
-		switch (typeOfrock) {
-			case 0: {
-				points = MeshUtilities.GetRandomPointsWithinCube(numberOfVerticesInt, edgeWidth, edgeHeight, edgeDepth);
-			} break;
-			case 1: {
-				points = MeshUtilities.GetRandomPointsWithinSphere(numberOfVerticesInt, boulderRadius);
-			} break;
-			case 2: {
-				points = MeshUtilities.GetRandomPointsWithinCrystal(numberOfVerticesInt, tetragonal, oneSided, baseWidth, baseHeight, tipProtrusion, tipFlatness);
-			} break;
-			case 3: {
-				points = MeshUtilities.GetRandomPointsOnMesh(numberOfVerticesInt, meshVolume);
-			} break;
-		}
-
-		if (GameObject.Find(rockGroupName) == nullptr) {
-			rockGroup = new GameObject(rockGroupName);
-			Undo.RegisterCreatedObjectUndo(rockGroup, "Create");
-			rockGroup.transform.position = pos;
-		} else {
-			rockGroup = GameObject.Find(rockGroupName);
-		}
-
-		RockCreation.CreateRock(points, pos + new Vector3(0, rockYPositionOffset, 0), nor, rockOrientation, rockMaterial, rockName, generateWithRigidbody, colliderType, rockGroup, showGenerationInfo);
+	// Compute flat normals per triangle
+	for (int i = 0; i + 2 < vertices.size(); i += 3) {
+		Vector3 n = (vertices[i + 1] - vertices[i]).cross(vertices[i + 2] - vertices[i]).normalized();
+		normals.write[i] = n;
+		normals.write[i + 1] = n;
+		normals.write[i + 2] = n;
 	}
+
+	Array arrays;
+	arrays.resize(VS::ARRAY_MAX);
+	arrays[VS::ARRAY_VERTEX] = vertices;
+	arrays[VS::ARRAY_NORMAL] = normals;
+
+	Ref<ArrayMesh> result;
+	result.instance();
+	result->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+	return result;
+}
+
+// =========================================================================
+// Box UV projection
+// =========================================================================
+
+int rock_studio_get_box_dir(const Vector3 &p_normal) {
+	real_t ax = Math::abs(p_normal.x);
+	real_t ay = Math::abs(p_normal.y);
+	real_t az = Math::abs(p_normal.z);
+	if (ax > ay && ax > az) {
+		return p_normal.x < 0 ? -1 : 1;
+	} else if (ay > az) {
+		return p_normal.y < 0 ? -2 : 2;
+	}
+	return p_normal.z < 0 ? -3 : 3;
+}
+
+Vector2 rock_studio_get_box_uv(const Vector3 &p_vertex, int p_box_dir) {
+	real_t s = p_box_dir < 0 ? -1.0 : 1.0;
+	switch (ABS(p_box_dir)) {
+		case 1:
+			return Vector2(p_vertex.z * s, p_vertex.y);
+		case 2:
+			return Vector2(p_vertex.x, p_vertex.z * s);
+		case 3:
+			return Vector2(p_vertex.x * -s, p_vertex.y);
+	}
+	return Vector2();
+}
+
+void rock_studio_box_uv(Ref<ArrayMesh> p_mesh) {
+	ERR_FAIL_COND(p_mesh.is_null() || p_mesh->get_surface_count() == 0);
+
+	Array src = p_mesh->surface_get_arrays(0);
+	Vector<Vector3> vertices = src[VS::ARRAY_VERTEX];
+	Vector<Vector3> normals = src[VS::ARRAY_NORMAL];
+
+	if (vertices.size() == 0 || normals.size() == 0) {
+		return;
+	}
+
+	Vector<Vector2> uvs;
+	uvs.resize(vertices.size());
+
+	// Assign UV per-triangle based on face normal direction
+	for (int i = 0; i + 2 < vertices.size(); i += 3) {
+		Vector3 face_normal = (vertices[i + 1] - vertices[i]).cross(vertices[i + 2] - vertices[i]).normalized();
+		int box_dir = rock_studio_get_box_dir(face_normal);
+		uvs.write[i] = rock_studio_get_box_uv(vertices[i], box_dir);
+		uvs.write[i + 1] = rock_studio_get_box_uv(vertices[i + 1], box_dir);
+		uvs.write[i + 2] = rock_studio_get_box_uv(vertices[i + 2], box_dir);
+	}
+
+	// Rebuild surface with UVs
+	Array arrays;
+	arrays.resize(VS::ARRAY_MAX);
+	arrays[VS::ARRAY_VERTEX] = vertices;
+	arrays[VS::ARRAY_NORMAL] = normals;
+	arrays[VS::ARRAY_TEX_UV] = uvs;
+
+	p_mesh->surface_remove(0);
+	p_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
 }

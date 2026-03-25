@@ -504,6 +504,7 @@ SilentWolfInstance::SilentWolfInstance() {
 }
 
 #ifdef DOCTEST
+#include "doctest/doctest_godot.h"
 
 TEST_CASE("[SilentWolf] UUID generation") {
 	SUBCASE("generate_uuid_v4 produces valid format") {
@@ -576,7 +577,7 @@ TEST_CASE("[SilentWolf] Hashing") {
 
 TEST_CASE("[SilentWolf] Status code checking") {
 	SUBCASE("zero status code indicates connection failure") {
-		CHECK_FALSE(sw_check_status_code(0));
+		EXPECT_ERROR(CHECK_FALSE(sw_check_status_code(0)));
 	}
 
 	SUBCASE("non-zero status codes pass") {
@@ -667,7 +668,8 @@ TEST_CASE("[SilentWolf] Local file storage") {
 	}
 
 	SUBCASE("get_data returns empty for nonexistent file") {
-		Dictionary result = sw_get_data("user://sw_nonexistent_doctest.json");
+		Dictionary result;
+		EXPECT_ERROR(result = sw_get_data("user://sw_nonexistent_doctest.json"));
 		CHECK(result.empty());
 	}
 }

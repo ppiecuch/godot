@@ -4,14 +4,14 @@ from pathlib import Path
 from gd2c.project import Project
 from gd2c.target import Target
 from gd2c.gdscriptclass import GDScriptClass, GDScriptFunction, GDScriptMember, GDScriptGlobal
-from gd2c.targets._gdnative.context import GlobalContext, ClassContext, FunctionContext
+from gd2c.targets._cppnative.context import GlobalContext, ClassContext, FunctionContext
 from gd2c.variant import VariantType
 
 from gd2c import controlflow
 
-import gd2c.targets._gdnative.transform as transform
-import gd2c.targets._gdnative.class_codegen as class_codegen
-import gd2c.targets._gdnative.function_codegen as function_codegen
+import gd2c.targets._cppnative.transform as transform
+import gd2c.targets._cppnative.class_codegen as class_codegen
+import gd2c.targets._cppnative.function_codegen as function_codegen
 
 class CPPNativeTarget(Target):
     project: Project

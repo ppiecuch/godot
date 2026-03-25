@@ -95,17 +95,20 @@ void IsoPhysics::_bind_methods() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 TEST_SUITE("[[isotools]] IsoPhysics") {
 	TEST_CASE("iso_raycast returns empty dict without world") {
 		IsoPhysics phys;
-		Dictionary result = phys.iso_raycast(nullptr, Vector3(), Vector3(1, 0, 0));
+		Dictionary result;
+		EXPECT_ERROR(result = phys.iso_raycast(nullptr, Vector3(), Vector3(1, 0, 0))); // expected: !p_world
 		CHECK(result.empty());
 	}
 
 	TEST_CASE("iso_intersect_point returns empty array without world") {
 		IsoPhysics phys;
-		Array result = phys.iso_intersect_point(nullptr, Vector3());
+		Array result;
+		EXPECT_ERROR(result = phys.iso_intersect_point(nullptr, Vector3())); // expected: !p_world
 		CHECK(result.empty());
 	}
 }

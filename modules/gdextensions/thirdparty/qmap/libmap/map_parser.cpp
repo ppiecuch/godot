@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _GODOT_
+#include "core/error_macros.h"
+#endif
+
 #include "brush.h"
 #include "entity.h"
 #include "face.h"
@@ -77,7 +81,11 @@ bool LMMapParser::map_parser_load(const char *map_file) {
 	FILE *map = fopen(map_file, "r");
 
 	if (!map) {
+#ifdef _GODOT_
+		ERR_PRINT("Error: Failed to open map file.");
+#else
 		printf("Error: Failed to open map file.\n");
+#endif
 		return false;
 	}
 

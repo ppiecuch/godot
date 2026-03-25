@@ -47,8 +47,8 @@ using namespace svg::types::parsers::path;
 
 // --- Predefined palettes (from Qt CyberElems app) ---
 
-static const Color DEFAULT_PRIMARY = Color(0.145f, 0.149f, 0.149f); // #252626
-static const Color DEFAULT_SECONDARY = Color(0.463f, 0.463f, 0.463f); // #767676
+static const Color DEFAULT_PRIMARY = Color::html("#252626");
+static const Color DEFAULT_SECONDARY = Color::html("#767676");
 
 const CyberPalette CyberPalette::PRESETS[] = {
 	{ "Original Light", Color::html("#252626"), Color::html("#767676"), Color::html("#ffffff") },
@@ -217,7 +217,11 @@ struct CmdRecorder : public parser {
 	}
 
 	void line_to(bool rel, real_t x, real_t y) {
-		move_to(rel, x, y);
+		if (rel) {
+			x += cursor.x;
+			y += cursor.y;
+		}
+		cursor = { x, y };
 		points.push_back(cursor);
 	}
 

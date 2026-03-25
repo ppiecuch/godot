@@ -23,6 +23,8 @@ class FlashKVDB : public Reference {
 	bool _initialized;
 	String _path;
 	String _name;
+	CharString _name_utf8; // kept alive for FlashDB's internal pointer
+	CharString _path_utf8;
 
 protected:
 	static void _bind_methods();
@@ -67,6 +69,8 @@ class FlashTSDB : public Reference {
 	bool _initialized;
 	String _path;
 	String _name;
+	CharString _name_utf8;
+	CharString _path_utf8;
 
 protected:
 	static void _bind_methods();

@@ -54,6 +54,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -321,18 +322,22 @@ TEST_SUITE("resources_config") {
 		ObjectNode root("root", "root");
 		root.attribs.insert("exists", ObjectNode("exists", "yes"));
 
-		const ObjectNode &n = root.get("missing");
-		CHECK(n.name == "");
-		CHECK(n.value == "");
+		EXPECT_ERROR({
+			const ObjectNode &n = root.get("missing");
+			CHECK(n.name == "");
+			CHECK(n.value == "");
+		});
 	}
 
 	TEST_CASE("ObjectNode::get returns empty node on missing nested key") {
 		ObjectNode root("root", "root");
 		root.attribs.insert("a", ObjectNode("a", "Section"));
 
-		const ObjectNode &n = root.get("a.b.c");
-		CHECK(n.name == "");
-		CHECK(n.value == "");
+		EXPECT_ERROR({
+			const ObjectNode &n = root.get("a.b.c");
+			CHECK(n.name == "");
+			CHECK(n.value == "");
+		});
 	}
 
 	TEST_CASE("ObjectNode::get does not mutate tree on missing key") {
@@ -340,7 +345,7 @@ TEST_SUITE("resources_config") {
 		root.attribs.insert("a", ObjectNode("a", "val"));
 		int before = root.attribs.size();
 
-		root.get("nonexistent");
+		EXPECT_ERROR(root.get("nonexistent"));
 		CHECK(root.attribs.size() == before);
 	}
 
@@ -511,7 +516,7 @@ TEST_SUITE("resources_config") {
 	TEST_CASE("Parser: too many closing braces reports line number") {
 		String err;
 		String input = "a = 1\n}\n}";
-		ObjectConfig::load_config_string(input, err);
+		EXPECT_ERROR(ObjectConfig::load_config_string(input, err));
 		CHECK(!err.empty());
 		CHECK(err.find("Line 2") >= 0);
 	}
@@ -519,7 +524,7 @@ TEST_SUITE("resources_config") {
 	TEST_CASE("Parser: unclosed section reports unclosed count") {
 		String err;
 		String input = "sec = Section {\n  a = 1\n";
-		ObjectConfig::load_config_string(input, err);
+		EXPECT_ERROR(ObjectConfig::load_config_string(input, err));
 		CHECK(!err.empty());
 		CHECK(err.find("unclosed") >= 0);
 	}
@@ -530,7 +535,7 @@ TEST_SUITE("resources_config") {
 				"a = Section {\n"
 				"  b = Section {\n"
 				"    c = Section {\n";
-		ObjectConfig::load_config_string(input, err);
+		EXPECT_ERROR(ObjectConfig::load_config_string(input, err));
 		CHECK(!err.empty());
 		CHECK(err.find("3 unclosed") >= 0);
 	}
@@ -542,7 +547,8 @@ TEST_SUITE("resources_config") {
 	TEST_CASE("Parser: duplicate key overwrites with last value") {
 		String err;
 		String input = "key = first\nkey = second";
-		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		ObjectNode root;
+		EXPECT_ERROR(root = ObjectConfig::load_config_string(input, err));
 		CHECK(err.empty()); // no error, just warning
 		CHECK(root.attribs["key"].value == "second");
 	}
@@ -556,7 +562,8 @@ TEST_SUITE("resources_config") {
 				"sec = Section {\n"
 				"  b = 2\n"
 				"}";
-		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		ObjectNode root;
+		EXPECT_ERROR(root = ObjectConfig::load_config_string(input, err));
 		CHECK(err.empty());
 		// Second 'sec' overwrites first
 		CHECK(root.attribs["sec"].attribs.has("b"));
@@ -612,7 +619,8 @@ TEST_SUITE("resources_config") {
 	TEST_CASE("Parser: empty key name is skipped") {
 		String err;
 		String input = " = value";
-		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		ObjectNode root;
+		EXPECT_ERROR(root = ObjectConfig::load_config_string(input, err));
 		CHECK(err.empty());
 		CHECK(root.attribs.size() == 0);
 	}

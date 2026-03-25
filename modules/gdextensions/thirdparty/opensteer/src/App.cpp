@@ -49,6 +49,12 @@
 #include <string>
 #include <sstream>
 
+#ifdef _GODOT_
+#include "core/error_macros.h"
+#include "core/print_string.h"
+#include "core/variant.h"
+#endif
+
 namespace OpenSteer {
     void draw3dCircleOrDisk (const float radius, const Vec3& center, const Vec3& axis, const Vec3& color, const int segments, const bool filled)
     {
@@ -83,7 +89,13 @@ OpenSteer::App* OpenSteer::App::singleton = NULL;
 
 namespace {
 
-    void printPlugIn (OpenSteer::PlugIn& pi) {std::cout << " " << pi << std::endl;} // XXX
+    void printPlugIn (OpenSteer::PlugIn& pi) {
+#ifdef _GODOT_
+        print_verbose(vformat("OpenSteer plugin: %s", pi.name()));
+#else
+        std::cout << " " << pi << std::endl;
+#endif
+    } // XXX
 
 } // anonymous namespace
 
@@ -105,6 +117,12 @@ OpenSteer::App::App (void)
     {
         // XXX this block is for debugging purposes,
         // XXX should it be replaced with something permanent?
+#ifdef _GODOT_
+        print_verbose("OpenSteer: Known plugins:");
+        PlugIn::applyToAll (printPlugIn);
+        if (!selectedPlugIn) errorExit ("no default PlugIn");
+        print_verbose(vformat("OpenSteer: Default plugin: %s", selectedPlugIn->name()));
+#else
         std::cout << std::endl << "Known plugins:" << std::endl;   // xxx?
         PlugIn::applyToAll (printPlugIn);                          // xxx?
         std::cout << std::endl;                                    // xxx?
@@ -113,6 +131,7 @@ OpenSteer::App::App (void)
         std::cout << std::endl << "Default plugin:" << std::endl;  // xxx?
         std::cout << " " << *selectedPlugIn << std::endl;          // xxx?
         std::cout << std::endl;                                    // xxx?
+#endif
     }
     // initialize the default PlugIn
     openSelectedPlugIn ();
@@ -154,17 +173,25 @@ void
 OpenSteer::App::errorExit (const char* message)
 {
     printMessage (message);
+#ifdef _GODOT_
+    ERR_FAIL_MSG(vformat("OpenSteer fatal: %s", message));
+#else
 #ifdef _MSC_VER
 	MessageBox(0, message, "App Unfortunate Event", MB_ICONERROR);
 #endif
     exit (-1);
+#endif
 }
 
 
-void 
+void
 OpenSteer::App::exit (int exitCode)
 {
+#ifdef _GODOT_
+    ERR_FAIL_MSG(vformat("OpenSteer exit(%d)", exitCode));
+#else
     ::exit (exitCode);
+#endif
 }
 
 
@@ -614,10 +641,14 @@ OpenSteer::App::drawCircleHighlightOnVehicle (const AbstractVehicle& v,
 // ----------------------------------------------------------------------------
 
 
-void 
+void
 OpenSteer::App::printMessage (const char* message)
 {
+#ifdef _GODOT_
+    print_verbose(vformat("OpenSteer: %s", message));
+#else
     std::cout << "App: " <<  message << std::endl << std::flush;
+#endif
 }
 
 
@@ -628,10 +659,14 @@ OpenSteer::App::printMessage (const std::ostringstream& message)
 }
 
 
-void 
+void
 OpenSteer::App::printWarning (const char* message)
 {
+#ifdef _GODOT_
+    WARN_PRINT(vformat("OpenSteer: %s", message));
+#else
     std::cout << "App: Warning: " <<  message << std::endl << std::flush;
+#endif
 }
 
 

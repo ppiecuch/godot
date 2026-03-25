@@ -679,10 +679,17 @@ TEST_SUITE("[[isotools]] IsoQuadTree") {
 }
 
 TEST_SUITE("[[isotools]] IsoScreenSolver") {
-	TEST_CASE("IsIsoObjectDepends: basic overlap") {
-		CHECK(IsoScreenSolver::is_iso_object_depends(
+	TEST_CASE("IsIsoObjectDepends: identical boxes have no ordering") {
+		CHECK_FALSE(IsoScreenSolver::is_iso_object_depends(
 				Vector3(0, 0, 0), Vector3(1, 1, 1),
 				Vector3(0, 0, 0), Vector3(1, 1, 1)));
+	}
+
+	TEST_CASE("IsIsoObjectDepends: overlapping boxes have ordering") {
+		// B is behind A in iso space, so A depends on B (A must draw after B)
+		CHECK(IsoScreenSolver::is_iso_object_depends(
+				Vector3(1, 1, 0), Vector3(2, 2, 2),
+				Vector3(0, 0, 0), Vector3(2, 2, 2)));
 	}
 
 	TEST_CASE("IsIsoObjectDepends: no overlap") {

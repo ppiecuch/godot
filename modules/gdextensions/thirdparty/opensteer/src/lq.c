@@ -117,6 +117,7 @@ lqInternalDB* lqCreateDatabase (float originx, float originy, float originz,
 				int divx, int divy, int divz)
 {
     lqInternalDB* lq = ((lqInternalDB*) malloc (sizeof (lqInternalDB)));
+    if (!lq) return NULL;
 
     lqInitDatabase (lq,
 		    originx, originy, originz,
@@ -132,6 +133,7 @@ lqInternalDB* lqCreateDatabase (float originx, float originy, float originz,
 
 void lqDeleteDatabase(lqDB* lq)
 {
+    if (!lq) return;
     free (lq->bins);
     free (lq);
 }
@@ -162,6 +164,7 @@ void lqInitDatabase (lqInternalDB* lq,
 	int bincount = divx * divy * divz;
 	int arraysize = sizeof (lqClientProxy*) * bincount;
 	lq->bins = (lqClientProxy**) malloc (arraysize);
+	if (!lq->bins) return;
 	for (i=0; i<bincount; i++) lq->bins[i] = NULL;
     }
     lq->other = NULL;

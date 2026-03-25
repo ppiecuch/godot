@@ -60,7 +60,6 @@ def configure(env):
         # middleware extensions
         "nakama1",
         "discord",
-        "parseplatform",
         "playfab",
         "silentwolf",
         "qrcodetexture",

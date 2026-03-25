@@ -119,6 +119,11 @@ public:
 
 	void SetSteps(uint32_t steps) { m_Steps = steps; }
 
+	Ref<ArrayMesh> GenerateMesh() {
+		_update();
+		return mesh;
+	}
+
 	GenRock(real_t width, real_t height, real_t depth, int steps);
 	~GenRock(void);
 };

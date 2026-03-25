@@ -17,16 +17,14 @@ def print_info(project, print_cfg, print_domtree):
 		for func in cls.functions():
 			if func.cfg is None:
 				func.cfg = controlflow.build_control_flow_graph(func)
-			#to_ssa_form(func)
 			func.pretty_print(True)
-			#func.cfg.update_function(func)
 
 			if print_cfg:
 				func.cfg.pretty_print(True, True)
 
 			if print_domtree:
 				print("-- DOMTREE ---------------------------------")
-				tree = domtree.build_domtree_naive(cfg)
+				tree = domtree.build_domtree_naive(func.cfg)
 				tree.pretty_print()
 
 		print("\n")
@@ -36,7 +34,11 @@ def get_target(target_name: str, project: Project) -> Target:
 		from gd2c.targets.cppnative import CPPNativeTarget
 		return CPPNativeTarget(project)
 
-	raise Exception("target not known: " + target_name)
+	if target_name == "gdnative":
+		from gd2c.targets.gdnative import GDNativeTarget
+		return GDNativeTarget(project)
+
+	raise Exception("target not known: " + target_name + " (valid: cppnative, gdnative)")
 
 def assert_nothing_in_ssa_form(project: Project):
 	for cls in project.iter_classes_in_dependency_order():
@@ -91,7 +93,6 @@ if __name__ == "__main__":
 
 			# Transforms not requiring SSA form
 			transform.strip_debug(func)
-			# func.cfg.pretty_print()
 
 			# Transforms done in SSA form
 			if False:
@@ -121,9 +122,6 @@ if __name__ == "__main__":
 	# Phase 3: Emit code
 	target.emit(project_output_path)
 
-	# print_info(project, False, False)
 	for cls in project.iter_classes_in_dependency_order():
 		print(cls.resource_path, cls.name, sep=" -> ")
-
-
 

@@ -331,6 +331,7 @@ void GenRock::_update() {
 		a[VS::ARRAY_NORMAL] = (Vector<Vector3>)m_VecGeom.Normal;
 		a[VS::ARRAY_INDEX] = (Vector<int>)m_VecIndices;
 
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);
 		m_PostInitialize = false;
 
 		print_verbose("Rock updated");

@@ -30,6 +30,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -951,7 +952,7 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 	TEST_CASE("[FoliageMesh2D] width_segments rejects zero") {
 		Ref<FoliageMesh2D> mesh = Ref<FoliageMesh2D>(memnew(FoliageMesh2D));
 		mesh->set_width_segments(3);
-		mesh->set_width_segments(0);
+		EXPECT_ERROR(mesh->set_width_segments(0));
 		CHECK(mesh->get_width_segments() == 3);
 	}
 
@@ -970,9 +971,9 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 	TEST_CASE("[FoliageMesh2D] size rejects non-positive") {
 		Ref<FoliageMesh2D> mesh = Ref<FoliageMesh2D>(memnew(FoliageMesh2D));
 		mesh->set_size(Vector2(100, 200));
-		mesh->set_size(Vector2(0, 100));
+		EXPECT_ERROR(mesh->set_size(Vector2(0, 100)));
 		CHECK(mesh->get_size() == Vector2(100, 200));
-		mesh->set_size(Vector2(100, -5));
+		EXPECT_ERROR(mesh->set_size(Vector2(100, -5)));
 		CHECK(mesh->get_size() == Vector2(100, 200));
 	}
 
@@ -1008,7 +1009,8 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 
 	TEST_CASE("[FoliageMesh2D] build returns null when empty") {
 		Ref<FoliageMesh2D> mesh = Ref<FoliageMesh2D>(memnew(FoliageMesh2D));
-		Ref<ArrayMesh> result = mesh->build();
+		Ref<ArrayMesh> result;
+		EXPECT_ERROR(result = mesh->build());
 		CHECK(result.is_null());
 	}
 
@@ -1142,7 +1144,8 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 
 	TEST_CASE("[FoliagePath2D] get_point_at with too few handles returns zero") {
 		FoliagePath2D *path = memnew(FoliagePath2D);
-		Vector2 p = path->get_point_at(0.5);
+		Vector2 p;
+		EXPECT_ERROR(p = path->get_point_at(0.5));
 		CHECK(p == Vector2(0, 0));
 		memdelete(path);
 	}
@@ -1180,7 +1183,8 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 		PoolRealArray widths, heights;
 		widths.push_back(20);
 		heights.push_back(40);
-		Array placements = path->compute_placement(widths, heights);
+		Array placements;
+		EXPECT_ERROR(placements = path->compute_placement(widths, heights));
 		CHECK(placements.size() == 0);
 		memdelete(path);
 	}
@@ -1242,10 +1246,10 @@ TEST_SUITE("[[foliage_2d_animation]]") {
 	TEST_CASE("[FoliageAnimation2D] segments reject zero") {
 		FoliageAnimation2D *anim = memnew(FoliageAnimation2D);
 		anim->set_width_segments(3);
-		anim->set_width_segments(0);
+		EXPECT_ERROR(anim->set_width_segments(0));
 		CHECK(anim->get_width_segments() == 3);
 		anim->set_height_segments(5);
-		anim->set_height_segments(-1);
+		EXPECT_ERROR(anim->set_height_segments(-1));
 		CHECK(anim->get_height_segments() == 5);
 		memdelete(anim);
 	}

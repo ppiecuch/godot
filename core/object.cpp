@@ -2050,6 +2050,7 @@ void postinitialize_handler(Object *p_object) {
 }
 
 RWLock *ObjectDB::rw_lock = memnew(RWLock);
+bool ObjectDB::cleaned_up = false;
 HashMap<ObjectID, Object *> ObjectDB::instances;
 ObjectID ObjectDB::instance_counter = 1;
 HashMap<Object *, ObjectID, ObjectDB::ObjectPtrHash> ObjectDB::instance_checks;
@@ -2068,6 +2069,10 @@ ObjectID ObjectDB::add_instance(Object *p_object) {
 }
 
 void ObjectDB::remove_instance(Object *p_object) {
+	if (cleaned_up) {
+		WARN_PRINT("ObjectDB::remove_instance called after cleanup — probable static/leak destructor ordering issue.");
+		return;
+	}
 	rw_lock->write_lock();
 
 	instances.erase(p_object->get_instance_id());
@@ -2077,6 +2082,9 @@ void ObjectDB::remove_instance(Object *p_object) {
 }
 
 Object *ObjectDB::get_instance(ObjectID p_instance_id) {
+	if (cleaned_up) {
+		return nullptr;
+	}
 	rw_lock->read_lock();
 	Object **obj = instances.getptr(p_instance_id);
 	rw_lock->read_unlock();
@@ -2145,5 +2153,6 @@ void ObjectDB::cleanup() {
 	instance_checks.clear();
 	rw_lock->write_unlock();
 	// we should not use objectdb beyond that point
+	cleaned_up = true;
 	memdelete_notnull(rw_lock);
 }

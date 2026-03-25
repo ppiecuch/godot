@@ -172,6 +172,9 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "vgamepaddesign/vgamepad_design.h"
 
 #include "environment/proc_rocks/proc_rocks.h"
+#ifdef TOOLS_ENABLED
+#include "environment/proc_rocks/proc_rocks_editor_plugin.h"
+#endif
 #include "environment/spherical_waves/spherical_waves.h"
 #include "environment/spider_anim/spider.h"
 #include "environment/spider_anim/stage.h"
@@ -193,6 +196,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 
 #ifdef GDEXT_HWINFO_ENABLED
 #include "hwinfo/gd_hwinfo.h"
+#endif
+
+#ifdef GDEXT_CPUFEATURES_ENABLED
+#include "cpufeatures/gd_cpu_features.h"
 #endif
 
 #ifdef GDEXT_ISOTOOLS_ENABLED
@@ -256,6 +263,9 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 
 #ifdef GDEXT_FLASHDB_ENABLED
 #include "flashdb/gd_flashdb.h"
+#endif
+#ifdef GDEXT_OPENSTEER_ENABLED
+#include "opensteer/gd_opensteer.h"
 #endif
 #ifdef GDEXT_SQLITE_ENABLED
 #include "sqlite/gd_sqlite.h"
@@ -365,6 +375,10 @@ static Ref<ImageLoaderThorSVG> image_loader_thor_svg;
 #include "nakama1/gd_nakama1.h"
 #endif
 
+#ifdef GDEXT_DISCORD_ENABLED
+#include "discord/gd_discord.h"
+#endif
+
 #ifdef GDEXT_PARSEPLATFORM_ENABLED
 #include "parseplatform/gd_parse_platform.h"
 #endif
@@ -407,6 +421,7 @@ static void editor_init_callback() {
 #ifdef GDEXT_SFXR_ENABLED
 	editor->add_editor_plugin(memnew(SfxrEditorPlugin(editor)));
 #endif
+	editor->add_editor_plugin(memnew(ProcRockEditorPlugin(editor)));
 #ifdef GDEXT_MESHLOD_ENABLED
 	editor->add_editor_plugin(memnew(MeshOptimizePlugin(editor)));
 #endif
@@ -557,6 +572,11 @@ void register_gdextensions_types() {
 	ClassDB::register_class<FlashKVDB>();
 	ClassDB::register_class<FlashTSDB>();
 #endif
+#ifdef GDEXT_OPENSTEER_ENABLED
+	ClassDB::register_class<GdOpenSteerVehicle>();
+	ClassDB::register_class<GdOpenSteerWorld>();
+	ClassDB::register_class<GdOpenSteerPathway>();
+#endif
 #ifdef GDEXT_SQLITE_ENABLED
 	ClassDB::register_class<SQLite>();
 #endif
@@ -674,6 +694,10 @@ void register_gdextensions_types() {
 	ClassDB::register_class<HWInfo>();
 #endif // GDEXT_HWINFO_ENABLED
 
+#ifdef GDEXT_CPUFEATURES_ENABLED
+	ClassDB::register_class<CpuFeatures>();
+#endif // GDEXT_CPUFEATURES_ENABLED
+
 #ifdef GDEXT_KEYCHAINS_ENABLED
 	ClassDB::register_class<Keychain>();
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Keychain", memnew(Keychain)));
@@ -707,6 +731,9 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_ENVIRONMENT_PROC_ROCKS_ENABLED
 	ClassDB::register_class<ProcRockMesh>();
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<ProcRockDialog>();
+#endif
 #endif
 #ifdef GDEXT_ENVIRONMENT_TREE_3D_ENABLED
 	ClassDB::register_class<ProceduralTree3D>();
@@ -786,6 +813,11 @@ void register_gdextensions_types() {
 	ClassDB::register_virtual_class<NkCollatedMessage>();
 	ClassDB::register_virtual_class<NkUncollatedMessage>();
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GdNakama1", memnew(GdNakama1)));
+#endif
+
+#ifdef GDEXT_DISCORD_ENABLED
+	ClassDB::register_class<GdDiscordClient>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("Discord", memnew(GdDiscordClient)));
 #endif
 
 #ifdef GDEXT_PARSEPLATFORM_ENABLED
@@ -975,6 +1007,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_NAKAMA1_ENABLED
 	RemoveSingleton(GdNakama1);
+#endif
+#ifdef GDEXT_DISCORD_ENABLED
+	RemoveSingleton(GdDiscordClient);
 #endif
 #ifdef GDEXT_PARSEPLATFORM_ENABLED
 	RemoveSingleton(GdParseBackend);

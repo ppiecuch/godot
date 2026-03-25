@@ -2,6 +2,16 @@
 
 #include "core/os/dir_access.h"
 #include "core/os/os.h"
+#include "core/print_string.h"
+
+// Suppress expected error output in negative tests.
+// Usage: EXPECT_ERROR( call_that_triggers_error() );
+#define EXPECT_ERROR(stmt) \
+	do {                   \
+		_print_error_enabled = false; \
+		stmt;              \
+		_print_error_enabled = true;  \
+	} while (0)
 
 String static _doctest_get_folder() {
 	return vformat("__doctest__/%04d_%02d_%02d_%02d/",

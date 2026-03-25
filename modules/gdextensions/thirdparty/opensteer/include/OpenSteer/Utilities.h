@@ -181,7 +181,11 @@ namespace OpenSteer {
     // and the value of the expression.  For example "angle = 35.6"
 
 
+#ifdef _GODOT_
+    #define debugPrint(e) print_verbose(vformat("OpenSteer: %s = %s", #e, Variant(e)))
+#else
     #define debugPrint(e) (std::cout << #e" = " << (e) << std::endl << std::flush)
+#endif
 
 
     // ----------------------------------------------------------------------------

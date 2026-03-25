@@ -44,6 +44,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif

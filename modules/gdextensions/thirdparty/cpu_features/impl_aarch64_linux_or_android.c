@@ -18,7 +18,6 @@
 #if defined(CPU_FEATURES_OS_LINUX) || defined(ANDROID)
 
 #include "cpuinfo_aarch64.h"
-#include "../../../../../Utilities/Interfaces/IFileSystem.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions for introspection.

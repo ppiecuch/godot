@@ -39,6 +39,7 @@
 
 #include "core/print_string.h"
 #include "core/variant.h"
+#include "servers/visual_server.h"
 
 struct Point {
 	real_t alpha, beta, rayon;
@@ -285,6 +286,13 @@ Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoo
 	dp = RelativementPremierPhi(MaxPoint);
 
 	PointPtr = 0;
+	PointTable = (Point *)memalloc(sizeof(Point) * MaxPoint);
+	for (uint_t i = 0; i < MaxPoint; i++) {
+		PointTable[i] = Empty;
+	}
+
+	mode = smoothed ? 1 : 0;
+
 	PoolVector3Array result;
 
 	Recurse(result, Point(0, 0, 1), Point(-36, 60, 1), Point(+36, 60, 1), MaxProf, true);
@@ -311,5 +319,56 @@ Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoo
 	Recurse(result, Point(-36, 180, 1), Point(0, 120, 1), Point(-72, 120, 1), MaxProf, true);
 	Recurse(result, Point(-108, 180, 1), Point(-72, 120, 1), Point(-144, 120, 1), MaxProf, true);
 
-	return Array();
+	// Free lookup table
+	if (PointTable) {
+		memfree(PointTable);
+		PointTable = nullptr;
+	}
+
+	// Build mesh arrays from generated triangles
+	if (result.size() == 0) {
+		return Array();
+	}
+
+	Array mesh_arrays;
+	mesh_arrays.resize(VS::ARRAY_MAX);
+
+	if (mode == 0) {
+		// Sharp mode: result contains triplets of vertex positions
+		Vector<Vector3> vertices;
+		Vector<Vector3> normals;
+		vertices.resize(result.size());
+		normals.resize(result.size());
+
+		PoolVector3Array::Read r = result.read();
+		for (int i = 0; i < result.size(); i++) {
+			vertices.write[i] = r[i];
+		}
+		// Compute flat normals per triangle
+		for (int i = 0; i + 2 < result.size(); i += 3) {
+			Vector3 n = (vertices[i + 1] - vertices[i]).cross(vertices[i + 2] - vertices[i]).normalized();
+			normals.write[i] = n;
+			normals.write[i + 1] = n;
+			normals.write[i + 2] = n;
+		}
+		mesh_arrays[VS::ARRAY_VERTEX] = vertices;
+		mesh_arrays[VS::ARRAY_NORMAL] = normals;
+	} else {
+		// Smoothed mode: result contains interleaved (vertex, normal) pairs × 3 per triangle
+		int tri_count = result.size() / 6;
+		Vector<Vector3> vertices;
+		Vector<Vector3> normals;
+		vertices.resize(tri_count * 3);
+		normals.resize(tri_count * 3);
+
+		PoolVector3Array::Read r = result.read();
+		for (int i = 0; i < tri_count * 3; i++) {
+			vertices.write[i] = r[i * 2];
+			normals.write[i] = r[i * 2 + 1];
+		}
+		mesh_arrays[VS::ARRAY_VERTEX] = vertices;
+		mesh_arrays[VS::ARRAY_NORMAL] = normals;
+	}
+
+	return mesh_arrays;
 }

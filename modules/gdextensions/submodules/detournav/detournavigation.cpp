@@ -865,6 +865,7 @@ void DetourNavigation::navigationThreadFunction() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 TEST_SUITE("[[detournav]] DetourNavigationParameters") {
 	TEST_CASE("[detournav] navigation parameter defaults") {
@@ -920,14 +921,14 @@ TEST_SUITE("[[detournav]] DetourNavigation") {
 
 	TEST_CASE("[detournav] navigation save fails when not initialized") {
 		DetourNavigation nav;
-		CHECK(nav.save("user://test_nav.bin", false) == false);
+		EXPECT_ERROR(CHECK(nav.save("user://test_nav.bin", false) == false)); // expected: Unable to save navigation data
 	}
 
 	TEST_CASE("[detournav] navigation load fails when initialized") {
 		// First initialize would be needed, but we can test that load on uninitialized
 		// with bad path returns false
 		DetourNavigation nav;
-		CHECK(nav.load("user://nonexistent_nav.bin", false) == false);
+		EXPECT_ERROR(CHECK(nav.load("user://nonexistent_nav.bin", false) == false)); // expected: Error while opening navigation save file
 	}
 }
 #endif

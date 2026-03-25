@@ -195,6 +195,15 @@ void RuntimeProfilerOverlay::hide_overlay() {
 
 void RuntimeProfilerOverlay::_deferred_init() {
 	if (enabled && !initialized) {
+		if (!SceneTree::get_singleton()) {
+			// SceneTree not ready yet (singleton created during register_types);
+			// re-defer until it exists, with a limit to avoid infinite loop
+			// during engine shutdown when SceneTree will never appear.
+			if (_deferred_retries++ < 60) {
+				call_deferred("_deferred_init");
+			}
+			return;
+		}
 		_init_overlay();
 	}
 }
@@ -261,6 +270,7 @@ RuntimeProfilerOverlay::RuntimeProfilerOverlay() {
 	initialized = false;
 	action_was_pressed = false;
 	pad_combo_was_active = false;
+	_deferred_retries = 0;
 
 #ifdef DEBUG_ENABLED
 	enabled = bool(GLOBAL_DEF("runtime_profiler/overlay_enabled", true));

@@ -89,7 +89,6 @@ def transpile_ctor_signature(class_context: ClassContext, writer: IO):
 def transpile_ctor(class_context: ClassContext, writer: IO):
     transpile_ctor_signature(class_context, writer)
     writer.write(f"""{{
-            printf("Enter: {class_context.ctor_identifier}\\n");
             struct {class_context.struct_tag} *user_data = api10->godot_alloc(sizeof(struct {class_context.struct_tag}));
             user_data->__vtable = &{class_context.vtable_identifier};
             api10->godot_variant_new_object(&user_data->__self, p_instance);
@@ -102,7 +101,6 @@ def transpile_ctor(class_context: ClassContext, writer: IO):
         """)
 
     writer.write(f"""\
-            printf("Exit: {class_context.ctor_identifier}\\n");
             return user_data;
         }}
     """)

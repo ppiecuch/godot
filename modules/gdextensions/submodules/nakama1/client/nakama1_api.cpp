@@ -285,6 +285,7 @@ LogoutMessage::LogoutMessage() {
 }
 
 #ifdef DOCTEST
+#include "doctest/doctest_godot.h"
 
 // ---------------------------------------------------------------------------
 // Utils tests
@@ -802,7 +803,7 @@ TEST_CASE("[nakama1_api] NkMessage with empty envelope returns PAYLOAD_NOT_SET")
 	PoolByteArray payload = Utils::create_payload(builder.GetBufferPointer(), builder.GetSize());
 	NkMessage msg(payload);
 
-	CHECK(msg.get_payload_case() == NkMessage::PAYLOAD_NOT_SET);
+	EXPECT_ERROR(CHECK(msg.get_payload_case() == NkMessage::PAYLOAD_NOT_SET));
 }
 
 TEST_CASE("[nakama1_api] NkMessage collation ID extraction") {

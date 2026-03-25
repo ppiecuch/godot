@@ -1,4 +1,3 @@
-#pragma once
 // Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#pragma once
+
 
 #include <stdint.h>
 
@@ -31,3 +33,4 @@ Leaf GetCpuidLeaf(uint32_t leaf_id, int ecx);
 uint32_t GetXCR0Eax(void);
 
 CPU_FEATURES_END_CPP_NAMESPACE
+

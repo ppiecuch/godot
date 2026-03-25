@@ -15,9 +15,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "cpu_features_macros.h"
+#include <assert.h>
 
-#include "../../../../../Utilities/Interfaces/ILog.h"
+#include "cpu_features_macros.h"
 
 CPU_FEATURES_START_CPP_NAMESPACE
 
@@ -29,7 +29,7 @@ inline static uint32_t ExtractBitRange(uint32_t reg, uint32_t msb,
                                        uint32_t lsb) {
   const uint64_t bits = msb - lsb + 1ULL;
   const uint64_t mask = (1ULL << bits) - 1ULL;
-  ASSERT(msb >= lsb);
+  assert(msb >= lsb);
   return (reg >> lsb) & mask;
 }
 

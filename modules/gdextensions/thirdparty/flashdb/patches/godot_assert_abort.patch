@@ -1,0 +1,18 @@
+diff --git a/modules/gdextensions/thirdparty/flashdb/inc/fdb_def.h b/modules/gdextensions/thirdparty/flashdb/inc/fdb_def.h
+index da0996ab527..aa9d9dd3106 100644
+--- a/modules/gdextensions/thirdparty/flashdb/inc/fdb_def.h
++++ b/modules/gdextensions/thirdparty/flashdb/inc/fdb_def.h
+@@ -62,11 +62,12 @@ extern "C" {
+ /* routine print function. Must be implement by user. */
+ #define FDB_INFO(...)                  FDB_LOG_PREFIX();FDB_PRINT(__VA_ARGS__)
+ /* assert for developer. */
++#include <stdlib.h>
+ #define FDB_ASSERT(EXPR)                                                      \
+ if (!(EXPR))                                                                  \
+ {                                                                             \
+     FDB_DEBUG("(%s) has assert failed at %s.\n", #EXPR, __FUNCTION__);        \
+-    while (1);                                                                \
++    abort();                                                                  \
+ }
+ 
+ #define FDB_KVDB_CTRL_SET_SEC_SIZE     0x00             /**< set sector size control command */

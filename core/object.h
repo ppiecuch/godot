@@ -843,6 +843,7 @@ class ObjectDB {
 	friend void unregister_core_types();
 
 	static RWLock *rw_lock;
+	static bool cleaned_up;
 	static void cleanup();
 	static ObjectID add_instance(Object *p_object);
 	static void remove_instance(Object *p_object);
@@ -863,6 +864,9 @@ public:
 
 	// This one may give false positives because a new object may be allocated at the same memory of a previously freed one
 	_FORCE_INLINE_ static bool instance_validate(Object *p_ptr) {
+		if (cleaned_up) {
+			return false;
+		}
 		rw_lock->read_lock();
 
 		bool exists = instance_checks.has(p_ptr);

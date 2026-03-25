@@ -22,6 +22,11 @@ void Spinner::_draw_spinner() {
 	ERR_FAIL_COND(!_imgui_wnd);
 	ImGui::SetCurrentWindow(_imgui_wnd);
 
+	// Center the spinner on the node's origin (0,0)
+	// SpinnerBegin computes centre = CursorPos + (radius, radius),
+	// so offset CursorPos so that centre lands at (0, 0).
+	_imgui_wnd->DC.CursorPos = Vector2(-_radius, -_radius);
+
 	// Build config from node properties
 	SpinnerConfig cfg;
 	cfg.radius = _radius;

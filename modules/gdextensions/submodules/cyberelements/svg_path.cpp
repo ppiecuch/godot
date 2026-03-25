@@ -918,6 +918,7 @@ std::array<real_t, 6> parse_transforms(const char *c, const char *const end) {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 using namespace svg::types::parsers;
 using namespace svg::types::parsers::path;
@@ -1202,7 +1203,7 @@ TEST_SUITE("[[cyberelements]] svg_path: path commands") {
 
 	TEST_CASE("Invalid command returns false") {
 		TestRecorder r;
-		CHECK_FALSE(r.parse("X 10 20"));
+		EXPECT_ERROR(CHECK_FALSE(r.parse("X 10 20"))); // expected: expected wsp / moveto...
 	}
 
 	TEST_CASE("Real CyberElement path parses") {
@@ -1283,10 +1284,11 @@ TEST_SUITE("[[cyberelements]] svg_path: transform parser") {
 	TEST_CASE("parse_transforms: chained transforms") {
 		const char *s = "translate(10, 0) scale(2)";
 		auto result = parse_transforms(s, s + strlen(s));
-		// translate(10,0) then scale(2): point (x,y) -> (2*(x+10), 2*y) = (2x+20, 2y)
+		// translate(10,0) then scale(2): M = translate * scale
+		// point (x,y) -> scale -> (2x,2y) -> translate -> (2x+10, 2y)
 		CHECK(result[0] == doctest::Approx(2.0f));
 		CHECK(result[3] == doctest::Approx(2.0f));
-		CHECK(result[4] == doctest::Approx(20.0f));
+		CHECK(result[4] == doctest::Approx(10.0f));
 		CHECK(result[5] == doctest::Approx(0.0f));
 	}
 

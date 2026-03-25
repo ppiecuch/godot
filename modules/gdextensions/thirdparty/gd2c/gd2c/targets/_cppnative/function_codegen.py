@@ -4,10 +4,10 @@ from gd2c.address import *
 from gd2c.variant import VariantType
 from gd2c.bytecode import *
 from gd2c.controlflow import Block
-from gd2c.targets._gdnative import builtin as BI
+from gd2c.targets._cppnative import builtin as BI
 import re
 if TYPE_CHECKING:
-    from gd2c.targets.gdnative import FunctionContext
+    from gd2c.targets.cppnative import FunctionContext
 
 def __transpile_signature(function_context: FunctionContext) -> str:
     return f"""\

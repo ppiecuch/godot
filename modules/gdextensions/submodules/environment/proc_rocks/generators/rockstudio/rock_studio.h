@@ -31,26 +31,35 @@
 #ifndef ROCK_STUDIO_H
 #define ROCK_STUDIO_H
 
+#include "core/math/geometry.h"
+#include "core/math/math_funcs.h"
+#include "core/math/vector2.h"
 #include "core/math/vector3.h"
 #include "core/vector.h"
+#include "scene/resources/mesh.h"
+#include "scene/resources/surface_tool.h"
 
-MeshInstance CreateRock(const Vector<Vector3> &vertices, Vector3 pos, Vector3 nor, int rockOrientation, Ref<Material> rockMaterial, const String &rockName, bool rigidbody, int colliderType, Node *parent = nullptr);
-Ref<Mesh> CreateMesh(const Vector<Vector3> &vertices);
+// =========================================================================
+// Point generators — create random point clouds for convex hull
+// =========================================================================
 
-Vector3 GetRandomPointOnMesh(const Ref<Mesh> &mesh);
-Vector<Vector3> GetRandomPointsWithinCube(int numberOfPoints, real_t width, real_t height, real_t depth);
-Vector<Vector3> GetRandomPointsWithinSphere(int numberOfPoints, real_t radius);
-Vector<Vector3> GetRandomPointsWithinCrystal(int numberOfPoints, bool tetragonal, bool oneSided, real_t baseWidth, real_t baseHeight, real_t tipProtrusion, real_t tipFlatness);
-Vector<Vector3> GetRandomPointsOnMesh(int numberOfPoints, Ref<Mesh> mesh);
+Vector<Vector3> rock_studio_points_cube(int p_count, real_t p_width, real_t p_height, real_t p_depth);
+Vector<Vector3> rock_studio_points_sphere(int p_count, real_t p_radius);
+Vector<Vector3> rock_studio_points_crystal(int p_count, bool p_tetragonal, bool p_one_sided, real_t p_base_width, real_t p_base_height, real_t p_tip_protrusion, real_t p_tip_flatness);
 
-void GenerateComposition(int numberOfVertices, Vector3 pos, Vector3 nor, Ref<Material> rockmat);
-void CreateSculpture(Vector<Vector3> vertices, Vector3 pos, Vector3 nor, Vector3 rot, Vector3 scale, Ref<Material> rockmat);
-void GenerateCompositionFill(int numberOfVertices, Vector3 pos, Vector3 nor, Ref<Material> rockmat);
-void CreateSculptureFill(const Vector<Vector3> &vertices, Vector3 pos, Vector3 nor, Ref<Material> rockmat);
+// =========================================================================
+// Mesh creation — convex hull + low-poly + box UV
+// =========================================================================
 
-Ref<Mesh> MakeLowPoly(Transform transform, String name);
-void BoxUV(Ref<Mesh> mesh, Transform tform);
-Vector2 GetBoxUV(const Vector3 &vertex, int boxDir);
-int GetBoxDir(const Vector3 &v);
+Ref<ArrayMesh> rock_studio_create_mesh(const Vector<Vector3> &p_points);
+Ref<ArrayMesh> rock_studio_make_low_poly(const Ref<ArrayMesh> &p_mesh);
+void rock_studio_box_uv(Ref<ArrayMesh> p_mesh);
+
+// =========================================================================
+// UV helpers
+// =========================================================================
+
+int rock_studio_get_box_dir(const Vector3 &p_normal);
+Vector2 rock_studio_get_box_uv(const Vector3 &p_vertex, int p_box_dir);
 
 #endif // ROCK_STUDIO_H

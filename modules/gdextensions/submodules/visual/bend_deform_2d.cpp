@@ -1111,6 +1111,7 @@ ElasticSprite::~ElasticSprite() {
 #ifdef DOCTEST
 #include "common/gd_core.h"
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 TEST_SUITE("[[bend_deform_2d]]") {
 	// --- SimulationController2D ---
@@ -1225,7 +1226,7 @@ TEST_SUITE("[[bend_deform_2d]]") {
 		Ref<SimulationController2D> ctrl = newref(SimulationController2D);
 		ctrl->set_simulation_precision(SimulationController2D::PRECISION_LOW);
 		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_LOW);
-		ctrl->set_simulation_precision((SimulationController2D::SimulationPrecision)99);
+		EXPECT_ERROR(ctrl->set_simulation_precision((SimulationController2D::SimulationPrecision)99));
 		CHECK(ctrl->get_simulation_precision() == SimulationController2D::PRECISION_LOW);
 	}
 
@@ -1531,10 +1532,10 @@ TEST_SUITE("[[bend_deform_2d]]") {
 		sprite->set_geometry_segments(5);
 		CHECK(sprite->get_geometry_segments() == 5);
 		// Reject zero
-		sprite->set_geometry_segments(0);
+		EXPECT_ERROR(sprite->set_geometry_segments(0));
 		CHECK(sprite->get_geometry_segments() == 5);
 		// Reject negative
-		sprite->set_geometry_segments(-1);
+		EXPECT_ERROR(sprite->set_geometry_segments(-1));
 		CHECK(sprite->get_geometry_segments() == 5);
 		memdelete(sprite);
 	}
@@ -1550,7 +1551,7 @@ TEST_SUITE("[[bend_deform_2d]]") {
 		sprite->set_geometry_anchor(ElasticSimulation::SIM_ANCHOR_BOTTOM);
 		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_BOTTOM);
 		// Invalid
-		sprite->set_geometry_anchor((ElasticSimulation::Anchor)99);
+		EXPECT_ERROR(sprite->set_geometry_anchor((ElasticSimulation::Anchor)99));
 		CHECK(sprite->get_geometry_anchor() == ElasticSimulation::SIM_ANCHOR_BOTTOM);
 		memdelete(sprite);
 	}
@@ -1560,10 +1561,10 @@ TEST_SUITE("[[bend_deform_2d]]") {
 		sprite->set_geometry_pixel_unit(0.5);
 		CHECK(sprite->get_geometry_pixel_unit() == doctest::Approx(0.5));
 		// Too small
-		sprite->set_geometry_pixel_unit(0.0001);
+		EXPECT_ERROR(sprite->set_geometry_pixel_unit(0.0001));
 		CHECK(sprite->get_geometry_pixel_unit() == doctest::Approx(0.5));
 		// Too large
-		sprite->set_geometry_pixel_unit(1.5);
+		EXPECT_ERROR(sprite->set_geometry_pixel_unit(1.5));
 		CHECK(sprite->get_geometry_pixel_unit() == doctest::Approx(0.5));
 		memdelete(sprite);
 	}
@@ -1577,10 +1578,10 @@ TEST_SUITE("[[bend_deform_2d]]") {
 		sprite->set_geometry_stiffness(0.75);
 		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.75));
 		// Below 0
-		sprite->set_geometry_stiffness(-0.1);
+		EXPECT_ERROR(sprite->set_geometry_stiffness(-0.1));
 		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.75));
 		// Above 1
-		sprite->set_geometry_stiffness(1.1);
+		EXPECT_ERROR(sprite->set_geometry_stiffness(1.1));
 		CHECK(sprite->get_geometry_stiffness() == doctest::Approx(0.75));
 		memdelete(sprite);
 	}
@@ -1638,10 +1639,10 @@ TEST_SUITE("[[bend_deform_2d]]") {
 		CHECK(sprite->get_controller() == ctrl);
 		// Replace
 		Ref<SimulationController2D> ctrl2 = newref(SimulationController2D);
-		sprite->set_controller(ctrl2);
+		EXPECT_ERROR(sprite->set_controller(ctrl2));
 		CHECK(sprite->get_controller() == ctrl2);
 		// Clear
-		sprite->set_controller(Ref<SimulationController2D>());
+		EXPECT_ERROR(sprite->set_controller(Ref<SimulationController2D>()));
 		CHECK(sprite->get_controller().is_null());
 		CHECK(sprite->get_simulation_id() == -1);
 		memdelete(sprite);

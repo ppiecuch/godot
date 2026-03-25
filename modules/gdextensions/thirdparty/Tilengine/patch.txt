@@ -435,3 +435,18 @@ diff -Nur _orig/src/World.c _patched/src/World.c
  
  		case LAYER_TILE:
  		{
+
+--- Godot: route TLN_Init printf through print_verbose ---
+diff -Nur _orig/src/Tilengine.c _patched/src/Tilengine.c
+--- _orig/src/Tilengine.c
++++ _patched/src/Tilengine.c
+@@ -59,7 +59,12 @@
+ TLN_Engine TLN_Init (int hres, int vres, int numlayers, int numsprites, int numanimations)
+ {
+-	printf("Tilengine v%d.%d.%d %d-bit %s built %s %s\n",
++#ifdef _GODOT_
++	extern void tilengine_godot_print(const char *fmt, ...);
++	tilengine_godot_print("Tilengine v%d.%d.%d %d-bit %s built %s %s",
++#else
++	printf("Tilengine v%d.%d.%d %d-bit %s built %s %s\n",
++#endif

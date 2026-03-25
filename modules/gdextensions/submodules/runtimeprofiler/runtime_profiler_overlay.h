@@ -55,6 +55,7 @@ class RuntimeProfilerOverlay : public Object {
 
 	// Gamepad combo state (L1 + R1 + Select)
 	bool pad_combo_was_active;
+	int _deferred_retries;
 
 	bool _init_overlay();
 	bool _ensure_initialized();

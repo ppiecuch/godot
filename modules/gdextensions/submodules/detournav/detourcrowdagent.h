@@ -61,24 +61,24 @@ public:
 
 	// These two parameters will determine into which navigation mesh & crowd this agent will be put.
 	// Make sure your DetourNavigationMesh supports the radius & height.
-	float radius;
-	float height;
+	float radius = 0;
+	float height = 0;
 
-	float maxAcceleration;
-	float maxSpeed;
+	float maxAcceleration = 0;
+	float maxSpeed = 0;
 
 	String filterName; // The filter to use
 
 	// Check more in-depth descriptions of the optimizations here:
 	// http://digestingduck.blogspot.com/2010/11/path-corridor-optimizations.html
-	bool anticipateTurns; // If this agent should anticipate turns and move accordingly.
-	bool optimizeVisibility; // Optimize walked path based on visibility. Strongly recommended.
-	bool optimizeTopology; // If shorter paths should be attempted under certain circumstances. Also recommended.
+	bool anticipateTurns = false; // If this agent should anticipate turns and move accordingly.
+	bool optimizeVisibility = false; // Optimize walked path based on visibility. Strongly recommended.
+	bool optimizeTopology = false; // If shorter paths should be attempted under certain circumstances. Also recommended.
 
-	bool avoidObstacles; // If this agent should try to avoid obstacles (dynamic obstacles).
-	bool avoidOtherAgents; // If this agent should avoid other agents.
-	int obstacleAvoidance; // How much this agent should avoid obstacles. 0 - 3, with 0 being low and 3 high avoidance.
-	float separationWeight; // How strongly the other agents should try to avoid this agent (if they have avoidOtherAgents set).
+	bool avoidObstacles = false; // If this agent should try to avoid obstacles (dynamic obstacles).
+	bool avoidOtherAgents = false; // If this agent should avoid other agents.
+	int obstacleAvoidance = 0; // How much this agent should avoid obstacles. 0 - 3, with 0 being low and 3 high avoidance.
+	float separationWeight = 0; // How strongly the other agents should try to avoid this agent (if they have avoidOtherAgents set).
 
 	void set_position(const Vector3 &p_value) { position = p_value; }
 	Vector3 get_position() const { return position; }

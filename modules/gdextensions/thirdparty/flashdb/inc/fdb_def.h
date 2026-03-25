@@ -49,7 +49,12 @@ extern "C" {
 
 /* log function. default FDB_PRINT macro is printf() */
 #ifndef FDB_PRINT
+#ifdef _GODOT_
+extern void fdb_godot_print(const char *fmt, ...);
+#define FDB_PRINT(...)                 fdb_godot_print(__VA_ARGS__)
+#else
 #define FDB_PRINT(...)                 printf(__VA_ARGS__)
+#endif
 #endif
 #define FDB_LOG_PREFIX1()              FDB_PRINT("[FlashDB]" FDB_LOG_TAG)
 #define FDB_LOG_PREFIX2()              FDB_PRINT(" ")
@@ -62,11 +67,12 @@ extern "C" {
 /* routine print function. Must be implement by user. */
 #define FDB_INFO(...)                  FDB_LOG_PREFIX();FDB_PRINT(__VA_ARGS__)
 /* assert for developer. */
+#include <stdlib.h>
 #define FDB_ASSERT(EXPR)                                                      \
 if (!(EXPR))                                                                  \
 {                                                                             \
     FDB_DEBUG("(%s) has assert failed at %s.\n", #EXPR, __FUNCTION__);        \
-    while (1);                                                                \
+    abort();                                                                  \
 }
 
 #define FDB_KVDB_CTRL_SET_SEC_SIZE     0x00             /**< set sector size control command */

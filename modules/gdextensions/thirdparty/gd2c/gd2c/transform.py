@@ -44,19 +44,15 @@ def make_coroutine(func: GDScriptFunction):
     assert func.cfg
     assert func.cfg.is_in_ssa_form
 
-    raise NotImplementedError()
+    raise NotImplementedError("Coroutine transformation is not yet implemented")
 
 def substitute_intrinsics(func: GDScriptFunction) -> bool:
     """Identifies calls and/or sequences of operations that can be
-    substituted with more optimized versions. These intrinsics are
-    target-agnostic. Specific targets may implement their own
-    set of intrinsic operations.
-    """
+    substituted with more optimized versions."""
     assert func
     assert func.cfg
     assert func.cfg.is_in_ssa_form
-
-    print("substitute_intrinsics not implemented")
+    # TODO: implement intrinsic substitution
     return False
 
 def promote_typed_arithmetic(func: GDScriptFunction) -> bool:
@@ -64,92 +60,43 @@ def promote_typed_arithmetic(func: GDScriptFunction) -> bool:
     to typed arithmetic over using variant arithmetic. Type annotations
     from GDScript are assumed to be accurate. When identified, assignments
     and arithmetic operations are converted to native ones. Unboxing and
-    boxing operations are inserted where necessary.
-
-    An operation will be promoted to typed arithmetic if it meets the
-    following criteria:
-    1. The type of all operands is known
-    2. The operation is a basic arithmetic operation (+, -, *, /, etc.)
-    3. The result of the operation can be reused at least once before
-       being boxed back into a variant.
-
-    TODO: The above should be profiled, probably on a target basis
-
-    An example of an operation that would not be promoted to typed
-    arithmetic could be as follows:
-
-    func mul(a: int, b: int):
-        return a * b
-
-    It may seem that the expression a * b is a perfect candidate for
-    promotion because both operands are of known type, however to
-    to do typed arithmetic may incur additional cost.
-
-    (GDNative output)
-
-    int a = gdnative->godot_variant_as_int(p_arg[0]);
-    int b = gdnative->godot_variant_as_int(p_arg[1]);
-    int ri = a * b
-    godot_variant rv;
-    gdnative->godot_variant_new_int(&rv, ri);
-    return rv;
-
-    In the above case continuing to use variants may be more
-    efficient because it requires fewer calls into the gdnative api.
-
-    godot_variant rv;
-    bool valid;
-    gdnative->godot_variant_evaluate(8, p_arg[0], p_arg[1], &rv, &valid);
-    return rv;
-    """
+    boxing operations are inserted where necessary."""
     assert func
     assert func.cfg
     assert func.cfg.is_in_ssa_form
-    print("promote_typed_arithmetic not implemented")
+    # TODO: implement typed arithmetic promotion
     return False
 
 def common_subexpression_elimination(func: GDScriptFunction, max_iterations: int = 0) -> bool:
     """Identifies expressions which are being performed more than once
     which are guaranteed to have the same result. The redundant calculations
-    will be eliminated and the result of the first instance reused.
-
-    Often performing this iteratively can further eliminate duplicate expressions.
-
-    Arguments:
-    func - Function to optimize. Its cfg must be populated.
-
-    """
+    will be eliminated and the result of the first instance reused."""
     assert func
     assert func.cfg
     assert func.cfg.is_in_ssa_form
-    print("common_subexpression_elimination not implemented")
+    # TODO: implement CSE
     return False
 
 def copy_elimination(func: GDScriptFunction) -> bool:
-    """Identifies and eliminates unnecessary copies.
-    TODO: Is this even necessary? Won't cse elimination take care of this?
-    """
+    """Identifies and eliminates unnecessary copies."""
     assert func
     assert func.cfg
     assert func.cfg.is_in_ssa_form
-    print("copy_elimination not implemented")
+    # TODO: implement copy elimination
     return False
 
-
 def redundant_phi_arg_elimination(func: GDScriptFunction) -> bool:
-    """Identifies phi ops who have the same def repeated in its operands.
-    """
+    """Identifies phi ops who have the same def repeated in its operands."""
     assert func
     assert func.cfg
     assert func.cfg.is_in_ssa_form
-    print("redundant_phi_arg_elimination not implemented")
+    # TODO: implement redundant phi arg elimination
     return False
 
 def dead_code_elimination(func: GDScriptFunction) -> bool:
-    """Removes unreachable code"""
+    """Removes unreachable code."""
     assert func
     assert func.cfg
     assert func.cfg.is_in_ssa_form
-    print("dead_code_elimination not implemented")
+    # TODO: implement dead code elimination
     return False
-

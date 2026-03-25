@@ -32,6 +32,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -152,10 +153,10 @@ TEST_CASE("[SymbolFonts] Font metadata") {
 	}
 
 	SUBCASE("invalid font type returns safely") {
-		CHECK(sf.get_font_filename(-1).empty());
-		CHECK(sf.get_font_filename(999).empty());
-		CHECK(sf.get_icon_count(-1) == 0);
-		CHECK(sf.get_icon_min(999) == 0);
+		EXPECT_ERROR(CHECK(sf.get_font_filename(-1).empty()));
+		EXPECT_ERROR(CHECK(sf.get_font_filename(999).empty()));
+		EXPECT_ERROR(CHECK(sf.get_icon_count(-1) == 0));
+		EXPECT_ERROR(CHECK(sf.get_icon_min(999) == 0));
 	}
 }
 
@@ -316,8 +317,8 @@ TEST_CASE("[SymbolFonts] Edge cases") {
 	GdSymbolFonts sf;
 
 	SUBCASE("invalid font type for has_icon") {
-		CHECK_FALSE(sf.has_icon(-1, "heart"));
-		CHECK_FALSE(sf.has_icon(999, "heart"));
+		EXPECT_ERROR(CHECK_FALSE(sf.has_icon(-1, "heart")));
+		EXPECT_ERROR(CHECK_FALSE(sf.has_icon(999, "heart")));
 	}
 
 	SUBCASE("empty icon name") {
@@ -325,18 +326,20 @@ TEST_CASE("[SymbolFonts] Edge cases") {
 	}
 
 	SUBCASE("get_icon on invalid type returns empty") {
-		String result = sf.get_icon(-1, "heart");
+		String result;
+		EXPECT_ERROR(result = sf.get_icon(-1, "heart"));
 		CHECK(result.empty());
 	}
 
 	SUBCASE("get_icon_names on invalid type returns empty array") {
-		PoolStringArray names = sf.get_icon_names(-1);
+		PoolStringArray names;
+		EXPECT_ERROR(names = sf.get_icon_names(-1));
 		CHECK(names.size() == 0);
 	}
 
 	SUBCASE("get_icon_max on invalid type returns 0") {
-		CHECK(sf.get_icon_max(-1) == 0);
-		CHECK(sf.get_icon_max(GdSymbolFonts::FONT_TYPE_COUNT) == 0);
+		EXPECT_ERROR(CHECK(sf.get_icon_max(-1) == 0));
+		EXPECT_ERROR(CHECK(sf.get_icon_max(GdSymbolFonts::FONT_TYPE_COUNT) == 0));
 	}
 }
 

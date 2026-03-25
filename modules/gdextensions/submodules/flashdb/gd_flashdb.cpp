@@ -11,6 +11,7 @@
 #include "core/io/json.h"
 #include "core/os/dir_access.h"
 #include "core/os/os.h"
+#include "core/project_settings.h"
 
 extern "C" {
 #include "flashdb.h"
@@ -39,27 +40,29 @@ bool FlashKVDB::open(const String &p_name, const String &p_path, int p_sector_si
 	ERR_FAIL_COND_V(p_name.empty(), false);
 
 	_name = p_name;
-	_path = p_path;
+	_path = ProjectSettings::get_singleton()->globalize_path(p_path);
 
-	if (!p_path.empty()) {
-		DirAccess *da = DirAccess::create(DirAccess::ACCESS_USERDATA);
+	if (!_path.empty()) {
+		DirAccess *da = DirAccess::create_for_path(_path);
 		if (da) {
-			da->make_dir_recursive(p_path);
+			da->make_dir_recursive(_path);
 			memdelete(da);
 		}
+	}
+
+	if (p_max_size <= 0) {
+		p_max_size = p_sector_size * 16;
 	}
 
 	bool file_mode = true;
 	fdb_kvdb_control(_db, FDB_KVDB_CTRL_SET_SEC_SIZE, &p_sector_size);
 	fdb_kvdb_control(_db, FDB_KVDB_CTRL_SET_FILE_MODE, &file_mode);
-	if (p_max_size > 0) {
-		fdb_kvdb_control(_db, FDB_KVDB_CTRL_SET_MAX_SIZE, &p_max_size);
-	}
+	fdb_kvdb_control(_db, FDB_KVDB_CTRL_SET_MAX_SIZE, &p_max_size);
 
-	CharString name_utf8 = p_name.utf8();
-	CharString path_utf8 = p_path.utf8();
+	_name_utf8 = p_name.utf8();
+	_path_utf8 = _path.utf8();
 
-	fdb_err_t err = fdb_kvdb_init(_db, name_utf8.get_data(), path_utf8.get_data(), nullptr, nullptr);
+	fdb_err_t err = fdb_kvdb_init(_db, _name_utf8.get_data(), _path_utf8.get_data(), nullptr, nullptr);
 	if (err != FDB_NO_ERR) {
 		ERR_PRINT(vformat("FlashKVDB: init failed for '%s' at '%s', error %d", p_name, p_path, (int)err));
 		return false;
@@ -233,25 +236,27 @@ FlashTSDB::~FlashTSDB() {
 bool FlashTSDB::open(const String &p_name, const String &p_path, int p_max_len, int p_sector_size, int p_max_size) {
 	ERR_FAIL_COND_V(_initialized, false);
 	_name = p_name;
-	_path = p_path;
+	_path = ProjectSettings::get_singleton()->globalize_path(p_path);
 
-	DirAccess *da = DirAccess::create(DirAccess::ACCESS_USERDATA);
+	DirAccess *da = DirAccess::create_for_path(_path);
 	if (da) {
-		da->make_dir_recursive(p_path);
+		da->make_dir_recursive(_path);
 		memdelete(da);
+	}
+
+	if (p_max_size <= 0) {
+		p_max_size = p_sector_size * 16;
 	}
 
 	bool file_mode = true;
 	fdb_tsdb_control(_db, FDB_TSDB_CTRL_SET_SEC_SIZE, &p_sector_size);
 	fdb_tsdb_control(_db, FDB_TSDB_CTRL_SET_FILE_MODE, &file_mode);
-	if (p_max_size > 0) {
-		fdb_tsdb_control(_db, FDB_TSDB_CTRL_SET_MAX_SIZE, &p_max_size);
-	}
+	fdb_tsdb_control(_db, FDB_TSDB_CTRL_SET_MAX_SIZE, &p_max_size);
 
-	CharString name_utf8 = p_name.utf8();
-	CharString path_utf8 = p_path.utf8();
+	_name_utf8 = p_name.utf8();
+	_path_utf8 = _path.utf8();
 
-	fdb_err_t err = fdb_tsdb_init(_db, name_utf8.get_data(), path_utf8.get_data(), _get_time, p_max_len, nullptr);
+	fdb_err_t err = fdb_tsdb_init(_db, _name_utf8.get_data(), _path_utf8.get_data(), _get_time, p_max_len, nullptr);
 	if (err != FDB_NO_ERR) {
 		ERR_PRINT(vformat("FlashTSDB: init failed for '%s', error %d", p_name, (int)err));
 		return false;
@@ -344,6 +349,7 @@ void FlashTSDB::_bind_methods() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 static String _test_path(const char *name) {
 	return vformat("user://flashdb_test_%s_%d", name, OS::get_singleton()->get_ticks_msec());
@@ -353,7 +359,7 @@ TEST_SUITE("[[flashdb]] FlashKVDB") {
 	TEST_CASE("[flashdb] default state") {
 		FlashKVDB db;
 		CHECK_FALSE(db.is_open());
-		CHECK(db.get_key_count() == 0);
+		EXPECT_ERROR(CHECK(db.get_key_count() == 0)); // expected: !_initialized
 	}
 
 	TEST_CASE("[flashdb] open and close") {
@@ -459,21 +465,23 @@ TEST_SUITE("[[flashdb]] FlashKVDB") {
 
 	TEST_CASE("[flashdb] ops on closed db are safe") {
 		FlashKVDB db;
-		CHECK_FALSE(db.set_string("k", "v"));
-		CHECK(db.get_string("k", "d") == "d");
-		CHECK_FALSE(db.delete_key("k"));
-		CHECK_FALSE(db.has_key("k"));
+		EXPECT_ERROR({
+			CHECK_FALSE(db.set_string("k", "v")); // expected: !_initialized
+			CHECK(db.get_string("k", "d") == "d");
+			CHECK_FALSE(db.delete_key("k"));
+			CHECK_FALSE(db.has_key("k"));
+		});
 	}
 
 	TEST_CASE("[flashdb] empty name rejected") {
 		FlashKVDB db;
-		CHECK_FALSE(db.open("", _test_path("kv_empty")));
+		EXPECT_ERROR(CHECK_FALSE(db.open("", _test_path("kv_empty")))); // expected: p_name.empty()
 	}
 
 	TEST_CASE("[flashdb] double open rejected") {
 		FlashKVDB db;
 		REQUIRE(db.open("test", _test_path("kv_dbl")));
-		CHECK_FALSE(db.open("test2", _test_path("kv_dbl2")));
+		EXPECT_ERROR(CHECK_FALSE(db.open("test2", _test_path("kv_dbl2")))); // expected: _initialized
 		db.close();
 	}
 }
@@ -482,7 +490,7 @@ TEST_SUITE("[[flashdb]] FlashTSDB") {
 	TEST_CASE("[flashdb] default state") {
 		FlashTSDB db;
 		CHECK_FALSE(db.is_open());
-		CHECK(db.get_record_count() == 0);
+		EXPECT_ERROR(CHECK(db.get_record_count() == 0)); // expected: !_initialized
 	}
 
 	TEST_CASE("[flashdb] open and close") {
@@ -554,9 +562,11 @@ TEST_SUITE("[[flashdb]] FlashTSDB") {
 
 	TEST_CASE("[flashdb] ops on closed db are safe") {
 		FlashTSDB db;
-		CHECK_FALSE(db.append_string("x"));
-		CHECK(db.get_record_count() == 0);
-		CHECK(db.get_all_records().size() == 0);
+		EXPECT_ERROR({
+			CHECK_FALSE(db.append_string("x")); // expected: !_initialized
+			CHECK(db.get_record_count() == 0);
+			CHECK(db.get_all_records().size() == 0);
+		});
 	}
 }
 

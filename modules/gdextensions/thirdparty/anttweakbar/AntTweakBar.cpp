@@ -8563,12 +8563,16 @@ void CTwMgr::SetFont(const CTexFont *_Font, bool _ResizeBars) {
 void ANT_CALL TwGlobalError(const char *_ErrorMessage) // to be called when g_TwMasterMgr is not created
 {
 	if (g_ErrorHandler == nullptr) {
+#ifdef _GODOT_
+		ERR_PRINT(vformat("AntTweakBar: %s", _ErrorMessage));
+#else
 		fprintf(stderr, "ERROR(AntTweakBar) >> %s\n", _ErrorMessage);
 #ifdef _WINDOWS
 		OutputDebugString("ERROR(AntTweakBar) >> ");
 		OutputDebugString(_ErrorMessage);
 		OutputDebugString("\n");
 #endif // ANT_WINDOWS
+#endif // _GODOT_
 	} else
 		g_ErrorHandler(_ErrorMessage);
 
@@ -8589,6 +8593,12 @@ void CTwMgr::SetLastError(const char *_ErrorMessage) // _ErrorMessage must be a 
 	m_LastError = _ErrorMessage;
 
 	if (g_ErrorHandler == NULL) {
+#ifdef _GODOT_
+		if (m_CurrentDbgFile != NULL && strlen(m_CurrentDbgFile) > 0 && m_CurrentDbgLine > 0)
+			ERR_PRINT(vformat("AntTweakBar: %s at %s(%d)", m_LastError, m_CurrentDbgFile, m_CurrentDbgLine));
+		else
+			ERR_PRINT(vformat("AntTweakBar: %s", m_LastError));
+#else
 		if (m_CurrentDbgFile != NULL && strlen(m_CurrentDbgFile) > 0 && m_CurrentDbgLine > 0)
 			fprintf(stderr, "%s(%d): ", m_CurrentDbgFile, m_CurrentDbgLine);
 		fprintf(stderr, "ERROR(AntTweakBar) >> %s\n", m_LastError);
@@ -8603,6 +8613,7 @@ void CTwMgr::SetLastError(const char *_ErrorMessage) // _ErrorMessage must be a 
 		OutputDebugString(m_LastError);
 		OutputDebugString("\n");
 #endif // _WINDOWS
+#endif // _GODOT_
 	} else
 		g_ErrorHandler(_ErrorMessage);
 

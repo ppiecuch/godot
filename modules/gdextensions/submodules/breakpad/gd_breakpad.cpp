@@ -658,6 +658,7 @@ void GdBreakpad::_bind_methods() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 TEST_CASE("[Breakpad] CrashAnnotations set and get") {
 	CrashAnnotations ann;
@@ -714,7 +715,7 @@ TEST_CASE("[Breakpad] CrashAnnotations clear") {
 
 TEST_CASE("[Breakpad] CrashAnnotations empty key rejected") {
 	CrashAnnotations ann;
-	CHECK_FALSE(ann.set("", "value"));
+	EXPECT_ERROR(CHECK_FALSE(ann.set("", "value"))); // expected: p_key.empty()
 	CHECK(ann.size() == 0);
 }
 
@@ -752,7 +753,7 @@ TEST_CASE("[Breakpad] CrashAnnotations max capacity") {
 	CHECK(ann.size() == CrashAnnotations::MAX_ENTRIES);
 
 	// One more should fail.
-	CHECK_FALSE(ann.set("overflow", "fail"));
+	EXPECT_ERROR(CHECK_FALSE(ann.set("overflow", "fail"))); // expected: count >= MAX_ENTRIES
 	CHECK(ann.size() == CrashAnnotations::MAX_ENTRIES);
 }
 
@@ -762,7 +763,7 @@ TEST_CASE("[Breakpad] CrashAnnotations key too long rejected") {
 	for (int i = 0; i < CrashAnnotations::MAX_KEY_LEN + 10; i++) {
 		long_key += "k";
 	}
-	CHECK_FALSE(ann.set(long_key, "value"));
+	EXPECT_ERROR(CHECK_FALSE(ann.set(long_key, "value"))); // expected: key_utf8.length() >= MAX_KEY_LEN
 }
 
 TEST_CASE("[Breakpad] CrashAnnotations value too long rejected") {
@@ -771,7 +772,7 @@ TEST_CASE("[Breakpad] CrashAnnotations value too long rejected") {
 	for (int i = 0; i < CrashAnnotations::MAX_VALUE_LEN + 10; i++) {
 		long_value += "v";
 	}
-	CHECK_FALSE(ann.set("key", long_value));
+	EXPECT_ERROR(CHECK_FALSE(ann.set("key", long_value))); // expected: val_utf8.length() >= MAX_VALUE_LEN
 }
 
 TEST_CASE("[Breakpad] CrashReportEntry default state") {
@@ -875,7 +876,7 @@ TEST_CASE("[Breakpad] GdBreakpad set_engine_annotations populates fields") {
 
 TEST_CASE("[Breakpad] GdBreakpad write_minidump fails when not installed") {
 	GdBreakpad bp;
-	CHECK(bp.write_minidump() == false);
+	EXPECT_ERROR(CHECK(bp.write_minidump() == false)); // expected: Breakpad: not installed
 }
 
 TEST_CASE("[Breakpad] GdBreakpad uninstall when not installed is safe") {
@@ -955,10 +956,11 @@ TEST_CASE("[Breakpad] GdBreakpad double install prevented") {
 	GdBreakpad bp;
 	String tmp_path = OS::get_singleton()->get_user_data_dir().plus_file("breakpad_test_double");
 
-	bool first = bp.install(tmp_path);
+	bool first;
+	EXPECT_ERROR(first = bp.install(tmp_path)); // expected: Breakpad: crash reporting not supported on this platform
 	if (first) {
 		// Second install should fail.
-		CHECK_FALSE(bp.install(tmp_path));
+		EXPECT_ERROR(CHECK_FALSE(bp.install(tmp_path)));
 		bp.uninstall();
 		CHECK(bp.get_state() == GdBreakpad::STATE_UNINITIALIZED);
 	}
@@ -975,7 +977,8 @@ TEST_CASE("[Breakpad] GdBreakpad install and uninstall cycle") {
 	GdBreakpad bp;
 	String tmp_path = OS::get_singleton()->get_user_data_dir().plus_file("breakpad_test_cycle");
 
-	bool ok = bp.install(tmp_path);
+	bool ok;
+	EXPECT_ERROR(ok = bp.install(tmp_path)); // expected: Breakpad: crash reporting not supported on this platform
 	if (ok) {
 		CHECK(bp.is_installed());
 		CHECK(bp.get_state() == GdBreakpad::STATE_INSTALLED);

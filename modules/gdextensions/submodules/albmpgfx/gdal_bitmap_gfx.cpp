@@ -3275,8 +3275,9 @@ TEST_SUITE("albmpgfx") {
 		REQUIRE(src_img.is_valid());
 
 		// Convert to al_gfx bitmap via from_image
-		AlBitmapGfx factory;
-		Ref<GdAlBitmapGfx> gfx = factory.from_image(src_img);
+		AlBitmapGfx *factory = AlBitmapGfx::get_singleton();
+		REQUIRE(factory);
+		Ref<GdAlBitmapGfx> gfx = factory->from_image(src_img);
 		REQUIRE(gfx.is_valid());
 		CHECK(gfx->get_width() == w);
 		CHECK(gfx->get_height() == h);
@@ -3598,9 +3599,10 @@ TEST_SUITE("albmpgfx") {
 		fb_wrap.instance();
 		fb_wrap->_init_from_bitmap(_make_test_font_bitmap(), true);
 
-		// Create AlBitmapGfx singleton if needed (tests may not have it)
-		AlBitmapGfx factory;
-		Ref<GdAlFont> gf = factory.font_from_bitmap(fb_wrap);
+		// Use existing singleton registered by register_types
+		AlBitmapGfx *factory = AlBitmapGfx::get_singleton();
+		REQUIRE(factory);
+		Ref<GdAlFont> gf = factory->font_from_bitmap(fb_wrap);
 
 		REQUIRE(gf.is_valid());
 		CHECK(gf->is_valid());

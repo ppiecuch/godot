@@ -48,6 +48,6 @@ void sw_print(int log_level, const String &text) {
 	} else if (log_level == SW_LOG_WARNING) {
 		WARN_PRINT(text);
 	} else if (sw_get_log_level() >= log_level) {
-		print_line(text);
+		print_verbose(text);
 	}
 }

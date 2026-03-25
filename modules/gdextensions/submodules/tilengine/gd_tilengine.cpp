@@ -30,6 +30,19 @@
 
 #include "gd_tilengine.h"
 
+#include "core/print_string.h"
+#include <cstdarg>
+#include <cstdio>
+
+extern "C" void tilengine_godot_print(const char *fmt, ...) {
+	char buf[256];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	print_verbose(String::utf8(buf));
+}
+
 // ===========================================================================
 // TLNPalette
 // ===========================================================================
@@ -1439,8 +1452,7 @@ TEST_SUITE("[[Tilengine]]") {
 		ts.create(64, 16, 16, Ref<TLNPalette>());
 		CHECK(ts.get_tile_width() == 16);
 		CHECK(ts.get_tile_height() == 16);
-		// Tilengine adds 1 extra tile (index 0 = blank)
-		CHECK(ts.get_num_tiles() == 65);
+		CHECK(ts.get_num_tiles() == 64);
 
 		TLN_Deinit();
 	}

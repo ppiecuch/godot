@@ -28,33 +28,80 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifndef GD_CPU_FEATURES_H
+#define GD_CPU_FEATURES_H
+
 #include "core/reference.h"
-
-typedef enum {
-	SIMD_SSE3,
-	SIMD_SSE4_1,
-	SIMD_SSE4_2,
-	SIMD_AVX,
-	SIMD_AVX2,
-	SIMD_NEON
-} SIMD_INTRINSIC;
-
-struct CpuInfo;
+#include "core/variant.h"
 
 class CpuFeatures : public Reference {
 	GDCLASS(CpuFeatures, Reference);
 
-	Ref<CpuInfo> cpu_info;
+public:
+	enum SimdLevel {
+		SIMD_NONE,
+		SIMD_SSE3,
+		SIMD_SSE4_1,
+		SIMD_SSE4_2,
+		SIMD_AVX,
+		SIMD_AVX2,
+		SIMD_NEON,
+	};
 
-#if defined(ANDROID)
-	bool init_cpu_info(CpuInfo *out_cpu_info, JNIEnv *pJavaEnv);
-#else
-	bool init_cpu_info(CpuInfo *out_cpu_info);
-#endif
+	enum Architecture {
+		ARCH_UNKNOWN,
+		ARCH_X86,
+		ARCH_X86_64,
+		ARCH_ARM,
+		ARCH_AARCH64,
+	};
+
+private:
+	bool detected;
+	String cpu_name;
+	String vendor;
+	SimdLevel simd_level;
+	Architecture architecture;
+	Dictionary feature_flags;
+	String microarchitecture_name;
+
+	void detect();
+	void detect_x86();
+	void detect_aarch64();
 
 protected:
 	static void _bind_methods();
 
 public:
+	// --- Getters ---
+	String get_cpu_name() const;
+	String get_vendor() const;
+	int get_simd_level() const;
+	String get_simd_name() const;
+	int get_architecture() const;
+	String get_architecture_name() const;
+	String get_microarchitecture() const;
+	Dictionary get_features() const;
+	bool has_feature(const String &feature) const;
+
+	// --- Convenience ---
+	bool has_sse3() const;
+	bool has_sse4_1() const;
+	bool has_sse4_2() const;
+	bool has_avx() const;
+	bool has_avx2() const;
+	bool has_neon() const;
+	bool has_aes() const;
+	bool has_sha() const;
+
+	// --- Summary ---
+	Dictionary get_info() const;
+	String get_summary() const;
+
 	CpuFeatures();
 };
+
+VARIANT_ENUM_CAST(CpuFeatures::SimdLevel);
+VARIANT_ENUM_CAST(CpuFeatures::Architecture);
+
+#endif // GD_CPU_FEATURES_H

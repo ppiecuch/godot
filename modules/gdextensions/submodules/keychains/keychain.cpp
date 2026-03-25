@@ -60,15 +60,13 @@ static PoolByteArray _b64_decode(const String &p_str) {
 	CharString cs = p_str.ascii();
 	int out_len = cs.length(); // overestimate
 	result.resize(out_len);
+	size_t actual = 0;
+	bool ok = false;
 	{
 		PoolByteArray::Write w = result.write();
-		size_t actual = 0;
-		if (CryptoCore::b64_decode(w.ptr(), out_len, &actual, (const unsigned char *)cs.get_data(), cs.length()) == OK) {
-			result.resize(actual);
-		} else {
-			result.resize(0);
-		}
+		ok = (CryptoCore::b64_decode(w.ptr(), out_len, &actual, (const unsigned char *)cs.get_data(), cs.length()) == OK);
 	}
+	result.resize(ok ? actual : 0);
 	return result;
 }
 
@@ -263,6 +261,7 @@ Keychain::~Keychain() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 TEST_SUITE("[[keychains]] base64 helpers") {
 	TEST_CASE("Encode and decode roundtrip") {
@@ -279,7 +278,8 @@ TEST_SUITE("[[keychains]] base64 helpers") {
 		String encoded = _b64_encode(data);
 		CHECK(!encoded.empty());
 
-		PoolByteArray decoded = _b64_decode(encoded);
+		PoolByteArray decoded;
+		EXPECT_ERROR(decoded = _b64_decode(encoded));
 		REQUIRE(decoded.size() == 5);
 		{
 			PoolByteArray::Read r = decoded.read();
@@ -310,7 +310,8 @@ TEST_SUITE("[[keychains]] base64 helpers") {
 			}
 		}
 		String encoded = _b64_encode(data);
-		PoolByteArray decoded = _b64_decode(encoded);
+		PoolByteArray decoded;
+		EXPECT_ERROR(decoded = _b64_decode(encoded));
 		REQUIRE(decoded.size() == 256);
 		{
 			PoolByteArray::Read r = decoded.read();
@@ -330,7 +331,8 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 		Keychain::Error err = kc.write_password("test_pw", "secret123");
 		CHECK(err == Keychain::NO_ERROR);
 
-		String result = kc.read_password("test_pw");
+		String result;
+		EXPECT_ERROR(result = kc.read_password("test_pw"));
 		CHECK(result == "secret123");
 		CHECK(kc.get_last_error() == Keychain::NO_ERROR);
 
@@ -355,7 +357,8 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 		Keychain::Error err = kc.write_data("bin_key", data);
 		CHECK(err == Keychain::NO_ERROR);
 
-		PoolByteArray result = kc.read_data("bin_key");
+		PoolByteArray result;
+		EXPECT_ERROR(result = kc.read_data("bin_key"));
 		CHECK(kc.get_last_error() == Keychain::NO_ERROR);
 		REQUIRE(result.size() == 4);
 		{
@@ -385,7 +388,7 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 		kc.set_insecure_fallback(true);
 
 		kc.write_password("delete_me", "temp");
-		CHECK(kc.has_entry("delete_me"));
+		EXPECT_ERROR(CHECK(kc.has_entry("delete_me")));
 
 		Keychain::Error err = kc.delete_entry("delete_me");
 		CHECK(err == Keychain::NO_ERROR);
@@ -399,7 +402,7 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 
 		CHECK_FALSE(kc.has_entry("has_test_abc"));
 		kc.write_password("has_test_abc", "val");
-		CHECK(kc.has_entry("has_test_abc"));
+		EXPECT_ERROR(CHECK(kc.has_entry("has_test_abc")));
 		kc.delete_entry("has_test_abc");
 		CHECK_FALSE(kc.has_entry("has_test_abc"));
 	}
@@ -410,10 +413,14 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 		kc.set_insecure_fallback(true);
 
 		kc.write_password("ow_key", "first");
-		CHECK(kc.read_password("ow_key") == "first");
+		String first_result;
+		EXPECT_ERROR(first_result = kc.read_password("ow_key"));
+		CHECK(first_result == "first");
 
 		kc.write_password("ow_key", "second");
-		CHECK(kc.read_password("ow_key") == "second");
+		String second_result;
+		EXPECT_ERROR(second_result = kc.read_password("ow_key"));
+		CHECK(second_result == "second");
 
 		kc.delete_entry("ow_key");
 	}
@@ -423,7 +430,8 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 		kc.set_service("doctest_keychain");
 		kc.set_insecure_fallback(true);
 
-		Keychain::Error err = kc.write_password("", "val");
+		Keychain::Error err;
+		EXPECT_ERROR(err = kc.write_password("", "val"));
 		CHECK(err == Keychain::OTHER_ERROR);
 	}
 
@@ -432,7 +440,8 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 		kc.set_service("");
 		kc.set_insecure_fallback(true);
 
-		Keychain::Error err = kc.write_password("key", "val");
+		Keychain::Error err;
+		EXPECT_ERROR(err = kc.write_password("key", "val"));
 		CHECK(err == Keychain::OTHER_ERROR);
 	}
 
