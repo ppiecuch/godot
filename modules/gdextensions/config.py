@@ -86,6 +86,7 @@ def configure(env):
         "flowed",
         "geomfonts",
         "symbolfonts",
+        "slugfont",
         "generator",
         "ggoxel",
         "fontengine3d",

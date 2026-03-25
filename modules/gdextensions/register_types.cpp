@@ -88,6 +88,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "editor/editor_icon_preview.h"
 #include "editor/explodomatica_plugin.h"
 #include "editor/power_station_plugin.h"
+#include "editor/rest_api_tester.h"
 #endif
 
 #include "albmpgfx/gdal_bitmap_gfx.h"
@@ -267,6 +268,9 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #ifdef GDEXT_OPENSTEER_ENABLED
 #include "opensteer/gd_opensteer.h"
 #endif
+#ifdef GDEXT_SLUGFONT_ENABLED
+#include "slugfont/gd_slug.h"
+#endif
 #ifdef GDEXT_SQLITE_ENABLED
 #include "sqlite/gd_sqlite.h"
 #endif
@@ -422,6 +426,8 @@ static void editor_init_callback() {
 	editor->add_editor_plugin(memnew(SfxrEditorPlugin(editor)));
 #endif
 	editor->add_editor_plugin(memnew(ProcRockEditorPlugin(editor)));
+	ClassDB::register_class<RestApiTesterDock>();
+	editor->add_editor_plugin(memnew(RestApiTesterPlugin(editor)));
 #ifdef GDEXT_MESHLOD_ENABLED
 	editor->add_editor_plugin(memnew(MeshOptimizePlugin(editor)));
 #endif
@@ -576,6 +582,11 @@ void register_gdextensions_types() {
 	ClassDB::register_class<GdOpenSteerVehicle>();
 	ClassDB::register_class<GdOpenSteerWorld>();
 	ClassDB::register_class<GdOpenSteerPathway>();
+#endif
+#ifdef GDEXT_SLUGFONT_ENABLED
+	ClassDB::register_class<SlugFont>();
+	ClassDB::register_class<SlugMaterial>();
+	ClassDB::register_class<SlugLabel>();
 #endif
 #ifdef GDEXT_SQLITE_ENABLED
 	ClassDB::register_class<SQLite>();

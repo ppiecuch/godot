@@ -210,6 +210,7 @@ modules = [
     "sfxr",
     "silentwolf",
     "simpleai",
+    "slugfont",
     "smooth",
     "symbolfonts",
     "sparkparticles",
@@ -775,13 +776,17 @@ if is_enabled("openclwrapper"):
             env["enable_gdextensions_submodules"].remove("openclwrapper")
 
 if is_enabled("slugfont"):
-    if secret("submodules/slugfont/ts_slug.cpp") and secret("submodules/slugfont/ts_slug.h"):
+    if secret("thirdparty/slugfont/ts_slug.cpp") and secret("thirdparty/slugfont/ts_slug.h"):
         print("(GDextensions) SlugFont is not available")
         env["enable_gdextensions_submodules"].remove("slugfont")
     else:
-        env_module.Append(CPPPATH=["thirdparty/slugfont"])
+        env_module.Append(CPPPATH=["thirdparty/slugfont", "thirdparty/slugfont/fontbuilder"])
+        thirdparty_sources += Glob("thirdparty/slugfont/*.cpp")
+        thirdparty_sources += [f for f in Glob("thirdparty/slugfont/fontbuilder/*.cpp") if "main.cpp" not in str(f)]
         if is_gcc:
             env_module.Append(CPPFLAGS=["-Wno-multichar", "-Wno-array-bounds"])
+        if env["tools"] and os.path.isfile("thirdparty/slugfont/fontbuilder/SConscript"):
+            SConscript("thirdparty/slugfont/fontbuilder/SConscript", exports="env")
 
 if is_enabled("media/"):
     env_module.Append(CPPPATH=["thirdparty/media"])
