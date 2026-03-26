@@ -226,6 +226,7 @@ void ThreadPoolJob::_bind_methods() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 #include "thread_pool.h"
 #include "thread_pool_execute_job.h"
@@ -354,11 +355,17 @@ TEST_SUITE("[[threadpool]] ThreadPool") {
 		CHECK(ThreadPool::get_singleton() != nullptr);
 	}
 
-	TEST_CASE("[threadpool] add_job accepts valid job") {
+	TEST_CASE("[threadpool] add_job enqueues without crash") {
 		Ref<ThreadPoolJob> job;
 		job.instance();
 		job->set_complete(false);
-		ThreadPool::get_singleton()->add_job(job);
+		// Worker thread will try execute() which fails (no _execute method),
+		// but the enqueue itself should not crash.
+		EXPECT_ERROR({
+			ThreadPool::get_singleton()->add_job(job);
+			// Give worker thread a moment to pick up and fail
+			OS::get_singleton()->delay_usec(5000);
+		});
 		CHECK(true);
 	}
 
@@ -366,9 +373,11 @@ TEST_SUITE("[[threadpool]] ThreadPool") {
 		ThreadPool *tp = ThreadPool::get_singleton();
 		CHECK(tp != nullptr);
 		Object *obj = memnew(Object);
-		Ref<ThreadPoolExecuteJob> job = tp->create_execute_job_simple(obj, "_nonexistent_method");
-		CHECK(job.is_valid());
-		CHECK(job->get_complete() == true);
+		EXPECT_ERROR({
+			Ref<ThreadPoolExecuteJob> job = tp->create_execute_job_simple(obj, "_nonexistent_method");
+			CHECK(job.is_valid());
+			CHECK(job->get_complete() == true);
+		});
 		memdelete(obj);
 	}
 }

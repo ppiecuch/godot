@@ -324,25 +324,27 @@ TEST_SUITE("[[keychains]] base64 helpers") {
 
 TEST_SUITE("[[keychains]] Keychain fallback storage") {
 	TEST_CASE("Write and read password via fallback") {
-		Keychain kc;
-		kc.set_service("doctest_keychain");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_keychain");
+		kc->set_insecure_fallback(true);
 
-		Keychain::Error err = kc.write_password("test_pw", "secret123");
+		Keychain::Error err = kc->write_password("test_pw", "secret123");
 		CHECK(err == Keychain::NO_ERROR);
 
 		String result;
-		EXPECT_ERROR(result = kc.read_password("test_pw"));
+		EXPECT_ERROR(result = kc->read_password("test_pw"));
 		CHECK(result == "secret123");
-		CHECK(kc.get_last_error() == Keychain::NO_ERROR);
+		CHECK(kc->get_last_error() == Keychain::NO_ERROR);
 
-		kc.delete_entry("test_pw");
+		kc->delete_entry("test_pw");
 	}
 
 	TEST_CASE("Write and read binary data via fallback") {
-		Keychain kc;
-		kc.set_service("doctest_keychain");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_keychain");
+		kc->set_insecure_fallback(true);
 
 		PoolByteArray data;
 		data.resize(4);
@@ -354,12 +356,12 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 			w[3] = 0xEF;
 		}
 
-		Keychain::Error err = kc.write_data("bin_key", data);
+		Keychain::Error err = kc->write_data("bin_key", data);
 		CHECK(err == Keychain::NO_ERROR);
 
 		PoolByteArray result;
-		EXPECT_ERROR(result = kc.read_data("bin_key"));
-		CHECK(kc.get_last_error() == Keychain::NO_ERROR);
+		EXPECT_ERROR(result = kc->read_data("bin_key"));
+		CHECK(kc->get_last_error() == Keychain::NO_ERROR);
 		REQUIRE(result.size() == 4);
 		{
 			PoolByteArray::Read r = result.read();
@@ -369,91 +371,98 @@ TEST_SUITE("[[keychains]] Keychain fallback storage") {
 			CHECK(r[3] == 0xEF);
 		}
 
-		kc.delete_entry("bin_key");
+		kc->delete_entry("bin_key");
 	}
 
 	TEST_CASE("Read nonexistent key returns error") {
-		Keychain kc;
-		kc.set_service("doctest_keychain");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_keychain");
+		kc->set_insecure_fallback(true);
 
-		String result = kc.read_password("nonexistent_key_xyz123");
-		CHECK(kc.get_last_error() == Keychain::ENTRY_NOT_FOUND);
+		String result = kc->read_password("nonexistent_key_xyz123");
+		CHECK(kc->get_last_error() == Keychain::ENTRY_NOT_FOUND);
 		CHECK(result.empty());
 	}
 
 	TEST_CASE("Delete entry") {
-		Keychain kc;
-		kc.set_service("doctest_keychain");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_keychain");
+		kc->set_insecure_fallback(true);
 
-		kc.write_password("delete_me", "temp");
-		EXPECT_ERROR(CHECK(kc.has_entry("delete_me")));
+		kc->write_password("delete_me", "temp");
+		EXPECT_ERROR(CHECK(kc->has_entry("delete_me")));
 
-		Keychain::Error err = kc.delete_entry("delete_me");
+		Keychain::Error err = kc->delete_entry("delete_me");
 		CHECK(err == Keychain::NO_ERROR);
-		CHECK_FALSE(kc.has_entry("delete_me"));
+		CHECK_FALSE(kc->has_entry("delete_me"));
 	}
 
 	TEST_CASE("has_entry") {
-		Keychain kc;
-		kc.set_service("doctest_keychain");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_keychain");
+		kc->set_insecure_fallback(true);
 
-		CHECK_FALSE(kc.has_entry("has_test_abc"));
-		kc.write_password("has_test_abc", "val");
-		EXPECT_ERROR(CHECK(kc.has_entry("has_test_abc")));
-		kc.delete_entry("has_test_abc");
-		CHECK_FALSE(kc.has_entry("has_test_abc"));
+		CHECK_FALSE(kc->has_entry("has_test_abc"));
+		kc->write_password("has_test_abc", "val");
+		EXPECT_ERROR(CHECK(kc->has_entry("has_test_abc")));
+		kc->delete_entry("has_test_abc");
+		CHECK_FALSE(kc->has_entry("has_test_abc"));
 	}
 
 	TEST_CASE("Overwrite existing key") {
-		Keychain kc;
-		kc.set_service("doctest_keychain");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_keychain");
+		kc->set_insecure_fallback(true);
 
-		kc.write_password("ow_key", "first");
+		kc->write_password("ow_key", "first");
 		String first_result;
-		EXPECT_ERROR(first_result = kc.read_password("ow_key"));
+		EXPECT_ERROR(first_result = kc->read_password("ow_key"));
 		CHECK(first_result == "first");
 
-		kc.write_password("ow_key", "second");
+		kc->write_password("ow_key", "second");
 		String second_result;
-		EXPECT_ERROR(second_result = kc.read_password("ow_key"));
+		EXPECT_ERROR(second_result = kc->read_password("ow_key"));
 		CHECK(second_result == "second");
 
-		kc.delete_entry("ow_key");
+		kc->delete_entry("ow_key");
 	}
 
 	TEST_CASE("Empty key rejected") {
-		Keychain kc;
-		kc.set_service("doctest_keychain");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_keychain");
+		kc->set_insecure_fallback(true);
 
 		Keychain::Error err;
-		EXPECT_ERROR(err = kc.write_password("", "val"));
+		EXPECT_ERROR(err = kc->write_password("", "val"));
 		CHECK(err == Keychain::OTHER_ERROR);
 	}
 
 	TEST_CASE("Empty service rejected") {
-		Keychain kc;
-		kc.set_service("");
-		kc.set_insecure_fallback(true);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("");
+		kc->set_insecure_fallback(true);
 
 		Keychain::Error err;
-		EXPECT_ERROR(err = kc.write_password("key", "val"));
+		EXPECT_ERROR(err = kc->write_password("key", "val"));
 		CHECK(err == Keychain::OTHER_ERROR);
 	}
 
 	TEST_CASE("Properties") {
-		Keychain kc;
-		kc.set_service("my_app");
-		CHECK(kc.get_service() == "my_app");
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("my_app");
+		CHECK(kc->get_service() == "my_app");
 
-		kc.set_insecure_fallback(true);
-		CHECK(kc.get_insecure_fallback());
-		kc.set_insecure_fallback(false);
-		CHECK_FALSE(kc.get_insecure_fallback());
+		kc->set_insecure_fallback(true);
+		CHECK(kc->get_insecure_fallback());
+		kc->set_insecure_fallback(false);
+		CHECK_FALSE(kc->get_insecure_fallback());
 	}
 }
 

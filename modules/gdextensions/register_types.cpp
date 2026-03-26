@@ -443,7 +443,9 @@ static void editor_init_callback() {
 }
 #endif // TOOLS_ENABLED
 
+#ifdef GDEXT_THREADPOOL_ENABLED
 static ThreadPool *thread_pool = nullptr;
+#endif
 
 void register_gdextensions_types() {
 #ifdef TOOLS_ENABLED
@@ -513,14 +515,6 @@ void register_gdextensions_types() {
 	Ref<ResourceImporterJSON> json_data = memnew(ResourceImporterJSON);
 	ResourceFormatImporter::get_singleton()->add_importer(json_data);
 #endif
-#ifdef GDEXT_THREADPOOL_ENABLED
-	ClassDB::register_class<ThreadPoolJob>();
-	ClassDB::register_class<ThreadPoolExecuteJob>();
-
-	thread_pool = memnew(ThreadPool);
-	ClassDB::register_class<ThreadPool>();
-	Engine::get_singleton()->add_singleton(Engine::Singleton("ThreadPool", ThreadPool::get_singleton()));
-#endif
 	ClassDB::register_class<LineBuilder2D>();
 	ClassDB::register_class<Phantom>();
 	ClassDB::register_virtual_class<RawPacker>();
@@ -540,6 +534,14 @@ void register_gdextensions_types() {
 	ClassDB::register_class<VoronoiSite>();
 	ClassDB::register_class<VoronoiEdge>();
 #endif // GDEXT_CORE_ENABLED
+#ifdef GDEXT_THREADPOOL_ENABLED
+	ClassDB::register_class<ThreadPoolJob>();
+	ClassDB::register_class<ThreadPoolExecuteJob>();
+
+	thread_pool = memnew(ThreadPool);
+	ClassDB::register_class<ThreadPool>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("ThreadPool", ThreadPool::get_singleton()));
+#endif
 #ifdef GDEXT_STATEMACHINE_ENABLED
 	ClassDB::register_class<StateMachine>();
 	ClassDB::register_class<State>();
@@ -710,7 +712,6 @@ void register_gdextensions_types() {
 #endif // GDEXT_CPUFEATURES_ENABLED
 
 #ifdef GDEXT_KEYCHAINS_ENABLED
-	ClassDB::register_class<Keychain>();
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Keychain", memnew(Keychain)));
 #endif // GDEXT_KEYCHAINS_ENABLED
 

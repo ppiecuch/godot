@@ -188,45 +188,48 @@ TEST_SUITE("[[keychains]] Apple Security.framework backend") {
 	}
 
 	TEST_CASE("Write and read via Security.framework") {
-		Keychain kc;
-		kc.set_service("doctest_apple_keychain");
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_apple_keychain");
 
 		// Write a test password
-		Keychain::Error err = kc.write_password("apple_test_key", "apple_secret_123");
+		Keychain::Error err = kc->write_password("apple_test_key", "apple_secret_123");
 		CHECK(err == Keychain::NO_ERROR);
 
 		// Read it back
-		String result = kc.read_password("apple_test_key");
+		String result = kc->read_password("apple_test_key");
 		CHECK(result == "apple_secret_123");
-		CHECK(kc.get_last_error() == Keychain::NO_ERROR);
+		CHECK(kc->get_last_error() == Keychain::NO_ERROR);
 
 		// Delete
-		err = kc.delete_entry("apple_test_key");
+		err = kc->delete_entry("apple_test_key");
 		CHECK(err == Keychain::NO_ERROR);
 
 		// Verify deleted
-		result = kc.read_password("apple_test_key");
-		CHECK(kc.get_last_error() == Keychain::ENTRY_NOT_FOUND);
+		result = kc->read_password("apple_test_key");
+		CHECK(kc->get_last_error() == Keychain::ENTRY_NOT_FOUND);
 	}
 
 	TEST_CASE("Read nonexistent key") {
-		Keychain kc;
-		kc.set_service("doctest_apple_keychain");
-		String result = kc.read_password("nonexistent_apple_key_xyz");
-		CHECK(kc.get_last_error() == Keychain::ENTRY_NOT_FOUND);
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_apple_keychain");
+		String result = kc->read_password("nonexistent_apple_key_xyz");
+		CHECK(kc->get_last_error() == Keychain::ENTRY_NOT_FOUND);
 	}
 
 	TEST_CASE("Overwrite key") {
-		Keychain kc;
-		kc.set_service("doctest_apple_keychain");
+		Keychain *kc = Keychain::get_singleton();
+		ERR_FAIL_COND(!kc);
+		kc->set_service("doctest_apple_keychain");
 
-		kc.write_password("apple_ow_key", "first");
-		CHECK(kc.read_password("apple_ow_key") == "first");
+		kc->write_password("apple_ow_key", "first");
+		CHECK(kc->read_password("apple_ow_key") == "first");
 
-		kc.write_password("apple_ow_key", "second");
-		CHECK(kc.read_password("apple_ow_key") == "second");
+		kc->write_password("apple_ow_key", "second");
+		CHECK(kc->read_password("apple_ow_key") == "second");
 
-		kc.delete_entry("apple_ow_key");
+		kc->delete_entry("apple_ow_key");
 	}
 }
 

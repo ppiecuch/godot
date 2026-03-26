@@ -722,11 +722,12 @@ TEST_SUITE("[ConsoleHw]") {
 	}
 
 	TEST_CASE("[arm2d] has_neon reports correctly") {
-		ConsoleHw hw;
+		ConsoleHw *hw = ConsoleHw::get_singleton();
+		REQUIRE(hw != nullptr);
 #if ARM2D_HAS_NEON
-		CHECK(hw.has_neon() == true);
+		CHECK(hw->has_neon() == true);
 #else
-		CHECK(hw.has_neon() == false);
+		CHECK(hw->has_neon() == false);
 #endif
 	}
 }

@@ -24,6 +24,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <stdio.h>
 
+#include "aa2map_defines.h"
+
 typedef struct
 {
   const char *input_file[ARGS_MAX];
