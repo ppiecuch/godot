@@ -805,12 +805,12 @@ void TrueTypeFontUtils::set_text_property(TextProperties prop, Variant value) {
 		} break;
 		case TEXT_TABWIDTH: {
 			tab_width = value;
-		}
+		} break;
 		case TEXT_DIRECTION: {
 			int v = value;
 			ERR_FAIL_COND_MSG(v != 1 && v != -1, "Only 1 and -1 are allowed");
 			direction = value;
-		}
+		} break;
 		default:
 			WARN_PRINT("Unsupported text property");
 	}
@@ -847,9 +847,11 @@ TrueTypeFontUtils::TrueTypeFontUtils(const TrueTypeFontUtils &mom) :
 	glyph_bbox = mom.glyph_bbox;
 	letter_spacing = mom.letter_spacing;
 	space_size = mom.space_size;
+	tab_width = mom.tab_width;
+	direction = mom.direction;
 	font_unit_scale = mom.font_unit_scale;
 
-	cps = mom.cps; // properties for each character
+	cps = mom.cps;
 	settings = mom.settings;
 	glyph_index_map = mom.glyph_index_map;
 	face = mom.face;
@@ -869,9 +871,11 @@ TrueTypeFontUtils &TrueTypeFontUtils::operator=(const TrueTypeFontUtils &mom) {
 	glyph_bbox = mom.glyph_bbox;
 	letter_spacing = mom.letter_spacing;
 	space_size = mom.space_size;
+	tab_width = mom.tab_width;
+	direction = mom.direction;
+	font_unit_scale = mom.font_unit_scale;
 
-	cps = mom.cps; // properties for each character
-	settings = mom.settings;
+	cps = mom.cps;
 	glyph_index_map = mom.glyph_index_map;
 	face = mom.face;
 
@@ -889,12 +893,14 @@ TrueTypeFontUtils::TrueTypeFontUtils(TrueTypeFontUtils &&mom) :
 	glyph_bbox = mom.glyph_bbox;
 	letter_spacing = mom.letter_spacing;
 	space_size = mom.space_size;
+	tab_width = mom.tab_width;
+	direction = mom.direction;
 	font_unit_scale = mom.font_unit_scale;
 
-	cps = mom.cps; // properties for each character
-	settings = mom.settings;
+	cps = std::move(mom.cps);
+	settings = std::move(mom.settings);
 	glyph_index_map = std::move(mom.glyph_index_map);
-	face = mom.face;
+	face = std::move(mom.face);
 }
 
 TrueTypeFontUtils &TrueTypeFontUtils::operator=(TrueTypeFontUtils &&mom) {
@@ -910,11 +916,14 @@ TrueTypeFontUtils &TrueTypeFontUtils::operator=(TrueTypeFontUtils &&mom) {
 	glyph_bbox = mom.glyph_bbox;
 	letter_spacing = mom.letter_spacing;
 	space_size = mom.space_size;
+	tab_width = mom.tab_width;
+	direction = mom.direction;
+	font_unit_scale = mom.font_unit_scale;
 
-	cps = mom.cps; // properties for each character
-	settings = mom.settings;
+	cps = std::move(mom.cps);
+	settings = std::move(mom.settings);
 	glyph_index_map = std::move(mom.glyph_index_map);
-	face = mom.face;
+	face = std::move(mom.face);
 	return *this;
 }
 
@@ -1118,7 +1127,12 @@ Vector<Vector<Point2>> TrueTypeFontUtils::get_string_as_points(const String &str
 		shapes.back().translate(pos);
 	});
 	Vector<Vector<Point2>> result;
-
+	for (const auto &shape : shapes) {
+		Vector<Vector<Point2>> char_points = get_character_as_points(shape, vflip, simplify_amt);
+		for (int i = 0; i < char_points.size(); i++) {
+			result.push_back(char_points[i]);
+		}
+	}
 	return result;
 }
 
@@ -1130,7 +1144,9 @@ bool TrueTypeFontUtils::is_valid_glyph(uint32_t glyph) const {
 }
 
 size_t TrueTypeFontUtils::index_for_glyph(uint32_t glyph) const {
-	return glyph_index_map.find(glyph)->second;
+	auto it = glyph_index_map.find(glyph);
+	ERR_FAIL_COND_V_MSG(it == glyph_index_map.end(), 0, vformat("Glyph %d not found in index map.", glyph));
+	return it->second;
 }
 
 const TrueTypeFontUtils::glyph_props &TrueTypeFontUtils::get_glyph_properties(uint32_t glyph) const {
@@ -1219,3 +1235,179 @@ TrueTypeFontUtils::TrueTypeFontUtils() :
 }
 
 TrueTypeFontUtils::~TrueTypeFontUtils() {}
+
+// =========================================================================
+// Tests
+// =========================================================================
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
+
+TEST_SUITE("[[truetype_utils]] UnicodeBlock") {
+	TEST_CASE("[truetype] Latin range covers ASCII letters") {
+		CHECK(UnicodeBlock::Latin.begin == 0x0020);
+		CHECK(UnicodeBlock::Latin.end == 0x007F);
+		CHECK(UnicodeBlock::Latin.get_num_glyphs() > 0);
+		CHECK('A' >= UnicodeBlock::Latin.begin);
+		CHECK('A' <= UnicodeBlock::Latin.end);
+	}
+
+	TEST_CASE("[truetype] CJK range is large") {
+		CHECK(UnicodeBlock::CJKUnified.get_num_glyphs() > 20000);
+	}
+
+	TEST_CASE("[truetype] Emoji range valid") {
+		CHECK(UnicodeBlock::Emoticons.begin == 0x1F600);
+		CHECK(UnicodeBlock::Emoticons.end == 0x1F64F);
+	}
+}
+
+TEST_SUITE("[[truetype_utils]] TrueTypePath") {
+	TEST_CASE("[truetype] empty path") {
+		TrueTypePath path;
+		CHECK(path.commands.empty());
+	}
+
+	TEST_CASE("[truetype] add commands") {
+		TrueTypePath path;
+		path.move_to(Point2(0, 0));
+		path.line_to(Point2(10, 0));
+		path.line_to(Point2(10, 10));
+		path.close();
+		CHECK(path.commands.size() == 4);
+	}
+
+	TEST_CASE("[truetype] translate shifts all points") {
+		TrueTypePath path;
+		path.move_to(Point2(0, 0));
+		path.line_to(Point2(10, 0));
+		path.translate(Point2(5, 3));
+		auto cmds = path.commands;
+		CHECK(cmds[0].to.x == doctest::Approx(5));
+		CHECK(cmds[0].to.y == doctest::Approx(3));
+		CHECK(cmds[1].to.x == doctest::Approx(15));
+		CHECK(cmds[1].to.y == doctest::Approx(3));
+	}
+}
+
+TEST_SUITE("[[truetype_utils]] TrueTypeFontUtils") {
+	TEST_CASE("[truetype] default construction") {
+		TrueTypeFontUtils font;
+		CHECK(font.get_size() == 0);
+		CHECK(font.get_ascender_height() == doctest::Approx(0));
+		CHECK(font.get_descender_height() == doctest::Approx(0));
+		CHECK(font.get_num_characters() == 0);
+	}
+
+	TEST_CASE("[truetype] text properties set/get") {
+		TrueTypeFontUtils font;
+		font.set_text_property(TrueTypeFontUtils::TEXT_SPACESIZE, 2.0f);
+		CHECK((float)font.get_text_property(TrueTypeFontUtils::TEXT_SPACESIZE) == doctest::Approx(2.0f));
+
+		font.set_text_property(TrueTypeFontUtils::TEXT_TABWIDTH, 8);
+		CHECK((int)font.get_text_property(TrueTypeFontUtils::TEXT_TABWIDTH) == 8);
+
+		font.set_text_property(TrueTypeFontUtils::TEXT_DIRECTION, -1);
+		CHECK((int)font.get_text_property(TrueTypeFontUtils::TEXT_DIRECTION) == -1);
+	}
+
+	TEST_CASE("[truetype] text property set_direction rejects invalid") {
+		TrueTypeFontUtils font;
+		font.set_text_property(TrueTypeFontUtils::TEXT_DIRECTION, 1);
+		EXPECT_ERROR(font.set_text_property(TrueTypeFontUtils::TEXT_DIRECTION, 0));
+		// Should still be 1 (rejected)
+		CHECK((int)font.get_text_property(TrueTypeFontUtils::TEXT_DIRECTION) == 1);
+	}
+
+	TEST_CASE("[truetype] tab_width not clobbered by set_text_property break fix") {
+		// Regression test for the missing break statement bug
+		TrueTypeFontUtils font;
+		font.set_text_property(TrueTypeFontUtils::TEXT_TABWIDTH, 8);
+		font.set_text_property(TrueTypeFontUtils::TEXT_DIRECTION, 1);
+		CHECK((int)font.get_text_property(TrueTypeFontUtils::TEXT_TABWIDTH) == 8);
+		CHECK((int)font.get_text_property(TrueTypeFontUtils::TEXT_DIRECTION) == 1);
+	}
+
+	TEST_CASE("[truetype] 26.6 fixed-point conversions") {
+		CHECK(TrueTypeFontUtils::int26p6_to_dbl(64) == doctest::Approx(1.0));
+		CHECK(TrueTypeFontUtils::int26p6_to_dbl(128) == doctest::Approx(2.0));
+		CHECK(TrueTypeFontUtils::int26p6_to_dbl(32) == doctest::Approx(0.5));
+		CHECK(TrueTypeFontUtils::dbl_to_int26p6(1.0) == 64);
+		CHECK(TrueTypeFontUtils::dbl_to_int26p6(2.5) == 160);
+	}
+
+	TEST_CASE("[truetype] 26.6 point conversion") {
+		Point2 p = TrueTypeFontUtils::int26p6_to_dbl(128, 192);
+		CHECK(p.x == doctest::Approx(2.0));
+		CHECK(p.y == doctest::Approx(3.0));
+	}
+
+	TEST_CASE("[truetype] load system font") {
+		TrueTypeFontUtils font;
+#if defined(OSX_ENABLED)
+		bool ok = font.load("Helvetica", 24);
+#elif defined(X11_ENABLED)
+		bool ok = font.load("DejaVu Sans", 24);
+#elif defined(WINDOWS_ENABLED)
+		bool ok = font.load("Arial", 24);
+#else
+		bool ok = false;
+#endif
+		if (ok) {
+			CHECK(font.get_size() == 24);
+			CHECK(font.get_ascender_height() > 0);
+			CHECK(font.get_num_characters() > 0);
+			CHECK(font.is_valid_glyph('A'));
+			CHECK(font.is_valid_glyph('z'));
+
+			// Character as path
+			TrueTypePath path = font.get_character_as_path('A');
+			CHECK(!path.commands.empty());
+
+			// Character as points
+			auto pts = font.get_character_as_points('O');
+			CHECK(pts.size() > 0); // 'O' has at least outer contour
+
+			// String bounding box
+			Rect2 bbox = font.get_string_bounding_box("Hello", 0, 0);
+			CHECK(bbox.size.x > 0);
+			CHECK(bbox.size.y > 0);
+
+			// Invalid glyph
+			CHECK_FALSE(font.is_valid_glyph(0xFFFF));
+		}
+	}
+
+	TEST_CASE("[truetype] load nonexistent font fails") {
+		TrueTypeFontUtils font;
+		EXPECT_ERROR({
+			bool ok = font.load("ThisFontDoesNotExist12345", 24);
+			CHECK_FALSE(ok);
+		});
+	}
+
+	TEST_CASE("[truetype] copy constructor preserves properties") {
+		TrueTypeFontUtils a;
+		a.set_text_property(TrueTypeFontUtils::TEXT_TABWIDTH, 8);
+		a.set_text_property(TrueTypeFontUtils::TEXT_DIRECTION, -1);
+		a.set_text_property(TrueTypeFontUtils::TEXT_SPACESIZE, 2.5f);
+
+		TrueTypeFontUtils b(a);
+		CHECK((int)b.get_text_property(TrueTypeFontUtils::TEXT_TABWIDTH) == 8);
+		CHECK((int)b.get_text_property(TrueTypeFontUtils::TEXT_DIRECTION) == -1);
+		CHECK((float)b.get_text_property(TrueTypeFontUtils::TEXT_SPACESIZE) == doctest::Approx(2.5f));
+	}
+
+	TEST_CASE("[truetype] move constructor transfers state") {
+		TrueTypeFontUtils a;
+		a.set_text_property(TrueTypeFontUtils::TEXT_TABWIDTH, 12);
+		a.set_text_property(TrueTypeFontUtils::TEXT_DIRECTION, -1);
+
+		TrueTypeFontUtils b(std::move(a));
+		CHECK((int)b.get_text_property(TrueTypeFontUtils::TEXT_TABWIDTH) == 12);
+		CHECK((int)b.get_text_property(TrueTypeFontUtils::TEXT_DIRECTION) == -1);
+	}
+}
+
+#endif // DOCTEST

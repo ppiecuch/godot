@@ -714,6 +714,9 @@ if is_enabled("opensteer"):
     )
     env_module.Append(CPPPATH=["thirdparty/opensteer/include"])
 
+if is_enabled("simpleai"):
+    env_module.Append(CPPPATH=["thirdparty/glm", "thirdparty/simple_ai"])
+
 if is_enabled("sparkparticles"):
     thirdparty_sources += Glob("thirdparty/spark/src/**/*.cpp")
     if env["tools"]:

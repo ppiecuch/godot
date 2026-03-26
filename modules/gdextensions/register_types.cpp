@@ -268,6 +268,9 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #ifdef GDEXT_OPENSTEER_ENABLED
 #include "opensteer/gd_opensteer.h"
 #endif
+#ifdef GDEXT_SIMPLEAI_ENABLED
+#include "simpleai/gd_simple_ai.h"
+#endif
 #ifdef GDEXT_SLUGFONT_ENABLED
 #include "slugfont/gd_slug.h"
 #endif
@@ -584,6 +587,18 @@ void register_gdextensions_types() {
 	ClassDB::register_class<GdOpenSteerVehicle>();
 	ClassDB::register_class<GdOpenSteerWorld>();
 	ClassDB::register_class<GdOpenSteerPathway>();
+#endif
+#ifdef GDEXT_SIMPLEAI_ENABLED
+	ClassDB::register_class<SimpleAICharacter>();
+	ClassDB::register_class<SimpleAIBehaviorTree>();
+	ClassDB::register_class<SimpleAITreeNode>();
+	ClassDB::register_class<SimpleAITask>();
+	ClassDB::register_class<SimpleAICondition>();
+	ClassDB::register_class<SimpleAIAggroMgr>();
+	ClassDB::register_class<SimpleAIZone>();
+	ClassDB::register_class<SimpleAIGroupMgr>();
+	ClassDB::register_class<SimpleAIFilter>();
+	ClassDB::register_class<SimpleAISteering>();
 #endif
 #ifdef GDEXT_SLUGFONT_ENABLED
 	ClassDB::register_class<SlugFont>();
