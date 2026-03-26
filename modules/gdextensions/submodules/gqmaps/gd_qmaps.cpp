@@ -44,8 +44,8 @@
 #include "libmap/surface_gatherer.h"
 
 extern "C" {
-#include "aa2map/aa2map_defines.h"
 #include "aa2map/aa2map.h"
+#include "aa2map/aa2map_defines.h"
 #include "aa2map/aa2map_misc.h"
 #include "aa2map/aa2map_parse.h"
 #include "aa2map/aa2map_write.h"
@@ -988,7 +988,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		layers.push_back(String("XXXXX\nX   X\nX   X\nX   X\nXXXXX\n"));
 
 		Dictionary opts;
-		opts["add_ascii"] = "!@";  // scatter two decoration chars
+		opts["add_ascii"] = "!@"; // scatter two decoration chars
 
 		q->load_ascii_map(layers, opts);
 		Array ents = q->get_entity_dicts();

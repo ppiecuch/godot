@@ -496,4 +496,3 @@ void ThreadPool::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("cancel_task_wait", "job"), &ThreadPool::cancel_task_wait);
 	ClassDB::bind_method(D_METHOD("cancel_task", "job"), &ThreadPool::cancel_task);
 }
-

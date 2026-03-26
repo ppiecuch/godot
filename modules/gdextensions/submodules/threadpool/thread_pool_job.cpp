@@ -227,8 +227,8 @@ void ThreadPoolJob::_bind_methods() {
 #ifdef DOCTEST
 #include "doctest/doctest.h"
 
-#include "thread_pool_execute_job.h"
 #include "thread_pool.h"
+#include "thread_pool_execute_job.h"
 
 TEST_SUITE("[[threadpool]] ThreadPoolJob") {
 	TEST_CASE("[threadpool] default construction") {
@@ -374,4 +374,3 @@ TEST_SUITE("[[threadpool]] ThreadPool") {
 }
 
 #endif // DOCTEST
-

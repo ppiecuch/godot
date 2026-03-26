@@ -120,11 +120,11 @@ static inline void _trace(int line, const char *file, const String &text) {
 // Register a cleanup callback that fires at exit.
 // SceneTree::add_exit_callback is static and works without a SceneTree instance.
 // Callbacks are fired from SceneTree::finish() or Main::start() after doctests.
-#define _register_global_ref(pRef)                    \
-	{                                                 \
-		SceneTree::add_exit_callback([&]() {          \
-			pRef.unref();                             \
-		});                                           \
+#define _register_global_ref(pRef)           \
+	{                                        \
+		SceneTree::add_exit_callback([&]() { \
+			pRef.unref();                    \
+		});                                  \
 	}
 
 #define for_all(range, func) \
