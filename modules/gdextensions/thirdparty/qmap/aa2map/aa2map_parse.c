@@ -3,7 +3,6 @@ aa2map_parse.c - ASCII parser for aa2map
 
 Copyright (c) 2007 NoisyB
 
-
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -38,7 +37,6 @@ aa2map_parse (st_aa2map_t *aa2map)
 {
   unsigned int i = 0, j = 0;
   int xpos = 0, ypos = 0, zpos = 0;
-//  unsigned int x = 0, y = 0;
   st_aa2map_parse_t *parsed = NULL;
   int pos = 0;
   char *p = NULL;
@@ -46,7 +44,6 @@ aa2map_parse (st_aa2map_t *aa2map)
   unsigned int total_size = 0;
   FILE *fh = NULL;
 
-  // get total_size
   for (; aa2map->input_file[i]; i++)
     {
       if (access (aa2map->input_file[i], R_OK) != 0)
@@ -56,22 +53,12 @@ aa2map_parse (st_aa2map_t *aa2map)
         }
 
       file_size = fsizeof (aa2map->input_file[i]);
-#if 0
-      if (file_size < 11) // 9x9 + 2 line feed
-        {
-          AA2MAP_LOG_ERROR ( "ERROR: The map is too small (at least 9 x 9 plus 2 line feed)\n"
-                           "EXAMPLE: ***(+\\n)\n"
-                           "         * *(+\\n)\n"
-                           "         ***\n");
-        }
-#endif
       total_size += file_size;
     }
 
-  if (aa2map->mirror) // when the map is supposed to be mirror'd we need the double
+  if (aa2map->mirror)
     total_size *= 2;
 
-  // malloc parse buffer
   p = malloc (total_size + 1);
   if (!p)
     {
@@ -79,10 +66,6 @@ aa2map_parse (st_aa2map_t *aa2map)
       return NULL;
     }
   memset (p, 0, total_size + 1);
-
-  // malloc st_aa2map_parse_t array
-  if (parsed)
-    free (parsed);
 
   if (!(parsed = malloc (sizeof (st_aa2map_parse_t) * (total_size + 1))))
     {
@@ -92,7 +75,6 @@ aa2map_parse (st_aa2map_t *aa2map)
     }
   memset (parsed, 0, sizeof (st_aa2map_parse_t) * (total_size + 1));
 
-  // parse
   for (i = 0; aa2map->input_file[i]; i++)
     {
       if (!(fh = fopen (aa2map->input_file[i], "r")))
@@ -123,16 +105,14 @@ aa2map_parse (st_aa2map_t *aa2map)
             }
           else
             {
-              st_aa2map_object_t *o = NULL;
-
-              o = aa2map_get_object_by_ascii (aa2map, c);
+              st_aa2map_object_t *o = aa2map_get_object_by_ascii (aa2map, c);
 
               if (o)
                 {
                   parsed[pos].id = o->id;
                   parsed[pos].name_s = o->name_s;
-                  parsed[pos].xscale = aa2map->xscale;  
-                  parsed[pos].yscale = aa2map->yscale;  
+                  parsed[pos].xscale = aa2map->xscale;
+                  parsed[pos].yscale = aa2map->yscale;
                   parsed[pos].zscale = aa2map->zscale;
                   parsed[pos].angle = 0;
 
@@ -156,7 +136,9 @@ aa2map_parse (st_aa2map_t *aa2map)
 
   AA2MAP_LOG_INFO ("Map dimensions: %dx%dx%d\n", aa2map->xsize, aa2map->ysize, aa2map->zsize);
 
-  //mirror
+  // Mirror: duplicate all parsed elements and reflect along the specified
+  // cardinal direction ('n'/'s' mirrors Y, 'e'/'w' mirrors X), doubling
+  // the map size on the mirrored axis.
   if (aa2map->mirror)
     if (strchr ("nesw", aa2map->mirror))
     {
@@ -165,8 +147,8 @@ aa2map_parse (st_aa2map_t *aa2map)
         {
           parsed[pos].id = parsed[i].id;
           parsed[pos].name_s = parsed[i].name_s;
-          parsed[pos].xscale = parsed[i].xscale;  
-          parsed[pos].yscale = parsed[i].yscale;  
+          parsed[pos].xscale = parsed[i].xscale;
+          parsed[pos].yscale = parsed[i].yscale;
           parsed[pos].zscale = parsed[i].zscale;
           parsed[pos].angle = parsed[i].angle;
 
@@ -181,7 +163,7 @@ aa2map_parse (st_aa2map_t *aa2map)
                 parsed[i].y = aa2map->ysize + parsed[i].y;
                 break;
               case 's':
-                parsed[i].y = (aa2map->ysize * 2 - 1) - parsed[i].y; 
+                parsed[i].y = (aa2map->ysize * 2 - 1) - parsed[i].y;
                 break;
               case 'w':
                 parsed[pos].x = (aa2map->xsize - 1) - parsed[pos].x;
@@ -201,37 +183,16 @@ aa2map_parse (st_aa2map_t *aa2map)
         aa2map->xsize *= 2;
     }
 
-  // flip
+  // Flip: by default X is mirrored (ASCII left-to-right → map right-to-left).
+  // --hflip disables the default X mirror. --vflip enables Y mirror.
   for (i = 0; parsed[i].id; i++)
     {
-      if (aa2map->hflip == 1)
-        {
-        }
-      else
+      if (!aa2map->hflip)
         parsed[i].x = (aa2map->xsize - 1) - parsed[i].x;
 
-      if (aa2map->vflip == 1)
+      if (aa2map->vflip)
         parsed[i].y = (aa2map->ysize - 1) - parsed[i].y;
     }
-
-#if 0
-  // cube
-  for (i = 0; i < pos; i++)
-    for (j = 0; j < pos; j++)
-      {
-        if (parsed[i].z == parsed[j].z - 1) // top
-          {
-            if (parsed[i].x == parsed[j].x - 1) // 0 - 2
-              parsed[i].
-          }
-        else if (parsed[i].z == parsed[j].z) // center
-          {
-          }
-        else if (parsed[i].z == parsed[j].z + 1) // bottom
-          {
-          }
-      }
-#endif
 
   if (p)
     free (p);
@@ -240,33 +201,61 @@ aa2map_parse (st_aa2map_t *aa2map)
 }
 
 
-#if 0
-static void
-aa2map_add_ascii_func (st_aa2map_parse_t *a)
-{
-}
-#endif
-
-
+// Randomly scatter ASCII characters from aa2map->add_ascii onto floor tiles.
+// Each character in add_ascii is looked up via aa2map_get_object_by_ascii
+// and placed at a random floor tile position (replacing the floor with the
+// new object type). Characters are distributed round-robin across floors.
 void
 aa2map_add_ascii (st_aa2map_t *aa2map, st_aa2map_parse_t *a)
 {
-  (void) aa2map;
-  (void) a;
-#if 0
+  int add_len = 0;
+  int floor_count = 0;
   int i = 0;
-  int floors = 0;
-  int add_ascii_len = strlen (aa2map->add_ascii);
-  int pos = 0;   
 
-  for (; a[i].id; i++)
+  if (!aa2map->add_ascii)
+    return;
+
+  add_len = strlen (aa2map->add_ascii);
+  if (add_len == 0)
+    return;
+
+  // Count floor tiles
+  for (i = 0; a[i].id; i++)
     if (a[i].id == AA2MAP_FLOOR)
-      floors++;
+      floor_count++;
 
-  if (floors > add_ascii_len)
-    for (i = 0; i < add_ascii_len; i++)
-      if (a[i].id == AA2MAP_FLOOR)
+  if (floor_count == 0)
+    return;
+
+  // Scatter each add_ascii character onto a random floor tile
+  for (i = 0; i < add_len; i++)
+    {
+      st_aa2map_object_t *o = aa2map_get_object_by_ascii (aa2map, aa2map->add_ascii[i]);
+      if (!o)
+        continue;
+
+      // Pick a random floor tile
+      int target = RANDOM (0, floor_count - 1);
+      int floor_idx = 0;
+      int j;
+
+      for (j = 0; a[j].id; j++)
         {
+          if (a[j].id == AA2MAP_FLOOR)
+            {
+              if (floor_idx == target)
+                {
+                  a[j].id = o->id;
+                  a[j].name_s = o->name_s;
+                  floor_count--;
+                  break;
+                }
+              floor_idx++;
+            }
         }
-#endif
+
+      if (floor_count == 0)
+        break;
+    }
 }
+

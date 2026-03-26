@@ -498,7 +498,9 @@ aa2map_strafe (st_aa2map_t *aa2map, int pads, int gap_initial, int gap_increment
   idtech3_map_brush6 (aa2map->map_file, &b);
   xpos += (FIRSTPAD_LEN + gap);
 
-  // HACK
+  // TODO: strafe mode overrides map dimensions to fit the generated course
+  // into a single world box. This should be refactored to compute bounds
+  // from the generated geometry instead of hardcoding size=1.
   aa2map->xsize = aa2map->ysize = aa2map->zsize = 1;
   aa2map->xscale = xpos;
   aa2map->yscale = yscale + SIDE_SPACE * 2;
@@ -616,8 +618,6 @@ aa2map_run (st_aa2map_t *aa2map, int run_len, int checkpoints)
 {
   int i = 0;
   char message[MAXBUFSIZE];
-//  char name[MAXBUFSIZE];
-//  char s[MAXBUFSIZE];
   const char *start_stop, *trigger, *floor, *floor_edge;
   const char *wall_n, *wall_s, *wall_w, *wall_e;
   const char *wall_edge_n, *wall_edge_s, *wall_edge_w, *wall_edge_e;
@@ -780,7 +780,6 @@ aa2map_run (st_aa2map_t *aa2map, int run_len, int checkpoints)
   fprintf (aa2map->map_file, "  \"classname\" \"trigger_multiple\"\n");
   fprintf (aa2map->map_file, "  \"target\" \"startTimer\"\n");
 
-  // TODO: fix height thingy
   aa2map_run_brush (aa2map, 0, 256, 0, 256, starty - 32, starty, 64, 1024, 1024, trigger, 256, 256, 256);
 
   fprintf (aa2map->map_file, "}\n");
@@ -858,9 +857,7 @@ aa2map_museum (st_aa2map_t *aa2map, const char *pk3_file)
     }
 
   for (i = 0; i < pk3->entries && i < UNZIP2_MAX_ENTRIES && assets < AA2MAP_MAX_ASSETS; i++)
-    if (stristr (get_suffix (pk3->entry[i]->name), ".md3") //||
-//        !strnicmp (pk3->entry[i]->name, "levelshot", 9)
-)
+    if stristr (get_suffix (pk3->entry[i]->name), ".md3") // || !strnicmp (pk3->entry[i]->name, "levelshot", 9)
       if (strlen (pk3->entry[i]->name) < AA2MAP_MAX_ASSET_NAME)
         {
           strncpy (asset[assets], pk3->entry[i]->name, AA2MAP_MAX_ASSET_NAME)[AA2MAP_MAX_ASSET_NAME - 1] = 0;
@@ -880,7 +877,8 @@ aa2map_museum (st_aa2map_t *aa2map, const char *pk3_file)
                                        NULL,
                                        NULL);
 
-  // HACK
+  // TODO: run mode overrides map dimensions to fit all assets in a grid.
+  // Should compute bounds from actual asset placement instead.
   aa2map->xsize = aa2map->ysize = aa2map->zsize = 1;
   aa2map->xscale = (((int) sqrt (assets)) + 2) * SPACE_RADIUS;
   aa2map->yscale = aa2map->xscale;
@@ -888,7 +886,6 @@ aa2map_museum (st_aa2map_t *aa2map, const char *pk3_file)
 
   memcpy (&b, &bak, sizeof (st_map_brush_t));
   idtech3_map_scale (&b, aa2map->xscale - 2, aa2map->yscale - 2, 32);
-  // TODO: cull
   idtech3_map_trans (&b, 1, 1, 1);
   sprintf (b.texture, "%s/block_trans", aa2map->path);
   b.xsize = aa2map->xscale - 2;

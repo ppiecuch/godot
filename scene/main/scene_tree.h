@@ -295,7 +295,9 @@ private:
 	void _call_idle_callbacks();
 	static ExitCallback exit_callbacks[MAX_EXIT_CALLBACKS];
 	static int exit_callback_count;
-	void _call_exit_callbacks();
+	static void _call_exit_callbacks();
+
+	friend class Main;
 
 protected:
 	void _notification(int p_notification);

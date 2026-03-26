@@ -351,8 +351,28 @@ void FlashTSDB::_bind_methods() {
 #include "doctest/doctest.h"
 #include "doctest/doctest_godot.h"
 
+static int _test_counter = 0;
+
 static String _test_path(const char *name) {
-	return vformat("user://flashdb_test_%s_%d", name, OS::get_singleton()->get_ticks_msec());
+	// Use counter + ticks to guarantee unique paths across tests and runs
+	return vformat("user://flashdb_test_%s_%d_%d", name, ++_test_counter, OS::get_singleton()->get_ticks_msec());
+}
+
+static void _test_cleanup(const String &path) {
+	String abs_path = ProjectSettings::get_singleton()->globalize_path(path);
+	DirAccess *da = DirAccess::open(abs_path);
+	if (da) {
+		da->list_dir_begin();
+		String f;
+		while ((f = da->get_next()) != "") {
+			if (!da->current_is_dir()) {
+				da->remove(abs_path.plus_file(f));
+			}
+		}
+		da->list_dir_end();
+		da->remove(abs_path);
+		memdelete(da);
+	}
 }
 
 TEST_SUITE("[[flashdb]] FlashKVDB") {
@@ -456,11 +476,13 @@ TEST_SUITE("[[flashdb]] FlashKVDB") {
 
 	TEST_CASE("[flashdb] get_key_count") {
 		FlashKVDB db;
-		REQUIRE(db.open("test", _test_path("kv_cnt")));
+		String path = _test_path("kv_cnt");
+		REQUIRE(db.open("kv_cnt", path));
 		CHECK(db.get_key_count() == 0);
 		db.set_string("x", "1");
 		CHECK(db.get_key_count() == 1);
 		db.close();
+		_test_cleanup(path);
 	}
 
 	TEST_CASE("[flashdb] ops on closed db are safe") {
@@ -503,16 +525,19 @@ TEST_SUITE("[[flashdb]] FlashTSDB") {
 
 	TEST_CASE("[flashdb] append and count") {
 		FlashTSDB db;
-		REQUIRE(db.open("ts", _test_path("ts_app"), 128));
+		String path = _test_path("ts_app");
+		REQUIRE(db.open("ts_app", path, 128));
 		CHECK(db.append_string("ev1"));
 		CHECK(db.append_string("ev2"));
 		CHECK(db.get_record_count() == 2);
 		db.close();
+		_test_cleanup(path);
 	}
 
 	TEST_CASE("[flashdb] append binary") {
 		FlashTSDB db;
-		REQUIRE(db.open("ts", _test_path("ts_bin"), 64));
+		String path = _test_path("ts_bin");
+		REQUIRE(db.open("ts_bin", path, 64));
 		PoolByteArray data;
 		data.resize(4);
 		{
@@ -525,20 +550,24 @@ TEST_SUITE("[[flashdb]] FlashTSDB") {
 		CHECK(db.append_data(data));
 		CHECK(db.get_record_count() == 1);
 		db.close();
+		_test_cleanup(path);
 	}
 
 	TEST_CASE("[flashdb] append variant") {
 		FlashTSDB db;
-		REQUIRE(db.open("ts", _test_path("ts_var"), 256));
+		String path = _test_path("ts_var");
+		REQUIRE(db.open("ts_var", path, 256));
 		CHECK(db.append_value(42));
 		CHECK(db.append_value("msg"));
 		CHECK(db.get_record_count() == 2);
 		db.close();
+		_test_cleanup(path);
 	}
 
 	TEST_CASE("[flashdb] records have timestamp") {
 		FlashTSDB db;
-		REQUIRE(db.open("ts", _test_path("ts_time"), 128));
+		String path = _test_path("ts_time");
+		REQUIRE(db.open("ts_time", path, 128));
 		db.append_string("log");
 		Array recs = db.get_all_records();
 		REQUIRE(recs.size() == 1);
@@ -547,17 +576,20 @@ TEST_SUITE("[[flashdb]] FlashTSDB") {
 		CHECK(r.has("status"));
 		CHECK((int64_t)r["time"] > 0);
 		db.close();
+		_test_cleanup(path);
 	}
 
 	TEST_CASE("[flashdb] clean removes all") {
 		FlashTSDB db;
-		REQUIRE(db.open("ts", _test_path("ts_clean"), 128));
+		String path = _test_path("ts_clean");
+		REQUIRE(db.open("ts_clean", path, 128));
 		db.append_string("a");
 		db.append_string("b");
 		CHECK(db.get_record_count() == 2);
 		db.clean();
 		CHECK(db.get_record_count() == 0);
 		db.close();
+		_test_cleanup(path);
 	}
 
 	TEST_CASE("[flashdb] ops on closed db are safe") {

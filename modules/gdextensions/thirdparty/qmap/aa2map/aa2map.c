@@ -270,9 +270,7 @@ aa2map_gen (st_aa2map_t *aa2map)
   aa2map->shader_file = stdout;
   aa2map->xscale = aa2map->yscale = aa2map->zscale = 128; // default ASCII block size
   aa2map->type = AA2MAP_IDTECH3;
-  // default path used in/for texture, map and shader
   strcpy (aa2map->path, AA2MAP_PATH_DEFAULT);
-  // sprintf (aa2map->path, "%08x", RANDOM (0x10000000, 0xffffffff)); // TODO: recalculate per generation (if more than one map at once is supported)
   // maze defaults
   aa2map->xmaze = 10;
   aa2map->ymaze = 20;

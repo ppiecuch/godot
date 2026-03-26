@@ -52,7 +52,9 @@ typedef struct
 
 extern st_aa2map_parse_t * aa2map_parse (st_aa2map_t *aa2map);
 
-
+// TODO: aa2map_add_ascii — randomly scatter additional ASCII characters
+// (from aa2map->add_ascii string) onto floor tiles in the parsed map.
+// Currently a no-op stub.
 extern void aa2map_add_ascii (st_aa2map_t *aa2map, st_aa2map_parse_t *a);
 
 

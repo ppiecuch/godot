@@ -117,15 +117,14 @@ static inline void _trace(int line, const char *file, const String &text) {
 }
 #define TRACE(text, ...) _trace(__LINE__, __FILE__, vformat(text, __VA_ARGS__))
 
-#define _register_global_ref(pRef)                        \
-	{                                                     \
-		if (SceneTree *sc = SceneTree::get_singleton()) { \
-			sc->add_exit_callback([&]() {                 \
-				pRef.unref();                             \
-			});                                           \
-		} else {                                          \
-			WARN_PRINT("Cannot register exit callback."); \
-		}                                                 \
+// Register a cleanup callback that fires at exit.
+// SceneTree::add_exit_callback is static and works without a SceneTree instance.
+// Callbacks are fired from SceneTree::finish() or Main::start() after doctests.
+#define _register_global_ref(pRef)                    \
+	{                                                 \
+		SceneTree::add_exit_callback([&]() {          \
+			pRef.unref();                             \
+		});                                           \
 	}
 
 #define for_all(range, func) \

@@ -24,16 +24,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include <stdio.h>
 
-#ifndef ARGS_MAX
-#define ARGS_MAX 128
-#endif
-#ifndef AA2MAP_MAX_ASCII_CHARS
-#define AA2MAP_MAX_ASCII_CHARS 256
-#endif
-#ifndef MAXBUFSIZE
-#define MAXBUFSIZE 4096
-#endif
-
 typedef struct
 {
   const char *input_file[ARGS_MAX];

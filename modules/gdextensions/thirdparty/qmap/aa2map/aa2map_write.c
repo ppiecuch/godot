@@ -111,7 +111,6 @@ aa2map_map_write (st_aa2map_t *aa2map, const st_aa2map_parse_t *a)
           break;
 
         // spawn
-//        case AA2MAP_INFO_PLAYER_START:
         case AA2MAP_INFO_PLAYER_DEATHMATCH:
           if (a[i].z == 0)
             aa2map_floor (aa2map, &a[i]);
@@ -166,7 +165,6 @@ aa2map_map_write (st_aa2map_t *aa2map, const st_aa2map_parse_t *a)
           break;
 
         // spawn
-        // case AA2MAP_INFO_PLAYER_START:
         case AA2MAP_INFO_PLAYER_DEATHMATCH:
 
         // weapons
@@ -213,9 +211,6 @@ aa2map_map_write (st_aa2map_t *aa2map, const st_aa2map_parse_t *a)
         case AA2MAP_TEAM_CTF_BLUEFLAG:
         case AA2MAP_TEAM_CTF_REDFLAG:
         // shooter
-        // case AA2MAP_SHOOTER_GRENADE:
-        // case AA2MAP_SHOOTER_PLASMA:
-        // case AA2MAP_SHOOTER_ROCKET:
           aa2map_entity_stub (aa2map, &a[i]);
           break;
 
@@ -240,7 +235,6 @@ aa2map_map_write (st_aa2map_t *aa2map, const st_aa2map_parse_t *a)
         case AA2MAP_TRIGGER_HURT75:
         case AA2MAP_TRIGGER_HURT100:
         // spawn
-        // case AA2MAP_INFO_PLAYER_START:
         case AA2MAP_INFO_PLAYER_DEATHMATCH:
         // weapons
         case AA2MAP_WEAPON_GAUNTLET:
@@ -286,9 +280,6 @@ aa2map_map_write (st_aa2map_t *aa2map, const st_aa2map_parse_t *a)
         case AA2MAP_TEAM_CTF_BLUEFLAG:
         case AA2MAP_TEAM_CTF_REDFLAG:
         // shooter
-        // case AA2MAP_SHOOTER_GRENADE:
-        // case AA2MAP_SHOOTER_PLASMA:
-        // case AA2MAP_SHOOTER_ROCKET:
           idtech3_map_light (aa2map->map_file,
                              (int) (a[i].x * aa2map->xscale + aa2map->xscale * 0.5),
                              (int) (a[i].y * aa2map->yscale + aa2map->yscale * 0.5),
@@ -315,7 +306,6 @@ aa2map_shader_write (st_aa2map_t *aa2map, const st_aa2map_parse_t *a)
 
   aa2map_world_shader (aa2map);
 
-  // TODO: ASCII row/col/file specific shaders?
 
   // shader
   for (int i = 0; a[i].id; i++)

@@ -58,10 +58,12 @@ SOFTWARE.
 #include "core/version.h"
 
 Variant ThreadPoolExecuteJob::get_object() const {
-	return _object;
+	Object *obj = ObjectDB::get_instance(_object_id);
+	return obj ? Variant(obj) : Variant();
 }
 void ThreadPoolExecuteJob::set_object(const Variant &value) {
-	_object = value;
+	Object *obj = value;
+	_object_id = obj ? obj->get_instance_id() : 0;
 }
 
 StringName ThreadPoolExecuteJob::get_method() const {
@@ -72,22 +74,20 @@ void ThreadPoolExecuteJob::set_method(const StringName &value) {
 }
 
 void ThreadPoolExecuteJob::_execute() {
-	ERR_FAIL_COND(!_object);
-	ERR_FAIL_COND(!_object->has_method(_method));
+	Object *obj = ObjectDB::get_instance(_object_id);
+	ERR_FAIL_COND_MSG(!obj, "ThreadPoolExecuteJob: object was freed before execution.");
+	ERR_FAIL_COND(!obj->has_method(_method));
 
-#if VERSION_MAJOR < 4
 	Variant::CallError error;
-#else
-	Callable::CallError error;
-#endif
-
-	_object->call(_method, const_cast<const Variant **>(&_argptr), _argcount, error);
+	obj->call(_method, const_cast<const Variant **>(&_argptr), _argcount, error);
 }
 
 void ThreadPoolExecuteJob::setup(const Variant &obj, const StringName &p_method, VARIANT_ARG_DECLARE) {
 	set_complete(false);
 	set_cancelled(false);
-	_object = obj;
+
+	Object *o = obj;
+	_object_id = o ? o->get_instance_id() : 0;
 	_method = p_method;
 
 	_argptr[0] = p_arg1;
@@ -96,6 +96,7 @@ void ThreadPoolExecuteJob::setup(const Variant &obj, const StringName &p_method,
 	_argptr[3] = p_arg4;
 	_argptr[4] = p_arg5;
 
+	_argcount = 0;
 	for (int i = 4; i >= 0; --i) {
 		if (_argptr[i].get_type() != Variant::NIL) {
 			_argcount = i + 1;
@@ -103,11 +104,10 @@ void ThreadPoolExecuteJob::setup(const Variant &obj, const StringName &p_method,
 		}
 	}
 
-	if (!_object || !_object->has_method(p_method)) {
+	if (!o || !o->has_method(p_method)) {
 		set_complete(true);
-
-		ERR_FAIL_COND(!_object);
-		ERR_FAIL_COND(!_object->has_method(p_method));
+		ERR_FAIL_COND(!o);
+		ERR_FAIL_COND(!o->has_method(p_method));
 	}
 }
 
@@ -152,37 +152,20 @@ Variant ThreadPoolExecuteJob::_setup_bind(const Variant **p_args, int p_argcount
 	}
 
 	set_complete(false);
-	_object = *p_args[0];
+
+	Object *obj = *p_args[0];
+	_object_id = obj ? obj->get_instance_id() : 0;
 
 	StringName sn = *p_args[1];
 	_method = sn;
 
-	if (p_argcount > 2) {
-		_argcount = 1;
-		_argptr[0] = p_args[2];
+	// Extra arguments start at p_args[2], max 5
+	_argcount = MIN(p_argcount - 2, 5);
+	for (int i = 0; i < _argcount; i++) {
+		_argptr[i] = *p_args[i + 2];
 	}
 
-	if (p_argcount > 3) {
-		_argcount = 2;
-		_argptr[1] = p_args[3];
-	}
-
-	if (p_argcount > 4) {
-		_argcount = 3;
-		_argptr[2] = p_args[4];
-	}
-
-	if (p_argcount > 5) {
-		_argcount = 4;
-		_argptr[3] = p_args[5];
-	}
-
-	if (p_argcount > 6) {
-		_argcount = 5;
-		_argptr[4] = p_args[6];
-	}
-
-	if (!_object || !_object->has_method(_method)) {
+	if (!obj || !obj->has_method(_method)) {
 		set_complete(true);
 	}
 
@@ -196,10 +179,8 @@ Variant ThreadPoolExecuteJob::_setup_bind(const Variant **p_args, int p_argcount
 }
 
 ThreadPoolExecuteJob::ThreadPoolExecuteJob() {
-	_object = NULL;
-
+	_object_id = 0;
 	_argcount = 0;
-
 	_argptr = memnew_arr(Variant, 5);
 }
 ThreadPoolExecuteJob::~ThreadPoolExecuteJob() {

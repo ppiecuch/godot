@@ -80,7 +80,7 @@ protected:
 	static void _bind_methods();
 
 private:
-	Object *_object;
+	ObjectID _object_id;
 	StringName _method;
 	int _argcount;
 	Variant *_argptr;

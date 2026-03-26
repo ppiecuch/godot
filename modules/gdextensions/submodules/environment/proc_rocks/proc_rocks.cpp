@@ -696,57 +696,62 @@ ProcRockMesh::ProcRockMesh() {
 
 TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 	TEST_CASE("[proc_rocks] default construction") {
-		ProcRockMesh mesh;
-		CHECK(mesh.get_generator() == 0);
-		CHECK(mesh.get_auto_refresh() == false);
-		CHECK(mesh.get_rockgen_depth() == 3);
-		CHECK(mesh.get_rockgen_randseed() == 0);
-		CHECK(mesh.get_rockgen_smoothness() == doctest::Approx(1.0f));
-		CHECK(mesh.get_rockgen_smoothed() == false);
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		CHECK(mesh->get_generator() == 0);
+		CHECK(mesh->get_auto_refresh() == false);
+		CHECK(mesh->get_rockgen_depth() == 3);
+		CHECK(mesh->get_rockgen_randseed() == 0);
+		CHECK(mesh->get_rockgen_smoothness() == doctest::Approx(1.0f));
+		CHECK(mesh->get_rockgen_smoothed() == false);
 	}
 
 	TEST_CASE("[proc_rocks] generator selection") {
-		ProcRockMesh mesh;
-		mesh.set_generator(1);
-		CHECK(mesh.get_generator() == 1);
-		mesh.set_generator(2);
-		CHECK(mesh.get_generator() == 2);
-		mesh.set_generator(0);
-		CHECK(mesh.get_generator() == 0);
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(1);
+		CHECK(mesh->get_generator() == 1);
+		mesh->set_generator(2);
+		CHECK(mesh->get_generator() == 2);
+		mesh->set_generator(0);
+		CHECK(mesh->get_generator() == 0);
 	}
 
 	TEST_CASE("[proc_rocks] generator clamped to valid range") {
-		ProcRockMesh mesh;
-		mesh.set_generator(-1);
-		CHECK(mesh.get_generator() == 0);
-		mesh.set_generator(99);
-		CHECK(mesh.get_generator() == 3);
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(-1);
+		CHECK(mesh->get_generator() == 0);
+		mesh->set_generator(99);
+		CHECK(mesh->get_generator() == 3);
 	}
 
 	TEST_CASE("[proc_rocks] rockgen properties") {
-		ProcRockMesh mesh;
-		mesh.set_rockgen_depth(5);
-		CHECK(mesh.get_rockgen_depth() == 5);
-		mesh.set_rockgen_randseed(42);
-		CHECK(mesh.get_rockgen_randseed() == 42);
-		mesh.set_rockgen_smoothness(2.5f);
-		CHECK(mesh.get_rockgen_smoothness() == doctest::Approx(2.5f));
-		mesh.set_rockgen_smoothed(true);
-		CHECK(mesh.get_rockgen_smoothed() == true);
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_rockgen_depth(5);
+		CHECK(mesh->get_rockgen_depth() == 5);
+		mesh->set_rockgen_randseed(42);
+		CHECK(mesh->get_rockgen_randseed() == 42);
+		mesh->set_rockgen_smoothness(2.5f);
+		CHECK(mesh->get_rockgen_smoothness() == doctest::Approx(2.5f));
+		mesh->set_rockgen_smoothed(true);
+		CHECK(mesh->get_rockgen_smoothed() == true);
 	}
 
 	TEST_CASE("[proc_rocks] rockgeneration properties") {
-		ProcRockMesh mesh;
-		mesh.set_rockgeneration_steps(15);
-		CHECK(mesh.get_rockgeneration_steps() == 15);
-		mesh.set_rockgeneration_width(100.0f);
-		CHECK(mesh.get_rockgeneration_width() == doctest::Approx(100.0f));
-		mesh.set_rockgeneration_height(75.0f);
-		CHECK(mesh.get_rockgeneration_height() == doctest::Approx(75.0f));
-		mesh.set_rockgeneration_depth(60.0f);
-		CHECK(mesh.get_rockgeneration_depth() == doctest::Approx(60.0f));
-		mesh.set_rockgeneration_max_planes(5);
-		CHECK(mesh.get_rockgeneration_max_planes() == 5);
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_rockgeneration_steps(15);
+		CHECK(mesh->get_rockgeneration_steps() == 15);
+		mesh->set_rockgeneration_width(100.0f);
+		CHECK(mesh->get_rockgeneration_width() == doctest::Approx(100.0f));
+		mesh->set_rockgeneration_height(75.0f);
+		CHECK(mesh->get_rockgeneration_height() == doctest::Approx(75.0f));
+		mesh->set_rockgeneration_depth(60.0f);
+		CHECK(mesh->get_rockgeneration_depth() == doctest::Approx(60.0f));
+		mesh->set_rockgeneration_max_planes(5);
+		CHECK(mesh->get_rockgeneration_max_planes() == 5);
 	}
 
 	TEST_CASE("[proc_rocks] rock_gen returns valid mesh arrays") {
@@ -789,12 +794,13 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 	}
 
 	TEST_CASE("[proc_rocks] auto_refresh triggers rebuild") {
-		ProcRockMesh mesh;
-		mesh.set_generator(0);
-		mesh.set_rockgen_randseed(42);
-		CHECK(mesh.get_surface_count() == 0);
-		mesh.set_auto_refresh(true);
-		CHECK(mesh.get_surface_count() == 1);
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(0);
+		mesh->set_rockgen_randseed(42);
+		CHECK(mesh->get_surface_count() == 0);
+		mesh->set_auto_refresh(true);
+		CHECK(mesh->get_surface_count() == 1);
 	}
 }
 

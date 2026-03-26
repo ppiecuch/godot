@@ -105,10 +105,12 @@ void ThreadPoolJob::reset_stages() {
 }
 
 Variant ThreadPoolJob::get_object() const {
-	return _object;
+	Object *obj = ObjectDB::get_instance(_object_id);
+	return obj ? Variant(obj) : Variant();
 }
 void ThreadPoolJob::set_object(const Variant &value) {
-	_object = value;
+	Object *obj = value;
+	_object_id = obj ? obj->get_instance_id() : 0;
 }
 
 StringName ThreadPoolJob::get_method() const {
@@ -175,20 +177,23 @@ ThreadPoolJob::ThreadPoolJob() {
 	_current_run_stage = 0;
 	_stage = 0;
 
-	_object = NULL;
-
-	_argcount = 0;
-
-	_argptr = memnew_arr(Variant, 5);
+	_object_id = 0;
 }
 ThreadPoolJob::~ThreadPoolJob() {
-	memdelete_arr(_argptr);
 }
 
 void ThreadPoolJob::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_complete"), &ThreadPoolJob::get_complete);
 	ClassDB::bind_method(D_METHOD("set_complete", "value"), &ThreadPoolJob::set_complete);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "complete"), "set_complete", "get_complete");
+
+	ClassDB::bind_method(D_METHOD("get_cancelled"), &ThreadPoolJob::get_cancelled);
+	ClassDB::bind_method(D_METHOD("set_cancelled", "value"), &ThreadPoolJob::set_cancelled);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cancelled"), "set_cancelled", "get_cancelled");
+
+	ClassDB::bind_method(D_METHOD("get_max_allocated_time"), &ThreadPoolJob::get_max_allocated_time);
+	ClassDB::bind_method(D_METHOD("set_max_allocated_time", "value"), &ThreadPoolJob::set_max_allocated_time);
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_allocated_time"), "set_max_allocated_time", "get_max_allocated_time");
 
 	ClassDB::bind_method(D_METHOD("get_start_time"), &ThreadPoolJob::get_start_time);
 	ClassDB::bind_method(D_METHOD("set_start_time", "value"), &ThreadPoolJob::set_start_time);
@@ -214,3 +219,159 @@ void ThreadPoolJob::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("completed"));
 }
+
+// =========================================================================
+// Tests
+// =========================================================================
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+
+#include "thread_pool_execute_job.h"
+#include "thread_pool.h"
+
+TEST_SUITE("[[threadpool]] ThreadPoolJob") {
+	TEST_CASE("[threadpool] default construction") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		CHECK(job->get_complete() == true);
+		CHECK(job->get_cancelled() == false);
+		CHECK(job->get_max_allocated_time() == doctest::Approx(0.0f));
+		CHECK(job->get_start_time() == 0);
+		CHECK(job->get_current_run_stage() == 0);
+		CHECK(job->get_stage() == 0);
+		CHECK(job->get_method() == StringName());
+	}
+
+	TEST_CASE("[threadpool] complete flag toggle") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		CHECK(job->get_complete() == true);
+		job->set_complete(false);
+		CHECK(job->get_complete() == false);
+		job->set_complete(true);
+		CHECK(job->get_complete() == true);
+	}
+
+	TEST_CASE("[threadpool] cancelled flag") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		CHECK(job->get_cancelled() == false);
+		job->set_cancelled(true);
+		CHECK(job->get_cancelled() == true);
+	}
+
+	TEST_CASE("[threadpool] should_return when cancelled") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		job->set_cancelled(false);
+		CHECK(job->should_return() == false);
+		job->set_cancelled(true);
+		CHECK(job->should_return() == true);
+	}
+
+	TEST_CASE("[threadpool] should_return with no time limit") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		job->set_max_allocated_time(0);
+		job->set_cancelled(false);
+		CHECK(job->should_return() == false);
+	}
+
+	TEST_CASE("[threadpool] stage progression via should_do") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		CHECK(job->should_do() == true);
+		CHECK(job->get_current_run_stage() == 1);
+		CHECK(job->get_stage() == 1);
+
+		job->set_current_run_stage(0);
+		CHECK(job->should_do() == false);
+		CHECK(job->get_current_run_stage() == 1);
+
+		CHECK(job->should_do() == true);
+		CHECK(job->get_stage() == 2);
+	}
+
+	TEST_CASE("[threadpool] reset_stages zeroes both counters") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		job->set_stage(5);
+		job->set_current_run_stage(3);
+		job->reset_stages();
+		CHECK(job->get_stage() == 0);
+		CHECK(job->get_current_run_stage() == 0);
+	}
+
+	TEST_CASE("[threadpool] should_do just_check is read-only") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		CHECK(job->should_do(true) == true);
+		CHECK(job->get_current_run_stage() == 0);
+		CHECK(job->get_stage() == 0);
+	}
+
+	TEST_CASE("[threadpool] max_allocated_time property") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		job->set_max_allocated_time(1.5f);
+		CHECK(job->get_max_allocated_time() == doctest::Approx(1.5f));
+	}
+
+	TEST_CASE("[threadpool] object stored as ObjectID survives deletion safely") {
+		Object *obj = memnew(Object);
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		job->set_object(obj);
+		CHECK(job->get_object() != Variant());
+		memdelete(obj);
+		CHECK(job->get_object() == Variant());
+	}
+}
+
+TEST_SUITE("[[threadpool]] ThreadPoolExecuteJob") {
+	TEST_CASE("[threadpool] execute job defaults") {
+		Ref<ThreadPoolExecuteJob> job;
+		job.instance();
+		CHECK(job->get_complete() == true);
+		CHECK(job->get_cancelled() == false);
+		CHECK(job->get_method() == StringName());
+	}
+
+	TEST_CASE("[threadpool] execute job object safety after deletion") {
+		Object *obj = memnew(Object);
+		Ref<ThreadPoolExecuteJob> job;
+		job.instance();
+		job->set_object(obj);
+		CHECK(job->get_object() != Variant());
+		memdelete(obj);
+		CHECK(job->get_object() == Variant());
+	}
+}
+
+TEST_SUITE("[[threadpool]] ThreadPool") {
+	TEST_CASE("[threadpool] singleton exists") {
+		CHECK(ThreadPool::get_singleton() != nullptr);
+	}
+
+	TEST_CASE("[threadpool] add_job accepts valid job") {
+		Ref<ThreadPoolJob> job;
+		job.instance();
+		job->set_complete(false);
+		ThreadPool::get_singleton()->add_job(job);
+		CHECK(true);
+	}
+
+	TEST_CASE("[threadpool] create_execute_job_simple with invalid method marks complete") {
+		ThreadPool *tp = ThreadPool::get_singleton();
+		CHECK(tp != nullptr);
+		Object *obj = memnew(Object);
+		Ref<ThreadPoolExecuteJob> job = tp->create_execute_job_simple(obj, "_nonexistent_method");
+		CHECK(job.is_valid());
+		CHECK(job->get_complete() == true);
+		memdelete(obj);
+	}
+}
+
+#endif // DOCTEST
+

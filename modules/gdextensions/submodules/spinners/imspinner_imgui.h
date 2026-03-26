@@ -507,11 +507,11 @@ void DestroyContext() {
 ImGuiContext *GetCurrentContext() {
 	if (!_GImGuiInstance) {
 		_GImGuiInstance = memnew(ImGuiContext);
-		if (SceneTree *sc = SceneTree::get_singleton()) {
-			sc->add_exit_callback([]() {
-				DestroyContext();
-			});
-		}
+		// Static method — works without SceneTree instance.
+		// Callback fires from SceneTree::finish() or after doctest runs.
+		SceneTree::add_exit_callback([]() {
+			DestroyContext();
+		});
 	}
 	return _GImGuiInstance;
 }

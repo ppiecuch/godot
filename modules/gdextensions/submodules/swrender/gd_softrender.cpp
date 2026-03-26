@@ -1029,13 +1029,13 @@ TEST_SUITE("swrender-vincent") {
 		bool jit = SWRVincent1::is_jit_enabled();
 #if defined(ARM) || defined(_ARM_) || defined(__MARM__)
 		CHECK(jit == true);
-		MESSAGE("Vincent ARM JIT: ENABLED (ARM32)");
+		INFO("Vincent ARM JIT: ENABLED (ARM32)");
 #elif defined(__aarch64__) || defined(_M_ARM64)
 		CHECK(jit == true);
-		MESSAGE("Vincent ARM JIT: ENABLED (ARM64)");
+		INFO("Vincent ARM JIT: ENABLED (ARM64)");
 #else
 		CHECK(jit == false);
-		MESSAGE("Vincent ARM JIT: DISABLED (non-ARM platform)");
+		INFO("Vincent ARM JIT: DISABLED (non-ARM platform)");
 #endif
 	}
 
@@ -1064,7 +1064,7 @@ TEST_SUITE("swrender-vincent") {
 		jit_fn_t fn = (jit_fn_t)mem;
 		int result = fn();
 		CHECK(result == 42);
-		MESSAGE("ARM64 JIT: minimal function returned ", result);
+		INFO("ARM64 JIT: minimal function returned ", result);
 		munmap(mem, 4096);
 	}
 
@@ -1100,7 +1100,7 @@ TEST_SUITE("swrender-vincent") {
 		typedef int (*jit_fn_t)(void);
 		int result = ((jit_fn_t)mem)();
 		CHECK(result == 99);
-		MESSAGE("ARM64 JIT: prologue/epilogue returned ", result);
+		INFO("ARM64 JIT: prologue/epilogue returned ", result);
 		munmap(mem, 4096);
 	}
 
@@ -1140,8 +1140,8 @@ TEST_SUITE("swrender-vincent") {
 		uint64_t result = ((spill_fn_t)mem)(test_val);
 		CHECK(result == test_val);
 		if (result != test_val) {
-			MESSAGE("FAIL: expected 0x", test_val, " got 0x", result);
-			MESSAGE("Upper 32: expected 0x", (uint32_t)(test_val >> 32),
+			INFO("FAIL: expected 0x", test_val, " got 0x", result);
+			INFO("Upper 32: expected 0x", (uint32_t)(test_val >> 32),
 					" got 0x", (uint32_t)(result >> 32));
 		}
 		munmap(mem, 4096);
@@ -1176,7 +1176,7 @@ TEST_SUITE("swrender-vincent") {
 		typedef int (*loop_fn_t)(void);
 		int result = ((loop_fn_t)mem)();
 		CHECK(result == 5);
-		MESSAGE("ARM64 JIT: backward branch loop counted to ", result);
+		INFO("ARM64 JIT: backward branch loop counted to ", result);
 		munmap(mem, 4096);
 	}
 #endif // __aarch64__
@@ -1265,7 +1265,7 @@ TEST_SUITE("swrender-vincent") {
 		REQUIRE(img.is_valid());
 		img->lock();
 		Color center = img->get_pixel(32, 32);
-		MESSAGE("JIT no-depth-test center: r=", center.r, " g=", center.g,
+		INFO("JIT no-depth-test center: r=", center.r, " g=", center.g,
 				" b=", center.b, " a=", center.a);
 		CHECK(center.a > 0.5f);
 		// With depth test disabled, the triangle SHOULD produce visible pixels

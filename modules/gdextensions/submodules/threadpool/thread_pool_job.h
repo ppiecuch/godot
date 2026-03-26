@@ -104,8 +104,8 @@ protected:
 	static void _bind_methods();
 
 private:
-	bool _complete;
-	bool _cancelled;
+	volatile bool _complete;
+	volatile bool _cancelled;
 
 	float _max_allocated_time;
 	uint64_t _start_time;
@@ -113,10 +113,8 @@ private:
 	int _current_run_stage;
 	int _stage;
 
-	Object *_object;
+	ObjectID _object_id;
 	StringName _method;
-	int _argcount;
-	Variant *_argptr;
 };
 
 #endif

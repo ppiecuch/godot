@@ -2789,6 +2789,11 @@ void Main::cleanup(bool p_force) {
 		ERR_FAIL_COND(!_start_success);
 	}
 
+	// Fire exit callbacks registered via SceneTree::add_exit_callback().
+	// Normally called from SceneTree::finish(), but if no SceneTree exists
+	// (e.g. doctest runs, headless server) we call them here as fallback.
+	SceneTree::_call_exit_callbacks();
+
 	// Auto-save ObjectDB snapshot in verbose mode.
 	if (OS::get_singleton()->is_stdout_verbose()) {
 		OS::Date date = OS::get_singleton()->get_date(true);

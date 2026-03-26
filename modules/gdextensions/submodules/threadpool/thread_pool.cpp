@@ -171,8 +171,14 @@ void ThreadPool::cancel_task(Ref<ThreadPoolJob> job) {
 }
 
 Ref<ThreadPoolJob> ThreadPool::get_running_job(const Variant &object, const StringName &method) {
-	if (!_use_threads)
-		return _queue[_current_queue_head];
+	_THREAD_SAFE_METHOD_
+
+	if (!_use_threads) {
+		if (_current_queue_head < _current_queue_tail && _current_queue_head < _queue.size()) {
+			return _queue[_current_queue_head];
+		}
+		return Ref<ThreadPoolJob>();
+	}
 
 	for (int i = 0; i < _threads.size(); ++i) {
 		Ref<ThreadPoolJob> j = _threads[i]->job;
@@ -185,14 +191,17 @@ Ref<ThreadPoolJob> ThreadPool::get_running_job(const Variant &object, const Stri
 		}
 	}
 
-	ERR_FAIL_V(Ref<ThreadPoolJob>());
+	return Ref<ThreadPoolJob>();
 }
 
 Ref<ThreadPoolJob> ThreadPool::get_queued_job(const Variant &object, const StringName &method) {
-	for (int i = 0; i < _queue.size(); ++i) {
+	_THREAD_SAFE_METHOD_
+
+	for (int i = _current_queue_head; i < _current_queue_tail; ++i) {
 		Ref<ThreadPoolJob> j = _queue[i];
 
-		ERR_CONTINUE(!j.is_valid());
+		if (!j.is_valid())
+			continue;
 
 		if (j->get_object() == object && j->get_method() == method) {
 			return j;
@@ -487,3 +496,4 @@ void ThreadPool::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("cancel_task_wait", "job"), &ThreadPool::cancel_task_wait);
 	ClassDB::bind_method(D_METHOD("cancel_task", "job"), &ThreadPool::cancel_task);
 }
+

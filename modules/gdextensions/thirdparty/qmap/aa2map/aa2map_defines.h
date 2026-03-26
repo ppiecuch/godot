@@ -22,11 +22,10 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #define  AA2MAP_DEFINES_H
 
 #define ARGS_MAX 512
-#define MAXBUFSIZE 32768
+#define MAXBUFSIZE 4096
 
 #define AA2MAP_VERSION_S "0.7.9"
 #define AA2MAP_CONFIG_VERSION 006
-
 
 #define AA2MAP_MAX_ASCII_CHARS 256
 #define AA2MAP_DEFAULT_ASCII_CHARS_S "    X0123456789ABC!@\\\\#$%^&*kx,:;efshHM+IQRbrn   TtJjaldD_iL/Wgm~"
