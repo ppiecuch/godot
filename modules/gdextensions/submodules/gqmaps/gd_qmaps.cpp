@@ -69,6 +69,9 @@ void aa2map_godot_log_error(const char *fmt, ...) {
 }
 
 void aa2map_godot_log_info(const char *fmt, ...) {
+	if (!_print_line_enabled) {
+		return;
+	}
 	char buf[1024];
 	va_list args;
 	va_start(args, fmt);
@@ -768,7 +771,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		String path = _write_temp_map(SIMPLE_BOX_MAP);
 		Ref<GdQMaps> q;
 		q.instance();
-		q->load_map(path);
+		SUPPRESS_OUTPUT(q->load_map(path));
 		DirAccess::remove_file_or_error(path);
 
 		PoolStringArray textures = q->get_texture_list();
@@ -791,12 +794,12 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		String path = _write_temp_map(SIMPLE_BOX_MAP);
 		Ref<GdQMaps> q;
 		q.instance();
-		q->load_map(path);
+		SUPPRESS_OUTPUT(q->load_map(path));
 		DirAccess::remove_file_or_error(path);
 
 		Dictionary tex_dict;
 		tex_dict["TEXTURE"] = Vector2(64, 64);
-		q->generate_geometry(tex_dict);
+		SUPPRESS_OUTPUT(q->generate_geometry(tex_dict));
 
 		q->gather_texture_surfaces("TEXTURE", "", "");
 		Array surfaces = q->fetch_surfaces(1.0);
@@ -820,7 +823,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		String path = _write_temp_map(TWO_ENTITY_MAP);
 		Ref<GdQMaps> q;
 		q.instance();
-		q->load_map(path);
+		SUPPRESS_OUTPUT(q->load_map(path));
 		DirAccess::remove_file_or_error(path);
 
 		Array ents = q->get_entity_dicts();
@@ -836,7 +839,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		String path = _write_temp_map(TWO_TEXTURE_MAP);
 		Ref<GdQMaps> q;
 		q.instance();
-		q->load_map(path);
+		SUPPRESS_OUTPUT(q->load_map(path));
 		DirAccess::remove_file_or_error(path);
 
 		PoolStringArray textures = q->get_texture_list();
@@ -858,12 +861,12 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		String path = _write_temp_map(SIMPLE_BOX_MAP);
 		Ref<GdQMaps> q;
 		q.instance();
-		q->load_map(path);
+		SUPPRESS_OUTPUT(q->load_map(path));
 		DirAccess::remove_file_or_error(path);
 
 		Dictionary tex_dict;
 		tex_dict["TEXTURE"] = Vector2(64, 64);
-		q->generate_geometry(tex_dict);
+		SUPPRESS_OUTPUT(q->generate_geometry(tex_dict));
 
 		q->gather_entity_convex_collision_surfaces(0);
 		Array surfaces = q->fetch_surfaces(1.0);
@@ -874,12 +877,12 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		String path = _write_temp_map(SIMPLE_BOX_MAP);
 		Ref<GdQMaps> q;
 		q.instance();
-		q->load_map(path);
+		SUPPRESS_OUTPUT(q->load_map(path));
 		DirAccess::remove_file_or_error(path);
 
 		Dictionary tex_dict;
 		tex_dict["TEXTURE"] = Vector2(64, 64);
-		q->generate_geometry(tex_dict);
+		SUPPRESS_OUTPUT(q->generate_geometry(tex_dict));
 
 		q->gather_entity_concave_collision_surfaces(0);
 		Array surfaces = q->fetch_surfaces(1.0);
@@ -890,12 +893,12 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		String path = _write_temp_map(SIMPLE_BOX_MAP);
 		Ref<GdQMaps> q;
 		q.instance();
-		q->load_map(path);
+		SUPPRESS_OUTPUT(q->load_map(path));
 		DirAccess::remove_file_or_error(path);
 
 		Dictionary tex_dict;
 		tex_dict["TEXTURE"] = Vector2(64, 64);
-		q->generate_geometry(tex_dict);
+		SUPPRESS_OUTPUT(q->generate_geometry(tex_dict));
 
 		q->gather_texture_surfaces("TEXTURE", "", "");
 		Array surfaces_1x = q->fetch_surfaces(1.0);
@@ -932,7 +935,8 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		Array layers;
 		layers.push_back(String("XXX\nX X\nXXX\n"));
 
-		String result = q->generate_map_from_ascii(layers, Dictionary());
+		String result;
+		SUPPRESS_OUTPUT(result = q->generate_map_from_ascii(layers, Dictionary()));
 		// Result may be empty if cache dir is unavailable during tests
 		if (!result.empty() && FileAccess::exists(result)) {
 			DirAccess::remove_file_or_error(result);
@@ -945,7 +949,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 
 		Array empty_layers;
 		String result;
-		EXPECT_ERROR(result = q->generate_map_from_ascii(empty_layers, Dictionary())); // expected: empty array
+		SUPPRESS_OUTPUT(result = q->generate_map_from_ascii(empty_layers, Dictionary())); // expected: empty array
 		CHECK(result.empty());
 	}
 
@@ -956,7 +960,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		Array layers;
 		layers.push_back(String("XXXXX\nX   X\nX   X\nX   X\nXXXXX\n"));
 
-		q->load_ascii_map(layers, Dictionary());
+		SUPPRESS_OUTPUT(q->load_ascii_map(layers, Dictionary()));
 		Array ents = q->get_entity_dicts();
 		CHECK(ents.size() >= 1);
 	}
@@ -972,7 +976,8 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		opts["scale"] = Vector3(64, 64, 64);
 		opts["path"] = "test/texture";
 
-		String result = q->generate_map_from_ascii(layers, opts);
+		String result;
+		SUPPRESS_OUTPUT(result = q->generate_map_from_ascii(layers, opts));
 		CHECK(!result.empty());
 		if (!result.empty()) {
 			DirAccess::remove_file_or_error(result);
@@ -990,7 +995,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		Dictionary opts;
 		opts["add_ascii"] = "!@"; // scatter two decoration chars
 
-		q->load_ascii_map(layers, opts);
+		SUPPRESS_OUTPUT(q->load_ascii_map(layers, opts));
 		Array ents = q->get_entity_dicts();
 		// With add_ascii, we should still get valid entities
 		// (floor tiles converted to decoration objects still produce geometry)
@@ -1004,7 +1009,7 @@ TEST_SUITE("[[gqmaps]] GdQMaps") {
 		Array layers;
 		layers.push_back(String::utf8(EXAMPLE_ASCII));
 
-		q->load_ascii_map(layers, Dictionary());
+		SUPPRESS_OUTPUT(q->load_ascii_map(layers, Dictionary()));
 		Array ents = q->get_entity_dicts();
 		CHECK(ents.size() >= 1);
 	}

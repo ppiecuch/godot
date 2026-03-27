@@ -13,6 +13,18 @@
 		_print_error_enabled = true;  \
 	} while (0)
 
+// Suppress all print output (errors, lines, verbose) during a statement.
+// Use for operations that produce expected noisy output (e.g. thirdparty init logs).
+// Usage: SUPPRESS_OUTPUT( db.open("test", path) );
+#define SUPPRESS_OUTPUT(stmt) \
+	do {                      \
+		_print_error_enabled = false; \
+		_print_line_enabled = false;  \
+		stmt;                 \
+		_print_line_enabled = true;   \
+		_print_error_enabled = true;  \
+	} while (0)
+
 String static _doctest_get_folder() {
 	return vformat("__doctest__/%04d_%02d_%02d_%02d/",
 					OS::get_singleton()->get_date().year,

@@ -290,6 +290,7 @@ TEST_CASE("[Voronoi] basic diagram generation") {
 	points.push_back(Vector2(5, 10));
 
 	v.set_points(points);
+	v.set_boundaries(Rect2(-1, -1, 12, 12));
 	Ref<VoronoiDiagram> diagram = v.generate_diagram();
 
 	REQUIRE(diagram.is_valid());

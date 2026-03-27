@@ -874,6 +874,13 @@ void tln_trace(TLN_LogLevel log_level, const char* format, ...)
 		vsprintf(line, format, ap);
 		va_end(ap);
 
+#ifdef _GODOT_
+		{
+			extern void tilengine_godot_print(const char *fmt, ...);
+			tilengine_godot_print("Tilengine: %s", line);
+		}
+#else
 		printf("Tilengine: %s\n", line);
+#endif
 	}
 }

@@ -693,6 +693,7 @@ ProcRockMesh::ProcRockMesh() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 	TEST_CASE("[proc_rocks] default construction") {
@@ -755,7 +756,8 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 	}
 
 	TEST_CASE("[proc_rocks] rock_gen returns valid mesh arrays") {
-		Array result = rock_gen(2, 42, 1.0, false);
+		Array result;
+		SUPPRESS_OUTPUT(result = rock_gen(2, 42, 1.0, false));
 		CHECK(result.size() == VS::ARRAY_MAX);
 		Vector<Vector3> verts = result[VS::ARRAY_VERTEX];
 		CHECK(verts.size() > 0);
@@ -766,16 +768,18 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 	}
 
 	TEST_CASE("[proc_rocks] rock_gen depth affects vertex count") {
-		Array r1 = rock_gen(1, 42, 1.0, false);
-		Array r2 = rock_gen(3, 42, 1.0, false);
+		Array r1, r2;
+		SUPPRESS_OUTPUT(r1 = rock_gen(1, 42, 1.0, false));
+		SUPPRESS_OUTPUT(r2 = rock_gen(3, 42, 1.0, false));
 		Vector<Vector3> v1 = r1[VS::ARRAY_VERTEX];
 		Vector<Vector3> v2 = r2[VS::ARRAY_VERTEX];
 		CHECK(v2.size() > v1.size());
 	}
 
 	TEST_CASE("[proc_rocks] rock_gen fixed seed is deterministic") {
-		Array r1 = rock_gen(2, 123, 1.0, false);
-		Array r2 = rock_gen(2, 123, 1.0, false);
+		Array r1, r2;
+		SUPPRESS_OUTPUT(r1 = rock_gen(2, 123, 1.0, false));
+		SUPPRESS_OUTPUT(r2 = rock_gen(2, 123, 1.0, false));
 		Vector<Vector3> v1 = r1[VS::ARRAY_VERTEX];
 		Vector<Vector3> v2 = r2[VS::ARRAY_VERTEX];
 		CHECK(v1.size() == v2.size());
@@ -785,7 +789,8 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 	}
 
 	TEST_CASE("[proc_rocks] rock_gen smoothed mode") {
-		Array result = rock_gen(2, 42, 1.0, true);
+		Array result;
+		SUPPRESS_OUTPUT(result = rock_gen(2, 42, 1.0, true));
 		CHECK(result.size() == VS::ARRAY_MAX);
 		Vector<Vector3> verts = result[VS::ARRAY_VERTEX];
 		CHECK(verts.size() > 0);
@@ -799,7 +804,7 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 		mesh->set_generator(0);
 		mesh->set_rockgen_randseed(42);
 		CHECK(mesh->get_surface_count() == 0);
-		mesh->set_auto_refresh(true);
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
 		CHECK(mesh->get_surface_count() == 1);
 	}
 }

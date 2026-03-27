@@ -34,7 +34,12 @@
 #include <cstdarg>
 #include <cstdio>
 
+// Respects _print_line_enabled so SUPPRESS_OUTPUT suppresses output in doctests.
 extern "C" void tilengine_godot_print(const char *fmt, ...) {
+	if (!_print_line_enabled) {
+		return;
+	}
+
 	char buf[256];
 	va_list args;
 	va_start(args, fmt);
@@ -1359,12 +1364,20 @@ void TLNEngine::_bind_methods() {
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
+
+// TLN_Init prints version info; suppress in tests.
+static TLN_Engine _test_tln_init(int w, int h, int layers, int sprites, int anims) {
+	TLN_Engine ctx;
+	SUPPRESS_OUTPUT(ctx = TLN_Init(w, h, layers, sprites, anims));
+	return ctx;
+}
 
 TEST_SUITE("[[Tilengine]]") {
 	TEST_CASE("[Tilengine] engine init and deinit") {
 		TLNEngine eng;
 		CHECK_FALSE(eng.is_initialized());
-		eng.init_engine(320, 240, 2, 8, 4);
+		SUPPRESS_OUTPUT(eng.init_engine(320, 240, 2, 8, 4));
 		CHECK(eng.is_initialized());
 		CHECK(eng.get_fb_width() == 320);
 		CHECK(eng.get_fb_height() == 240);
@@ -1374,7 +1387,7 @@ TEST_SUITE("[[Tilengine]]") {
 
 	TEST_CASE("[Tilengine] engine framebuffer renders to image") {
 		TLNEngine eng;
-		eng.init_engine(64, 64, 1, 1, 1);
+		SUPPRESS_OUTPUT(eng.init_engine(64, 64, 1, 1, 1));
 		REQUIRE(eng.is_initialized());
 
 		eng.set_bg_color(Color(1, 0, 0));
@@ -1389,7 +1402,7 @@ TEST_SUITE("[[Tilengine]]") {
 
 	TEST_CASE("[Tilengine] palette create and color ops") {
 		// Need an engine context for resource creation
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		TLNPalette pal;
@@ -1411,7 +1424,7 @@ TEST_SUITE("[[Tilengine]]") {
 	}
 
 	TEST_CASE("[Tilengine] bitmap create dimensions") {
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		TLNBitmap bmp;
@@ -1424,7 +1437,7 @@ TEST_SUITE("[[Tilengine]]") {
 	}
 
 	TEST_CASE("[Tilengine] tilemap create and tile access") {
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		TLNTilemap tm;
@@ -1445,7 +1458,7 @@ TEST_SUITE("[[Tilengine]]") {
 	}
 
 	TEST_CASE("[Tilengine] tileset load properties via create") {
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		TLNTileset ts;
@@ -1458,7 +1471,7 @@ TEST_SUITE("[[Tilengine]]") {
 	}
 
 	TEST_CASE("[Tilengine] sequence create frame sequence") {
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		TLNSequence seq;
@@ -1526,7 +1539,7 @@ TEST_SUITE("[[Tilengine]]") {
 	}
 
 	TEST_CASE("[Tilengine] owned vs borrowed palette") {
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		// Create a palette and tileset programmatically
@@ -1559,7 +1572,7 @@ TEST_SUITE("[[Tilengine]]") {
 
 	TEST_CASE("[Tilengine] layer setup on engine") {
 		TLNEngine eng;
-		eng.init_engine(256, 224, 2, 4, 2);
+		SUPPRESS_OUTPUT(eng.init_engine(256, 224, 2, 4, 2));
 		REQUIRE(eng.is_initialized());
 
 		// Create resources using Ref (heap-allocated)
@@ -1588,7 +1601,7 @@ TEST_SUITE("[[Tilengine]]") {
 	}
 
 	TEST_CASE("[Tilengine] object list create and add") {
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		TLNObjectList ol;
@@ -1602,7 +1615,7 @@ TEST_SUITE("[[Tilengine]]") {
 	}
 
 	TEST_CASE("[Tilengine] sequence pack create and add") {
-		TLN_Engine ctx = TLN_Init(32, 32, 1, 1, 1);
+		TLN_Engine ctx = _test_tln_init(32, 32, 1, 1, 1);
 		REQUIRE(ctx != nullptr);
 
 		TLNSequencePack sp;

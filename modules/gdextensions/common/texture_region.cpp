@@ -41,6 +41,8 @@ void TextureRegion::set_region(const Ref<Texture> &texture) {
 }
 
 void TextureRegion::set_region(int x, int y, int width, int height) {
+	ERR_FAIL_COND_MSG(source_texture.is_null(), "TextureRegion: source texture not set.");
+	ERR_FAIL_COND_MSG(source_texture->get_width() == 0 || source_texture->get_height() == 0, "TextureRegion: texture has zero dimensions.");
 	const real_t inv_tex_width = 1.0 / source_texture->get_width();
 	const real_t inv_tex_height = 1.0 / source_texture->get_height();
 	set_region(x * inv_tex_width, y * inv_tex_height, (x + width) * inv_tex_width, (y + height) * inv_tex_height);
@@ -160,6 +162,7 @@ void TextureRegion::set_region_height(int height) {
 }
 
 void TextureRegion::scroll(real_t x_amount, real_t y_amount) {
+	ERR_FAIL_COND_MSG(source_texture.is_null(), "TextureRegion: source texture not set.");
 	if (x_amount != 0) {
 		const real_t width = (opposite.u - origin.u) * source_texture->get_width();
 		origin.u = Math::fposmod(origin.u + x_amount, 1);
@@ -173,6 +176,9 @@ void TextureRegion::scroll(real_t x_amount, real_t y_amount) {
 }
 
 TextureRegion::TextureRegionArray TextureRegion::split(int tile_width, int tile_height) const {
+	ERR_FAIL_COND_V_MSG(tile_width <= 0 || tile_height <= 0, TextureRegionArray(), "TextureRegion: tile dimensions must be positive.");
+	ERR_FAIL_COND_V_MSG(source_texture.is_null(), TextureRegionArray(), "TextureRegion: source texture not set.");
+
 	int x = get_region_x();
 	int y = get_region_y();
 	const int width = region_width;
@@ -221,3 +227,159 @@ TextureRegion::TextureRegion(const Ref<Texture> &texture, real_t u, real_t v, re
 	source_texture = texture;
 	set_region(u, v, u2, v2);
 }
+
+// =========================================================================
+// Tests
+// =========================================================================
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
+#include "tile_set_utility.h"
+
+TEST_SUITE("[[texture_region]] TextureRegion") {
+	TEST_CASE("[texture_region] default constructor zeroes members") {
+		TextureRegion r;
+		CHECK(r.get_texture().is_null());
+		CHECK(r.get_u() == doctest::Approx(0));
+		CHECK(r.get_v() == doctest::Approx(0));
+		CHECK(r.get_u2() == doctest::Approx(0));
+		CHECK(r.get_v2() == doctest::Approx(0));
+		CHECK(r.get_region_width() == 0);
+		CHECK(r.get_region_height() == 0);
+	}
+
+	TEST_CASE("[texture_region] flip detection on default is false") {
+		TextureRegion r;
+		CHECK_FALSE(r.is_flip_x());
+		CHECK_FALSE(r.is_flip_y());
+	}
+
+	TEST_CASE("[texture_region] set_region(int) requires texture") {
+		TextureRegion r;
+		SUPPRESS_OUTPUT(r.set_region(0, 0, 32, 32));
+		// Should not crash, just error
+		CHECK(r.get_region_width() == 0);
+	}
+
+	TEST_CASE("[texture_region] scroll requires texture") {
+		TextureRegion r;
+		SUPPRESS_OUTPUT(r.scroll(0.1, 0.1));
+	}
+
+	TEST_CASE("[texture_region] split requires positive tile size") {
+		TextureRegion r;
+		SUPPRESS_OUTPUT({
+			auto tiles = r.split(0, 32);
+			CHECK(tiles.size() == 0);
+		});
+		SUPPRESS_OUTPUT({
+			auto tiles = r.split(32, -1);
+			CHECK(tiles.size() == 0);
+		});
+	}
+}
+
+TEST_SUITE("[[tile_set_utility]] TileSetUtility") {
+	TEST_CASE("[tileset] BufferedImage basic access") {
+		// 4x4 RGBA image, all red (255,0,0,255)
+		uint8_t data[4 * 4 * 4];
+		for (int i = 0; i < 4 * 4; i++) {
+			data[i * 4 + 0] = 255;
+			data[i * 4 + 1] = 0;
+			data[i * 4 + 2] = 0;
+			data[i * 4 + 3] = 255;
+		}
+		BufferedImage img = { data, 4, 4 };
+		CHECK(img.get_width() == 4);
+		CHECK(img.get_height() == 4);
+		uint32_t pixel = img.get_rgb<4>(0, 0);
+		CHECK(pixel != 0);
+	}
+
+	TEST_CASE("[tileset] solid color image detected") {
+		// 8x8 solid blue
+		uint8_t data[8 * 8 * 4];
+		for (int i = 0; i < 8 * 8; i++) {
+			data[i * 4 + 0] = 0;
+			data[i * 4 + 1] = 0;
+			data[i * 4 + 2] = 255;
+			data[i * 4 + 3] = 255;
+		}
+		BufferedImage img = { data, 8, 8 };
+		CHECK(TileSetUtilityRGBA::is_image_solid_color(img));
+	}
+
+	TEST_CASE("[tileset] non-solid image not detected as solid") {
+		uint8_t data[4 * 4 * 4] = {};
+		// Set pixel (2,2) to different color
+		int idx = (2 * 4 + 2) * 4;
+		data[idx] = 255;
+		data[idx + 1] = 255;
+		data[idx + 2] = 255;
+		data[idx + 3] = 255;
+		BufferedImage img = { data, 4, 4 };
+		CHECK_FALSE(TileSetUtilityRGBA::is_image_solid_color(img));
+	}
+
+	TEST_CASE("[tileset] count_contiguous_regions finds blocks") {
+		// Pattern: false false TRUE TRUE TRUE false TRUE TRUE false
+		std::vector<bool> arr = { false, false, true, true, true, false, true, true, false };
+		auto regions = TileSetUtilityRGBA::count_contiguous_regions(arr);
+		CHECK(regions.size() == 2);
+		CHECK(regions[0].first == 2);
+		CHECK(regions[0].second == 5); // [2, 5)
+		CHECK(regions[1].first == 6);
+		CHECK(regions[1].second == 8); // [6, 8)
+	}
+
+	TEST_CASE("[tileset] count_contiguous_regions empty array") {
+		std::vector<bool> arr;
+		auto regions = TileSetUtilityRGBA::count_contiguous_regions(arr);
+		CHECK(regions.size() == 0);
+	}
+
+	TEST_CASE("[tileset] count_contiguous_regions all true") {
+		std::vector<bool> arr = { true, true, true };
+		auto regions = TileSetUtilityRGBA::count_contiguous_regions(arr);
+		CHECK(regions.size() == 1);
+		CHECK(regions[0].first == 0);
+	}
+
+	TEST_CASE("[tileset] infer columns on grid image") {
+		// 9x1 image: border(0) | tile(FF) tile(FF) | border(0) | tile(FF) tile(FF) | border(0)
+		// Columns: [0]=border [1,2]=tile [3]=border [4,5]=tile [6]=border
+		uint8_t data[9 * 4]; // 9 pixels, RGBA
+		memset(data, 0, sizeof(data)); // all black (border)
+		// Tile pixels at x=1,2 and x=4,5
+		for (int x : { 1, 2, 4, 5, 7, 8 }) {
+			int idx = x * 4;
+			data[idx] = 255;
+			data[idx + 1] = 255;
+			data[idx + 2] = 255;
+			data[idx + 3] = 255;
+		}
+		BufferedImage img = { data, 9, 1 };
+		auto cols = TileSetUtilityRGBA::infer_number_columns(img);
+		CHECK(cols.size() >= 2);
+	}
+
+	TEST_CASE("[tileset] is_line_empty on border") {
+		// 3x3 image with black border, white center
+		uint8_t data[3 * 3 * 4];
+		memset(data, 0, sizeof(data));
+		// Center pixel white
+		int idx = (1 * 3 + 1) * 4;
+		data[idx] = 255;
+		data[idx + 1] = 255;
+		data[idx + 2] = 255;
+		data[idx + 3] = 255;
+		BufferedImage img = { data, 3, 3 };
+		CHECK(TileSetUtilityRGBA::is_line_empty(img, 0, false)); // column 0 = all black = matches border
+		CHECK_FALSE(TileSetUtilityRGBA::is_line_empty(img, 1, false)); // column 1 has white center
+		CHECK(TileSetUtilityRGBA::is_line_empty(img, 0, true)); // row 0 = all black
+		CHECK_FALSE(TileSetUtilityRGBA::is_line_empty(img, 1, true)); // row 1 has white
+	}
+}
+
+#endif // DOCTEST

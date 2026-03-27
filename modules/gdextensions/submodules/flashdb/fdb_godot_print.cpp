@@ -1,5 +1,6 @@
 // C++ bridge: routes FlashDB's printf-style logging through Godot's print system.
 // Called from C code via the FDB_PRINT macro override in fdb_def.h.
+// Respects _print_line_enabled so SUPPRESS_OUTPUT suppresses output in doctests.
 
 #include "core/print_string.h"
 
@@ -7,6 +8,10 @@
 #include <cstdio>
 
 extern "C" void fdb_godot_print(const char *fmt, ...) {
+	if (!_print_line_enabled) {
+		return;
+	}
+
 	char buf[512];
 	va_list args;
 	va_start(args, fmt);

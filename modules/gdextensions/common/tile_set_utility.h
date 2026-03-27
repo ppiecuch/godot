@@ -91,7 +91,7 @@ struct TileSetUtility {
 		const int w = tile.get_width();
 		const int h = tile.get_height();
 
-		print_verbose(vformat("Processing regions of %d columns and %d rows with border color 0x%08x.", cols.size(), rows.size(), tile.getRGB<PIXEL_SIZE>(0, 0)));
+		print_verbose(vformat("Processing regions of %d columns and %d rows with border color 0x%08x.", cols.size(), rows.size(), tile.get_rgb<PIXEL_SIZE>(0, 0)));
 
 		std::vector<TileCoord> tiles;
 		for (int y = 0; y < rows.size(); y++) {
@@ -113,7 +113,7 @@ struct TileSetUtility {
 
 		// after this loop, we should have a series of contiguous regions
 		// of 'true' in the array.
-		column_clear.resize(img.getWidth());
+		column_clear.resize(img.get_width());
 		for (int ii = 0; ii < column_clear.size(); ii++) {
 			column_clear[ii] = is_line_empty(img, ii, false);
 		}
@@ -127,7 +127,7 @@ struct TileSetUtility {
 		std::vector<bool> column_clear;
 		// after this loop, we should have a series of contiguous regions
 		// of 'true' in the array.
-		column_clear.resize(img.getHeight());
+		column_clear.resize(img.get_height());
 		for (int ii = 0; ii < column_clear.size(); ii++) {
 			column_clear[ii] = is_line_empty(img, ii, true);
 		}
@@ -194,7 +194,7 @@ struct TileSetUtility {
 
 	// Determine if this image is one solid color (implies redundant tile)
 	static bool is_image_solid_color(const BufferedImage &img) {
-		const TileCoord coord = (TileCoord){ 0, 0, img.get_width() + 1, img.get_height() + 1 };
+		const TileCoord coord = (TileCoord){ 0, 0, img.get_width(), img.get_height() };
 		return is_image_solid_color(img, coord);
 	}
 };

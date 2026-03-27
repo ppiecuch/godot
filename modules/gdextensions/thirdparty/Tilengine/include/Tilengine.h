@@ -266,7 +266,11 @@ typedef struct
 }
 TLN_PixelMap;
 
+#if defined(_GODOT_) && defined(__cplusplus)
+typedef void*                TLN_Engine;			/*!< Engine context (opaque, avoids struct Engine conflict in C++) */
+#else
 typedef struct Engine*		 TLN_Engine;			/*!< Engine context */
+#endif
 typedef union  Tile*		 TLN_Tile;				/*!< Tile reference */
 typedef struct Tileset*		 TLN_Tileset;			/*!< Opaque tileset reference */
 typedef struct Tilemap*		 TLN_Tilemap;			/*!< Opaque tilemap reference */

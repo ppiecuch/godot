@@ -577,16 +577,18 @@ TEST_CASE("[SilentWolf] Hashing") {
 
 TEST_CASE("[SilentWolf] Status code checking") {
 	SUBCASE("zero status code indicates connection failure") {
-		EXPECT_ERROR(CHECK_FALSE(sw_check_status_code(0)));
+		SUPPRESS_OUTPUT(CHECK_FALSE(sw_check_status_code(0)));
 	}
 
 	SUBCASE("non-zero status codes pass") {
-		CHECK(sw_check_status_code(200));
-		CHECK(sw_check_status_code(201));
-		CHECK(sw_check_status_code(400));
-		CHECK(sw_check_status_code(403));
-		CHECK(sw_check_status_code(404));
-		CHECK(sw_check_status_code(500));
+		SUPPRESS_OUTPUT({
+			CHECK(sw_check_status_code(200));
+			CHECK(sw_check_status_code(201));
+			CHECK(sw_check_status_code(400));
+			CHECK(sw_check_status_code(403));
+			CHECK(sw_check_status_code(404));
+			CHECK(sw_check_status_code(500));
+		});
 	}
 }
 

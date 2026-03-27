@@ -436,7 +436,20 @@ diff -Nur _orig/src/World.c _patched/src/World.c
  		case LAYER_TILE:
  		{
 
---- Godot: route TLN_Init printf through print_verbose ---
+--- Godot: avoid struct Engine conflict with Godot's Engine class in C++ ---
+diff -Nur _orig/include/Tilengine.h _patched/include/Tilengine.h
+--- _orig/include/Tilengine.h
++++ _patched/include/Tilengine.h
+@@ -269,7 +269,11 @@
+ TLN_PixelMap;
+
++#if defined(_GODOT_) && defined(__cplusplus)
++typedef void*                TLN_Engine;			/*!< Engine context (opaque, avoids struct Engine conflict in C++) */
++#else
+ typedef struct Engine*		 TLN_Engine;			/*!< Engine context */
++#endif
+
+--- Godot: route TLN_Init and tln_trace printf through print_verbose ---
 diff -Nur _orig/src/Tilengine.c _patched/src/Tilengine.c
 --- _orig/src/Tilengine.c
 +++ _patched/src/Tilengine.c
@@ -449,4 +462,17 @@ diff -Nur _orig/src/Tilengine.c _patched/src/Tilengine.c
 +	tilengine_godot_print("Tilengine v%d.%d.%d %d-bit %s built %s %s",
 +#else
 +	printf("Tilengine v%d.%d.%d %d-bit %s built %s %s\n",
++#endif
+@@ -877,7 +882,14 @@
+ 		vsprintf(line, format, ap);
+ 		va_end(ap);
+
+-		printf("Tilengine: %s\n", line);
++#ifdef _GODOT_
++		{
++			extern void tilengine_godot_print(const char *fmt, ...);
++			tilengine_godot_print("Tilengine: %s", line);
++		}
++#else
++		printf("Tilengine: %s\n", line);
 +#endif

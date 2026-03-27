@@ -40,6 +40,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -292,48 +293,50 @@ ResCache::~ResCache() {
 #include "core/image.h"
 #include "scene/resources/texture.h"
 
-TEST_CASE("Disk cache") {
-	static const int test_data_size = 80;
-	static const uint8_t test_data[80] = { // png, 32x32
-		0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-		0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x08, 0x00, 0x00, 0x00, 0x00, 0x56, 0x11, 0x25,
-		0x28, 0x00, 0x00, 0x00, 0x17, 0x49, 0x44, 0x41, 0x54, 0x38, 0xCB, 0x63, 0xFC, 0xCF, 0x80, 0x1F,
-		0x30, 0x8E, 0x2A, 0x18, 0x55, 0x30, 0xAA, 0x60, 0xA4, 0x2A, 0x00, 0x00, 0xF8, 0x2D, 0x20, 0x01,
-		0x4F, 0x2A, 0xA0, 0xAE, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
-	};
-	Ref<Image> image = memnew(Image(test_data, test_data_size));
-	Ref<ImageTexture> texture = memnew(ImageTexture);
-	texture->create_from_image(image);
+TEST_SUITE("[[rescache]] ResCache") {
+	TEST_CASE("[rescache] disk cache") {
+		static const int test_data_size = 80;
+		static const uint8_t test_data[80] = { // png, 32x32
+			0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+			0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x20, 0x08, 0x00, 0x00, 0x00, 0x00, 0x56, 0x11, 0x25,
+			0x28, 0x00, 0x00, 0x00, 0x17, 0x49, 0x44, 0x41, 0x54, 0x38, 0xCB, 0x63, 0xFC, 0xCF, 0x80, 0x1F,
+			0x30, 0x8E, 0x2A, 0x18, 0x55, 0x30, 0xAA, 0x60, 0xA4, 0x2A, 0x00, 0x00, 0xF8, 0x2D, 0x20, 0x01,
+			0x4F, 0x2A, 0xA0, 0xAE, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+		};
+		Ref<Image> image = memnew(Image(test_data, test_data_size));
+		Ref<ImageTexture> texture = memnew(ImageTexture);
+		texture->create_from_image(image);
 
-	ResCache *res_cache = ResCache::get_singleton();
+		ResCache *res_cache = ResCache::get_singleton();
 
-	SUBCASE("check resource access before sync") {
-		res_cache->set_resource(texture, "__t1__");
-		REQUIRE(res_cache->is_res_cached("__t1__"));
-		REQUIRE(res_cache->is_res_available("__t1__"));
-		res_cache->del_resource("__t1__");
-		REQUIRE(!res_cache->is_res_cached("__t1__"));
-		REQUIRE(!res_cache->is_res_available("__t1__"));
+		SUBCASE("check resource access before sync") {
+			res_cache->set_resource(texture, "__t1__");
+			REQUIRE(res_cache->is_res_cached("__t1__"));
+			REQUIRE(res_cache->is_res_available("__t1__"));
+			res_cache->del_resource("__t1__");
+			REQUIRE(!res_cache->is_res_cached("__t1__"));
+			REQUIRE(!res_cache->is_res_available("__t1__"));
+		}
+		SUBCASE("check resource access after sync") {
+			res_cache->set_resource(texture, "__t1__");
+			REQUIRE(res_cache->is_res_cached("__t1__"));
+			REQUIRE(res_cache->is_res_available("__t1__"));
+			SUPPRESS_OUTPUT(res_cache->sync());
+			res_cache->del_resource("__t1__");
+			REQUIRE(!res_cache->is_res_cached("__t1__"));
+			REQUIRE(!res_cache->is_res_available("__t1__"));
+		}
+		SUBCASE("check disk cache purge") {
+			SUPPRESS_OUTPUT(res_cache->purge());
+			REQUIRE(!DirAccess::exists(_cache_location));
+		}
+		SUBCASE("check disk cache limit") {
+			res_cache->set_max_disk_cache_size(112233);
+			REQUIRE(res_cache->get_max_disk_cache_size() == 112233);
+		}
+		SUBCASE("cleanup") {
+			SUPPRESS_OUTPUT(memdelete(res_cache));
+		}
 	}
-	SUBCASE("check resource access after sync") {
-		res_cache->set_resource(texture, "__t1__");
-		REQUIRE(res_cache->is_res_cached("__t1__"));
-		REQUIRE(res_cache->is_res_available("__t1__"));
-		res_cache->sync();
-		res_cache->del_resource("__t1__");
-		REQUIRE(!res_cache->is_res_cached("__t1__"));
-		REQUIRE(!res_cache->is_res_available("__t1__"));
-	}
-	SUBCASE("check disk cache purge") {
-		res_cache->purge();
-		REQUIRE(!DirAccess::exists(_cache_location));
-	}
-	SUBCASE("check disk cache limit") {
-		res_cache->set_max_disk_cache_size(112233);
-		REQUIRE(res_cache->get_max_disk_cache_size() == 112233);
-	}
-	SUBCASE("cleanup") {
-		memdelete(res_cache);
-	}
-}
+} // TEST_SUITE
 #endif

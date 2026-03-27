@@ -66,7 +66,7 @@ int64_t Byteswap::reverse_int64(int64_t p_value) {
 
 int Byteswap::reverse_short(int p_value) {
 	uint16_t v = (uint16_t)(p_value & 0xFFFF);
-	return (int)((v >> 8) | (v << 8));
+	return (int)(uint16_t)((v >> 8) | (v << 8));
 }
 
 PoolByteArray Byteswap::reverse_bytes(const PoolByteArray &p_data) {

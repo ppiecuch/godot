@@ -281,7 +281,7 @@ Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoo
 
 	print_verbose(vformat("mesh has %d triangles", 20 * ExpoDiscrete(4, MaxProf)));
 	MaxPoint = 13 * ExpoDiscrete(2, MaxProf) * (ExpoDiscrete(2, MaxProf) + 1); // MaxPoint = 10 * ExpoDiscrete(2, MaxProf) * (ExpoDiscrete(2, MaxProf) + 1);
-	print_verbose(vformat("mesh has ~%d summits\n", MaxPoint));
+	print_verbose(vformat("mesh has ~%d summits", MaxPoint));
 
 	dp = RelativementPremierPhi(MaxPoint);
 

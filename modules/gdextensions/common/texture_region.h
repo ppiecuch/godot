@@ -142,7 +142,10 @@ public:
 	TextureRegion(const Ref<Texture> &texture, real_t u, real_t v, real_t u2, real_t v2);
 
 	// Constructs a region that cannot be used until a texture and texture coordinates are set.
-	TextureRegion() {
+	TextureRegion() :
+			region_width(0), region_height(0) {
+		origin.u = origin.v = 0;
+		opposite.u = opposite.v = 0;
 	}
 };
 
