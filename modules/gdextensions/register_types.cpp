@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "register_types.h"
+#include "modules/modules_enabled.gen.h"
 
 #include "core/engine.h"
 #include "core/io/resource_importer.h"
@@ -59,6 +60,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "common/resources_config.h"
 #include "common/sr_graph.h"
 
+#ifdef GDEXT_CORE_ENABLED
 #include "core/area_prober.h"
 #include "core/blitter.h"
 #include "core/bs_input_event_key.h"
@@ -71,7 +73,6 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "core/godot_error_handler.h"
 #include "core/input_map_editor.h"
 #include "core/input_storage.h"
-#include "core/line_builder_2d.h"
 #include "core/phantom.h"
 #include "core/procedural_animation.h"
 #include "core/procedural_animation_editor_plugin.h"
@@ -80,9 +81,9 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "core/stopwatch.h"
 #include "core/tags.h"
 #include "core/timer2.h"
-#include "core/trail_2d.h"
 #include "core/tween2.h"
 #include "core/voronoi.h"
+#endif // GDEXT_CORE_ENABLED
 
 #ifdef TOOLS_ENABLED
 #include "editor/editor_icon_preview.h"
@@ -148,6 +149,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "generator/gd_procedural_mesh.h"
 #endif
 
+#ifdef GDEXT_VISUAL_ENABLED
 #include "visual/autotilemap.h"
 #include "visual/bend_deform_2d.h"
 #include "visual/bullet_manager.h"
@@ -159,6 +161,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "visual/filo_cable.h"
 #include "visual/foliage_2d_animation.h"
 #include "visual/grid_rect.h"
+#include "visual/line_builder_2d.h"
 #include "visual/nixie_font.h"
 #include "visual/pixel_spaceships.h"
 #include "visual/round_progress.h"
@@ -166,7 +169,9 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "visual/texture_panning.h"
 #include "visual/thumb_wheel.h"
 #include "visual/touch_button.h"
+#include "visual/trail_2d.h"
 #include "visual/widget_controls.h"
+#endif // GDEXT_VISUAL_ENABLED
 
 #include "ropesim/rope_server.h"
 
@@ -518,25 +523,26 @@ void register_gdextensions_types() {
 	Ref<ResourceImporterJSON> json_data = memnew(ResourceImporterJSON);
 	ResourceFormatImporter::get_singleton()->add_importer(json_data);
 #endif
-	ClassDB::register_class<LineBuilder2D>();
 	ClassDB::register_class<Phantom>();
+	ClassDB::register_class<ProceduralAnimation>();
 	ClassDB::register_virtual_class<RawPacker>();
 	ClassDB::register_class<RealNormal>();
-	ClassDB::register_class<RoundProgress>();
-	ClassDB::register_class<GridRect>();
 	ClassDB::register_class<Timer2>();
 	ClassDB::register_class<TimerObject>();
 	ClassDB::register_class<Tween2>();
 	ClassDB::register_class<TweenAction>();
-	ClassDB::register_class<TrailPoint2D>();
-	ClassDB::register_class<TrailLine2D>();
-	ClassDB::register_class<ProceduralAnimation>();
-	ClassDB::register_class<GridRect>();
 	ClassDB::register_class<Voronoi>();
 	ClassDB::register_class<VoronoiDiagram>();
 	ClassDB::register_class<VoronoiSite>();
 	ClassDB::register_class<VoronoiEdge>();
 #endif // GDEXT_CORE_ENABLED
+#ifdef GDEXT_VISUAL_ENABLED
+	ClassDB::register_class<LineBuilder2D>();
+	ClassDB::register_class<RoundProgress>();
+	ClassDB::register_class<GridRect>();
+	ClassDB::register_class<TrailPoint2D>();
+	ClassDB::register_class<TrailLine2D>();
+#endif // GDEXT_VISUAL_ENABLED
 #ifdef GDEXT_THREADPOOL_ENABLED
 	ClassDB::register_class<ThreadPoolJob>();
 	ClassDB::register_class<ThreadPoolExecuteJob>();
@@ -984,9 +990,11 @@ void register_gdextensions_types() {
 void unregister_gdextensions_types() {
 	RemoveSingleton(ResCache);
 	RemoveSingleton(Resources);
+#ifdef GDEXT_THREADPOOL_ENABLED
 	if (thread_pool) {
 		memdelete(thread_pool);
 	}
+#endif
 #ifdef GDEXT_BEHAVIORTREE_ENABLED
 	BTStringNames::free();
 #endif

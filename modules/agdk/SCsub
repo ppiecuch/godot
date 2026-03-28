@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+Import("env")
+Import("env_modules")
+
+env_agdk = env_modules.Clone()
+
+# AGDK sub-component feature flags
+env_agdk.Append(CPPDEFINES=["AGDK_ENABLED"])
+
+# Thirdparty includes
+swappy_dir = "#modules/agdk/thirdparty/swappy/"
+paddleboat_dir = "#modules/agdk/thirdparty/paddleboat/"
+oboe_dir = "#modules/agdk/thirdparty/oboe/"
+
+env_agdk.Prepend(CPPPATH=[swappy_dir + "include"])
+env_agdk.Prepend(CPPPATH=[paddleboat_dir + "include"])
+env_agdk.Prepend(CPPPATH=[oboe_dir + "include"])
+
+# Collect sources
+sources = []
+
+# Core module
+env_agdk.add_source_files(sources, "*.cpp")
+
+# Sub-components
+env_agdk.add_source_files(sources, "swappy/*.cpp")
+env_agdk.add_source_files(sources, "paddleboat/*.cpp")
+env_agdk.add_source_files(sources, "thermal/*.cpp")
+env_agdk.add_source_files(sources, "oboe/*.cpp")
+env_agdk.add_source_files(sources, "memory/*.cpp")
+
+# Link AGDK prebuilt static libraries per-ABI, or use stubs if not available
+arch = env["android_arch"]
+abi_map = {
+    "armv7": "armeabi-v7a",
+    "arm64v8": "arm64-v8a",
+    "x86": "x86",
+    "x86_64": "x86_64",
+}
+abi = abi_map.get(arch, "arm64-v8a")
+
+use_swappy_stub = True
+swappy_lib_dir = swappy_dir + "lib/" + abi
+if env.Dir(swappy_lib_dir).exists():
+    env.Append(LIBPATH=[swappy_lib_dir])
+    env.Append(LIBS=["swappy_static"])
+    use_swappy_stub = False
+
+use_paddleboat_stub = True
+paddleboat_lib_dir = paddleboat_dir + "lib/" + abi
+if env.Dir(paddleboat_lib_dir).exists():
+    env.Append(LIBPATH=[paddleboat_lib_dir])
+    env.Append(LIBS=["paddleboat_static"])
+    use_paddleboat_stub = False
+
+# Compile stub implementations when real libraries are not available
+if use_swappy_stub:
+    env_agdk.add_source_files(sources, "thirdparty/swappy/swappy_stub.c")
+
+if use_paddleboat_stub:
+    env_agdk.add_source_files(sources, "thirdparty/paddleboat/paddleboat_stub.c")
+
+lib = env_agdk.add_library("agdk", sources)
+env.Prepend(LIBS=[lib])
+
+# Android NDK libs needed by AGDK
+env.Append(LIBS=["android", "log"])

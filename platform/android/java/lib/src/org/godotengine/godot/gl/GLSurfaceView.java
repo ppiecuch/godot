@@ -172,6 +172,24 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 	private final static boolean LOG_RENDERER = false;
 	private final static boolean LOG_RENDERER_DRAW_FRAME = false;
 	private final static boolean LOG_EGL = false;
+
+	/**
+	 * Interface for pluggable swap buffer strategies (e.g. Swappy frame pacing).
+	 * When set, the SwapStrategy.swap() method is called instead of eglSwapBuffers.
+	 */
+	public interface SwapStrategy {
+		int swap(EGL10 egl, EGLDisplay display, EGLSurface surface);
+	}
+
+	private static volatile SwapStrategy sSwapStrategy = null;
+
+	/**
+	 * Set a custom swap strategy to replace the default eglSwapBuffers call.
+	 * Pass null to restore the default behavior.
+	 */
+	public static void setSwapStrategy(SwapStrategy strategy) {
+		sSwapStrategy = strategy;
+	}
 	/**
 	 * The renderer only renders
 	 * when the surface is created, or when {@link #requestRender} is called.
@@ -1176,6 +1194,10 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 		 * @return the EGL error code from eglSwapBuffers.
 		 */
 		public int swap() {
+			SwapStrategy strategy = sSwapStrategy;
+			if (strategy != null) {
+				return strategy.swap(mEgl, mEglDisplay, mEglSurface);
+			}
 			if (! mEgl.eglSwapBuffers(mEglDisplay, mEglSurface)) {
 				return mEgl.eglGetError();
 			}
