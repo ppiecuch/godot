@@ -1429,7 +1429,7 @@ int SDL_BlendLines(SDL_Surface *dst, const SDL_Point *points, int count, SDL_Ble
 	static void SDL_FillRect##bpp##SSE(Uint8 *pixels, int pitch, Uint32 color, int w, int h) { \
 		SSE_BEGIN;                                                                             \
 		while (h--) {                                                                          \
-			int = w * bpp;                                                                     \
+			int n = w * bpp;                                                                   \
 			Uint8 *p = pixels;                                                                 \
                                                                                                \
 			if (n > 63) {                                                                      \

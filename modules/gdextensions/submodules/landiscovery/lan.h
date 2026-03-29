@@ -28,6 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifndef LAN_H
+#define LAN_H
+
 #include "core/io/packet_peer_udp.h"
 #include "core/io/udp_server.h"
 #include "core/map.h"
@@ -55,7 +58,7 @@ public:
 	void set_peer_info(const Dictionary &p_dict);
 	Dictionary get_peer_info() const;
 	void set_broadcast_interval(real_t p_interval);
-	int get_broadcast_interval() const;
+	real_t get_broadcast_interval() const;
 	void set_port(int p_port);
 	int get_port() const;
 
@@ -66,8 +69,7 @@ class LanListener : public Node {
 	GDCLASS(LanListener, Node);
 
 	int listen_port;
-	int server_cleanup_timeout; // Number of seconds to wait when a server
-								// hasn't been heard from before remove
+	real_t server_cleanup_timeout;
 
 	Ref<UDPServer> _udp_server;
 	Timer *_cleanup_timer;
@@ -84,6 +86,8 @@ public:
 	int get_port() const;
 	void set_cleanup_timeout(real_t p_timeout);
 	real_t get_cleanup_timeout() const;
+
+	Map<String, Dictionary> get_known_peers() const;
 
 	LanListener();
 };
@@ -121,6 +125,12 @@ public:
 	int get_game_port() const;
 	void set_cleanup_timeout(real_t p_timeout);
 	real_t get_cleanup_timeout() const;
+	void set_broadcast_interval(real_t p_interval);
+	real_t get_broadcast_interval() const;
+
+	Map<String, Dictionary> get_known_peers() const;
 
 	LanPlayer();
 };
+
+#endif // LAN_H

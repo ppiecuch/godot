@@ -221,6 +221,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "keychains/keychain.h"
 #endif
 
+#ifdef GDEXT_LANDISCOVERY_ENABLED
+#include "landiscovery/lan.h"
+#endif
+
 #ifdef GDEXT_MEDIA_FLAC_ENABLED
 #include "media/flac/audio_stream_flac.h"
 #ifdef TOOLS_ENABLED
@@ -735,6 +739,12 @@ void register_gdextensions_types() {
 #ifdef GDEXT_KEYCHAINS_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Keychain", memnew(Keychain)));
 #endif // GDEXT_KEYCHAINS_ENABLED
+
+#ifdef GDEXT_LANDISCOVERY_ENABLED
+	ClassDB::register_class<LanAdvertiser>();
+	ClassDB::register_class<LanListener>();
+	ClassDB::register_class<LanPlayer>();
+#endif // GDEXT_LANDISCOVERY_ENABLED
 
 #ifdef GDEXT_ENVIRONMENT_WATERFALL_ENABLED
 	ClassDB::register_class<GdWaterfall>();

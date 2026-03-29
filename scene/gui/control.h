@@ -161,6 +161,20 @@ private:
 		Vector2 scale;
 		Vector2 pivot_offset;
 
+		// Offset transform: layout-independent visual/input transform.
+		// Heap-allocated on first use for zero overhead on controls that don't use it.
+		struct OffsetTransform {
+			bool enabled = false;
+			Vector2 translation_absolute;
+			Vector2 translation_relative;
+			Vector2 scale = Vector2(1, 1);
+			float rotation = 0;
+			Vector2 pivot_absolute;
+			Vector2 pivot_relative = Vector2(0.5, 0.5);
+			bool visual_only = true;
+		};
+		OffsetTransform *offset_transform = nullptr;
+
 		bool pending_resize;
 
 		int h_size_flags;
@@ -242,6 +256,8 @@ private:
 	void _update_canvas_item_transform();
 
 	Transform2D _get_internal_transform() const;
+
+	void _ensure_allocated_offset_transform();
 
 	friend class Viewport;
 	void _modal_stack_remove();
@@ -385,6 +401,37 @@ public:
 
 	void set_scale(const Vector2 &p_scale);
 	Vector2 get_scale() const;
+
+	/* OFFSET TRANSFORM */
+
+	void set_offset_transform_enabled(bool p_enabled);
+	bool is_offset_transform_enabled() const;
+
+	void set_offset_transform_translation_absolute(const Vector2 &p_translation);
+	Vector2 get_offset_transform_translation_absolute() const;
+
+	void set_offset_transform_translation_relative(const Vector2 &p_translation);
+	Vector2 get_offset_transform_translation_relative() const;
+
+	void set_offset_transform_scale(const Vector2 &p_scale);
+	Vector2 get_offset_transform_scale() const;
+
+	void set_offset_transform_rotation(float p_radians);
+	float get_offset_transform_rotation() const;
+
+	void set_offset_transform_rotation_degrees(float p_degrees);
+	float get_offset_transform_rotation_degrees() const;
+
+	void set_offset_transform_pivot_absolute(const Vector2 &p_pivot);
+	Vector2 get_offset_transform_pivot_absolute() const;
+
+	void set_offset_transform_pivot_relative(const Vector2 &p_pivot);
+	Vector2 get_offset_transform_pivot_relative() const;
+
+	void set_offset_transform_visual_only(bool p_visual_only);
+	bool is_offset_transform_visual_only() const;
+
+	Transform2D get_offset_transform() const;
 
 	void show_modal(bool p_exclusive = false);
 

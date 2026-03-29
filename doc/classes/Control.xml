@@ -849,6 +849,30 @@
 			[b]Note:[/b] This property is mainly intended to be used for animation purposes. Text inside the Control will look pixelated or blurry when the Control is scaled. To support multiple resolutions in your project, use an appropriate viewport stretch mode as described in the [url=$DOCS_URL/tutorials/rendering/multiple_resolutions.html]documentation[/url] instead of scaling Controls individually.
 			[b]Note:[/b] If the Control node is a child of a [Container] node, the scale will be reset to [code]Vector2(1, 1)[/code] when the scene is instanced. To set the Control's scale when it's instanced, wait for one frame using [code]yield(get_tree(), "idle_frame")[/code] then set its [member rect_scale] property.
 		</member>
+		<member name="rect_offset_transform_enabled" type="bool" setter="set_offset_transform_enabled" getter="is_offset_transform_enabled" default="false">
+			If [code]true[/code], the offset transform is applied to this Control. The offset transform allows animating position, rotation, and scale without affecting the layout system, similar to CSS transforms. When enabled, [Container] parent nodes will not react to the transform changes.
+		</member>
+		<member name="rect_offset_transform_translation_absolute" type="Vector2" setter="set_offset_transform_translation_absolute" getter="get_offset_transform_translation_absolute" default="Vector2( 0, 0 )">
+			The absolute translation of the offset transform, in pixels. Combined with [member rect_offset_transform_translation_relative] to produce the final translation. Only effective when [member rect_offset_transform_enabled] is [code]true[/code].
+		</member>
+		<member name="rect_offset_transform_translation_relative" type="Vector2" setter="set_offset_transform_translation_relative" getter="get_offset_transform_translation_relative" default="Vector2( 0, 0 )">
+			The relative translation of the offset transform, as a ratio of the Control's size. For example, [code]Vector2(0.5, 0)[/code] translates by half the width. Combined with [member rect_offset_transform_translation_absolute]. Only effective when [member rect_offset_transform_enabled] is [code]true[/code].
+		</member>
+		<member name="rect_offset_transform_scale" type="Vector2" setter="set_offset_transform_scale" getter="get_offset_transform_scale" default="Vector2( 1, 1 )">
+			The scale of the offset transform. Applied around the offset transform pivot point. Only effective when [member rect_offset_transform_enabled] is [code]true[/code].
+		</member>
+		<member name="rect_offset_transform_rotation" type="float" setter="set_offset_transform_rotation_degrees" getter="get_offset_transform_rotation_degrees" default="0.0">
+			The rotation of the offset transform, in degrees. Applied around the offset transform pivot point. Only effective when [member rect_offset_transform_enabled] is [code]true[/code].
+		</member>
+		<member name="rect_offset_transform_pivot_absolute" type="Vector2" setter="set_offset_transform_pivot_absolute" getter="get_offset_transform_pivot_absolute" default="Vector2( 0, 0 )">
+			The absolute pivot of the offset transform, in pixels. Combined with [member rect_offset_transform_pivot_relative] to produce the final pivot. Only effective when [member rect_offset_transform_enabled] is [code]true[/code].
+		</member>
+		<member name="rect_offset_transform_pivot_relative" type="Vector2" setter="set_offset_transform_pivot_relative" getter="get_offset_transform_pivot_relative" default="Vector2( 0.5, 0.5 )">
+			The relative pivot of the offset transform, as a ratio of the Control's size. Defaults to [code]Vector2(0.5, 0.5)[/code] (center). Combined with [member rect_offset_transform_pivot_absolute]. Only effective when [member rect_offset_transform_enabled] is [code]true[/code].
+		</member>
+		<member name="rect_offset_transform_visual_only" type="bool" setter="set_offset_transform_visual_only" getter="is_offset_transform_visual_only" default="true">
+			If [code]true[/code] (default), the offset transform only affects rendering — the Control's input/hit-testing region stays in its original layout position. If [code]false[/code], the transform also affects input, meaning clicks will target the visually transformed position. When [code]false[/code], the editor draws a dashed ghost rectangle at the original layout position.
+		</member>
 		<member name="rect_size" type="Vector2" setter="_set_size" getter="get_size" default="Vector2( 0, 0 )">
 			The size of the node's bounding rectangle, in pixels. [Container] nodes update this property automatically.
 		</member>

@@ -1064,7 +1064,7 @@ static SDL_INLINE void INTERPOL_BILINEAR_SSE(const Uint32 *s0, const Uint32 *s1,
 static int scale_mat_SSE(const Uint32 *src, int src_w, int src_h, int src_pitch, Uint32 *dst, int dst_w, int dst_h, int dst_pitch) {
 	BILINEAR___START
 
-	for (i = 0; i < dst_h; i++) {
+	for (int i = 0; i < dst_h; i++) {
 		int nb_block2;
 		__m128i v_frac_h0;
 		__m128i v_frac_h1;

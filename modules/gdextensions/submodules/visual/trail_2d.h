@@ -42,7 +42,7 @@
 #include "scene/2d/node_2d.h"
 #include "scene/2d/position_2d.h"
 
-#include "queue.h"
+#include "core/queue.h"
 
 class TrailPoint2D : public Node2D {
 	GDCLASS(TrailPoint2D, Node2D);

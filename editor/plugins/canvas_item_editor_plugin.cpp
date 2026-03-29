@@ -3532,6 +3532,42 @@ void CanvasItemEditor::_draw_control_helpers(Control *control) {
 				break;
 		}
 	}
+
+	// Draw dashed ghost rect showing original layout bounds when offset transform is active and not visual-only.
+	if (control->is_offset_transform_enabled() && !control->is_offset_transform_visual_only()) {
+		Transform2D offset_xform = control->get_offset_transform();
+		Transform2D base_xform = xform * offset_xform.affine_inverse();
+
+		Rect2 rect = Rect2(Vector2(), control->get_size());
+		Vector2 corners[4] = {
+			base_xform.xform(rect.position),
+			base_xform.xform(rect.position + Vector2(rect.size.x, 0)),
+			base_xform.xform(rect.position + rect.size),
+			base_xform.xform(rect.position + Vector2(0, rect.size.y))
+		};
+
+		Color ghost_color = Color(0.5, 0.5, 0.5, 0.75);
+		float dash_length = 4.0 * EDSCALE;
+		for (int i = 0; i < 4; i++) {
+			Vector2 from = corners[i];
+			Vector2 to = corners[(i + 1) % 4];
+			float total_length = from.distance_to(to);
+			if (total_length < 0.1) {
+				continue;
+			}
+			Vector2 dir = (to - from) / total_length;
+			float drawn = 0;
+			bool draw_on = true;
+			while (drawn < total_length) {
+				float seg = MIN(dash_length, total_length - drawn);
+				if (draw_on) {
+					viewport->draw_line(from + dir * drawn, from + dir * (drawn + seg), ghost_color, Math::round(EDSCALE));
+				}
+				drawn += seg;
+				draw_on = !draw_on;
+			}
+		}
+	}
 }
 
 void CanvasItemEditor::_draw_selection() {

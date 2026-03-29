@@ -112,13 +112,17 @@ def convert(src_dir: Path, dst_dir: Path):
             log.info("%s  ANIM  %s", progress, rel)
             cmd = [str(FBX2OBJ), "-a", "-o", f"{out_dir}/", str(fbx)]
         else:
-            out_file = out_dir / f"{name}.obj"
-            if out_file.exists():
+            # Export OBJ + MTL + Godot ArrayMesh .tres in one call (-m -t)
+            out_obj = out_dir / f"{name}.obj"
+            out_tres = out_dir / f"{name}.tres"
+
+            if out_obj.exists() and out_tres.exists():
                 log.info("%s  SKIP  %s  (exists)", progress, rel)
                 skipped += 1
                 continue
-            log.info("%s  OBJ   %s", progress, rel)
-            cmd = [str(FBX2OBJ), "-t", "-o", f"{out_dir}/", str(fbx)]
+
+            log.info("%s  MESH  %s", progress, rel)
+            cmd = [str(FBX2OBJ), "-m", "-t", "-o", f"{out_dir}/", str(fbx)]
 
         if run_fbx2obj(cmd, rel):
             converted += 1
