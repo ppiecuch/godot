@@ -6730,7 +6730,7 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 					child = memnew(TextureRect);
 				} else if (default_type == "NinePatchRect") {
 					child = memnew(NinePatchRect);
-				// (PP) Other default types
+					// (PP) Other default types
 #ifdef MODULE_GD_VECTOR_GRAPHICS_ENABLED
 				} else if (default_type == "Sprite") {
 					child = memnew(Sprite);
