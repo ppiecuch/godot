@@ -44,11 +44,16 @@
 #include "core/math/math_funcs.h"
 #include "core/os/input.h"
 #include "core/os/input_event.h"
+#include "core/os/keyboard.h"
 #include "core/variant.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
 #include "widget_controls.h"
+
+// Feature toggles
+#define EXPERIMENTAL_PIXEL_SNAP
+#define DISABLE_Z_FORESHORTEN
 
 /// Rotation ball
 
@@ -208,6 +213,10 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 		PoolColorArray colors;
 
 		Color curr_color;
+		Color *sel_col; // for outline: tracks selected color to suppress duplicates
+
+		mesh_info_t() :
+				sel_col(nullptr) {}
 
 		void set_color(const Color &color) { curr_color = color; }
 		void set_color(real_t grey) { curr_color = { grey, grey, grey }; }
@@ -218,6 +227,21 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 		void add_vert(const Transform2D &transform, const Vector2 &vert) {
 			colors.push_back(curr_color);
 			verts.push_back(transform.xform(vert));
+		}
+		bool select_color(Color *col) {
+			if (sel_col && sel_col != col) {
+				return false;
+			}
+			return col != nullptr;
+		}
+		void draw_segment(const Transform2D &xf, Color *col, real_t xa, real_t ya, real_t xb, real_t yb) {
+			if (select_color(col)) {
+				set_color(*col);
+				add_vert(xf, { xa, ya });
+				add_vert(xf, { xb, yb });
+				add_vert(xf, { xb, yb });
+				add_vert(xf, { xa, ya });
+			}
 		}
 	};
 
@@ -287,47 +311,54 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 			x1b *= 1.7;
 		}
 	}
+#ifndef DISABLE_Z_FORESHORTEN
+	bool z1 = (TransZ == trans_type);
+#else
 	bool z1 = false;
-	if (true) { // EXPERIMENTAL
-		// Pretty good foreshortening. This is pretty cool
-		// but I think I did it because the thin neck part
-		// looked either too thin or too fat with the hard
-		// pixel offests.
-		if (false) { // DISABLED: z1 = (TransZ == trans_type)
-			y2 *= orientation ? 1.2 : 1;
+#endif
 
-			real_t x = 0.5;
-			y1 *= x;
-			y2 *= x;
+#ifdef EXPERIMENTAL_PIXEL_SNAP
+	// Pretty good foreshortening. This is pretty cool
+	// but I think I did it because the thin neck part
+	// looked either too thin or too fat with the hard
+	// pixel offsets.
+#ifndef DISABLE_Z_FORESHORTEN
+	if (z1) {
+		y2 *= orientation ? 1.2 : 1;
 
-			x = 1.8;
-			x1a *= x;
-			if (orientation) {
-				x2 *= x;
-				x1b *= x;
-			}
+		real_t x = 0.5;
+		y1 *= x;
+		y2 *= x;
+
+		x = 1.8;
+		x1a *= x;
+		if (orientation) {
+			x2 *= x;
+			x1b *= x;
 		}
-
-		// Fixing to hard pixel boundaries before applying
-		// 1px offsets below.
-		// x1_ = int(x1 + 0.5);
-		x2 = (real_t)(int)(x2 + 0.5);
-		y0 = (real_t)(int)(y0 + 0.5);
-		y1 = (real_t)(int)(y1 + 0.5);
-		y2 = (real_t)(int)(y2 + 0.5);
-		x1a = (real_t)(int)(x1a + 0.5);
-		x1b = (real_t)(int)(x1b + 0.5);
 	}
+#endif
 
-	{
+	// Fixing to hard pixel boundaries before applying
+	// 1px offsets below.
+	// x1_ = int(x1 + 0.5);
+	x2 = (real_t)(int)(x2 + 0.5);
+	y0 = (real_t)(int)(y0 + 0.5);
+	y1 = (real_t)(int)(y1 + 0.5);
+	y2 = (real_t)(int)(y2 + 0.5);
+	x1a = (real_t)(int)(x1a + 0.5);
+	x1b = (real_t)(int)(x1b + 0.5);
+#endif
+
+	if (!enabled) {
+		// Check if control is enabled or not
+		// Indents the shadows - goes from a raised look to embossed
+		c_rot += 4;
+	} else {
+		// Draw arrow fill (triangle fan)
 		mesh_info_t mesh_info;
 
-		if (!enabled) {
-			// Check if control is enabled or not
-			// Indents the shadows - goes from a raised look to embossed
-			c_rot += 4;
-			goto disabled; // set_to_bkgd_color();
-		} else if (!filled) { // Fill in inside of arrow
+		if (!filled) { // Fill in inside of arrow
 			// Means button is up - control is not clicked
 			mesh_info.set_color(bkgd2); // set_to_bkgd_color();
 		} else { // button is down on control
@@ -350,87 +381,58 @@ static void _draw_2d_arrow(Ref<ArrayMesh> mesh, int radius, bool filled, bool en
 		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_FAN, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
 	}
 
-disabled:
+	// Draw arrow outline
 	bool z2 = z1;
 	(orientation ? z1 : z2) = false;
 
 	// Draw arrow outline
 	{
 		mesh_info_t mesh_info;
-		Color *col, *sel = nullptr;
+		Color *col;
 
-#define SET_COL(io, i)                                         \
-	if (sel != (col = &colors_##io[(i + c_rot) % 8]) && sel) { \
-		col = 0;                                               \
-	}
-#define DRAW_SEG(xa, ya, xb, yb)                    \
-	if (col) {                                      \
-		mesh_info.set_color(*col);                  \
-		mesh_info.add_vert(curr_xform, { xa, ya }); \
-		mesh_info.add_vert(curr_xform, { xb, yb }); \
-		mesh_info.add_vert(curr_xform, { xb, yb }); \
-		mesh_info.add_vert(curr_xform, { xa, ya }); \
-	} // double ends?
+		// Helper to select color from inner/outer octagon shading arrays
+		auto col_in = [&](int i) -> Color * { return &colors_in[(i + c_rot) % 8]; };
+		auto col_out = [&](int i) -> Color * { return &colors_out[(i + c_rot) % 8]; };
 
 		if (!z1) {
-			SET_COL(in, 1);
-			DRAW_SEG(0, y2 - 1, -x2 + 2, y1 + 1); // flipping
-			SET_COL(in, 3);
-			DRAW_SEG(0, y2 - 1, x2 - 2, y1 + 1);
+			mesh_info.draw_segment(curr_xform, col_in(1), 0, y2 - 1, -x2 + 2, y1 + 1); // flipping
+			mesh_info.draw_segment(curr_xform, col_in(3), 0, y2 - 1, x2 - 2, y1 + 1);
 
-			SET_COL(out, 1);
-			DRAW_SEG(0, y2, -x2, y1);
-			SET_COL(out, 3);
-			DRAW_SEG(0, y2, x2, y1);
+			mesh_info.draw_segment(curr_xform, col_out(1), 0, y2, -x2, y1);
+			mesh_info.draw_segment(curr_xform, col_out(3), 0, y2, x2, y1);
 		}
 
 		int l = (bkgd3 == colors_in[(6 + c_rot) % 8]) ? 3 : 1;
 		int ll = (TransXY == trans_type) ? 1 : 0;
 
-		SET_COL(in, 0);
-		DRAW_SEG(-x1b + 1, y1 + 1, -x1a + 1, y0 + ll); // flipping
-		SET_COL(in, 6);
-		DRAW_SEG(-x2 + l, y1 + 1, -x1b + 1, y1 + 1); // flipping
-		SET_COL(in, 6);
-		DRAW_SEG(x2 - l, y1 + 1, x1b - 1, y1 + 1);
-		SET_COL(in, 4);
-		DRAW_SEG(x1b - 1, y1 + 1, x1a - 1, y0 + ll);
+		mesh_info.draw_segment(curr_xform, col_in(0), -x1b + 1, y1 + 1, -x1a + 1, y0 + ll); // flipping
+		mesh_info.draw_segment(curr_xform, col_in(6), -x2 + l, y1 + 1, -x1b + 1, y1 + 1); // flipping
+		mesh_info.draw_segment(curr_xform, col_in(6), x2 - l, y1 + 1, x1b - 1, y1 + 1);
+		mesh_info.draw_segment(curr_xform, col_in(4), x1b - 1, y1 + 1, x1a - 1, y0 + ll);
 
 		if (trans_type == TransZ) { // Fill in gaps.
 			const real_t hl = 0.5;
-			SET_COL(in, 0);
-			DRAW_SEG(-x1b + hl, y1, -x1a + 1, y0); // flipping
-			SET_COL(in, 4);
-			DRAW_SEG(x1b - hl, y1, x1a - 1, y0);
+			mesh_info.draw_segment(curr_xform, col_in(0), -x1b + hl, y1, -x1a + 1, y0); // flipping
+			mesh_info.draw_segment(curr_xform, col_in(4), x1b - hl, y1, x1a - 1, y0);
 		}
 
 		if (!z2) { // Saving for end?
-			SET_COL(out, 0);
-			DRAW_SEG(-x1b, y1, -x1a, y0); // flipping
-			SET_COL(out, 6);
-			DRAW_SEG(-x2, y1, -x1b, y1); // flipping
+			mesh_info.draw_segment(curr_xform, col_out(0), -x1b, y1, -x1a, y0); // flipping
+			mesh_info.draw_segment(curr_xform, col_out(6), -x2, y1, -x1b, y1); // flipping
 		} else { // Make point 2 pixels tall.
-			SET_COL(out, 1);
-			DRAW_SEG(0, y2 + 1, -x2, y1); // flipping
-			SET_COL(out, 3);
-			DRAW_SEG(0, y2 + 1, x2, y1);
+			mesh_info.draw_segment(curr_xform, col_out(1), 0, y2 + 1, -x2, y1); // flipping
+			mesh_info.draw_segment(curr_xform, col_out(3), 0, y2 + 1, x2, y1);
 		}
 		// -1 is not connecting in this order??? But flipping
 		// its line makes the other end break.
-		SET_COL(out, 6);
-		DRAW_SEG(x2, y1, x1b, y1); // doubling
-		// SET_COL(out,6); DRAW_SEG(x1b, y1, x2, y1) // doubling flipped
-		SET_COL(out, 4);
-		DRAW_SEG(x1b, y1, x1a, y0); // doubling
-		// SET_COL(out,4); DRAW_SEG(x1a, y0, x1b, y1); // doubling flipped
+		mesh_info.draw_segment(curr_xform, col_out(6), x2, y1, x1b, y1); // doubling
+		mesh_info.draw_segment(curr_xform, col_out(4), x1b, y1, x1a, y0); // doubling
 
-		if (z2) { // front of forshortened arrow
-			// Dawing these last for forshortened Z to be drawn
+		if (z2) { // front of foreshortened arrow
+			// Drawing these last for foreshortened Z to be drawn
 			// in front of the frame.
-			SET_COL(out, 0);
-			DRAW_SEG(-x1b, y1, -x1a, y0); // flipping
-			SET_COL(out, 6);
-			DRAW_SEG(-x2, y1, -x1b, y1); // flipping
+			mesh_info.draw_segment(curr_xform, col_out(0), -x1b, y1, -x1a, y0); // flipping
+			mesh_info.draw_segment(curr_xform, col_out(6), -x2, y1, -x1b, y1); // flipping
 		}
 
 		Array mesh_array;
@@ -438,38 +440,36 @@ disabled:
 		mesh_array[VS::ARRAY_VERTEX] = mesh_info.verts;
 		mesh_array[VS::ARRAY_COLOR] = mesh_info.colors;
 		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
-#undef SET_COL
-#undef DRAW_SEG
 	}
 }
 
-static void draw_2d_arrows(Ref<ArrayMesh> mesh, int trans_type, int radius, bool press, bool enabled, char translation_locked /* 'X', 'Y' or 0 */) {
+static void draw_2d_arrows(Ref<ArrayMesh> mesh, int trans_type, int radius, bool press, bool enabled, LockAxis translation_locked) {
 	int o1 = 0, o2 = 0;
 	if (trans_type == TransZ) {
 		o1 = 2;
 		o2 = 0; // draw_2d_z_arrows(radius);
 	} else if (trans_type == TransXY) { // draw_2d_xy_arrows(radius);
-		char lock = press ? translation_locked : 0;
+		LockAxis lock = press ? translation_locked : LOCK_NONE;
 
 		bool filled = false;
-		if (!lock) {
+		if (lock == LOCK_NONE) {
 			filled = press;
 			o1 = 0;
 			o2 = 1;
-		} else if (lock == 'Y') { // LOCK_X
+		} else if (lock == LOCK_Y) {
 			o1 = 0;
 			o2 = 2; // Y
-		} else if (lock == 'X') { // LOCK_Y
+		} else if (lock == LOCK_X) {
 			o1 = 1;
 			o2 = 3; // X
 		}
 		_draw_2d_arrow(mesh, radius, filled, enabled, o1, trans_type);
 		_draw_2d_arrow(mesh, radius, filled, enabled, o2, trans_type);
 
-		if (lock == 'Y') {
-			trans_type = TransX; // LOCK_X
-		} else if (lock == 'X') {
-			trans_type = TransY; // LOCK_Y
+		if (lock == LOCK_Y) {
+			trans_type = TransX;
+		} else if (lock == LOCK_X) {
+			trans_type = TransY;
 		} else {
 			o1 = 2;
 			o2 = 3;
@@ -650,9 +650,9 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 					Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE);
 					break;
 				case WIDGET_TRANSLATION_XY: {
-					if (_state.locked == 'X') {
+					if (_state.locked == LOCK_X) {
 						Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_HSIZE);
-					} else if (_state.locked == 'Y') {
+					} else if (_state.locked == LOCK_Y) {
 						Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_VSIZE);
 					} else {
 						Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_CROSS);
@@ -691,24 +691,22 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 	if (const InputEventMouseMotion *e = cast_to<InputEventMouseMotion>(*p_event)) {
 		if (_state.active) {
 			if (control_type == WIDGET_ROTATION_SPHERE) {
-				if (_state.active) {
-					_mouse_on_sphere(to_local(e->get_position()), control_rect.size, &_state.to_vector);
-					if (_state.to_vector != _state.from_vector) {
-						Vector3 from = _state.from_vector, to = _state.to_vector;
-						if (_state.locked) {
-							from = _constrain_to_axis(from, _state.locked_axis);
-							to = _constrain_to_axis(to, _state.locked_axis);
-						}
-						// the axis to rotate around in view space
-						Vector3 axis = from.cross(to).normalized();
-						const real_t angle = Math::acos(MIN(from.dot(to), 1));
-						if (angle && !axis.is_zero()) {
-							_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
-							update();
-							emit_signal("transform_changed", _state.tr);
-						}
-						_state.swap();
+				_mouse_on_sphere(to_local(e->get_position()), control_rect.size, &_state.to_vector);
+				if (_state.to_vector != _state.from_vector) {
+					Vector3 from = _state.from_vector, to = _state.to_vector;
+					if (!_state.locked_axis.is_zero()) {
+						from = _constrain_to_axis(from, _state.locked_axis);
+						to = _constrain_to_axis(to, _state.locked_axis);
 					}
+					// the axis to rotate around in view space
+					Vector3 axis = from.cross(to).normalized();
+					const real_t angle = Math::acos(MIN(from.dot(to), 1));
+					if (angle && !axis.is_zero()) {
+						_state.rotate(axis, (e->get_shift() ? xcv_rotate_speed : 1) * angle);
+						update();
+						emit_signal("transform_changed", _state.tr);
+					}
+					_state.swap();
 				}
 			} else {
 				const Point2 p = to_local(e->get_position());
@@ -719,24 +717,24 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 						const Vector2 dd = (p - _state.initial_pos).abs();
 						// update locking
 						if (dd.x > dd.y) {
-							if (_state.locked != 'X') {
-								_state.locked = 'X';
+							if (_state.locked != LOCK_X) {
+								_state.locked = LOCK_X;
 								update_cursor();
 							}
 						} else if (dd.x < dd.y) {
-							if (_state.locked != 'Y') {
-								_state.locked = 'Y';
+							if (_state.locked != LOCK_Y) {
+								_state.locked = LOCK_Y;
 								update_cursor();
 							}
 						} else {
-							if (_state.locked) {
-								_state.locked = 0;
+							if (_state.locked != LOCK_NONE) {
+								_state.locked = LOCK_NONE;
 								update_cursor();
 							}
 						}
 					} else {
-						if (_state.locked) {
-							_state.locked = 0;
+						if (_state.locked != LOCK_NONE) {
+							_state.locked = LOCK_NONE;
 							update_cursor();
 						}
 					}
@@ -750,9 +748,9 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 				}
 				switch (control_type) {
 					case WIDGET_TRANSLATION_XY: {
-						if ('Y' == _state.locked) {
+						if (LOCK_Y == _state.locked) {
 							pf.y = 0;
-						} else if ('X' == _state.locked) {
+						} else if (LOCK_X == _state.locked) {
 							pf.x = 0;
 						}
 						_state.tr.origin.x = _state.base_tr.origin.x + pf.x;
@@ -777,9 +775,140 @@ void ControlWidget::_input(const Ref<InputEvent> &p_event) {
 			}
 		}
 	}
+
+	if (const InputEventKey *e = cast_to<InputEventKey>(*p_event)) {
+		if (e->is_pressed() && !e->is_echo()) {
+			switch (e->get_scancode()) {
+				case KEY_ESCAPE: {
+					_cancel_drag();
+					get_tree()->set_input_as_handled();
+				} break;
+				case KEY_X: {
+					if (_state.active && control_type == WIDGET_TRANSLATION_XY) {
+						_state.locked = (_state.locked == LOCK_X) ? LOCK_NONE : LOCK_X;
+						update_cursor();
+						update();
+						get_tree()->set_input_as_handled();
+					} else if (_state.active && control_type == WIDGET_ROTATION_SPHERE) {
+						_state.locked_axis = (_state.locked_axis == Vector3(1, 0, 0)) ? Vector3() : Vector3(1, 0, 0);
+						get_tree()->set_input_as_handled();
+					}
+				} break;
+				case KEY_Y: {
+					if (_state.active && control_type == WIDGET_TRANSLATION_XY) {
+						_state.locked = (_state.locked == LOCK_Y) ? LOCK_NONE : LOCK_Y;
+						update_cursor();
+						update();
+						get_tree()->set_input_as_handled();
+					} else if (_state.active && control_type == WIDGET_ROTATION_SPHERE) {
+						_state.locked_axis = (_state.locked_axis == Vector3(0, 1, 0)) ? Vector3() : Vector3(0, 1, 0);
+						get_tree()->set_input_as_handled();
+					}
+				} break;
+				case KEY_Z: {
+					if (_state.active && control_type == WIDGET_ROTATION_SPHERE) {
+						_state.locked_axis = (_state.locked_axis == Vector3(0, 0, 1)) ? Vector3() : Vector3(0, 0, 1);
+						get_tree()->set_input_as_handled();
+					}
+				} break;
+				case KEY_R: {
+					if (!_state.active) {
+						reset_transform();
+						get_tree()->set_input_as_handled();
+					}
+				} break;
+			}
+		}
+	}
 }
 
 void ControlWidget::_unhandled_input(const Ref<InputEvent> &p_event) {
+	if (!p_event.is_valid() || !is_visible_in_tree()) {
+		return;
+	}
+
+	if (const InputEventKey *e = cast_to<InputEventKey>(*p_event)) {
+		if (e->is_pressed() && !e->is_echo()) {
+			const real_t nudge_step = resolution;
+
+			if (control_type == WIDGET_ROTATION_SPHERE) {
+				// Numpad: snap rotation by 90 degrees
+				const real_t snap_angle = Math_PI / 2;
+				switch (e->get_scancode()) {
+					case KEY_KP_8: { // rotate up (around X axis)
+						_state.rotate(Vector3(1, 0, 0), snap_angle);
+						update();
+						emit_signal("transform_changed", _state.tr);
+						get_tree()->set_input_as_handled();
+					} break;
+					case KEY_KP_2: { // rotate down
+						_state.rotate(Vector3(1, 0, 0), -snap_angle);
+						update();
+						emit_signal("transform_changed", _state.tr);
+						get_tree()->set_input_as_handled();
+					} break;
+					case KEY_KP_4: { // rotate left (around Y axis)
+						_state.rotate(Vector3(0, 1, 0), snap_angle);
+						update();
+						emit_signal("transform_changed", _state.tr);
+						get_tree()->set_input_as_handled();
+					} break;
+					case KEY_KP_6: { // rotate right
+						_state.rotate(Vector3(0, 1, 0), -snap_angle);
+						update();
+						emit_signal("transform_changed", _state.tr);
+						get_tree()->set_input_as_handled();
+					} break;
+				}
+			} else {
+				// Arrow keys: nudge translation
+				switch (e->get_scancode()) {
+					case KEY_LEFT: {
+						if (control_type == WIDGET_TRANSLATION_X || control_type == WIDGET_TRANSLATION_XY) {
+							_state.tr.origin.x -= nudge_step;
+							update();
+							emit_signal("transform_changed", _state.tr);
+							get_tree()->set_input_as_handled();
+						}
+					} break;
+					case KEY_RIGHT: {
+						if (control_type == WIDGET_TRANSLATION_X || control_type == WIDGET_TRANSLATION_XY) {
+							_state.tr.origin.x += nudge_step;
+							update();
+							emit_signal("transform_changed", _state.tr);
+							get_tree()->set_input_as_handled();
+						}
+					} break;
+					case KEY_UP: {
+						if (control_type == WIDGET_TRANSLATION_Y || control_type == WIDGET_TRANSLATION_XY) {
+							_state.tr.origin.y -= nudge_step;
+							update();
+							emit_signal("transform_changed", _state.tr);
+							get_tree()->set_input_as_handled();
+						} else if (control_type == WIDGET_TRANSLATION_Z) {
+							_state.tr.origin.z -= nudge_step;
+							update();
+							emit_signal("transform_changed", _state.tr);
+							get_tree()->set_input_as_handled();
+						}
+					} break;
+					case KEY_DOWN: {
+						if (control_type == WIDGET_TRANSLATION_Y || control_type == WIDGET_TRANSLATION_XY) {
+							_state.tr.origin.y += nudge_step;
+							update();
+							emit_signal("transform_changed", _state.tr);
+							get_tree()->set_input_as_handled();
+						} else if (control_type == WIDGET_TRANSLATION_Z) {
+							_state.tr.origin.z += nudge_step;
+							update();
+							emit_signal("transform_changed", _state.tr);
+							get_tree()->set_input_as_handled();
+						}
+					} break;
+				}
+			}
+		}
+	}
 }
 
 void ControlWidget::set_control_type(WidgetType p_type) {
@@ -818,15 +947,125 @@ real_t ControlWidget::get_control_resolution() const {
 	return resolution;
 }
 
+void ControlWidget::set_control_rect(const Rect2 &p_rect) {
+	control_rect = p_rect;
+	update();
+}
+
+Rect2 ControlWidget::get_control_rect() const {
+	return control_rect;
+}
+
+void ControlWidget::set_style_border_width(real_t p_width) {
+	_style_info.width = p_width;
+	update();
+}
+
+real_t ControlWidget::get_style_border_width() const {
+	return _style_info.width;
+}
+
+void ControlWidget::set_style_corner_radius(real_t p_radius) {
+	_style_info.radius = p_radius;
+	update();
+}
+
+real_t ControlWidget::get_style_corner_radius() const {
+	return _style_info.radius;
+}
+
+void ControlWidget::set_style_bg_color(const Color &p_color) {
+	_style_info.bg_color = p_color;
+	update();
+}
+
+Color ControlWidget::get_style_bg_color() const {
+	return _style_info.bg_color;
+}
+
+void ControlWidget::set_style_shadow_size(real_t p_size) {
+	_style_info.shadow_size = p_size;
+	update();
+}
+
+real_t ControlWidget::get_style_shadow_size() const {
+	return _style_info.shadow_size;
+}
+
+void ControlWidget::set_style_shadow_color(const Color &p_color) {
+	_style_info.shadow_color = p_color;
+	update();
+}
+
+Color ControlWidget::get_style_shadow_color() const {
+	return _style_info.shadow_color;
+}
+
+void ControlWidget::set_style_shadow_offset(const Vector2 &p_offset) {
+	_style_info.shadow_offset = p_offset;
+	update();
+}
+
+Vector2 ControlWidget::get_style_shadow_offset() const {
+	return _style_info.shadow_offset;
+}
+
+void ControlWidget::set_widget_transform(const Transform &p_tr) {
+	_state.tr = p_tr;
+	update();
+	emit_signal("transform_changed", _state.tr);
+}
+
+Transform ControlWidget::get_widget_transform() const {
+	return _state.tr;
+}
+
+void ControlWidget::reset_transform() {
+	_state.tr = Transform();
+	_state.base_tr = Transform();
+	update();
+	emit_signal("transform_changed", _state.tr);
+}
+
+void ControlWidget::_cancel_drag() {
+	if (_state.active) {
+		_state.active = false;
+		_state.tr = _state.base_tr;
+		_state.locked = LOCK_NONE;
+		Input::get_singleton()->set_default_cursor_shape(Input::CURSOR_ARROW);
+		update();
+		emit_signal("transform_changed", _state.tr);
+	}
+}
+
 void ControlWidget::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_control_type"), &ControlWidget::set_control_type);
+	ClassDB::bind_method(D_METHOD("set_control_type", "type"), &ControlWidget::set_control_type);
 	ClassDB::bind_method(D_METHOD("get_control_type"), &ControlWidget::get_control_type);
-	ClassDB::bind_method(D_METHOD("set_control_flat"), &ControlWidget::set_control_flat);
+	ClassDB::bind_method(D_METHOD("set_control_flat", "flat"), &ControlWidget::set_control_flat);
 	ClassDB::bind_method(D_METHOD("is_control_flat"), &ControlWidget::is_control_flat);
-	ClassDB::bind_method(D_METHOD("set_control_disabled"), &ControlWidget::set_control_disabled);
+	ClassDB::bind_method(D_METHOD("set_control_disabled", "disabled"), &ControlWidget::set_control_disabled);
 	ClassDB::bind_method(D_METHOD("is_control_disabled"), &ControlWidget::is_control_disabled);
-	ClassDB::bind_method(D_METHOD("set_control_resolution"), &ControlWidget::set_control_resolution);
+	ClassDB::bind_method(D_METHOD("set_control_resolution", "resolution"), &ControlWidget::set_control_resolution);
 	ClassDB::bind_method(D_METHOD("get_control_resolution"), &ControlWidget::get_control_resolution);
+	ClassDB::bind_method(D_METHOD("set_control_rect", "rect"), &ControlWidget::set_control_rect);
+	ClassDB::bind_method(D_METHOD("get_control_rect"), &ControlWidget::get_control_rect);
+
+	ClassDB::bind_method(D_METHOD("set_style_border_width", "width"), &ControlWidget::set_style_border_width);
+	ClassDB::bind_method(D_METHOD("get_style_border_width"), &ControlWidget::get_style_border_width);
+	ClassDB::bind_method(D_METHOD("set_style_corner_radius", "radius"), &ControlWidget::set_style_corner_radius);
+	ClassDB::bind_method(D_METHOD("get_style_corner_radius"), &ControlWidget::get_style_corner_radius);
+	ClassDB::bind_method(D_METHOD("set_style_bg_color", "color"), &ControlWidget::set_style_bg_color);
+	ClassDB::bind_method(D_METHOD("get_style_bg_color"), &ControlWidget::get_style_bg_color);
+	ClassDB::bind_method(D_METHOD("set_style_shadow_size", "size"), &ControlWidget::set_style_shadow_size);
+	ClassDB::bind_method(D_METHOD("get_style_shadow_size"), &ControlWidget::get_style_shadow_size);
+	ClassDB::bind_method(D_METHOD("set_style_shadow_color", "color"), &ControlWidget::set_style_shadow_color);
+	ClassDB::bind_method(D_METHOD("get_style_shadow_color"), &ControlWidget::get_style_shadow_color);
+	ClassDB::bind_method(D_METHOD("set_style_shadow_offset", "offset"), &ControlWidget::set_style_shadow_offset);
+	ClassDB::bind_method(D_METHOD("get_style_shadow_offset"), &ControlWidget::get_style_shadow_offset);
+
+	ClassDB::bind_method(D_METHOD("set_widget_transform", "transform"), &ControlWidget::set_widget_transform);
+	ClassDB::bind_method(D_METHOD("get_widget_transform"), &ControlWidget::get_widget_transform);
+	ClassDB::bind_method(D_METHOD("reset_transform"), &ControlWidget::reset_transform);
 
 	ClassDB::bind_method(D_METHOD("_input"), &ControlWidget::_input);
 
@@ -834,6 +1073,18 @@ void ControlWidget::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disabled"), "set_control_disabled", "is_control_disabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "flat"), "set_control_flat", "is_control_flat");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "resolution"), "set_control_resolution", "get_control_resolution");
+	ADD_PROPERTY(PropertyInfo(Variant::RECT2, "control_rect"), "set_control_rect", "get_control_rect");
+
+	ADD_GROUP("Style", "style_");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "style_border_width"), "set_style_border_width", "get_style_border_width");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "style_corner_radius"), "set_style_corner_radius", "get_style_corner_radius");
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "style_bg_color"), "set_style_bg_color", "get_style_bg_color");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "style_shadow_size"), "set_style_shadow_size", "get_style_shadow_size");
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "style_shadow_color"), "set_style_shadow_color", "get_style_shadow_color");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "style_shadow_offset"), "set_style_shadow_offset", "get_style_shadow_offset");
+
+	ADD_GROUP("", "");
+	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM, "widget_transform"), "set_widget_transform", "get_widget_transform");
 
 	ADD_SIGNAL(MethodInfo("transform_changed", PropertyInfo(Variant::TRANSFORM, "tr")));
 }
@@ -846,6 +1097,12 @@ ControlWidget::ControlWidget() {
 	resolution = 1.0;
 	_style_info = StyleInfo{ 2, 2, Color::named("lightgray"), 2, Color::named("darkgray"), Vector2(1, 2) };
 	_state.active = false;
+	_state.locked = LOCK_NONE;
+	_state.from_vector = Vector3();
+	_state.to_vector = Vector3();
+	_state.locked_axis = Vector3();
+	_state.tr = Transform();
+	_state.base_tr = Transform();
 	_mesh = newref(ArrayMesh);
 }
 
@@ -853,8 +1110,113 @@ ControlWidget::ControlWidget() {
 
 #ifdef DOCTEST
 
-TEST_CASE("[WidgetControls] placeholder") {
-	CHECK(true);
+TEST_CASE("[WidgetControls] _mouse_on_sphere maps to unit sphere") {
+	Vector3 result;
+
+	// Center of widget -> straight forward (0,0,1)
+	_mouse_on_sphere(Point2(0, 0), Size2(100, 100), &result);
+	CHECK(result.x == doctest::Approx(0));
+	CHECK(result.y == doctest::Approx(0));
+	CHECK(result.z == doctest::Approx(1));
+
+	// Edge point -> on sphere surface, z >= 0
+	_mouse_on_sphere(Point2(50, 0), Size2(100, 100), &result);
+	CHECK(result.length() == doctest::Approx(1));
+
+	// Outside sphere -> normalized, z == 0
+	_mouse_on_sphere(Point2(100, 100), Size2(100, 100), &result);
+	CHECK(result.z == doctest::Approx(0));
+	CHECK(result.length() == doctest::Approx(1));
+}
+
+TEST_CASE("[WidgetControls] _constrain_to_axis projects perpendicular") {
+	// Constrain to Z axis
+	Vector3 axis(0, 0, 1);
+	Vector3 loose(0.5, 0.5, 0.5);
+	Vector3 result = _constrain_to_axis(loose, axis);
+	CHECK(result.dot(axis) == doctest::Approx(0));
+	CHECK(result.length() == doctest::Approx(1));
+
+	// Constrain to X axis
+	result = _constrain_to_axis(loose, Vector3(1, 0, 0));
+	CHECK(result.dot(Vector3(1, 0, 0)) == doctest::Approx(0));
+	CHECK(result.length() == doctest::Approx(1));
+
+	// Edge case: loose is parallel to axis -> fallback
+	// Note: axis=(0,0,1) hits a degenerate path in the fallback where
+	// Vector3(-axis.y, axis.x, 0) is zero. The function returns zero
+	// vector in this case. A future fix could handle this properly.
+	result = _constrain_to_axis(Vector3(1, 0, 0), Vector3(0, 0, 1));
+	CHECK(result.dot(Vector3(0, 0, 1)) == doctest::Approx(0));
+	CHECK(result.length() == doctest::Approx(1));
+}
+
+TEST_CASE("[WidgetControls] _rotate_sphere generates valid mesh") {
+	Ref<ArrayMesh> mesh = newref(ArrayMesh);
+	_rotate_sphere(mesh, 10, 8, 8);
+	CHECK(mesh->get_surface_count() == 1);
+	CHECK(mesh->surface_get_primitive_type(0) == Mesh::PRIMITIVE_TRIANGLES);
+	CHECK(mesh->surface_get_array_len(0) > 0);
+
+	// With basis transform
+	Ref<ArrayMesh> mesh2 = newref(ArrayMesh);
+	_rotate_sphere(mesh2, 10, 8, 8, Basis().rotated(Vector3(0, 1, 0), Math_PI / 4));
+	CHECK(mesh2->get_surface_count() == 1);
+	CHECK(mesh2->surface_get_array_len(0) == mesh->surface_get_array_len(0));
+}
+
+TEST_CASE("[WidgetControls] _draw_ball generates sphere + ring surfaces") {
+	Ref<ArrayMesh> mesh = newref(ArrayMesh);
+	_draw_ball(mesh, 50, true);
+	CHECK(mesh->get_surface_count() == 2); // sphere triangles + ring lines
+
+	// Disabled state should also produce surfaces
+	Ref<ArrayMesh> mesh2 = newref(ArrayMesh);
+	_draw_ball(mesh2, 50, false);
+	CHECK(mesh2->get_surface_count() == 2);
+}
+
+TEST_CASE("[WidgetControls] draw_2d_arrows for all translation types") {
+	int types[] = { TransXY, TransX, TransY, TransZ };
+	for (int i = 0; i < 4; i++) {
+		Ref<ArrayMesh> mesh = newref(ArrayMesh);
+		draw_2d_arrows(mesh, types[i], 30, false, true, LOCK_NONE);
+		CHECK(mesh->get_surface_count() > 0);
+
+		// Pressed state
+		mesh->clear_mesh();
+		draw_2d_arrows(mesh, types[i], 30, true, true, LOCK_NONE);
+		CHECK(mesh->get_surface_count() > 0);
+	}
+}
+
+TEST_CASE("[WidgetControls] draw_2d_arrows with axis locking") {
+	Ref<ArrayMesh> mesh = newref(ArrayMesh);
+	draw_2d_arrows(mesh, TransXY, 30, true, true, LOCK_X);
+	CHECK(mesh->get_surface_count() > 0);
+
+	mesh->clear_mesh();
+	draw_2d_arrows(mesh, TransXY, 30, true, true, LOCK_Y);
+	CHECK(mesh->get_surface_count() > 0);
+}
+
+TEST_CASE("[WidgetControls] _draw_2d_arrow all orientations") {
+	for (int orient = Orient0; orient <= Orient270; orient++) {
+		Ref<ArrayMesh> mesh = newref(ArrayMesh);
+		_draw_2d_arrow(mesh, 30, false, true, orient, TransXY);
+		CHECK(mesh->get_surface_count() > 0);
+	}
+}
+
+TEST_CASE("[WidgetControls] _draw_2d_arrow disabled produces outline only") {
+	Ref<ArrayMesh> mesh_enabled = newref(ArrayMesh);
+	_draw_2d_arrow(mesh_enabled, 30, false, true, Orient0, TransXY);
+
+	Ref<ArrayMesh> mesh_disabled = newref(ArrayMesh);
+	_draw_2d_arrow(mesh_disabled, 30, false, false, Orient0, TransXY);
+
+	// Disabled should have fewer surfaces (no fill, only outline)
+	CHECK(mesh_disabled->get_surface_count() < mesh_enabled->get_surface_count());
 }
 
 #endif

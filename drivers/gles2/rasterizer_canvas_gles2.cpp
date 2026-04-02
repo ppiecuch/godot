@@ -839,9 +839,9 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 #define putpoint(J, x, y)                                          \
 	{                                                              \
 		points[(J)] = circle->pos + Point2(x, y) * circle->radius; \
-		indices[(J) * 3 + 0] = (J);                                \
-		indices[(J) * 3 + 1] = ((J) + 1) % num_points;             \
-		indices[(J) * 3 + 2] = num_points;                         \
+		indices[(J)*3 + 0] = (J);                                  \
+		indices[(J)*3 + 1] = ((J) + 1) % num_points;               \
+		indices[(J)*3 + 2] = num_points;                           \
 	}
 
 							const bool squared = circle->squared > 0;

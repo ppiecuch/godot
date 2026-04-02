@@ -33,6 +33,7 @@
 #include "generators/rockgen/rockgen.h"
 #include "generators/rockgeneration/gen_rock.h"
 #include "generators/rockstudio/rock_studio.h"
+
 #ifdef TOOLS_ENABLED
 #include "generators/procrockgen/procrockgen.h"
 #endif

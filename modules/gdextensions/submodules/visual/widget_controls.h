@@ -45,6 +45,12 @@ enum WidgetType {
 
 constexpr int WIDGET_TYPES = WIDGET_ROTATION_SPHERE + 1;
 
+enum LockAxis {
+	LOCK_NONE = 0,
+	LOCK_X,
+	LOCK_Y,
+};
+
 class ControlWidget : public Node2D {
 	GDCLASS(ControlWidget, Node2D);
 
@@ -68,7 +74,7 @@ class ControlWidget : public Node2D {
 	struct {
 		bool active;
 		Point2 initial_pos;
-		char locked;
+		LockAxis locked;
 		Vector3 from_vector, to_vector, locked_axis;
 		Transform tr, base_tr;
 		void rotate(const Vector3 &axis, real_t angle) { tr.rotate(axis, angle); }
@@ -77,6 +83,7 @@ class ControlWidget : public Node2D {
 
 	Rect2 _get_global_rect() const;
 	bool _is_point_inside(const Vector2 &vec) const;
+	void _cancel_drag();
 
 protected:
 	static void _bind_methods();
@@ -104,6 +111,27 @@ public:
 
 	void set_control_resolution(real_t p_resolution);
 	real_t get_control_resolution() const;
+
+	void set_control_rect(const Rect2 &p_rect);
+	Rect2 get_control_rect() const;
+
+	void set_style_border_width(real_t p_width);
+	real_t get_style_border_width() const;
+	void set_style_corner_radius(real_t p_radius);
+	real_t get_style_corner_radius() const;
+	void set_style_bg_color(const Color &p_color);
+	Color get_style_bg_color() const;
+	void set_style_shadow_size(real_t p_size);
+	real_t get_style_shadow_size() const;
+	void set_style_shadow_color(const Color &p_color);
+	Color get_style_shadow_color() const;
+	void set_style_shadow_offset(const Vector2 &p_offset);
+	Vector2 get_style_shadow_offset() const;
+
+	void set_widget_transform(const Transform &p_tr);
+	Transform get_widget_transform() const;
+
+	void reset_transform();
 
 	ControlWidget();
 };
