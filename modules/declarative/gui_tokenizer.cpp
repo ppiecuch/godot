@@ -334,6 +334,7 @@ String GUITokenizer::token_type_name(TokenType p_type) {
 }
 
 // --- Doctests ---
+#ifdef DOCTEST
 
 TEST_CASE("[GUITokenizer] empty input") {
 	GUITokenizer tk;
@@ -474,3 +475,5 @@ TEST_CASE("[GUITokenizer] full component tokenization") {
 	CHECK(found_hash);
 	CHECK(found_string);
 }
+
+#endif // DOCTEST

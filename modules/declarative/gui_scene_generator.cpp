@@ -133,6 +133,7 @@ String GUISceneGenerator::generate(const GUIDocument &p_doc) {
 }
 
 // --- Helper for scene generator tests ---
+#ifdef DOCTEST
 static String _compile_gui(const String &p_source) {
 	GUITokenizer tk;
 	if (tk.tokenize(p_source) != OK)
@@ -239,3 +240,5 @@ TEST_CASE("[GUISceneGenerator] nested hierarchy paths") {
 	String tscn = _compile_gui(src);
 	CHECK(tscn.find("parent=\"HBoxContainer\"") != -1);
 }
+
+#endif // DOCTEST

@@ -553,6 +553,7 @@ Error GUIParser::parse(const Vector<GUITokenizer::Token> &p_tokens, GUIDocument 
 }
 
 // --- Helper for parser tests ---
+#ifdef DOCTEST
 static Error _tokenize_and_parse(const String &p_source, GUIDocument &r_doc) {
 	GUITokenizer tk;
 	Error err = tk.tokenize(p_source);
@@ -752,3 +753,5 @@ TEST_CASE("[GUIParser] error on missing inherits") {
 	String src = "@target: scene\ncomponent Foo {\n}\n";
 	CHECK(_tokenize_and_parse(src, doc) != OK);
 }
+
+#endif // DOCTEST
