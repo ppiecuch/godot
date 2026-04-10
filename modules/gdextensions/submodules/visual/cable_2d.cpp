@@ -149,6 +149,26 @@ int Cable2D::get_iterations() const {
 	return _iterations;
 }
 
+void Cable2D::set_force_damping(float damping) {
+	_force_damping = CLAMP(damping, 0.0f, 1.0f);
+}
+
+float Cable2D::get_force_damping() const {
+	return _force_damping;
+}
+
+void Cable2D::set_gravity(float gravity) {
+	_gravity = gravity;
+}
+
+float Cable2D::get_gravity() const {
+	return _gravity;
+}
+
+PoolVector<Vector2> Cable2D::get_rendered_points() const {
+	return _rendered_points;
+}
+
 void Cable2D::rebuild_points() {
 	if (_points.size() < 2) {
 		_rendered_points = _points;
@@ -203,7 +223,7 @@ void Cable2D::update_cable(float delta) {
 			Vector2 new_pt = pt;
 			Vector2 vel = (pt - _old_points[i]) * delta;
 			new_pt += vel;
-			new_pt.y += 50 * delta;
+			new_pt.y += _gravity * delta;
 			new_pt += point_force;
 			_rendered_points.set(i, new_pt);
 		}
@@ -225,8 +245,12 @@ void Cable2D::update_constraints() {
 		Vector2 pt_b = _rendered_points[i + 1];
 
 		const Vector2 delta = pt_b - pt_a;
-		const float diff = _rest_lengths[floor(i / _segments)] * _restlength_scale - delta.length();
-		const float amount = diff / delta.length() / 2;
+		const float len = delta.length();
+		if (len < CMP_EPSILON) {
+			continue;
+		}
+		const float diff = _rest_lengths[floor(i / _segments)] * _restlength_scale - len;
+		const float amount = diff / len / 2;
 		const Vector2 offset = delta * amount;
 
 		if (i % _segments > 0) {
@@ -259,12 +283,9 @@ void Cable2D::_draw() {
 	if (_points.size() <= 1 || _width == 0) {
 		return;
 	}
-	PoolVector<Vector2>::Read points_read = _rendered_points.read();
-	for (int i = 0; i < _rendered_points.size(); ++i) {
-		if (i < _rendered_points.size() - 1) {
-			draw_line(_rendered_points[i], _rendered_points[i + 1], _color, _width);
-		}
-		// draw_circle(_rendered_points[i], _width / 2.0, Color(1.0, 0.0, 0.0, 1.0));
+	PoolVector<Vector2>::Read pts = _rendered_points.read();
+	for (int i = 0; i < _rendered_points.size() - 1; ++i) {
+		draw_line(pts[i], pts[i + 1], _color, _width);
 	}
 }
 
@@ -296,6 +317,14 @@ void Cable2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_iterations", "iterations"), &Cable2D::set_iterations);
 	ClassDB::bind_method(D_METHOD("get_iterations"), &Cable2D::get_iterations);
 
+	ClassDB::bind_method(D_METHOD("set_force_damping", "damping"), &Cable2D::set_force_damping);
+	ClassDB::bind_method(D_METHOD("get_force_damping"), &Cable2D::get_force_damping);
+
+	ClassDB::bind_method(D_METHOD("set_gravity", "gravity"), &Cable2D::set_gravity);
+	ClassDB::bind_method(D_METHOD("get_gravity"), &Cable2D::get_gravity);
+
+	ClassDB::bind_method(D_METHOD("get_rendered_points"), &Cable2D::get_rendered_points);
+
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_active", "is_active");
 	ADD_PROPERTY(PropertyInfo(Variant::POOL_VECTOR2_ARRAY, "points"), "set_points", "get_points");
 	ADD_PROPERTY(PropertyInfo(Variant::POOL_VECTOR2_ARRAY, "forces"), "set_points_forces", "get_points_forces");
@@ -304,6 +333,8 @@ void Cable2D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "restlength_scale"), "set_restlength_scale", "get_restlength_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "iterations"), "set_iterations", "get_iterations");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "color"), "set_color", "get_color");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "force_damping", PROPERTY_HINT_RANGE, "0,1,0.01"), "set_force_damping", "get_force_damping");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "gravity"), "set_gravity", "get_gravity");
 }
 
 Cable2D::Cable2D() {
@@ -311,7 +342,8 @@ Cable2D::Cable2D() {
 	_width = 2;
 	_segments = 5;
 	_restlength_scale = 1;
-	_force_damping = 0.98;
+	_force_damping = 0.98f;
+	_gravity = 50.0f;
 	_iterations = 10;
 	_color = Color(0.0, 0.0, 0.0, 1.0);
 	set_process_internal(_active);
@@ -324,19 +356,21 @@ Cable2D::Cable2D() {
 TEST_CASE("[Cable2D] default constructor values") {
 	Cable2D cable;
 	CHECK(cable.is_active() == true);
-	CHECK(cable.get_width() == 2.0f);
+	CHECK(cable.get_width() == doctest::Approx(2.0f));
 	CHECK(cable.get_segments() == 5);
-	CHECK(cable.get_restlength_scale() == 1.0f);
+	CHECK(cable.get_restlength_scale() == doctest::Approx(1.0f));
 	CHECK(cable.get_iterations() == 10);
 	CHECK(cable.get_color() == Color(0, 0, 0, 1));
+	CHECK(cable.get_force_damping() == doctest::Approx(0.98f));
+	CHECK(cable.get_gravity() == doctest::Approx(50.0f));
 }
 
 TEST_CASE("[Cable2D] set_width clamps negative to zero") {
 	Cable2D cable;
 	cable.set_width(-5);
-	CHECK(cable.get_width() == 0.0f);
+	CHECK(cable.get_width() == doctest::Approx(0.0f));
 	cable.set_width(3);
-	CHECK(cable.get_width() == 3.0f);
+	CHECK(cable.get_width() == doctest::Approx(3.0f));
 }
 
 TEST_CASE("[Cable2D] set_segments clamps minimum to 1") {
@@ -351,11 +385,11 @@ TEST_CASE("[Cable2D] set_segments clamps minimum to 1") {
 
 TEST_CASE("[Cable2D] set_restlength_scale clamps minimum to 0.1") {
 	Cable2D cable;
-	cable.set_restlength_scale(0.05);
+	cable.set_restlength_scale(0.05f);
 	CHECK(cable.get_restlength_scale() == doctest::Approx(0.1f));
 	cable.set_restlength_scale(-1);
 	CHECK(cable.get_restlength_scale() == doctest::Approx(0.1f));
-	cable.set_restlength_scale(2.5);
+	cable.set_restlength_scale(2.5f);
 	CHECK(cable.get_restlength_scale() == doctest::Approx(2.5f));
 }
 
@@ -369,7 +403,27 @@ TEST_CASE("[Cable2D] set_iterations clamps minimum to 1") {
 	CHECK(cable.get_iterations() == 20);
 }
 
-TEST_CASE("[Cable2D] set_points with 2 points produces correct rendered point count") {
+TEST_CASE("[Cable2D] force_damping clamped to [0, 1]") {
+	Cable2D cable;
+	cable.set_force_damping(0.75f);
+	CHECK(cable.get_force_damping() == doctest::Approx(0.75f));
+	cable.set_force_damping(1.5f);
+	CHECK(cable.get_force_damping() == doctest::Approx(1.0f));
+	cable.set_force_damping(-0.1f);
+	CHECK(cable.get_force_damping() == doctest::Approx(0.0f));
+}
+
+TEST_CASE("[Cable2D] gravity property accepts any value") {
+	Cable2D cable;
+	cable.set_gravity(200.0f);
+	CHECK(cable.get_gravity() == doctest::Approx(200.0f));
+	cable.set_gravity(-9.8f);
+	CHECK(cable.get_gravity() == doctest::Approx(-9.8f));
+	cable.set_gravity(0.0f);
+	CHECK(cable.get_gravity() == doctest::Approx(0.0f));
+}
+
+TEST_CASE("[Cable2D] get_rendered_points count — 2 pinned, 4 segments") {
 	Cable2D cable;
 	cable.set_segments(4);
 
@@ -379,10 +433,11 @@ TEST_CASE("[Cable2D] set_points with 2 points produces correct rendered point co
 	cable.set_points(pts);
 
 	// 1 span * 4 segments + 1 = 5 rendered points
+	CHECK(cable.get_rendered_points().size() == 5);
 	CHECK(cable.get_points().size() == 2);
 }
 
-TEST_CASE("[Cable2D] set_points with 3 points produces correct rendered point count") {
+TEST_CASE("[Cable2D] get_rendered_points count — 3 pinned, 3 segments") {
 	Cable2D cable;
 	cable.set_segments(3);
 
@@ -393,18 +448,59 @@ TEST_CASE("[Cable2D] set_points with 3 points produces correct rendered point co
 	cable.set_points(pts);
 
 	// 2 spans * 3 segments + 1 = 7 rendered points
+	CHECK(cable.get_rendered_points().size() == 7);
 	CHECK(cable.get_points().size() == 3);
 }
 
-TEST_CASE("[Cable2D] set_points with fewer than 2 points") {
+TEST_CASE("[Cable2D] rendered points interpolated at correct positions") {
 	Cable2D cable;
+	cable.set_segments(2);
 
 	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(100, 0));
 	cable.set_points(pts);
-	CHECK(cable.get_points().size() == 0);
 
-	pts.push_back(Vector2(10, 20));
+	// 3 rendered points: (0,0), (50,0), (100,0)
+	PoolVector<Vector2> rp = cable.get_rendered_points();
+	REQUIRE(rp.size() == 3);
+	CHECK(rp[0].x == doctest::Approx(0));
+	CHECK(rp[0].y == doctest::Approx(0));
+	CHECK(rp[1].x == doctest::Approx(50));
+	CHECK(rp[1].y == doctest::Approx(0));
+	CHECK(rp[2].x == doctest::Approx(100));
+	CHECK(rp[2].y == doctest::Approx(0));
+}
+
+TEST_CASE("[Cable2D] rendered points follow diagonal path") {
+	Cable2D cable;
+	cable.set_segments(4);
+
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(40, 40));
 	cable.set_points(pts);
+
+	PoolVector<Vector2> rp = cable.get_rendered_points();
+	REQUIRE(rp.size() == 5);
+	CHECK(rp[0].x == doctest::Approx(0));
+	CHECK(rp[1].x == doctest::Approx(10));
+	CHECK(rp[1].y == doctest::Approx(10));
+	CHECK(rp[4].x == doctest::Approx(40));
+	CHECK(rp[4].y == doctest::Approx(40));
+}
+
+TEST_CASE("[Cable2D] set_points with fewer than 2 points — no crash") {
+	Cable2D cable;
+
+	PoolVector<Vector2> empty;
+	cable.set_points(empty);
+	CHECK(cable.get_points().size() == 0);
+	CHECK(cable.get_rendered_points().size() == 0);
+
+	PoolVector<Vector2> one;
+	one.push_back(Vector2(10, 20));
+	cable.set_points(one);
 	CHECK(cable.get_points().size() == 1);
 }
 
@@ -417,9 +513,8 @@ TEST_CASE("[Cable2D] set_points_forces auto-resizes to match points") {
 	pts.push_back(Vector2(200, 0));
 	cable.set_points(pts);
 
-	// Provide wrong-sized forces array — should be resized to match points
 	PoolVector<Vector2> forces;
-	forces.push_back(Vector2(1, 0));
+	forces.push_back(Vector2(1, 0)); // wrong size — should resize to 3
 	cable.set_points_forces(forces);
 	CHECK(cable.get_points_forces().size() == 3);
 }
@@ -446,16 +541,48 @@ TEST_CASE("[Cable2D] set_point_force within bounds") {
 	// Out of bounds — should be no-op
 	cable.set_point_force(99, Vector2(1, 1));
 	cable.set_point_force(-1, Vector2(1, 1));
+	CHECK(cable.get_point_force(99) == Vector2());
 }
 
-TEST_CASE("[Cable2D] color property") {
+TEST_CASE("[Cable2D] color property round-trip") {
 	Cable2D cable;
-	Color c(0.5, 0.3, 0.1, 0.8);
+	Color c(0.5f, 0.3f, 0.1f, 0.8f);
 	cable.set_color(c);
-	CHECK(cable.get_color().r == doctest::Approx(0.5));
-	CHECK(cable.get_color().g == doctest::Approx(0.3));
-	CHECK(cable.get_color().b == doctest::Approx(0.1));
-	CHECK(cable.get_color().a == doctest::Approx(0.8));
+	CHECK(cable.get_color().r == doctest::Approx(0.5f));
+	CHECK(cable.get_color().g == doctest::Approx(0.3f));
+	CHECK(cable.get_color().b == doctest::Approx(0.1f));
+	CHECK(cable.get_color().a == doctest::Approx(0.8f));
+}
+
+TEST_CASE("[Cable2D] changing segments rebuilds rendered points") {
+	Cable2D cable;
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(100, 0));
+	cable.set_points(pts);
+
+	cable.set_segments(2);
+	CHECK(cable.get_rendered_points().size() == 3); // 1 span * 2 + 1
+
+	cable.set_segments(5);
+	CHECK(cable.get_rendered_points().size() == 6); // 1 span * 5 + 1
+}
+
+TEST_CASE("[Cable2D] coincident pinned points do not crash constraint update") {
+	// Regression: update_constraints must guard against zero-length delta (div-by-zero)
+	Cable2D cable;
+	cable.set_segments(3);
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(50, 50));
+	pts.push_back(Vector2(50, 50)); // same position forces zero-length delta
+	cable.set_points(pts);
+	// Internal simulation is only triggered via NOTIFICATION_INTERNAL_PROCESS,
+	// so we validate no NaN was introduced during rebuild
+	PoolVector<Vector2> rp = cable.get_rendered_points();
+	for (int i = 0; i < rp.size(); i++) {
+		CHECK_FALSE(Math::is_nan(rp[i].x));
+		CHECK_FALSE(Math::is_nan(rp[i].y));
+	}
 }
 
 #endif

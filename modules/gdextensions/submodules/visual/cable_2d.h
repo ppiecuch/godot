@@ -46,6 +46,7 @@ class Cable2D : public Node2D {
 	float _width;
 	float _restlength_scale;
 	float _force_damping;
+	float _gravity;
 	int _iterations;
 	Color _color;
 
@@ -88,6 +89,14 @@ public:
 
 	void set_iterations(int iterations);
 	int get_iterations() const;
+
+	void set_force_damping(float damping);
+	float get_force_damping() const;
+
+	void set_gravity(float gravity);
+	float get_gravity() const;
+
+	PoolVector<Vector2> get_rendered_points() const;
 
 	Cable2D();
 };

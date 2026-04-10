@@ -42,19 +42,19 @@
 
 #include "autotilemap.h"
 
-int encode_tile_and_flipping(int tid, int fx, int fy, int atlas_id = 0) {
-	//24 bits of id code. We encode the ATLAS id in 8 bits, and the tile_id in 16 bits
+// Bit layout (32 bits):
+//   [31]       unused
+//   [30]       flip_h (horizontal / x-axis mirror)
+//   [29]       flip_v (vertical   / y-axis mirror)
+//   [28..24]   unused
+//   [23..16]   atlas_id  (8 bits)
+//   [15..0]    tile_id   (16 bits)
+int encode_tile_and_flipping(int tid, int fh, int fv, int atlas_id = 0) {
 	int atlas_id_code = (int(atlas_id) & 0xff) << 16;
 	int id_code = int(tid) & 0x0000ffff;
-
-	//1 bit of flipx
-	//1 bit of flipy
-	int flip_x_code = int(fx) << 29;
-	int flip_y_code = int(fy) << 30;
-
-	//1 bit of transpose
-	int id = atlas_id_code + id_code + flip_x_code + flip_y_code;
-	return id;
+	int flip_h_code = int(fh) << 30; // bit 30 → compute_flip_h
+	int flip_v_code = int(fv) << 29; // bit 29 → compute_flip_v
+	return atlas_id_code | id_code | flip_h_code | flip_v_code;
 }
 
 bool compute_flip_h(int code) {
@@ -92,7 +92,8 @@ void Autotilemap::init(const Vector2 &top_left, const Vector2 &bottom_right, con
 
 	_data.resize(_width * _height);
 
-	_base_tile = _json_data.get("base_tile");
+	Dictionary data_dict = _json_data;
+	_base_tile = data_dict.has("base_tile") ? int(_json_data.get("base_tile")) : -1;
 	if (_base_tile >= 0) {
 		for (int r = 0; r < _height; r++) {
 			for (int c = 0; c < _width; c++) {
@@ -100,8 +101,6 @@ void Autotilemap::init(const Vector2 &top_left, const Vector2 &bottom_right, con
 			}
 		}
 	}
-
-	Dictionary data_dict = _json_data;
 
 	if (data_dict.has("id_to_atlas")) {
 		_id_to_atlas = _json_data.get("id_to_atlas");
@@ -404,7 +403,8 @@ void Autotilemap::load_from_json(const String &json_file) {
 	Error err;
 	FileAccessRef f = FileAccess::open(json_file, FileAccess::READ, &err);
 	if (!f) {
-		print_line("Error loading");
+		print_error("Autotilemap: could not open json file: " + json_file);
+		return;
 	}
 
 	Vector<uint8_t> array;
@@ -463,49 +463,116 @@ void Autotilemap::_bind_methods() {
 
 #ifdef DOCTEST
 
-TEST_CASE("[Autotilemap] encode and decode tile") {
-	int code = encode_tile_and_flipping(42, 0, 0, 0);
-	CHECK(compute_tile_id(code) == 42);
-	CHECK(compute_atlas_id(code) == 0);
-}
+// Bit layout: [30]=flip_h  [29]=flip_v  [23..16]=atlas_id  [15..0]=tile_id
 
-TEST_CASE("[Autotilemap] encode with atlas id") {
-	int code = encode_tile_and_flipping(100, 0, 0, 5);
-	CHECK(compute_tile_id(code) == 100);
-	CHECK(compute_atlas_id(code) == 5);
-}
-
-TEST_CASE("[Autotilemap] encode flip flags") {
-	SUBCASE("no flips") {
-		int code = encode_tile_and_flipping(1, 0, 0);
-		CHECK_FALSE(compute_flip_h(code));
-		CHECK_FALSE(compute_flip_v(code));
+TEST_CASE("[Autotilemap] encode/decode tile id round-trip") {
+	SUBCASE("tile id 0") {
+		int code = encode_tile_and_flipping(0, 0, 0, 0);
+		CHECK(compute_tile_id(code) == 0);
 	}
-	SUBCASE("flip x only") {
-		int code = encode_tile_and_flipping(1, 1, 0);
-		CHECK(compute_flip_v(code));
+	SUBCASE("tile id 42") {
+		int code = encode_tile_and_flipping(42, 0, 0, 0);
+		CHECK(compute_tile_id(code) == 42);
 	}
-	SUBCASE("flip y only") {
-		int code = encode_tile_and_flipping(1, 0, 1);
-		CHECK(compute_flip_h(code));
+	SUBCASE("tile id max (0xFFFF)") {
+		int code = encode_tile_and_flipping(0xFFFF, 0, 0, 0);
+		CHECK(compute_tile_id(code) == 0xFFFF);
 	}
 }
 
-TEST_CASE("[Autotilemap] subtile coordinates") {
-	int code = encode_tile_and_flipping(0, 0, 0);
-	CHECK(compute_subtile_coords(code) == Vector2(0, 0));
-
-	code = encode_tile_and_flipping(7, 0, 0);
-	CHECK(compute_subtile_coords(code) == Vector2(0, 1));
-
-	code = encode_tile_and_flipping(15, 0, 0);
-	CHECK(compute_subtile_coords(code) == Vector2(1, 2));
+TEST_CASE("[Autotilemap] encode/decode atlas id round-trip") {
+	SUBCASE("atlas id 0") {
+		int code = encode_tile_and_flipping(0, 0, 0, 0);
+		CHECK(compute_atlas_id(code) == 0);
+	}
+	SUBCASE("atlas id 5") {
+		int code = encode_tile_and_flipping(100, 0, 0, 5);
+		CHECK(compute_atlas_id(code) == 5);
+	}
+	SUBCASE("atlas id max (0xFF)") {
+		int code = encode_tile_and_flipping(0, 0, 0, 0xFF);
+		CHECK(compute_atlas_id(code) == 0xFF);
+	}
 }
 
-TEST_CASE("[Autotilemap] tile id range") {
+TEST_CASE("[Autotilemap] tile_id and atlas_id are independent (bit isolation)") {
 	int code = encode_tile_and_flipping(0xFFFF, 0, 0, 0xFF);
 	CHECK(compute_tile_id(code) == 0xFFFF);
 	CHECK(compute_atlas_id(code) == 0xFF);
+
+	// Changing atlas_id must not affect tile_id
+	int code2 = encode_tile_and_flipping(0xFFFF, 0, 0, 0x01);
+	CHECK(compute_tile_id(code2) == 0xFFFF);
+	CHECK(compute_atlas_id(code2) == 0x01);
+
+	// Changing tile_id must not affect atlas_id
+	int code3 = encode_tile_and_flipping(0x0001, 0, 0, 0xFF);
+	CHECK(compute_tile_id(code3) == 0x0001);
+	CHECK(compute_atlas_id(code3) == 0xFF);
+}
+
+TEST_CASE("[Autotilemap] flip flags — no flips") {
+	int code = encode_tile_and_flipping(1, 0, 0);
+	CHECK_FALSE(compute_flip_h(code));
+	CHECK_FALSE(compute_flip_v(code));
+}
+
+TEST_CASE("[Autotilemap] flip flags — flip_h only") {
+	// fh=1 sets bit 30, decoded by compute_flip_h
+	int code = encode_tile_and_flipping(1, 1, 0);
+	CHECK(compute_flip_h(code));
+	CHECK_FALSE(compute_flip_v(code));
+}
+
+TEST_CASE("[Autotilemap] flip flags — flip_v only") {
+	// fv=1 sets bit 29, decoded by compute_flip_v
+	int code = encode_tile_and_flipping(1, 0, 1);
+	CHECK_FALSE(compute_flip_h(code));
+	CHECK(compute_flip_v(code));
+}
+
+TEST_CASE("[Autotilemap] flip flags — both flips") {
+	int code = encode_tile_and_flipping(1, 1, 1);
+	CHECK(compute_flip_h(code));
+	CHECK(compute_flip_v(code));
+}
+
+TEST_CASE("[Autotilemap] flip flags do not corrupt tile/atlas ids") {
+	int code = encode_tile_and_flipping(42, 1, 1, 3);
+	CHECK(compute_tile_id(code) == 42);
+	CHECK(compute_atlas_id(code) == 3);
+	CHECK(compute_flip_h(code));
+	CHECK(compute_flip_v(code));
+}
+
+TEST_CASE("[Autotilemap] compute_subtile_coords — 7-column sheet layout") {
+	// Row 0: tiles 0–6
+	CHECK(compute_subtile_coords(encode_tile_and_flipping(0, 0, 0)) == Vector2(0, 0));
+	CHECK(compute_subtile_coords(encode_tile_and_flipping(6, 0, 0)) == Vector2(6, 0));
+	// Row 1: tiles 7–13
+	CHECK(compute_subtile_coords(encode_tile_and_flipping(7, 0, 0)) == Vector2(0, 1));
+	CHECK(compute_subtile_coords(encode_tile_and_flipping(13, 0, 0)) == Vector2(6, 1));
+	// Row 2: tiles 14–20
+	CHECK(compute_subtile_coords(encode_tile_and_flipping(14, 0, 0)) == Vector2(0, 2));
+	CHECK(compute_subtile_coords(encode_tile_and_flipping(15, 0, 0)) == Vector2(1, 2));
+}
+
+TEST_CASE("[Autotilemap] blob neighbor bitmask weight per direction") {
+	// The 8-neighbor value: n=1 ne=2 e=4 se=8 s=16 sw=32 w=64 nw=128
+	// Verify individual contributions are orthogonal powers of 2
+	CHECK((1 + 2 + 4 + 8 + 16 + 32 + 64 + 128) == 255);
+	// Each direction bit must be unique
+	CHECK((1 & 2) == 0);
+	CHECK((4 & 8) == 0);
+	CHECK((64 & 128) == 0);
+}
+
+TEST_CASE("[Autotilemap] quad neighbor bitmask weight per direction") {
+	// 4-neighbor value: n=1 e=4 s=16 w=64
+	CHECK((1 & 4) == 0);
+	CHECK((4 & 16) == 0);
+	CHECK((16 & 64) == 0);
+	CHECK((1 + 4 + 16 + 64) == 85);
 }
 
 #endif

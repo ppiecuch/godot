@@ -68,6 +68,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #ifdef MODULE_MBEDTLS_ENABLED
 #include "core/cripter.h"
 #endif
+#include "core/arrow_shape.h"
 #include "core/dist_rand.h"
 #include "core/error_reporter.h"
 #include "core/godot_error_handler.h"
@@ -90,6 +91,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "editor/explodomatica_plugin.h"
 #include "editor/power_station_plugin.h"
 #include "editor/rest_api_tester.h"
+#include "editor/sprite_quick_offset_plugin.h"
 #endif
 
 #include "albmpgfx/gdal_bitmap_gfx.h"
@@ -460,6 +462,7 @@ static void editor_init_callback() {
 	editor->add_editor_plugin(memnew(ExplodomaticaEditorPlugin(editor)));
 	editor->add_editor_plugin(memnew(PowerStationEditorPlugin(editor)));
 	editor->add_editor_plugin(memnew(EditorIconPreview(editor)));
+	editor->add_editor_plugin(memnew(SpriteQuickOffsetPlugin(editor)));
 }
 #endif // TOOLS_ENABLED
 
@@ -515,6 +518,7 @@ void register_gdextensions_types() {
 	ClassDB::register_class<BTCustomParallelNode>();
 #endif
 #ifdef GDEXT_CORE_ENABLED
+	ClassDB::register_class<Arrow2D>();
 	ClassDB::register_class<AreaProber>();
 	ClassDB::register_class<BSInputEventKey>();
 	ClassDB::register_class<Byteswap>();

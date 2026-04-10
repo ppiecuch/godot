@@ -30,6 +30,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -74,8 +75,54 @@ Cable2DEditorPlugin::Cable2DEditorPlugin(EditorNode *p_node) :
 
 #ifdef DOCTEST
 
-TEST_CASE("[Cable2DEditorPlugin] placeholder") {
-	CHECK(true);
+TEST_CASE("[Cable2DEditor] Cable2D points accessible via Variant property interface") {
+	// _get_polygon/_set_polygon use node->get/set("points") — verify the round-trip
+	Cable2D cable;
+
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(10, 20));
+	pts.push_back(Vector2(30, 40));
+	cable.set("points", pts);
+
+	PoolVector<Vector2> got = cable.get("points");
+	REQUIRE(got.size() == 2);
+	CHECK(got[0].x == doctest::Approx(10));
+	CHECK(got[0].y == doctest::Approx(20));
+	CHECK(got[1].x == doctest::Approx(30));
+	CHECK(got[1].y == doctest::Approx(40));
+}
+
+TEST_CASE("[Cable2DEditor] set_points via Variant updates rendered points") {
+	Cable2D cable;
+	cable.set_segments(2);
+
+	PoolVector<Vector2> pts;
+	pts.push_back(Vector2(0, 0));
+	pts.push_back(Vector2(100, 0));
+	cable.set("points", pts);
+
+	// Confirm rendered subdivision happened
+	CHECK(cable.get_rendered_points().size() == 3);
+}
+
+TEST_CASE("[Cable2DEditor] overwriting points via Variant replaces previous") {
+	Cable2D cable;
+
+	PoolVector<Vector2> first;
+	first.push_back(Vector2(1, 2));
+	first.push_back(Vector2(3, 4));
+	cable.set("points", first);
+
+	PoolVector<Vector2> second;
+	second.push_back(Vector2(5, 6));
+	second.push_back(Vector2(7, 8));
+	second.push_back(Vector2(9, 10));
+	cable.set("points", second);
+
+	PoolVector<Vector2> got = cable.get("points");
+	REQUIRE(got.size() == 3);
+	CHECK(got[2].x == doctest::Approx(9));
+	CHECK(got[2].y == doctest::Approx(10));
 }
 
 #endif

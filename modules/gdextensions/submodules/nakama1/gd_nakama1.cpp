@@ -195,7 +195,8 @@ void GdNakama1Node::set_lang(String p_lang) {
 }
 
 String GdNakama1Node::get_lang() const {
-	ERR_FAIL_NULL_V(nk_client, "");
+	if (!nk_client)
+		return "";
 	return nk_client->get_lang();
 }
 
@@ -205,7 +206,8 @@ void GdNakama1Node::set_trace(bool p_trace) {
 }
 
 bool GdNakama1Node::get_trace() const {
-	ERR_FAIL_NULL_V(nk_client, false);
+	if (!nk_client)
+		return false;
 	return nk_client->get_trace();
 }
 

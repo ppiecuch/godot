@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+  <!-- Arrow shaft + triangular head pointing right -->
+  <polygon points="1,6 9,6 9,3 15,8 9,13 9,10 1,10" fill="#ffdd65" opacity="0.95"/>
+</svg>
