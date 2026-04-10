@@ -31,56 +31,67 @@
 #ifndef GD_NAKAMA1_H
 #define GD_NAKAMA1_H
 
-#include "core/reference.h"
 #include "scene/main/node.h"
 
 #include "client/nakamaclient.h"
 
-class GdNakama1 : public Node {
-	GDCLASS(GdNakama1, Node);
+// Internal C++ singleton — NOT exposed to GDScript.
+// Persists authentication state (session token) independently of
+// GdNakama1Node lifetime so reconnection does not require re-authentication.
+class GdNakama1 {
+	static GdNakama1 *singleton;
 
-	real_t time_since_last_tick;
+	DefaultSession *nk_session = nullptr;
 
-protected:
-	static void _bind_methods();
+public:
+	static GdNakama1 *get_singleton();
 
-	void _notification(int p_what);
-	void _authenticated(String p_session_token);
+	// Takes ownership of p_session (will memdelete on replacement or destruction).
+	void set_session(DefaultSession *p_session);
+	DefaultSession *get_session() const { return nk_session; }
+	bool is_authenticated() const { return nk_session != nullptr; }
+	bool is_session_expired() const;
 
-	DefaultClient *nk_client;
-	DefaultSession *nk_session;
+	GdNakama1();
+	~GdNakama1();
+};
 
+// GDScript-facing Node. Add to the scene tree to activate Nakama networking.
+// Drives HTTP/WebSocket processing via _process() and exposes the full API.
+// The underlying session persists in GdNakama1 singleton across node lifecycle.
+class GdNakama1Node : public Node {
+	GDCLASS(GdNakama1Node, Node);
+
+	DefaultClient *nk_client = nullptr;
+
+	void _authenticated(const String &p_session_token);
 	void _client_request_error(String error_message);
-	void _client_network_error(HTTPRequest::Result status, HTTPClient::ResponseCode code);
+	void _client_network_error(int status, int code);
 	void _client_session_error(NkErrorCode error_code, String error_message, String collation_id);
 	void _client_session_accepted(String session_token, String collation_id);
 
+protected:
+	static void _bind_methods();
+	void _notification(int p_what);
+
 public:
-	void set_lang(String p_lang);
-	String get_lang() const;
-
-	void set_trace(bool p_trace);
-	bool get_trace() const;
-
-	// Session
 	void create_client(String p_server_key, String p_server_host, int p_port = 7349, bool p_ssl = false, int p_timeout = 60);
-	void login_or_register();
 	void authenticate_device(String p_device, bool create = true);
 	void authenticate_email(String p_email, String p_password, bool create = true);
 	bool is_session_expired();
 	void logout();
 
-	// Chat
+	void set_lang(String p_lang);
+	String get_lang() const;
+	void set_trace(bool p_trace);
+	bool get_trace() const;
+
 	void join_chat_room(String p_room_name);
 	void write_chat_message(String p_channel_id, String p_content);
+	void submit_score(String p_leaderboard_id, NkMessage::ScoreOperator p_op, int64_t p_score);
 
-	// Leaderboard
-	void submit_score(NkMessage::ScoreOperator p_op, int64_t p_score);
-
-	static GdNakama1 *get_singleton();
-
-	GdNakama1();
-	~GdNakama1();
+	GdNakama1Node();
+	~GdNakama1Node();
 };
 
 #endif // GD_NAKAMA1_H

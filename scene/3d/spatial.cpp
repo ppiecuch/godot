@@ -1051,6 +1051,9 @@ void Spatial::set_identity() {
 }
 
 void Spatial::look_at(const Vector3 &p_target, const Vector3 &p_up) {
+	if (!is_inside_tree()) {
+		return;
+	}
 	Vector3 origin(get_global_transform().origin);
 	look_at_from_position(origin, p_target, p_up);
 }

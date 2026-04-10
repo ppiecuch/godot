@@ -187,10 +187,12 @@ GdHttpServer::GdHttpServer() {
 	}
 	instance = this;
 
+#ifndef TOOLS_ENABLED
 	if (GLOBAL_GET("network/http_server/autostart")) {
 		print_verbose("Auto-start http server on default port " + itos(GLOBAL_GET("network/http_server/port")));
 		start();
 	}
+#endif
 }
 
 GdHttpServer::~GdHttpServer() {

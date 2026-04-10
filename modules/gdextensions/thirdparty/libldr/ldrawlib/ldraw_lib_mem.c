@@ -2,4 +2,4 @@
 #define INCBIN_PREFIX
 #include "incbin.h"
 
-INCBIN(ldrawlib, "ldraw_lib.content.gz");
+INCBIN(ldrawlib, "thirdparty/libldr/ldrawlib/ldraw_lib.content.gz");

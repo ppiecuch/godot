@@ -135,6 +135,12 @@ def snake_case(name):
 
 env_module = env_modules.Clone()
 
+# INCBIN (.incbin) paths are relative to the source file's directory during normal
+# compilation, but during LTO the linker re-processes inline asm from the Godot root.
+# Define INCBIN_ROOT so incbin.h prepends the module path to all .incbin filenames.
+_module_dir = os.path.relpath(os.path.dirname(File("SCsub").srcnode().abspath), env.Dir("#").abspath)
+env_module.Append(CPPDEFINES=[('INCBIN_ROOT', '\\"' + _module_dir + '/\\"')])
+
 sources = Glob("*.cpp") + Glob("common/*.cpp") + Glob("core/*.cpp") + Glob("core/*.c")  # Always build core and common
 
 modules = [

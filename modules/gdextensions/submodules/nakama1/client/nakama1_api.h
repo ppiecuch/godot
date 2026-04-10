@@ -291,4 +291,40 @@ public:
 	LogoutMessage();
 };
 
+// Joins a named chat room (TTopicsJoin Envelope over WebSocket).
+class TopicsJoinMessage : public NkCollatedMessage {
+	String room_name;
+
+public:
+	PoolByteArray as_bytes(String p_collation_id) const;
+
+	TopicsJoinMessage(const String &p_room_name) :
+			room_name(p_room_name) {}
+};
+
+// Sends a message to a room channel (TTopicMessageSend Envelope over WebSocket).
+class TopicMessageSendMessage : public NkCollatedMessage {
+	String channel_id;
+	String content;
+
+public:
+	PoolByteArray as_bytes(String p_collation_id) const;
+
+	TopicMessageSendMessage(const String &p_channel_id, const String &p_content) :
+			channel_id(p_channel_id), content(p_content) {}
+};
+
+// Submits a leaderboard score (TLeaderboardRecordsWrite Envelope over WebSocket).
+class LeaderboardRecordWriteMessage : public NkCollatedMessage {
+	String leaderboard_id;
+	NkMessage::ScoreOperator op;
+	int64_t score;
+
+public:
+	PoolByteArray as_bytes(String p_collation_id) const;
+
+	LeaderboardRecordWriteMessage(const String &p_leaderboard_id, NkMessage::ScoreOperator p_op, int64_t p_score) :
+			leaderboard_id(p_leaderboard_id), op(p_op), score(p_score) {}
+};
+
 #endif // NAKAMA1_API_H

@@ -32,8 +32,8 @@
 #define NAKAMACLIENT_H
 
 #include "core/reference.h"
+#include "modules/gdextensions/common/basic_http_request.h"
 #include "modules/websocket/websocket_client.h"
-#include "scene/main/http_request.h"
 
 #include "nakama1_api.h"
 
@@ -90,7 +90,7 @@ struct Request {
 		_payload = p_payload;
 		return *this;
 	}
-	Error make(HTTPRequest *p_client, bool trace = false) {
+	Error make(BasicHTTPRequest *p_client, bool trace = false) {
 		if (trace) {
 			LOGI("Sending request: " + _url);
 		}
@@ -155,13 +155,13 @@ private:
 
 	long server_time;
 
-	HTTPRequest *rest;
+	BasicHTTPRequest *rest;
 	WebSocketClient *ws;
 	std::map<String, ObjectID> collation_ids;
 
 	// network callbacks:
 
-	void _rest_request_completed(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &p_headers, const PoolByteArray &p_data);
+	void _rest_request_completed(BasicHTTPRequest::Result p_status, int p_code, const PoolStringArray &p_headers, const PoolByteArray &p_data);
 
 	void _ws_connection_closed();
 	void _ws_connection_error();
@@ -194,6 +194,9 @@ public:
 
 	bool send(const Ref<NkCollatedMessage> &p_message);
 	bool send(const Ref<NkUncollatedMessage> &p_message);
+
+	// Drive HTTP and WebSocket polling — call every frame from a Node's _process().
+	void poll();
 
 	DefaultClient(String p_server_key, String p_host, int p_port, bool p_ssl = false, int p_timeout = 60);
 	~DefaultClient();

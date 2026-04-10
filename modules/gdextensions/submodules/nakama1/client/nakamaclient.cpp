@@ -76,17 +76,17 @@ bool DefaultSession::is_expired() const {
 }
 
 bool DefaultSession::is_expired(uint64_t p_now) const {
-	return (expire_time - OS::get_singleton()->get_system_time_secs() * 1000) < 0;
+	return (int64_t)(expire_time - p_now) < 0;
 }
 
 DefaultSession *DefaultSession::restore(String p_token) {
 	return memnew(DefaultSession(p_token));
 }
 
-void DefaultClient::_rest_request_completed(HTTPRequest::Result p_status, HTTPClient::ResponseCode p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
+void DefaultClient::_rest_request_completed(BasicHTTPRequest::Result p_status, int p_code, const PoolStringArray &headers, const PoolByteArray &p_data) {
 	String error_text;
 
-	if (p_status == HTTPRequest::RESULT_SUCCESS && p_code < HTTPClient::RESPONSE_BAD_REQUEST) {
+	if (p_status == BasicHTTPRequest::RESULT_SUCCESS && p_code < HTTPClient::RESPONSE_BAD_REQUEST) {
 		String str = Utils::bytearray_to_string(p_data);
 		LOGI(str);
 
@@ -139,6 +139,11 @@ void DefaultClient::_ws_connection_established() {
 }
 
 void DefaultClient::_ws_server_close_request() {
+	// Server requested graceful WebSocket close — send close frame back.
+	Ref<WebSocketPeer> peer = ws->get_peer(1);
+	if (peer.is_valid() && peer->is_connected_to_host()) {
+		peer->close(1000); // 1000 = Normal Closure
+	}
 }
 
 void DefaultClient::_ws_data_received() {
@@ -532,7 +537,7 @@ DefaultClient::DefaultClient(String p_server_key, String p_host, int p_port, boo
 	lang = "en";
 	trace = false;
 
-	rest = memnew(HTTPRequest);
+	rest = memnew(BasicHTTPRequest);
 	rest->set_timeout(p_timeout);
 	rest->connect("request_completed", this, "_rest_request_completed");
 	ws = WebSocketClient::_create();
@@ -543,12 +548,19 @@ DefaultClient::DefaultClient(String p_server_key, String p_host, int p_port, boo
 	ws->connect("server_close_request", this, "_ws_server_close_request");
 }
 
+void DefaultClient::poll() {
+	rest->poll();
+	if (ws) {
+		ws->poll();
+	}
+}
+
 DefaultClient::~DefaultClient() {
 	if (rest) {
 		rest->cancel_request();
 		memdelete(rest);
+		rest = nullptr;
 	}
-
 	memdelete(ws);
 }
 

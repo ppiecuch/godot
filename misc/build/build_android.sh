@@ -90,6 +90,8 @@ if [ -z "$JAVA_HOME" ] || ! is_jdk_compatible "$JAVA_HOME"; then
 fi
 echo "Using JDK $(get_java_major_version "$JAVA_HOME"): $JAVA_HOME"
 
+# Build env info is saved to the template output dir after templates are built (see below).
+
 export SCONS="scons -j$CPU verbose=yes warnings=no progress=no"
 export OPTIONS="debug_symbols=yes debug_experimental=no"
 
@@ -162,6 +164,15 @@ if [ ! -d "$template_dir" ]; then
 fi
 
 mkdir -p "$template_dir"
+
+# Save build environment info for downstream builds (e.g. app export scripts).
+cat > "${template_dir}/build_env.txt" <<BUILD_ENV_EOF
+JAVA_HOME=$JAVA_HOME
+JAVA_VERSION=$(get_java_major_version "$JAVA_HOME")
+JAVA_VERSION_MIN=$MIN_JDK
+JAVA_VERSION_MAX=$MAX_JDK
+BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+BUILD_ENV_EOF
 
 mv -v \
 	bin/android_source.zip bin/android_debug.apk bin/android_release.apk bin/godot-lib.debug.aar bin/godot-lib.release.aar \

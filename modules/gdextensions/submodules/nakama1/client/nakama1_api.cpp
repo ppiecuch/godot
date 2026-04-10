@@ -284,6 +284,97 @@ LogoutMessage::LogoutMessage() {
 	payload = _make_payload(Logout, &logout);
 }
 
+/// TopicsJoinMessage
+
+PoolByteArray TopicsJoinMessage::as_bytes(String p_collation_id) const {
+	flatbuffers::FlatBufferBuilder builder(512);
+
+	auto room_str = builder.CreateString(room_name.utf8().get_data());
+	auto auth_result = server::TTopicsJoin_::TopicJoin_::CreateAuthenticateResult0(builder, 0, room_str, 0);
+	auto join = server::TTopicsJoin_::CreateTopicJoin(builder, auth_result);
+
+	std::vector<flatbuffers::Offset<server::TTopicsJoin_::TopicJoin>> joins_vec = { join };
+	auto joins = builder.CreateVector(joins_vec);
+	auto topics_join = server::CreateTTopicsJoin(builder, joins);
+
+	server::Envelope_::EnvelopeContentBuilder content_builder(builder);
+	content_builder.add_topics_join(topics_join);
+	auto content = content_builder.Finish();
+
+	auto collation = builder.CreateString(p_collation_id.utf8().get_data());
+	auto envelope = server::CreateEnvelope(builder, collation, content);
+	builder.Finish(envelope);
+
+	return Utils::create_payload(builder.GetBufferPointer(), builder.GetSize());
+}
+
+/// TopicMessageSendMessage
+
+PoolByteArray TopicMessageSendMessage::as_bytes(String p_collation_id) const {
+	flatbuffers::FlatBufferBuilder builder(512);
+
+	// TopicId identifies the destination channel (room type).
+	auto room_str = builder.CreateString(channel_id.utf8().get_data());
+	auto topic_type = server::TopicId_::CreateTopicType(builder, 0, room_str, 0);
+	auto topic_id = server::CreateTopicId(builder, topic_type);
+
+	auto data_str = builder.CreateString(content.utf8().get_data());
+	auto msg_send = server::CreateTTopicMessageSend(builder, topic_id, data_str);
+
+	server::Envelope_::EnvelopeContentBuilder content_builder(builder);
+	content_builder.add_topic_message_send(msg_send);
+	auto env_content = content_builder.Finish();
+
+	auto collation = builder.CreateString(p_collation_id.utf8().get_data());
+	auto envelope = server::CreateEnvelope(builder, collation, env_content);
+	builder.Finish(envelope);
+
+	return Utils::create_payload(builder.GetBufferPointer(), builder.GetSize());
+}
+
+/// LeaderboardRecordWriteMessage
+
+PoolByteArray LeaderboardRecordWriteMessage::as_bytes(String p_collation_id) const {
+	using namespace server::TLeaderboardRecordsWrite_::LeaderboardRecordWrite_;
+
+	flatbuffers::FlatBufferBuilder builder(512);
+
+	// Each operator maps to a separate field in AuthenticateResult5.
+	int64_t incr = 0, decr = 0, set_val = 0, best = 0;
+	switch (op) {
+		case NkMessage::SUBMITOP_INCR:
+			incr = score;
+			break;
+		case NkMessage::SUBMITOP_DECR:
+			decr = score;
+			break;
+		case NkMessage::SUBMITOP_SET:
+			set_val = score;
+			break;
+		case NkMessage::SUBMITOP_BEST:
+			best = score;
+			break;
+	}
+	auto score_op = CreateAuthenticateResult5(builder, incr, decr, set_val, best);
+
+	auto lb_id_str = builder.CreateString(leaderboard_id.utf8().get_data());
+	auto record = server::TLeaderboardRecordsWrite_::CreateLeaderboardRecordWrite(builder, lb_id_str, score_op);
+
+	std::vector<flatbuffers::Offset<server::TLeaderboardRecordsWrite_::LeaderboardRecordWrite>> records_vec = { record };
+	auto records = builder.CreateVector(records_vec);
+	auto lb_write = server::CreateTLeaderboardRecordsWrite(builder, records);
+
+	server::Envelope_::EnvelopeContentBuilder content_builder(builder);
+	content_builder.add_leaderboard_records_write(lb_write);
+	auto env_content = content_builder.Finish();
+
+	auto collation = builder.CreateString(p_collation_id.utf8().get_data());
+	auto envelope = server::CreateEnvelope(builder, collation, env_content);
+	builder.Finish(envelope);
+
+	return Utils::create_payload(builder.GetBufferPointer(), builder.GetSize());
+}
+
 #ifdef DOCTEST
 #include "doctest/doctest_godot.h"
 

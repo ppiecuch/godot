@@ -45,7 +45,7 @@
 void ProcRockDialog::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_PROCESS: {
-			if (!is_visible_in_tree()) {
+			if (!is_visible_in_tree() || !preview_camera || !preview_camera->is_inside_tree()) {
 				return;
 			}
 			camera_orbit_angle += get_process_delta_time() * 0.3;
@@ -148,9 +148,9 @@ ProcRockDialog::ProcRockDialog() {
 
 	preview_camera = memnew(Camera);
 	preview_camera->set_translation(Vector3(0, 1.5, 3));
-	preview_camera->look_at(Vector3(0, 0, 0), Vector3(0, 1, 0));
 	preview_camera->set_perspective(45, 0.1, 100);
 	preview_viewport->add_child(preview_camera);
+	preview_camera->look_at(Vector3(0, 0, 0), Vector3(0, 1, 0));
 	preview_camera->set_current(true);
 
 	DirectionalLight *light = memnew(DirectionalLight);

@@ -123,27 +123,37 @@ void SimpleAICharacter::set_position(const Vector3 &p_pos) {
 }
 
 Vector3 SimpleAICharacter::get_position() const {
-	ERR_FAIL_COND_V(!_character, Vector3());
+	if (!_character) {
+		return Vector3();
+	}
 	return to_godot(_character->getPosition());
 }
 
 void SimpleAICharacter::set_orientation(float p_radians) {
-	ERR_FAIL_COND(!_character);
+	if (!_character) {
+		return;
+	}
 	_character->setOrientation(p_radians);
 }
 
 float SimpleAICharacter::get_orientation() const {
-	ERR_FAIL_COND_V(!_character, 0.0f);
+	if (!_character) {
+		return 0.0f;
+	}
 	return _character->getOrientation();
 }
 
 void SimpleAICharacter::set_speed(float p_speed) {
-	ERR_FAIL_COND(!_character);
+	if (!_character) {
+		return;
+	}
 	_character->setSpeed(p_speed);
 }
 
 float SimpleAICharacter::get_speed() const {
-	ERR_FAIL_COND_V(!_character, 0.0f);
+	if (!_character) {
+		return 0.0f;
+	}
 	return _character->getSpeed();
 }
 

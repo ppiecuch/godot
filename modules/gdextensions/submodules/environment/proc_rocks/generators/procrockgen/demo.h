@@ -35,7 +35,7 @@
 
 #include "misc/incbin.h"
 
-#define ROOT "modules/gdextensions/submodules/environment/proc_rocks/generators/procrockgen/"
+#define ROOT "submodules/environment/proc_rocks/generators/procrockgen/"
 
 INCBIN(json_1, ROOT "demo/example/1.json");
 INCBIN(json_2, ROOT "demo/example/2.json");

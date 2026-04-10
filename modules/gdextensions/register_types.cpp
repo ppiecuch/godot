@@ -418,6 +418,14 @@ static void editor_init_callback() {
 	EditorNode *editor = EditorNode::get_singleton();
 	ERR_FAIL_NULL(editor);
 
+#ifdef GDEXT_HTTPSERVER_ENABLED
+	if (GdHttpServer::get_singleton() && GLOBAL_GET("network/http_server/autostart") &&
+			!OS::get_singleton()->is_no_window_mode_enabled()) {
+		print_verbose("Auto-start http server on default port " + itos(GLOBAL_GET("network/http_server/port")));
+		GdHttpServer::get_singleton()->start();
+	}
+#endif
+
 #ifdef GDEXT_POLYVECTOR_ENABLED
 	if (Engine::get_singleton()->is_editor_hint()) {
 		Ref<ResourceImporterSWF> swfdata;
@@ -855,7 +863,8 @@ void register_gdextensions_types() {
 #ifdef GDEXT_NAKAMA1_ENABLED
 	ClassDB::register_virtual_class<NkCollatedMessage>();
 	ClassDB::register_virtual_class<NkUncollatedMessage>();
-	Engine::get_singleton()->add_singleton(Engine::Singleton("GdNakama1", memnew(GdNakama1)));
+	ClassDB::register_class<GdNakama1Node>();
+	memnew(GdNakama1); // internal singleton — not exposed to GDScript
 #endif
 
 #ifdef GDEXT_DISCORD_ENABLED
@@ -1051,7 +1060,9 @@ void unregister_gdextensions_types() {
 	RemoveSingleton(ConsoleHw);
 #endif
 #ifdef GDEXT_NAKAMA1_ENABLED
-	RemoveSingleton(GdNakama1);
+	if (GdNakama1::get_singleton()) {
+		memdelete(GdNakama1::get_singleton());
+	}
 #endif
 #ifdef GDEXT_DISCORD_ENABLED
 	RemoveSingleton(GdDiscordClient);

@@ -41,6 +41,7 @@
 #include "core/variant.h"
 #include "modules/websocket/websocket_client.h"
 #include "scene/2d/node_2d.h"
+#include "scene/main/timer.h"
 
 #define _print_debug(...) DEBUG_PRINT(vconcat("[SilentWolf] ", __VA_ARGS__))
 #define _print_fmt_debug(fmt, ...) DEBUG_PRINT(String("[SilentWolf] " fmt).sprintf(array(__VA_ARGS__)))

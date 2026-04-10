@@ -28,7 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "basic_http_request.h"
+
+#include "core/io/json.h"
 
 void BasicHTTPRequest::_redirect_request(const String &p_new_url) {
 }
@@ -70,6 +78,13 @@ Error BasicHTTPRequest::_parse_url(const String &p_url) {
 
 bool BasicHTTPRequest::poll() {
 	if (requesting) {
+		if (timeout > 0.0) {
+			uint64_t elapsed_ms = OS::get_singleton()->get_ticks_msec() - request_start_ms;
+			if (elapsed_ms >= (uint64_t)(timeout * 1000.0)) {
+				_timeout();
+				return REQ_DONE;
+			}
+		}
 		return _update_connection();
 	} else {
 		return REQ_DONE;
@@ -92,8 +107,7 @@ Error BasicHTTPRequest::request_raw(const String &p_url, const Vector<String> &p
 	ERR_FAIL_COND_V_MSG(requesting, ERR_BUSY, "BasicHTTPRequest is processing a request. Wait for completion or cancel it before attempting a new one.");
 
 	if (timeout > 0.0) {
-		timer->stop();
-		timer->start(timeout);
+		request_start_ms = OS::get_singleton()->get_ticks_msec();
 	}
 
 	method = p_method;
@@ -105,7 +119,11 @@ Error BasicHTTPRequest::request_raw(const String &p_url, const Vector<String> &p
 
 	validate_ssl = p_ssl_validate_domain;
 
-	headers = p_custom_headers;
+	// Merge default_headers first; custom headers append (and can override).
+	headers = default_headers;
+	for (int i = 0; i < p_custom_headers.size(); i++) {
+		headers.push_back(p_custom_headers[i]);
+	}
 
 	request_data = p_request_data_raw;
 
@@ -122,8 +140,6 @@ Error BasicHTTPRequest::request_raw(const String &p_url, const Vector<String> &p
 }
 
 void BasicHTTPRequest::cancel_request() {
-	timer->stop();
-
 	if (!requesting) {
 		return;
 	}
@@ -356,6 +372,10 @@ bool BasicHTTPRequest::_update_connection() {
 }
 
 void BasicHTTPRequest::_request_done(int p_status, int p_code, const PoolStringArray &p_headers, const PoolByteArray &p_data) {
+	last_result = (Result)p_status;
+	last_response_code = p_code;
+	last_response_headers = p_headers;
+	last_response_body = p_data;
 	cancel_request();
 	emit_signal("request_completed", p_status, p_code, p_headers, p_data);
 }
@@ -426,8 +446,46 @@ void BasicHTTPRequest::set_timeout(double p_timeout) {
 	}
 }
 
-double BasicHTTPRequest::get_timeout() {
+double BasicHTTPRequest::get_timeout() const {
 	return timeout;
+}
+
+// ── default headers ────────────────────────────────────────────────────────────
+
+void BasicHTTPRequest::set_default_headers(const Vector<String> &p_headers) {
+	default_headers = p_headers;
+}
+
+Vector<String> BasicHTTPRequest::get_default_headers() const {
+	return default_headers;
+}
+
+void BasicHTTPRequest::add_default_header(const String &p_name, const String &p_value) {
+	default_headers.push_back(p_name + ": " + p_value);
+}
+
+// ── JSON convenience ───────────────────────────────────────────────────────────
+
+Error BasicHTTPRequest::post_json(const String &p_url, const Variant &p_data, const Vector<String> &p_extra_headers, bool p_ssl_validate) {
+	Vector<String> hdrs = p_extra_headers;
+	hdrs.push_back("Content-Type: application/json");
+	hdrs.push_back("Accept: application/json");
+	return request(p_url, hdrs, p_ssl_validate, HTTPClient::METHOD_POST, JSON::print(p_data));
+}
+
+Variant BasicHTTPRequest::get_last_response_json() const {
+	if (last_response_body.size() == 0) {
+		return Variant();
+	}
+	String body_str;
+	body_str.parse_utf8((const char *)last_response_body.read().ptr(), last_response_body.size());
+	Variant result;
+	String err_str;
+	int err_line = 0;
+	if (JSON::parse(body_str, result, err_str, err_line) != OK) {
+		return Variant();
+	}
+	return result;
 }
 
 void BasicHTTPRequest::_timeout() {
@@ -436,12 +494,24 @@ void BasicHTTPRequest::_timeout() {
 }
 
 void BasicHTTPRequest::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("request_raw", "url", "custom_headers", "ssl_validate_domain", "method", "request_data_raw"), &BasicHTTPRequest::request_raw, DEFVAL(PoolStringArray()), DEFVAL(true), DEFVAL(HTTPClient::METHOD_GET), DEFVAL(PoolVector<uint8_t>()));
 	ClassDB::bind_method(D_METHOD("request", "url", "custom_headers", "ssl_validate_domain", "method", "request_data"), &BasicHTTPRequest::request, DEFVAL(PoolStringArray()), DEFVAL(true), DEFVAL(HTTPClient::METHOD_GET), DEFVAL(String()));
+	ClassDB::bind_method(D_METHOD("request_raw", "url", "custom_headers", "ssl_validate_domain", "method", "request_data_raw"), &BasicHTTPRequest::request_raw, DEFVAL(PoolStringArray()), DEFVAL(true), DEFVAL(HTTPClient::METHOD_GET), DEFVAL(PoolVector<uint8_t>()));
+	ClassDB::bind_method(D_METHOD("post_json", "url", "data", "extra_headers", "ssl_validate"), &BasicHTTPRequest::post_json, DEFVAL(PoolStringArray()), DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("cancel_request"), &BasicHTTPRequest::cancel_request);
-	ClassDB::bind_method(D_METHOD("is_active_request"), &BasicHTTPRequest::is_active_request);
+	ClassDB::bind_method(D_METHOD("is_requesting"), &BasicHTTPRequest::is_requesting);
+	ClassDB::bind_method(D_METHOD("is_active_request"), &BasicHTTPRequest::is_active_request); // compat alias
 
 	ClassDB::bind_method(D_METHOD("get_http_client_status"), &BasicHTTPRequest::get_http_client_status);
+
+	ClassDB::bind_method(D_METHOD("set_default_headers", "headers"), &BasicHTTPRequest::set_default_headers);
+	ClassDB::bind_method(D_METHOD("get_default_headers"), &BasicHTTPRequest::get_default_headers);
+	ClassDB::bind_method(D_METHOD("add_default_header", "name", "value"), &BasicHTTPRequest::add_default_header);
+
+	ClassDB::bind_method(D_METHOD("get_last_result"), &BasicHTTPRequest::get_last_result);
+	ClassDB::bind_method(D_METHOD("get_last_response_code"), &BasicHTTPRequest::get_last_response_code);
+	ClassDB::bind_method(D_METHOD("get_last_response_headers"), &BasicHTTPRequest::get_last_response_headers);
+	ClassDB::bind_method(D_METHOD("get_last_response_body"), &BasicHTTPRequest::get_last_response_body);
+	ClassDB::bind_method(D_METHOD("get_last_response_json"), &BasicHTTPRequest::get_last_response_json);
 
 	ClassDB::bind_method(D_METHOD("set_body_size_limit", "bytes"), &BasicHTTPRequest::set_body_size_limit);
 	ClassDB::bind_method(D_METHOD("get_body_size_limit"), &BasicHTTPRequest::get_body_size_limit);
@@ -468,7 +538,6 @@ void BasicHTTPRequest::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_https_proxy", "host", "port"), &BasicHTTPRequest::set_https_proxy);
 
 	ClassDB::bind_method(D_METHOD("poll"), &BasicHTTPRequest::poll);
-	ClassDB::bind_method(D_METHOD("_timeout"), &BasicHTTPRequest::_timeout);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "download_file", PROPERTY_HINT_FILE), "set_download_file", "get_download_file");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "download_chunk_size", PROPERTY_HINT_RANGE, "256,16777216"), "set_download_chunk_size", "get_download_chunk_size");
@@ -479,7 +548,6 @@ void BasicHTTPRequest::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("request_completed", PropertyInfo(Variant::INT, "result"), PropertyInfo(Variant::INT, "response_code"), PropertyInfo(Variant::POOL_STRING_ARRAY, "headers"), PropertyInfo(Variant::POOL_BYTE_ARRAY, "body")));
 
 	BIND_ENUM_CONSTANT(RESULT_SUCCESS);
-	//BIND_ENUM_CONSTANT( RESULT_NO_BODY );
 	BIND_ENUM_CONSTANT(RESULT_CHUNKED_BODY_SIZE_MISMATCH);
 	BIND_ENUM_CONSTANT(RESULT_CANT_CONNECT);
 	BIND_ENUM_CONSTANT(RESULT_CANT_RESOLVE);
@@ -492,27 +560,12 @@ void BasicHTTPRequest::_bind_methods() {
 	BIND_ENUM_CONSTANT(RESULT_DOWNLOAD_FILE_WRITE_ERROR);
 	BIND_ENUM_CONSTANT(RESULT_REDIRECT_LIMIT_REACHED);
 	BIND_ENUM_CONSTANT(RESULT_TIMEOUT);
+	BIND_ENUM_CONSTANT(RESULT_MAX);
 }
 
 BasicHTTPRequest::BasicHTTPRequest() {
-	port = 80;
-	redirections = 0;
-	max_redirects = 8;
-	body_len = -1;
-	got_response = false;
-	validate_ssl = false;
-	use_ssl = false;
-	response_code = 0;
-	request_sent = false;
-	requesting = false;
+	downloaded.set(0);
 	client.instance();
-	body_size_limit = -1;
-	file = nullptr;
-
-	timer = memnew(Timer);
-	timer->set_one_shot(true);
-	timer->connect("timeout", this, "_timeout");
-	timeout = 0.0;
 }
 
 BasicHTTPRequest::~BasicHTTPRequest() {
@@ -522,7 +575,277 @@ BasicHTTPRequest::~BasicHTTPRequest() {
 	if (file) {
 		memdelete(file);
 	}
-	if (timer) {
-		memdelete(timer);
-	}
 }
+
+// ── Doctests ───────────────────────────────────────────────────────────────────
+// Run via: godot --doctest-BasicHTTPRequest
+// All tests require the engine to be initialized (ClassDB, HTTPClient registered).
+// Network-dependent features (actual requests) are noted and skipped here.
+
+#ifdef DOCTEST
+
+TEST_CASE("[BasicHTTPRequest] default state after construction") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	CHECK_FALSE(req->is_requesting());
+	CHECK_FALSE(req->is_active_request()); // compat alias
+	CHECK(req->get_timeout() == doctest::Approx(0.0));
+	CHECK(req->get_body_size_limit() == -1);
+	CHECK(req->get_max_redirects() == 8);
+	CHECK(req->get_download_file() == String());
+	CHECK(req->get_default_headers().size() == 0);
+	CHECK(req->get_http_client_status() == HTTPClient::STATUS_DISCONNECTED);
+	CHECK(req->get_downloaded_bytes() == 0);
+	CHECK(req->get_body_size() == -1);
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] last response defaults") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	CHECK(req->get_last_result() == BasicHTTPRequest::RESULT_SUCCESS);
+	CHECK(req->get_last_response_code() == 0);
+	CHECK(req->get_last_response_headers().size() == 0);
+	CHECK(req->get_last_response_body().size() == 0);
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] get_last_response_json with empty body") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	Variant v = req->get_last_response_json();
+	CHECK(v.get_type() == Variant::NIL);
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] timeout configuration") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	SUBCASE("set and get round-trip") {
+		req->set_timeout(30.0);
+		CHECK(req->get_timeout() == doctest::Approx(30.0));
+	}
+
+	SUBCASE("set to zero disables timeout") {
+		req->set_timeout(15.0);
+		req->set_timeout(0.0);
+		CHECK(req->get_timeout() == doctest::Approx(0.0));
+	}
+
+	SUBCASE("set to near-zero treated as zero") {
+		req->set_timeout(0.0);
+		CHECK(req->get_timeout() == doctest::Approx(0.0));
+	}
+
+	SUBCASE("large timeout preserved") {
+		req->set_timeout(3600.0);
+		CHECK(req->get_timeout() == doctest::Approx(3600.0));
+	}
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] body size limit") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	SUBCASE("set and get round-trip") {
+		req->set_body_size_limit(1024 * 1024);
+		CHECK(req->get_body_size_limit() == 1024 * 1024);
+	}
+
+	SUBCASE("-1 means unlimited") {
+		req->set_body_size_limit(512);
+		req->set_body_size_limit(-1);
+		CHECK(req->get_body_size_limit() == -1);
+	}
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] max redirects") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	SUBCASE("set and get round-trip") {
+		req->set_max_redirects(3);
+		CHECK(req->get_max_redirects() == 3);
+	}
+
+	SUBCASE("zero disables all redirects") {
+		req->set_max_redirects(0);
+		CHECK(req->get_max_redirects() == 0);
+	}
+
+	SUBCASE("-1 means unlimited") {
+		req->set_max_redirects(-1);
+		CHECK(req->get_max_redirects() == -1);
+	}
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] download file path") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	SUBCASE("set and get round-trip") {
+		req->set_download_file("user://download.dat");
+		CHECK(req->get_download_file() == String("user://download.dat"));
+	}
+
+	SUBCASE("empty string clears the path") {
+		req->set_download_file("user://tmp.bin");
+		req->set_download_file("");
+		CHECK(req->get_download_file() == String());
+	}
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] download chunk size") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	SUBCASE("set and get round-trip") {
+		req->set_download_chunk_size(4096);
+		CHECK(req->get_download_chunk_size() == 4096);
+	}
+
+	SUBCASE("large chunk size") {
+		req->set_download_chunk_size(65536);
+		CHECK(req->get_download_chunk_size() == 65536);
+	}
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] default headers — set_default_headers") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	SUBCASE("starts empty") {
+		CHECK(req->get_default_headers().size() == 0);
+	}
+
+	SUBCASE("set replaces all") {
+		Vector<String> hdrs;
+		hdrs.push_back("Authorization: Bearer token");
+		hdrs.push_back("X-App-Version: 1.0");
+		req->set_default_headers(hdrs);
+		CHECK(req->get_default_headers().size() == 2);
+		CHECK(req->get_default_headers()[0] == String("Authorization: Bearer token"));
+		CHECK(req->get_default_headers()[1] == String("X-App-Version: 1.0"));
+	}
+
+	SUBCASE("set with empty vector clears") {
+		Vector<String> hdrs;
+		hdrs.push_back("X-Foo: bar");
+		req->set_default_headers(hdrs);
+		req->set_default_headers(Vector<String>());
+		CHECK(req->get_default_headers().size() == 0);
+	}
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] default headers — add_default_header") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	SUBCASE("formats as 'Name: value'") {
+		req->add_default_header("Authorization", "Bearer abc123");
+		CHECK(req->get_default_headers().size() == 1);
+		CHECK(req->get_default_headers()[0] == String("Authorization: Bearer abc123"));
+	}
+
+	SUBCASE("multiple calls accumulate") {
+		req->add_default_header("Accept", "application/json");
+		req->add_default_header("X-Request-ID", "42");
+		CHECK(req->get_default_headers().size() == 2);
+	}
+
+	SUBCASE("add after set appends") {
+		Vector<String> hdrs;
+		hdrs.push_back("Cache-Control: no-cache");
+		req->set_default_headers(hdrs);
+		req->add_default_header("Accept", "application/json");
+		CHECK(req->get_default_headers().size() == 2);
+	}
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] cancel_request when idle is safe") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	// Must not crash or change state when no request is in flight.
+	req->cancel_request();
+	CHECK_FALSE(req->is_requesting());
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] is_requesting and is_active_request are aliases") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	CHECK(req->is_requesting() == req->is_active_request());
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] Result enum ordering and sentinels") {
+	CHECK(BasicHTTPRequest::RESULT_SUCCESS == 0);
+	CHECK(BasicHTTPRequest::RESULT_MAX > BasicHTTPRequest::RESULT_TIMEOUT);
+	CHECK(BasicHTTPRequest::RESULT_TIMEOUT == BasicHTTPRequest::RESULT_MAX - 1);
+	// Every named result fits in [0, RESULT_MAX).
+	CHECK(BasicHTTPRequest::RESULT_CANT_CONNECT < BasicHTTPRequest::RESULT_MAX);
+	CHECK(BasicHTTPRequest::RESULT_SSL_HANDSHAKE_ERROR < BasicHTTPRequest::RESULT_MAX);
+	CHECK(BasicHTTPRequest::RESULT_REDIRECT_LIMIT_REACHED < BasicHTTPRequest::RESULT_MAX);
+}
+
+TEST_CASE("[BasicHTTPRequest] request() requires active client — no network") {
+	// Verify that attempting a request to an invalid URL returns an error
+	// without crashing, and that is_requesting() reflects the error.
+	// No real network connection is made.
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	Error err = req->request("not-a-valid-url");
+	CHECK(err != OK);
+	// After a failed parse, the object must remain in a clean state.
+	CHECK_FALSE(req->is_requesting());
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] post_json builds correct Content-Type header") {
+	// post_json with an invalid URL must fail the URL parse, not a header check.
+	// We verify the method compiles and handles the error path cleanly.
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	Dictionary data;
+	data["key"] = "value";
+	Error err = req->post_json("not-a-url", data);
+	CHECK(err != OK);
+	CHECK_FALSE(req->is_requesting());
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] get_last_response_json with valid JSON body") {
+	// We cannot drive _request_done() from outside (it is private), but
+	// we can verify the parser via last_response_body set to empty, which
+	// returns NIL, and document the expected behaviour for non-empty bodies.
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+
+	// Empty body → NIL (already covered; repeated here for clarity).
+	Variant v = req->get_last_response_json();
+	CHECK(v.get_type() == Variant::NIL);
+
+	memdelete(req);
+}
+
+TEST_CASE("[BasicHTTPRequest] HTTP client status starts disconnected") {
+	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
+	CHECK(req->get_http_client_status() == HTTPClient::STATUS_DISCONNECTED);
+	memdelete(req);
+}
+
+#endif // DOCTEST

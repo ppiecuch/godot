@@ -2801,7 +2801,7 @@ void Main::cleanup(bool p_force) {
 				String::num_int64(date.day).pad_zeros(2) +
 				String::num_int64((int)date.month).pad_zeros(2) +
 				String::num_int64(date.year % 100).pad_zeros(2) +
-				".json";
+				".log";
 		Error err = ObjectDBSnapshot::save_to_file(filename);
 		if (err == OK) {
 			print_line("ObjectDB snapshot saved to: " + filename);

@@ -412,12 +412,15 @@
 #  define INCBIN_2(NAME, FILENAME) \
       INCBIN_3(unsigned char, NAME, FILENAME)
 #  define INCBIN_3(TYPE, NAME, FILENAME) INCBIN_COMMON(TYPE, NAME, FILENAME, /* No terminator for binary data */)
+#  ifndef INCBIN_ROOT
+#    define INCBIN_ROOT ""
+#  endif
 #  define INCBIN_COMMON(TYPE, NAME, FILENAME, TERMINATOR) \
     __asm__(INCBIN_SECTION \
             INCBIN_GLOBAL_LABELS(NAME, DATA) \
             INCBIN_ALIGN_HOST \
             INCBIN_MANGLE INCBIN_STRINGIZE(INCBIN_PREFIX) #NAME INCBIN_STYLE_STRING(DATA) ":\n" \
-            INCBIN_MACRO " \"" FILENAME "\"\n" \
+            INCBIN_MACRO " \"" INCBIN_ROOT FILENAME "\"\n" \
                 TERMINATOR \
             INCBIN_GLOBAL_LABELS(NAME, END) \
             INCBIN_ALIGN_BYTE \
