@@ -30,6 +30,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -42,8 +43,7 @@
 #include <scene/main/viewport.h>
 #include <scene/resources/tile_set.h>
 
-#include <algorithm>
-#include <deque>
+#include "core/list.h"
 
 namespace {
 inline float lerp(const float &a, const float &b, const float &t) {
@@ -51,11 +51,33 @@ inline float lerp(const float &a, const float &b, const float &t) {
 }
 } // namespace
 
+void Heatmap::set_pathfinding_tilemap(const NodePath &p_path) {
+	m_pathfinding_tilemap = p_path;
+}
+
+NodePath Heatmap::get_pathfinding_tilemap() const {
+	return m_pathfinding_tilemap;
+}
+
+void Heatmap::set_draw_debug(bool p_draw) {
+	m_draw_debug = p_draw;
+	update();
+}
+
+bool Heatmap::get_draw_debug() const {
+	return m_draw_debug;
+}
+
 void Heatmap::_bind_methods() {
 	//public
 	ClassDB::bind_method(D_METHOD("best_direction_for", "location", "is_world_location"), &Heatmap::best_direction_for);
 	ClassDB::bind_method(D_METHOD("calculate_point_index", "point"), &Heatmap::calculate_point_index);
 	ClassDB::bind_method(D_METHOD("calculate_point_index_for_world_position", "world_position"), &Heatmap::calculate_point_index_for_world_position);
+
+	ClassDB::bind_method(D_METHOD("set_pathfinding_tilemap", "path"), &Heatmap::set_pathfinding_tilemap);
+	ClassDB::bind_method(D_METHOD("get_pathfinding_tilemap"), &Heatmap::get_pathfinding_tilemap);
+	ClassDB::bind_method(D_METHOD("set_draw_debug", "draw"), &Heatmap::set_draw_debug);
+	ClassDB::bind_method(D_METHOD("get_draw_debug"), &Heatmap::get_draw_debug);
 
 	//semi-private
 	ClassDB::bind_method(D_METHOD("_on_Events_player_moved", "player"), &Heatmap::on_Events_player_moved);
@@ -72,7 +94,7 @@ void Heatmap::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_DRAW: {
 			_draw();
-		}
+		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
 			float dt = get_process_delta_time();
 			_process(dt);
@@ -93,11 +115,11 @@ void Heatmap::_ready() {
 	m_y_min = m_map_limits.position.y;
 	m_y_max = m_map_limits.size.y - m_map_limits.position.y;
 
-	unsigned int highest_index = calculate_point_index(m_map_limits.size - m_map_limits.position);
+	int highest_index = calculate_point_index(m_map_limits.size - m_map_limits.position);
 	m_cells_heat.resize(highest_index);
 	m_cells_heat_cache.resize(highest_index);
-	for (unsigned int i = 0; i < highest_index; ++i) {
-		m_cells_heat[i] = -1;
+	for (int i = 0; i < highest_index; ++i) {
+		m_cells_heat.write[i] = -1;
 	}
 
 	find_all_obstacles();
@@ -158,7 +180,7 @@ void Heatmap::_process(float delta) {
 Vector2 Heatmap::best_direction_for(Vector2 t_location, bool t_is_world_location) {
 	Vector2 point = t_is_world_location ? m_grid->world_to_map(t_location) : t_location;
 	Vector2 world_location = t_is_world_location ? t_location : m_grid->map_to_world(point);
-	unsigned int cell_index = calculate_point_index(point);
+	int cell_index = calculate_point_index(point);
 
 	if (cell_index < 0 || cell_index >= m_cells_heat.size()) {
 		return (m_last_player_cell_position - world_location).normalized();
@@ -174,11 +196,11 @@ Vector2 Heatmap::best_direction_for(Vector2 t_location, bool t_is_world_location
 		for (int x = 0; x < 3; ++x) {
 			Vector2 point_relative = Vector2(point.x + float(x) - 1.0f, point.y + float(y) - 1.0f);
 
-			if (is_out_of_bounds(point_relative) || std::find(m_obstacles.begin(), m_obstacles.end(), point_relative) != m_obstacles.end()) {
+			if (is_out_of_bounds(point_relative) || m_obstacles.find(point_relative) != -1) {
 				continue;
 			}
 
-			unsigned int point_relative_index = calculate_point_index(point_relative);
+			int point_relative_index = calculate_point_index(point_relative);
 			if (point_relative_index == cell_index) {
 				continue;
 			}
@@ -206,11 +228,11 @@ Vector2 Heatmap::best_direction_for(Vector2 t_location, bool t_is_world_location
 	return direction;
 }
 
-unsigned int Heatmap::calculate_point_index(Vector2 t_point) {
+int Heatmap::calculate_point_index(Vector2 t_point) {
 	return int((t_point.x - m_map_limits.position.x) + m_map_limits.size.x * (t_point.y - m_map_limits.position.y));
 }
 
-unsigned int Heatmap::calculate_point_index_for_world_position(Vector2 t_world_position) {
+int Heatmap::calculate_point_index_for_world_position(Vector2 t_world_position) {
 	return calculate_point_index(m_grid->world_to_map(t_world_position));
 }
 
@@ -244,7 +266,7 @@ void Heatmap::find_all_obstacles() {
 
 //Breadth-first search using a queue.
 Vector2 Heatmap::refresh_cells_heat(Vector2 t_cell_position) {
-	std::deque<HeatCell> queue;
+	List<HeatCell> queue;
 	//We begin with 4 cells of goals instead of 1 - this alleviates the problem of multiple cells
 	//having the same amount of heat.
 	queue.push_back(HeatCell(Vector2(t_cell_position.x, t_cell_position.y), 0));
@@ -254,17 +276,17 @@ Vector2 Heatmap::refresh_cells_heat(Vector2 t_cell_position) {
 	m_max_heat_cache = 0;
 
 	while (!queue.empty()) {
-		HeatCell cell = queue.front();
+		HeatCell cell = queue.front()->get();
 		queue.pop_front();
 
 		Vector2 position = cell.position;
 		int layer = cell.layer;
 
-		unsigned int index = calculate_point_index(position);
+		int index = calculate_point_index(position);
 		if (index < 0 || index >= m_cells_heat_cache.size()) {
 			continue;
 		}
-		m_cells_heat_cache[index] = layer;
+		m_cells_heat_cache.write[index] = layer;
 		if (layer > m_max_heat_cache) {
 			m_max_heat_cache = layer;
 		}
@@ -272,10 +294,10 @@ Vector2 Heatmap::refresh_cells_heat(Vector2 t_cell_position) {
 		for (int y = 0; y < 3; ++y) {
 			for (int x = 0; x < 3; ++x) {
 				Vector2 point = Vector2(position.x + float(x) - 1.0f, position.y + float(y) - 1.0f);
-				unsigned int cell_index = calculate_point_index(point);
+				int cell_index = calculate_point_index(point);
 				HeatCell new_cell = HeatCell(point, layer + 1);
 
-				if (cell_index != index && cell_index >= 0 && cell_index < m_cells_heat_cache.size() && m_cells_heat_cache[cell_index] == -1 && !is_out_of_bounds(point) && std::find(queue.begin(), queue.end(), new_cell) == queue.end() && std::find(m_obstacles.begin(), m_obstacles.end(), point) == m_obstacles.end()) {
+				if (cell_index != index && cell_index >= 0 && cell_index < m_cells_heat_cache.size() && m_cells_heat_cache[cell_index] == -1 && !is_out_of_bounds(point) && queue.find(new_cell) == nullptr && m_obstacles.find(point) == -1) {
 					queue.push_back(new_cell);
 				}
 			}
@@ -290,8 +312,8 @@ void Heatmap::thread_done(Vector2 t_cell_position) {
 	m_updating = false;
 
 	m_max_heat = m_max_heat_cache;
-	for (size_t i = 0; i < m_cells_heat.size(); ++i) {
-		m_cells_heat[i] = m_cells_heat_cache[i];
+	for (int i = 0; i < m_cells_heat.size(); ++i) {
+		m_cells_heat.write[i] = m_cells_heat_cache[i];
 	}
 	m_last_player_cell_position = t_cell_position;
 
@@ -313,8 +335,8 @@ void Heatmap::on_Events_player_moved(Node *t_player) {
 		Vector2 difference = player_cell_position - m_last_player_cell_position;
 
 		if (!out_of_bounds && (difference.x != 0 || difference.y != 0)) {
-			for (size_t i = 0; i < m_cells_heat_cache.size(); ++i) {
-				m_cells_heat_cache[i] = -1;
+			for (int i = 0; i < m_cells_heat_cache.size(); ++i) {
+				m_cells_heat_cache.write[i] = -1;
 			}
 
 			m_updating = true;
@@ -337,18 +359,72 @@ Heatmap::~Heatmap() {
 
 #ifdef DOCTEST
 
+TEST_CASE("[Heatmap] HeatCell construction stores position and layer") {
+	HeatCell cell(Vector2(3, 7), 5);
+	CHECK(cell.position == Vector2(3, 7));
+	CHECK(cell.layer == 5);
+}
+
 TEST_CASE("[Heatmap] HeatCell equality") {
 	HeatCell a(Vector2(1, 2), 0);
 	HeatCell b(Vector2(1, 2), 0);
 	HeatCell c(Vector2(3, 4), 0);
-	CHECK(a.operator==(b));
-	CHECK_FALSE(a.operator==(c));
+	CHECK(a == b);
+	CHECK_FALSE(a == c);
 }
 
 TEST_CASE("[Heatmap] HeatCell inequality") {
 	HeatCell a(Vector2(1, 2), 0);
 	HeatCell b(Vector2(1, 3), 0);
-	CHECK(a.operator!=(b));
+	HeatCell c(Vector2(1, 2), 1); // same position, different layer
+	CHECK(a != b);
+	CHECK(a != c);
+	CHECK_FALSE(a != a);
+}
+
+TEST_CASE("[Heatmap] HeatCell layer-only difference is unequal") {
+	HeatCell a(Vector2(0, 0), 0);
+	HeatCell b(Vector2(0, 0), 99);
+	CHECK(a != b);
+}
+
+TEST_CASE("[Heatmap] Godot List<HeatCell> find works with HeatCell equality") {
+	// Verifies the refactored BFS queue lookup works correctly.
+	List<HeatCell> queue;
+	queue.push_back(HeatCell(Vector2(1, 0), 1));
+	queue.push_back(HeatCell(Vector2(2, 0), 2));
+
+	HeatCell target(Vector2(2, 0), 2);
+	HeatCell missing(Vector2(9, 9), 0);
+
+	CHECK(queue.find(target) != nullptr);
+	CHECK(queue.find(missing) == nullptr);
+}
+
+TEST_CASE("[Heatmap] Godot Vector<Vector2> find works for obstacle lookup") {
+	// Verifies the refactored obstacle search (replaces std::find on m_obstacles).
+	Vector<Vector2> obstacles;
+	obstacles.push_back(Vector2(3, 4));
+	obstacles.push_back(Vector2(5, 6));
+
+	CHECK(obstacles.find(Vector2(3, 4)) != -1);
+	CHECK(obstacles.find(Vector2(0, 0)) == -1);
+}
+
+TEST_CASE("[Heatmap] draw_debug property round-trip") {
+	Heatmap hm;
+	CHECK(hm.get_draw_debug() == false); // default
+	hm.set_draw_debug(true);
+	CHECK(hm.get_draw_debug() == true);
+	hm.set_draw_debug(false);
+	CHECK(hm.get_draw_debug() == false);
+}
+
+TEST_CASE("[Heatmap] pathfinding_tilemap property round-trip") {
+	Heatmap hm;
+	CHECK(hm.get_pathfinding_tilemap() == NodePath());
+	hm.set_pathfinding_tilemap(NodePath("TileMap"));
+	CHECK(hm.get_pathfinding_tilemap() == NodePath("TileMap"));
 }
 
 #endif

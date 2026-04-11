@@ -41,7 +41,6 @@
 #include "scene/2d/node_2d.h"
 
 #include <future>
-#include <vector>
 
 // HeatCell. Simple structure used by the `refresh_cells_heat` member function to contain both
 // position and current layer in the flood fill search.
@@ -49,6 +48,8 @@
 class TileMap;
 
 struct HeatCell {
+	HeatCell() :
+			position(Vector2()), layer(0) {}
 	HeatCell(Vector2 t_position, int t_layer) {
 		position = t_position;
 		layer = t_layer;
@@ -56,11 +57,11 @@ struct HeatCell {
 	Vector2 position;
 	int layer;
 
-	bool operator==(HeatCell const &other) {
+	bool operator==(HeatCell const &other) const {
 		return other.layer == layer && other.position == position;
 	}
 
-	bool operator!=(HeatCell const &other) {
+	bool operator!=(HeatCell const &other) const {
 		return other.layer != layer || other.position != position;
 	}
 };
@@ -73,8 +74,14 @@ public:
 	~Heatmap();
 
 	Vector2 best_direction_for(Vector2 t_location, bool t_is_world_location);
-	unsigned int calculate_point_index(Vector2 t_point);
-	unsigned int calculate_point_index_for_world_position(Vector2 t_world_position);
+	int calculate_point_index(Vector2 t_point);
+	int calculate_point_index_for_world_position(Vector2 t_world_position);
+
+	void set_pathfinding_tilemap(const NodePath &p_path);
+	NodePath get_pathfinding_tilemap() const;
+
+	void set_draw_debug(bool p_draw);
+	bool get_draw_debug() const;
 
 protected:
 	static void _bind_methods();
@@ -106,9 +113,9 @@ private:
 	int m_max_heat_cache;
 	bool m_updating;
 
-	std::vector<int> m_cells_heat;
-	std::vector<int> m_cells_heat_cache;
-	std::vector<Vector2> m_obstacles;
+	Vector<int> m_cells_heat;
+	Vector<int> m_cells_heat_cache;
+	Vector<Vector2> m_obstacles;
 	Vector2 m_last_player_cell_position;
 	std::future<Vector2> m_future;
 };
