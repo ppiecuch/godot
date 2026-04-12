@@ -30,6 +30,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -451,16 +452,24 @@ TEST_CASE("[TimerNode] cancel_all clears all timers") {
 // ── Timer2 singleton (structural, no scene tree) ──────────────────────────────
 
 TEST_CASE("[Timer2] get_pending_count is zero when no node") {
-	// Timer2 singleton is created by the engine; just verify the API
-	// compiles and the count starts at zero without a tree.
-	Timer2 t2;
-	CHECK(t2.get_pending_count() == 0);
+	// The engine registers a Timer2 singleton at startup — constructing a local
+	// Timer2 always triggers "singleton already exists". Suppress with EXPECT_ERROR.
+	int count = -1;
+	EXPECT_ERROR({
+		Timer2 t2;
+		count = t2.get_pending_count();
+	});
+	CHECK(count == 0);
 }
 
 TEST_CASE("[Timer2] cancel_all is safe when no timers exist") {
-	Timer2 t2;
-	t2.cancel_all(); // must not crash
-	CHECK(t2.get_pending_count() == 0);
+	int count = -1;
+	EXPECT_ERROR({
+		Timer2 t2;
+		t2.cancel_all(); // must not crash
+		count = t2.get_pending_count();
+	});
+	CHECK(count == 0);
 }
 
 #endif // DOCTEST

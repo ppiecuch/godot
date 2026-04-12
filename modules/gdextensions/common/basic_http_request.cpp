@@ -30,6 +30,7 @@
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 #else
 #define DOCTEST_CONFIG_DISABLE
 #endif
@@ -807,7 +808,8 @@ TEST_CASE("[BasicHTTPRequest] request() requires active client — no network") 
 	// No real network connection is made.
 	BasicHTTPRequest *req = memnew(BasicHTTPRequest);
 
-	Error err = req->request("not-a-valid-url");
+	Error err;
+	EXPECT_ERROR(err = req->request("not-a-valid-url"));
 	CHECK(err != OK);
 	// After a failed parse, the object must remain in a clean state.
 	CHECK_FALSE(req->is_requesting());
@@ -822,7 +824,8 @@ TEST_CASE("[BasicHTTPRequest] post_json builds correct Content-Type header") {
 
 	Dictionary data;
 	data["key"] = "value";
-	Error err = req->post_json("not-a-url", data);
+	Error err;
+	EXPECT_ERROR(err = req->post_json("not-a-url", data));
 	CHECK(err != OK);
 	CHECK_FALSE(req->is_requesting());
 

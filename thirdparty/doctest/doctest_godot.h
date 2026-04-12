@@ -33,6 +33,6 @@ String static _doctest_get_folder() {
 					OS::get_singleton()->get_time().hour);
 }
 
-void static _doctest_prepare_folder() {
+void inline static  _doctest_prepare_folder() {
 	DirAccess::create(DirAccess::ACCESS_FILESYSTEM)->make_dir_recursive(_doctest_get_folder());
 }
