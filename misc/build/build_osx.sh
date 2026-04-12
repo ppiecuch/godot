@@ -205,6 +205,10 @@ fi
 
 log_success "Finished building editor for macOS ($(date +'%h/%d %H:%M'))"
 
+log_step "Running doctests"
+"$GODOT_DIR/bin/godot.osx.opt.tools.$A" --doctest-run
+log_success "All doctests passed"
+
 if [ "$1" == "templates" ] || [ ! -z "$build_templates" ]; then
 	log_step "Building 64-bit release export template for macOS"
 
