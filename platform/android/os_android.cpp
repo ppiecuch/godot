@@ -50,6 +50,15 @@
 #include <core/os/keyboard.h>
 #include <dlfcn.h>
 
+#if __ANDROID_API__ >= 23
+#include <android/trace.h>
+#define GODOT_ATRACE_BEGIN(name) ATrace_beginSection(name)
+#define GODOT_ATRACE_END() ATrace_endSection()
+#else
+#define GODOT_ATRACE_BEGIN(name) ((void)0)
+#define GODOT_ATRACE_END() ((void)0)
+#endif
+
 #include "java_godot_io_wrapper.h"
 #include "java_godot_wrapper.h"
 #include "java_jni_object.h"
@@ -410,8 +419,10 @@ bool OS_Android::main_loop_iterate(bool *r_should_swap_buffers) {
 	if (!main_loop) {
 		return false;
 	}
+	GODOT_ATRACE_BEGIN("Godot/Frame");
 	uint64_t current_frames_drawn = Engine::get_singleton()->get_frames_drawn();
 	bool exit = Main::iteration();
+	GODOT_ATRACE_END();
 
 	if (r_should_swap_buffers) {
 		*r_should_swap_buffers = !is_in_low_processor_usage_mode() || _update_pending || current_frames_drawn != Engine::get_singleton()->get_frames_drawn();

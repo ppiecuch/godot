@@ -41,7 +41,10 @@ export -f echo_success
 CPU=$(sysctl -n hw.physicalcpu)
 
 export SCONS="scons -j$CPU verbose=yes warnings=no progress=no"
-export OPTIONS="debug_symbols=no"
+# release_debug variant gets debug symbols so Xcode can extract a .dSYM at archive time.
+# release variant strips them for minimum binary size.
+export OPTIONS_DEBUG="debug_symbols=yes"
+export OPTIONS_RELEASE="debug_symbols=no"
 
 export IOS_SDK="14.2"
 export IOS_LIPO="xcrun lipo"
@@ -50,11 +53,11 @@ export IOS_LIPO="xcrun lipo"
 
 echo_header "*** Starting classical build for iOS..."
 
-$SCONS platform=iphone $OPTIONS arch=arm64 tools=no target=release_debug
-$SCONS platform=iphone $OPTIONS arch=arm64 tools=no target=release
+$SCONS platform=iphone $OPTIONS_DEBUG   arch=arm64 tools=no target=release_debug
+$SCONS platform=iphone $OPTIONS_RELEASE arch=arm64 tools=no target=release
 
-$SCONS platform=iphone $OPTIONS arch=x86_64 ios_simulator=yes tools=no target=release_debug
-$SCONS platform=iphone $OPTIONS arch=x86_64 ios_simulator=yes tools=no target=release
+$SCONS platform=iphone $OPTIONS_DEBUG   arch=x86_64 ios_simulator=yes tools=no target=release_debug
+$SCONS platform=iphone $OPTIONS_RELEASE arch=x86_64 ios_simulator=yes tools=no target=release
 
 mkdir -p bin/templates/ios
 
@@ -64,6 +67,11 @@ $IOS_LIPO -create bin/libgodot.iphone.opt.debug.arm64.a bin/libgodot.iphone.opt.
 rm -v \
 	bin/libgodot.iphone.opt.arm64.a bin/libgodot.iphone.opt.x86_64.simulator.a \
 	bin/libgodot.iphone.opt.debug.arm64.a bin/libgodot.iphone.opt.debug.x86_64.simulator.a
+
+# dSYM note: static libraries (.a) do not produce .dSYM files directly.
+# Debug symbols are embedded in libgodot.iphone.opt.debug.a (built with debug_symbols=yes).
+# Xcode extracts them and generates a .dSYM bundle automatically when archiving the .app.
+# To use: in Xcode export preset set DEBUG_INFORMATION_FORMAT = dwarf-with-dsym.
 
 # Look for platform plugins:
 if [ -d "platform_plugins/ios" ]; then

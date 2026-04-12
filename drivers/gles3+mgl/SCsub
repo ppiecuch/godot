@@ -7,6 +7,9 @@ env.add_source_files(env.drivers_sources, "*.mm")
 env.add_source_files(env.drivers_sources, "MGL/*.c")
 env.add_source_files(env.drivers_sources, "MGL/*.cpp")
 
+# glcorearb.h includes <KHR/khrplatform.h>
+env.Append(CPPPATH=["#thirdparty/glad"])
+
 env.Append(FRAMEWORKS=["Metal", "Foundation"])
 
 SConscript("metal/SCsub")

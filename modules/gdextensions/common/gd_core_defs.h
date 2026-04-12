@@ -72,7 +72,16 @@
 #endif // _HAS_EXCEPTIONS
 
 #ifndef _HAS_EXCEPTIONS
+// Provide no-op try/catch for exception-disabled builds.
+// On Apple targets we must NOT redefine 'throw': iOS SDK 18+ has
+//   __cxa_allocate_exception(size_t) throw();
+// in exception_ptr.h, and '#define throw (void)' turns 'throw()' into
+// '(void)()' which is an invalid function-returning-function-type error.
+// The compiler already rejects throw-expressions under -fno-exceptions,
+// so the macro is both redundant and harmful on Apple.
+#ifndef __APPLE__
 #define throw (void)
+#endif
 #define try if (true)
 #define catch(...) if (false)
 #define __declare_exception(nm) const std::exception nm

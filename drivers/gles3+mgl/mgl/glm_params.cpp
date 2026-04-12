@@ -335,6 +335,11 @@ GLMParams default_glm_params = {
 	.max_vertex_attrib_bindings = 0,
 };
 
+#ifdef IPHONE_ENABLED
+// getMacOSDefaults uses CGL + <OpenGL/OpenGL.h> which are macOS-only.
+// On iOS the function is not called, so provide an empty stub.
+void getMacOSDefaults(GLMContext glm_ctx) {}
+#else
 #include <OpenGL/OpenGL.h>
 #include <unistd.h>
 
@@ -589,3 +594,4 @@ void getMacOSDefaults(GLMContext glm_ctx) {
 	CGLSetCurrentContext(NULL);
 	CGLDestroyContext(ctx);
 }
+#endif // !IPHONE_ENABLED

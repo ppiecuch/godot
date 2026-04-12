@@ -59,6 +59,12 @@
 #include <sys/sysctl.h>
 #import <sys/utsname.h>
 
+#if __has_include(<os/signpost.h>)
+#include <os/signpost.h>
+#define GODOT_SIGNPOST_AVAILABLE 1
+static os_log_t _godot_log = nullptr;
+#endif
+
 extern int gl_view_base_fb; // from gl_view.mm
 extern bool gles3_available; // from gl_view.mm
 
@@ -255,7 +261,14 @@ bool OSIPhone::iterate() {
 
 	input->flush_buffered_events();
 
-	return Main::iteration();
+#ifdef GODOT_SIGNPOST_AVAILABLE
+	os_signpost_interval_begin(_godot_log, OS_SIGNPOST_ID_EXCLUSIVE, "Godot/Frame");
+#endif
+	bool exit = Main::iteration();
+#ifdef GODOT_SIGNPOST_AVAILABLE
+	os_signpost_interval_end(_godot_log, OS_SIGNPOST_ID_EXCLUSIVE, "Godot/Frame");
+#endif
+	return exit;
 };
 
 void OSIPhone::key(uint32_t p_key, bool p_pressed) {
@@ -802,6 +815,11 @@ void add_ios_init_callback(init_callback cb) {
 }
 
 OSIPhone::OSIPhone(String p_data_dir, String p_cache_dir) {
+#ifdef GODOT_SIGNPOST_AVAILABLE
+	if (!_godot_log) {
+		_godot_log = os_log_create("org.godotengine.godot", "engine");
+	}
+#endif
 	for (int i = 0; i < ios_init_callbacks_count; ++i) {
 		ios_init_callbacks[i]();
 	}
