@@ -1,0 +1,134 @@
+# SCsub
+Import("env")
+
+module_env = env.Clone()
+
+if ARGUMENTS.get("godot_remote_no_default_resources", "no") == "yes":
+    module_env.Append(CPPDEFINES=["NO_GODOTREMOTE_DEFAULT_RESOURCES"])
+if ARGUMENTS.get("godot_remote_disable_server", "no") == "yes":
+    module_env.Append(CPPDEFINES=["NO_GODOTREMOTE_SERVER"])
+if ARGUMENTS.get("godot_remote_disable_client", "no") == "yes":
+    module_env.Append(CPPDEFINES=["NO_GODOTREMOTE_CLIENT"])
+
+# =========================================================================
+# libjpeg-turbo (built from source in thirdparty/)
+# Following the same build pattern as upstream Godot 4.x modules/jpg/SCsub.
+# Bit-dependent sources are compiled twice (8-bit and 12-bit) with distinct
+# object suffixes to avoid symbol collisions.
+# =========================================================================
+
+thirdparty_obj = []
+thirdparty_dir = "#thirdparty/libjpeg-turbo"
+
+thirdparty_sources_common = [
+    "jaricom.c",
+    "jcapimin.c",
+    "jcarith.c",
+    "jchuff.c",
+    "jcicc.c",
+    "jcinit.c",
+    "jcmarker.c",
+    "jcmaster.c",
+    "jcomapi.c",
+    "jcparam.c",
+    "jcphuff.c",
+    "jctrans.c",
+    "jdapimin.c",
+    "jdarith.c",
+    "jdatadst.c",
+    "jdatadst-tj.c",
+    "jdatasrc.c",
+    "jdatasrc-tj.c",
+    "jdhuff.c",
+    "jdicc.c",
+    "jdinput.c",
+    "jdmarker.c",
+    "jdmaster.c",
+    "jdphuff.c",
+    "jdtrans.c",
+    "jerror.c",
+    "jfdctflt.c",
+    "jmemmgr.c",
+    "jmemnobs.c",
+    "jpeg_nbits.c",
+    "transupp.c",
+    "turbojpeg.c",
+]
+
+thirdparty_sources_bit_dependent = [
+    "jcapistd.c",
+    "jccoefct.c",
+    "jccolor.c",
+    "jcdctmgr.c",
+    "jcmainct.c",
+    "jcprepct.c",
+    "jcsample.c",
+    "jdcoefct.c",
+    "jdcolor.c",
+    "jdapistd.c",
+    "jddctmgr.c",
+    "jdmainct.c",
+    "jdmerge.c",
+    "jdpostct.c",
+    "jdsample.c",
+    "jfdctfst.c",
+    "jfdctint.c",
+    "jidctflt.c",
+    "jidctfst.c",
+    "jidctint.c",
+    "jidctred.c",
+    "jutils.c",
+    "jquant1.c",
+    "jquant2.c",
+]
+
+def source_paths(files):
+    return [thirdparty_dir + "/src/" + f for f in files]
+
+# Build bit-dependent sources twice (8-bit and 12-bit) with distinct object suffixes
+for bit_depth in [8, 12]:
+    env_bit = module_env.Clone()
+    env_bit.disable_warnings()
+    env_bit.Append(CPPPATH=[thirdparty_dir + "/src"])
+    env_bit["OBJSUFFIX"] = "_%d%s" % (bit_depth, env_bit["OBJSUFFIX"])
+    env_bit.Append(CPPDEFINES=["BITS_IN_JSAMPLE=%d" % bit_depth])
+    env_bit.add_source_files(thirdparty_obj, source_paths(thirdparty_sources_bit_dependent))
+
+# Build common (bit-depth-independent) sources
+env_turbo = module_env.Clone()
+env_turbo.disable_warnings()
+env_turbo.Append(CPPPATH=[thirdparty_dir + "/src"])
+env_turbo.add_source_files(thirdparty_obj, source_paths(thirdparty_sources_common))
+
+env.modules_sources += thirdparty_obj
+
+# Enable turbo in the module
+module_env.Append(CPPDEFINES=["GODOT_REMOTE_LIBJPEG_TURBO_ENABLED"])
+module_env.Append(CPPPATH=[thirdparty_dir + "/src"])
+
+# =========================================================================
+# OpenH264 headers (dynamic loading — no lib linking)
+# =========================================================================
+module_env.Append(CPPPATH=["deps/openh264/include"])
+
+# =========================================================================
+# Module sources
+# =========================================================================
+if env["platform"] == "windows":
+    module_env.add_source_files(env.modules_sources, "*.cpp")
+else:
+    module_env.Append(CCFLAGS=["-O2"])
+
+    if ARGUMENTS.get("godot_remote_shared", "no") == "yes":
+        sources = []
+        module_env.add_source_files(sources, "*.cpp")
+        module_env.Append(CCFLAGS=["-fPIC"])
+        module_env["LIBS"] = []
+        module_env["STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME"] = True
+        shared_lib = module_env.SharedLibrary(target="#bin/godot_remote", source=sources)
+
+        shared_lib_shim = shared_lib[0].name.rsplit(".", 1)[0]
+        env.Append(LIBS=[shared_lib_shim])
+        env.Append(LIBPATH=["#bin"])
+    else:
+        module_env.add_source_files(env.modules_sources, "*.cpp")

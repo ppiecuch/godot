@@ -1,0 +1,8 @@
+{
+    "should_exit_on_success":true,
+    "should_maximize": true,
+    "include_subdirs":true,
+    "dirs":[
+        "res://goost/"
+    ]
+}

@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+Import("env")
+Import("env_goost")
+
+SConscript("2d/SCsub", exports="env_goost")
+
+if not env["disable_3d"]:
+    SConscript("3d/SCsub", exports="env_goost")
+
+if env["goost_audio_enabled"]:
+    SConscript("audio/SCsub", exports="env_goost")
+
+if env["goost_gui_enabled"]:
+    SConscript("gui/SCsub", exports="env_goost")
+
+if env["goost_physics_enabled"]:
+    SConscript("physics/SCsub", exports="env_goost")
+
+env_goost.add_source_files(env_goost.sources, "main/*.cpp")
+env_goost.add_source_files(env_goost.sources, "resources/*.cpp")
+env_goost.add_source_files(env_goost.sources, "*.cpp")

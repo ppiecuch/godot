@@ -1,0 +1,21 @@
+
+#ifndef GRLIITERALS_H
+#define GRLIITERALS_H
+
+#define __COMPRESSION_UNCOMPRESSED 0
+#define __COMPRESSION_JPG 1
+#define __COMPRESSION_PNG 2
+#define __COMPRESSION_H264 3
+#define __COMPRESSION_AUTO 4
+
+#define __SUBSAMPLING_Y_ONLY 0
+#define __SUBSAMPLING_H1V1 1
+#define __SUBSAMPLING_H2V1 2
+#define __SUBSAMPLING_H2V2 3
+
+#define __LL_DEBUG 0
+#define __LL_NORMAL 1
+#define __LL_WARNING 2
+#define __LL_ERROR 3
+
+#endif // GRLIITERALS_H

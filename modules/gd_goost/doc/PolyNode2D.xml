@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="PolyNode2D" inherits="Node2D" version="3.5">
+	<brief_description>
+		Represents a single polygon-based node in the hierarchy of nested polygons.
+	</brief_description>
+	<description>
+		The class provides boolean operators used to shape the outlines of nodes at run-time, similarly to CSG nodes in 3D, while also giving ability to represent nested polygons.
+		Unlike in 3D, this class cannot be used as a collision object directly. Instead, use [PolyCollisionShape2D] to build collision shapes which can be applied to any [CollisionObject2D] node.
+		Drawing is only done on the level of the root node (see [method is_root]), unless children do not perform any [member operation] with parent nodes.
+		This data structure is also used to receive solutions from clipping and offsetting operations. It's an alternative to the array-based data structures which also receive these solutions in [PolyBoolean2D]. The class has a major advantage over the [Array] structure by having an ability to properly represent the parent-child relationships of the returned polygons, but it may be more computationally expensive to process.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="build_outlines">
+			<return type="Array" />
+			<description>
+				Builds outlines from selected [member operation]. Unlike [method get_outlines], returns outlines immediately without scheduling operation for the next frame, so prefer to use [method get_outlines] if you care about performance over immediate information.
+			</description>
+		</method>
+		<method name="clear">
+			<return type="void" />
+			<description>
+				Removes all [PolyNode2D] children immediately. Use [method Object.call_deferred] if you want to emulate the [method Node.queue_free] behavior.
+			</description>
+		</method>
+		<method name="get_outlines">
+			<return type="Array" />
+			<description>
+				Returns the outlines representing this node, which may result from the clipping [member operation]. This is different from [member points].
+			</description>
+		</method>
+		<method name="is_inner" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Tells whether this node is an inner or an outer node in the hierarchy of nested nodes. If this node has no [PolyNode2D] parent and has empty [member points], this node is considered as inner node containing outer children. If [member points] is not empty, this is an outer node.
+			</description>
+		</method>
+		<method name="is_root" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if this node has no [PolyNode2D] as parent.
+			</description>
+		</method>
+		<method name="make_from_outlines">
+			<return type="void" />
+			<argument index="0" name="outlines" type="Array" />
+			<description>
+				Constructs an hierarchy of nodes from an array of outer and inner outlines. New nodes are constructed to represent inner outlines with [member operation] set to [constant OP_DIFFERENCE].
+			</description>
+		</method>
+		<method name="new_child">
+			<return type="PolyNode2D" />
+			<argument index="0" name="from_points" type="PoolVector2Array" />
+			<description>
+				Constructs a new [PolyNode2D] using vertices from supplied points.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="antialiased" type="bool" setter="set_antialiased" getter="is_antialiased" default="false">
+			Draws polygons and polylines antialiased.
+			[b]Note:[/b] anti-aliasing may not work reliably in Godot 3.2, especially on GLES3 backend. This property will be removed in the future version of Godot.
+		</member>
+		<member name="color" type="Color" setter="set_color" getter="get_color" default="Color( 1, 1, 1, 1 )">
+			The color used to draw the node. Texture is also modulated by this property.
+		</member>
+		<member name="filled" type="bool" setter="set_filled" getter="is_filled" default="true">
+			If [code]true[/code], draws outlines with a solid color. Does not have an effect on polylines.
+		</member>
+		<member name="line_width" type="float" setter="set_line_width" getter="get_line_width" default="2.0">
+			The line width used to draw polylines. Does not have an effect on polygons.
+		</member>
+		<member name="normal_map" type="Texture" setter="set_normal_map" getter="get_normal_map">
+			The normal map used to provide depth to the [member texture].
+		</member>
+		<member name="open" type="bool" setter="set_open" getter="is_open" default="false">
+			If [code]true[/code], this node is treated as a polyline (open line), otherwise this is a polygon (closed outline).
+		</member>
+		<member name="operation" type="int" setter="set_operation" getter="get_operation" enum="PolyNode2D.Operation" default="1">
+			The boolean operation that is performed on this node. This is ignored for the first child node as the operation is between this node and the previous child of this nodes parent.
+		</member>
+		<member name="points" type="PoolVector2Array" setter="set_points" getter="get_points" default="PoolVector2Array(  )">
+			The vertices which represent the outer or inner outline of this node.
+		</member>
+		<member name="texture" type="Texture" setter="set_texture" getter="get_texture">
+			[Texture] object to draw. Only the area defined by [method get_outlines] is drawn.
+		</member>
+		<member name="texture_offset" type="Vector2" setter="set_texture_offset" getter="get_texture_offset" default="Vector2( 0, 0 )">
+			Amount to offset the texture. If (0, 0) the texture's origin (its top-left corner) will be placed at the node's position.
+		</member>
+		<member name="texture_rotation" type="float" setter="set_texture_rotation" getter="get_texture_rotation">
+			The texture's rotation in radians.
+		</member>
+		<member name="texture_rotation_degrees" type="float" setter="set_texture_rotation_degrees" getter="get_texture_rotation_degrees" default="0.0">
+			The texture's rotation in degrees.
+		</member>
+		<member name="texture_scale" type="Vector2" setter="set_texture_scale" getter="get_texture_scale" default="Vector2( 1, 1 )">
+			Amount to multiply the [code]uv[/code] coordinates when using a texture. Larger values make the texture smaller, and vice versa.
+		</member>
+	</members>
+	<signals>
+		<signal name="outlines_updated">
+			<description>
+				Emitted whenever the outlines are updated. Changes in local transform, [member operation] and [member points] of children triggers outlines to get updated on idle frame.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="OP_NONE" value="0" enum="Operation">
+			No operation is applied. Nodes with no operation set are able to be drawn separately from the root [PolyNode2D].
+		</constant>
+		<constant name="OP_UNION" value="1" enum="Operation">
+			Outlines of parent and child nodes are merged together.
+		</constant>
+		<constant name="OP_DIFFERENCE" value="2" enum="Operation">
+			Outlines from the child node is subtracted from the parent's outlines.
+		</constant>
+		<constant name="OP_INTERSECTION" value="3" enum="Operation">
+			Only intersecting outlines from parent and child nodes remain, the rest is removed.
+		</constant>
+		<constant name="OP_XOR" value="4" enum="Operation">
+			Common area defined by intersection of outlines between the parent and child is removed, the rest outlines remain unaffected.
+		</constant>
+	</constants>
+</class>

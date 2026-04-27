@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Random" inherits="RandomNumberGenerator" version="3.5">
+	<brief_description>
+		An instance of [RandomNumberGenerator] available at [@GlobalScope].
+	</brief_description>
+	<description>
+		This is a singleton which allows to use [RandomNumberGenerator] methods without instantiating a dedicated object. This means that [Random] can be used via script with methods such as [method @GDScript.randi]:
+		[codeblock]
+		Random.randomize() # Time-based.
+		Random.seed = hash("Goost") # Manual.
+		var i = Random.randi() % 100
+		var f = Random.randf_range(-1.0, 1.0)
+		[/codeblock]
+		The class provides other useful convenience methods and properties other than what [RandomNumberGenerator] already provides out of the box.
+		Local instances must be created with [method new_instance] method. It's not possible to instantiate a new [Random] instance with [code]Random.new()[/code] in GDScript. Alternatively, a new instance can be created with [code]ClassDB.instance("Random")[/code], see [method ClassDB.instance].
+		You have to call [method RandomNumberGenerator.randomize] for local instances manually if you want to have non-reproducible results, else done automatically for the global instance by default.
+		For 2D, use [Random2D] class, which inherits all the functionality behind [Random] as well.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="choices">
+			<return type="Array" />
+			<argument index="0" name="sequence" type="Variant" />
+			<argument index="1" name="count" type="int" default="1" />
+			<argument index="2" name="weights" type="PoolIntArray" default="null" />
+			<argument index="3" name="cumulative" type="bool" default="false" />
+			<description>
+				Returns an [Array] of randomly picked elements from a [code]sequence[/code], with the number of elements equal to [code]count[/code]. The elements are picked according to integer [code]weights[/code] or an array of values from the [code]sequence[/code] if it's a [Dictionary] and if [code]weights[/code] is empty.
+				All elements of [code]weights[/code] must be non-negative integers, and must contain at least one non-zero element if [code]weights[/code] is not empty. Additionally, the order of integers should be non-decreasing if [code]cumulative[/code] is [code]true[/code].
+				If [code]weights[/code] is not empty and if [code]sequence[/code] is not a [Dictionary], then the size of [code]weights[/code] must be equal to the size of [code]sequence[/code].
+			</description>
+		</method>
+		<method name="color_hsv">
+			<return type="Color" />
+			<argument index="0" name="hue_min" type="float" default="0.0" />
+			<argument index="1" name="hue_max" type="float" default="1.0" />
+			<argument index="2" name="saturation_min" type="float" default="0.0" />
+			<argument index="3" name="saturation_max" type="float" default="1.0" />
+			<argument index="4" name="value_min" type="float" default="0.0" />
+			<argument index="5" name="value_max" type="float" default="1.0" />
+			<argument index="6" name="alpha_min" type="float" default="1.0" />
+			<argument index="7" name="alpha_max" type="float" default="1.0" />
+			<description>
+				Generates a random [Color] specified in HSV color model. See also [method Color.from_hsv]. By default, equivalent to the following code:
+				[codeblock]
+				var color = Color.from_hsv(randf(), randf(), randf())
+				[/codeblock]
+				If you want to generate colors which are not too pale and not too dark, use [member color].
+			</description>
+		</method>
+		<method name="color_rgb">
+			<return type="Color" />
+			<argument index="0" name="red_min" type="float" default="0.0" />
+			<argument index="1" name="red_max" type="float" default="1.0" />
+			<argument index="2" name="green_min" type="float" default="0.0" />
+			<argument index="3" name="green_max" type="float" default="1.0" />
+			<argument index="4" name="blue_min" type="float" default="0.0" />
+			<argument index="5" name="blue_max" type="float" default="1.0" />
+			<argument index="6" name="alpha_min" type="float" default="1.0" />
+			<argument index="7" name="alpha_max" type="float" default="1.0" />
+			<description>
+				Generates a random [Color] specified in RGB color model. By default, equivalent to the following code:
+				[codeblock]
+				var color = Color(randf(), randf(), randf())
+				[/codeblock]
+				If you want to generate colors which are not too pale and not too dark, use [member color].
+			</description>
+		</method>
+		<method name="decision">
+			<return type="bool" />
+			<argument index="0" name="probability" type="float" />
+			<description>
+				Returns a boolean based on a given [code]probability[/code] value in the range of [code]0.0..1.0[/code]. The higher the probability value the higher the chance of this returning [code]true[/code].
+			</description>
+		</method>
+		<method name="new_instance" qualifiers="const">
+			<return type="Reference" />
+			<description>
+				Instantiates a new local [Random] instance based on [RandomNumberGenerator]. Does not override the [Random] instance accessible at [@GlobalScope].
+			</description>
+		</method>
+		<method name="pick">
+			<return type="Variant" />
+			<argument index="0" name="sequence" type="Variant" />
+			<description>
+				Returns a random element from a container or indexable [code]sequence[/code], such as [Array], [Dictionary], [String]. If container is empty, prints an error and returns [code]null[/code].
+			</description>
+		</method>
+		<method name="pop">
+			<return type="Variant" />
+			<argument index="0" name="sequence" type="Variant" />
+			<description>
+				Returns a random element from an [Array] or [Dictionary], and then removes the value from it. If container is empty, prints an error and returns [code]null[/code].
+				For performance reasons, this will modify the original order in the [Array]: the last value is swapped with the popped element, and then [method Array.pop_back] is called. See [method Array.remove] for explanations.
+				Unlike [method pick], the [String] and [b]Pool*Array[/b] types are not supported, since they are passed by value when calling this function.
+			</description>
+		</method>
+		<method name="range">
+			<return type="Variant" />
+			<argument index="0" name="from" type="Variant" />
+			<argument index="1" name="to" type="Variant" />
+			<description>
+				Generates a singular value in a specified range depending on the type of [Variant]. The types of [code]from[/code] and [code]to[/code] must be the same.
+				For integer and float values, generates a random number in the range equivalently to [method RandomNumberGenerator.randi_range] and [method RandomNumberGenerator.randf_range] respectively.
+				For any other type, the value is linearly interpolated with a random weight of [code]0.0..1.0[/code].
+			</description>
+		</method>
+		<method name="shuffle">
+			<return type="void" />
+			<argument index="0" name="array" type="Array" />
+			<description>
+				Shuffles the array such that the items will have a random order. By default, this method uses the global random number generator in [Random] singletons, but unlike in [method Array.shuffle], local instances of [Random] can be created with [method new_instance] to achieve reproducible results given the same seed.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="color" type="Color" setter="" getter="get_color" default="Color( 0, 0, 1, 1 )">
+			The next random color in HSV color space. Saturated, bright colors are preferred. Equivalent to the following code:
+			[codeblock]
+			var color = Color.from_hsv(randf(), rand_range(0.5, 1.0), rand_range(0.5, 1.0))
+			[/codeblock]
+			For more options, use [method color_hsv] or [method color_rgb].
+		</member>
+		<member name="condition" type="bool" setter="" getter="get_condition" default="true">
+			Generates a random boolean value. Useful for randomizing [code]true[/code] and [code]false[/code] states, conditions, decisions etc. The outcome is equal for both values.
+			[codeblock]
+			if Random.condition:
+			    pass
+			[/codeblock]
+			Equivalent to the following code:
+			[codeblock]
+			if randf() &gt;= 0.5:
+			    pass
+			[/codeblock]
+		</member>
+		<member name="number" type="int" setter="" getter="get_number" default="37">
+			Generates a random unsigned 32-bit integer. Equivalent to [method RandomNumberGenerator.randi].
+		</member>
+		<member name="value" type="float" setter="" getter="get_value" default="0.5">
+			Generates a random real number in the range of [code]0.0..1.0[/code]. Equivalent to [method RandomNumberGenerator.randf].
+		</member>
+	</members>
+	<constants>
+	</constants>
+</class>
