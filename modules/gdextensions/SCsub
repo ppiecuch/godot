@@ -139,7 +139,7 @@ env_module = env_modules.Clone()
 # compilation, but during LTO the linker re-processes inline asm from the Godot root.
 # Define INCBIN_ROOT so incbin.h prepends the module path to all .incbin filenames.
 _module_dir = os.path.relpath(os.path.dirname(File("SCsub").srcnode().abspath), env.Dir("#").abspath)
-env_module.Append(CPPDEFINES=[('INCBIN_ROOT', '\\"' + _module_dir + '/\\"')])
+env_module.Append(CPPDEFINES=[("INCBIN_ROOT", '\\"' + _module_dir + '/\\"')])
 
 sources = Glob("*.cpp") + Glob("common/*.cpp") + Glob("core/*.cpp") + Glob("core/*.c")  # Always build core and common
 
@@ -331,15 +331,9 @@ if is_enabled("hwinfo"):
             + ["thirdparty/hwinfo/src/platform_apple/utils/apple_info_ios.m"]
         )
     elif env["platform"] == "android":
-        thirdparty_sources += (
-            Glob("thirdparty/hwinfo/src/*.cpp")
-            + Glob("thirdparty/hwinfo/src/platform_android/*.cpp")
-        )
+        thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_android/*.cpp")
     elif env["platform"] == "windows":
-        thirdparty_sources += (
-            Glob("thirdparty/hwinfo/src/*.cpp")
-            + Glob("thirdparty/hwinfo/src/platform_windows/*.cpp")
-        )
+        thirdparty_sources += Glob("thirdparty/hwinfo/src/*.cpp") + Glob("thirdparty/hwinfo/src/platform_windows/*.cpp")
     else:
         arch = env["arch"] if "arch" in env and env["arch"] else platform.machine()
         print("(GDextensions) HWInfo is not supported on platform '%s/%s'." % (env["platform"], arch))
@@ -572,6 +566,7 @@ if is_enabled("flexbuffers") or is_enabled("nakama1"):
 
 if is_enabled("symbolfonts"):
     import subprocess
+
     gen_script = os.path.join("submodules", "symbolfonts", "gen_icon_tables.py")
     gen_output = os.path.join("submodules", "symbolfonts", "icon_tables.gen.h")
     if not os.path.exists(gen_output):
@@ -663,11 +658,13 @@ if is_enabled("swrender"):
     # Fusion2X backend (optional, GLES 1.0 fixed-function)
     if os.path.isdir("thirdparty/swr-fusion2x"):
         env_module.Append(CPPDEFINES=["SWRENDER_FUSION2X"])
-        env_module.Append(CPPPATH=[
-            "thirdparty/swr-fusion2x",
-            "thirdparty/swr-fusion2x/include",
-            "thirdparty/swr-fusion2x/include/fusion2x",
-        ])
+        env_module.Append(
+            CPPPATH=[
+                "thirdparty/swr-fusion2x",
+                "thirdparty/swr-fusion2x/include",
+                "thirdparty/swr-fusion2x/include/fusion2x",
+            ]
+        )
         f2x_srcs = (
             Glob("thirdparty/swr-fusion2x/src/*.cpp")
             + Glob("thirdparty/swr-fusion2x/src/renderer/*.cpp")
@@ -680,21 +677,19 @@ if is_enabled("swrender"):
     # Vincent GLES 1.1 backend (all platforms, JIT only on ARM32)
     if os.path.isdir("thirdparty/swr-vincent-gles1"):
         env_module.Append(CPPDEFINES=["SWRENDER_VINCENT1"])
-        env_module.Append(CPPPATH=[
-            "thirdparty/swr-vincent-gles1/include",
-            "thirdparty/swr-vincent-gles1/src",
-        ])
-        vin_srcs = (
-            Glob("thirdparty/swr-vincent-gles1/src/*.cpp")
-            + Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")
+        env_module.Append(
+            CPPPATH=[
+                "thirdparty/swr-vincent-gles1/include",
+                "thirdparty/swr-vincent-gles1/src",
+            ]
         )
+        vin_srcs = Glob("thirdparty/swr-vincent-gles1/src/*.cpp") + Glob("thirdparty/swr-vincent-gles1/src/egl/*.cpp")
         # Exclude gl.cpp — we use the C++ API directly to avoid gl* symbol conflicts
         vin_srcs = [f for f in vin_srcs if not str(f).endswith("gl.cpp")]
         # ARM JIT codegen (ARM32 and ARM64)
         if arch in ["arm", "arm64", "aarch64"]:
-            vin_srcs += (
-                Glob("thirdparty/swr-vincent-gles1/src/armjit/*.cpp")
-                + Glob("thirdparty/swr-vincent-gles1/src/codegen/*.c")
+            vin_srcs += Glob("thirdparty/swr-vincent-gles1/src/armjit/*.cpp") + Glob(
+                "thirdparty/swr-vincent-gles1/src/codegen/*.c"
             )
         thirdparty_sources += vin_srcs
 
@@ -739,12 +734,14 @@ if is_enabled("turbobadger"):
     thirdparty_sources += Glob("thirdparty/turbobadger/src/**/*.cpp") + Glob("thirdparty/turbobadger/resources/*.c")
 
 if is_enabled("glitehtml"):
-    env_module.Append(CPPPATH=[
-        "thirdparty/litehtml/include",
-        "thirdparty/litehtml/include/litehtml",
-        "thirdparty/litehtml/src/gumbo/include",
-        "thirdparty/litehtml/src/gumbo/include/gumbo",
-    ])
+    env_module.Append(
+        CPPPATH=[
+            "thirdparty/litehtml/include",
+            "thirdparty/litehtml/include/litehtml",
+            "thirdparty/litehtml/src/gumbo/include",
+            "thirdparty/litehtml/src/gumbo/include/gumbo",
+        ]
+    )
     # Build litehtml sources - use a clone to add src/ to include path
     # only for litehtml files (avoids util.h clash with other thirdparty)
     env_litehtml = env_module.Clone()

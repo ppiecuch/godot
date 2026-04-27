@@ -10,7 +10,7 @@ def make_classes_enabled(target, source, env):
     h = open(target[0].abspath, "w")
 
     h.write("// THIS FILE IS GENERATED, DO NOT EDIT!\n\n")
-    h.write("#include \"goost.h\"\n\n")
+    h.write('#include "goost.h"\n\n')
     for c in env["goost_classes_enabled"]:
         h.write("#define GOOST_%s\n" % c)
     h.write("\n")
@@ -27,7 +27,7 @@ def make_classes_enabled(target, source, env):
     # rebuilt again by SCons, even if no changes were done to "goost.py".
     cpp = open(target[1].abspath, "w")
     cpp.write("// THIS FILE IS GENERATED, DO NOT EDIT!\n\n")
-    cpp.write("#include \"classes_enabled.gen.h\"\n")
+    cpp.write('#include "classes_enabled.gen.h"\n')
     cpp.write("\n")
     for c in env["goost_classes_disabled"]:
         if c in goost.module_classes:
@@ -66,8 +66,9 @@ def make_version_header(target, source, env):
     f.write('#define GOOST_VERSION_HASH "' + githash + '"' + "\n")
     f.write('#define GOOST_VERSION_STATUS "' + str(goost.version["status"]) + '"\n')
     f.write("#define GOOST_VERSION_YEAR " + str(goost.version["year"]) + "\n")
-    
+
     f.close()
+
 
 # Implementation synchronized with upstream (change "GODOT" to "GOOST"):
 # https://github.com/godotengine/godot/blob/master/core/core_builders.py
@@ -116,6 +117,7 @@ def make_authors_header(target, source, env):
 
     g.close()
     f.close()
+
 
 # Implementation synchronized with upstream (change "GODOT" to "GOOST"):
 # https://github.com/godotengine/godot/blob/master/core/core_builders.py

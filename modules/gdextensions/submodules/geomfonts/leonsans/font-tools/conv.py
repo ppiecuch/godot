@@ -115,11 +115,11 @@ if sys.argv[1]:
                         print(
                             "  { u%s, %s },"
                             % (
-                                "'\x80'"
-                                if prop["key"]["value"] == "tofu"
-                                else "'\\''"
-                                if prop["key"]["value"] == "'"
-                                else prop["key"]["raw"],
+                                (
+                                    "'\x80'"
+                                    if prop["key"]["value"] == "tofu"
+                                    else "'\\''" if prop["key"]["value"] == "'" else prop["key"]["raw"]
+                                ),
                                 dump_value(prop["value"]),
                             )
                         )

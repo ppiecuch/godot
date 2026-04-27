@@ -24,7 +24,7 @@ def get_engine_executable_path():
     return binary_path
 
 
-def run(p_args, windowed=False, verbose=False): # Assumes the first arg is the binary path.
+def run(p_args, windowed=False, verbose=False):  # Assumes the first arg is the binary path.
     args = list(p_args)
     if not windowed:
         args.insert(1, "--no-window")
@@ -61,12 +61,17 @@ if __name__ == "__main__":
 
     # Unit tests.
     tests = subparsers.add_parser("tests", help="Run Goost unit tests (run with `tests -h` for more options).")
-    tests.add_argument("-t", "--test-file",
-            help='A relative path to test file to run, for instance: "core/math/test_random.gd"')
-    tests.add_argument("-tc", "--test-case",
-            help="Name of a test case to run. Any test case matching the name will be run.")
-    tests.add_argument("-itc", "--inner-test-case",
-            help="Name of an inner test case to run. Any test case matching the name will be run.")
+    tests.add_argument(
+        "-t", "--test-file", help='A relative path to test file to run, for instance: "core/math/test_random.gd"'
+    )
+    tests.add_argument(
+        "-tc", "--test-case", help="Name of a test case to run. Any test case matching the name will be run."
+    )
+    tests.add_argument(
+        "-itc",
+        "--inner-test-case",
+        help="Name of an inner test case to run. Any test case matching the name will be run.",
+    )
 
     # Documentation.
     doc = subparsers.add_parser("doc", help="Generate documentation.")
@@ -104,7 +109,7 @@ if __name__ == "__main__":
         # Run in debug mode, disabling it allows to workaround:
         # https://github.com/godotengine/godot/issues/51387
         if args.debug:
-            test_args.append("-d") # Use short options, GUT will break otherwise.
+            test_args.append("-d")  # Use short options, GUT will break otherwise.
 
         # Path to GUT command-line script.
         test_args.extend(["-s", os.path.join(base_path, "tests/project/addons/gut/gut_cmdln.gd")])
@@ -139,8 +144,9 @@ if __name__ == "__main__":
         if not os.path.exists("doc/godot"):
             os.makedirs("doc/godot")
 
-        ret = run([godot_bin, "--doctool", os.path.join(base_path, "doc/godot")],
-                windowed=args.windowed, verbose=args.verbose)
+        ret = run(
+            [godot_bin, "--doctool", os.path.join(base_path, "doc/godot")], windowed=args.windowed, verbose=args.verbose
+        )
         sys.exit(ret)
     else:
         print("Error: tool not found. Run with `--help` to list available tools.")

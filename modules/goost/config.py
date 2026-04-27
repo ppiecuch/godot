@@ -27,6 +27,7 @@ def configure(env):
     # From `custom.py` file.
     try:
         import custom
+
         if hasattr(custom, "components"):
             components_config = custom.components
         if hasattr(custom, "components_enabled_by_default"):
@@ -41,11 +42,16 @@ def configure(env):
         pass
 
     # From command-line (CLI arguments override arguments specified via file).
-    opts.Add(BoolVariable("goost_components_enabled",
-            "Set to `no` to disable all components by default, and enable each component of interest manually", True))
+    opts.Add(
+        BoolVariable(
+            "goost_components_enabled",
+            "Set to `no` to disable all components by default, and enable each component of interest manually",
+            True,
+        )
+    )
 
     # Get a list of all components and add them, regardless of configuration.
-    for name in goost.get_components()["enabled"]: # All enabled by default.
+    for name in goost.get_components()["enabled"]:  # All enabled by default.
         opts.Add(BoolVariable("goost_%s_enabled" % (name), "Build %s component." % (name), True))
 
     # Math/Geometry.
@@ -75,8 +81,9 @@ def configure(env):
             for component_name in reversed(goost.get_class_components(class_name)):
                 skip = False
                 if component_name in components["disabled"]:
-                    print("Goost: Skipping class `%s`, because component `%s` is disabled."
-                            % (class_name, component_name))
+                    print(
+                        "Goost: Skipping class `%s`, because component `%s` is disabled." % (class_name, component_name)
+                    )
                     skip = True
                 if skip:
                     break
@@ -92,7 +99,7 @@ def configure_components(env, config, enabled_by_default):
         # Override from command-line.
         enabled_by_default = env["goost_components_enabled"]
 
-    for name in goost.get_components()["enabled"]: # All enabled by default.
+    for name in goost.get_components()["enabled"]:  # All enabled by default.
         c = "goost_%s_enabled" % name
         if c in ARGUMENTS:
             # Override from command-line.
@@ -114,7 +121,7 @@ def configure_components(env, config, enabled_by_default):
             env["goost_%s_enabled" % child_name] = False
             to_disable.append(child_name)
             components["enabled"].remove(child_name)
- 
+
     def enable_parent_components(name):
         for parent_name in goost.get_parent_components(name):
             if parent_name in to_enable:

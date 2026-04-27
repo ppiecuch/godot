@@ -5,6 +5,7 @@ import os
 # This module is maintained as part of Goost, but can be built independently.
 # Refer to https://github.com/goostengine/goost for more information.
 
+
 def can_build(env, platform):
     libgit2_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "thirdparty/libgit2/")
 
@@ -23,7 +24,7 @@ def can_build(env, platform):
 
 
 def configure(env):
-	pass
+    pass
 
 
 def get_doc_path():

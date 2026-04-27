@@ -14,21 +14,21 @@ import sys
 
 # Font definitions: (enum_name, prefix, header_file, filename_define, min_define, max_define)
 FONTS = [
-    ("FA6",  "ICON_FA_",  "IconsFontAwesome6.h",        "FONT_ICON_FILE_NAME_FAS", "ICON_MIN_FA",  "ICON_MAX_FA"),
-    ("FA6B", "ICON_FA_",  "IconsFontAwesome6Brands.h",  "FONT_ICON_FILE_NAME_FAB", "ICON_MIN_FAB", "ICON_MAX_FAB"),
-    ("FA5",  "ICON_FA_",  "IconsFontAwesome5.h",        "FONT_ICON_FILE_NAME_FAS", "ICON_MIN_FA",  "ICON_MAX_FA"),
-    ("FA5B", "ICON_FA_",  "IconsFontAwesome5Brands.h",  "FONT_ICON_FILE_NAME_FAB", "ICON_MIN_FAB", "ICON_MAX_FAB"),
-    ("FA4",  "ICON_FA_",  "IconsFontAwesome4.h",        "FONT_ICON_FILE_NAME_FA",  "ICON_MIN_FA",  "ICON_MAX_FA"),
-    ("FA7",  "ICON_FA_",  "IconsFontAwesome7.h",        "FONT_ICON_FILE_NAME_FAS", "ICON_MIN_FA",  "ICON_MAX_FA"),
-    ("FA7B", "ICON_FA_",  "IconsFontAwesome7Brands.h",  "FONT_ICON_FILE_NAME_FAB", "ICON_MIN_FAB", "ICON_MAX_FAB"),
-    ("KI",   "ICON_KI_",  "IconsKenney.h",              "FONT_ICON_FILE_NAME_KI",  "ICON_MIN_KI",  "ICON_MAX_KI"),
-    ("FAD",  "ICON_FAD_", "IconsFontaudio.h",            "FONT_ICON_FILE_NAME_FAD", "ICON_MIN_FAD", "ICON_MAX_FAD"),
-    ("MD",   "ICON_MD_",  "IconsMaterialDesign.h",       "FONT_ICON_FILE_NAME_MD",  "ICON_MIN_MD",  "ICON_MAX_MD"),
-    ("MDI",  "ICON_MDI_", "IconsMaterialDesignIcons.h",  "FONT_ICON_FILE_NAME_MDI", "ICON_MIN_MDI", "ICON_MAX_MDI"),
-    ("FK",   "ICON_FK_",  "IconsForkAwesome.h",          "FONT_ICON_FILE_NAME_FK",  "ICON_MIN_FK",  "ICON_MAX_FK"),
-    ("CI",   "ICON_CI_",  "IconsCodicons.h",             "FONT_ICON_FILE_NAME_CI",  "ICON_MIN_CI",  "ICON_MAX_CI"),
-    ("LC",   "ICON_LC_",  "IconsLucide.h",               "FONT_ICON_FILE_NAME_LC",  "ICON_MIN_LC",  "ICON_MAX_LC"),
-    ("MS",   "ICON_MS_",  "IconsMaterialSymbols.h",      "FONT_ICON_FILE_NAME_MSO", "ICON_MIN_MS",  "ICON_MAX_MS"),
+    ("FA6", "ICON_FA_", "IconsFontAwesome6.h", "FONT_ICON_FILE_NAME_FAS", "ICON_MIN_FA", "ICON_MAX_FA"),
+    ("FA6B", "ICON_FA_", "IconsFontAwesome6Brands.h", "FONT_ICON_FILE_NAME_FAB", "ICON_MIN_FAB", "ICON_MAX_FAB"),
+    ("FA5", "ICON_FA_", "IconsFontAwesome5.h", "FONT_ICON_FILE_NAME_FAS", "ICON_MIN_FA", "ICON_MAX_FA"),
+    ("FA5B", "ICON_FA_", "IconsFontAwesome5Brands.h", "FONT_ICON_FILE_NAME_FAB", "ICON_MIN_FAB", "ICON_MAX_FAB"),
+    ("FA4", "ICON_FA_", "IconsFontAwesome4.h", "FONT_ICON_FILE_NAME_FA", "ICON_MIN_FA", "ICON_MAX_FA"),
+    ("FA7", "ICON_FA_", "IconsFontAwesome7.h", "FONT_ICON_FILE_NAME_FAS", "ICON_MIN_FA", "ICON_MAX_FA"),
+    ("FA7B", "ICON_FA_", "IconsFontAwesome7Brands.h", "FONT_ICON_FILE_NAME_FAB", "ICON_MIN_FAB", "ICON_MAX_FAB"),
+    ("KI", "ICON_KI_", "IconsKenney.h", "FONT_ICON_FILE_NAME_KI", "ICON_MIN_KI", "ICON_MAX_KI"),
+    ("FAD", "ICON_FAD_", "IconsFontaudio.h", "FONT_ICON_FILE_NAME_FAD", "ICON_MIN_FAD", "ICON_MAX_FAD"),
+    ("MD", "ICON_MD_", "IconsMaterialDesign.h", "FONT_ICON_FILE_NAME_MD", "ICON_MIN_MD", "ICON_MAX_MD"),
+    ("MDI", "ICON_MDI_", "IconsMaterialDesignIcons.h", "FONT_ICON_FILE_NAME_MDI", "ICON_MIN_MDI", "ICON_MAX_MDI"),
+    ("FK", "ICON_FK_", "IconsForkAwesome.h", "FONT_ICON_FILE_NAME_FK", "ICON_MIN_FK", "ICON_MAX_FK"),
+    ("CI", "ICON_CI_", "IconsCodicons.h", "FONT_ICON_FILE_NAME_CI", "ICON_MIN_CI", "ICON_MAX_CI"),
+    ("LC", "ICON_LC_", "IconsLucide.h", "FONT_ICON_FILE_NAME_LC", "ICON_MIN_LC", "ICON_MAX_LC"),
+    ("MS", "ICON_MS_", "IconsMaterialSymbols.h", "FONT_ICON_FILE_NAME_MSO", "ICON_MIN_MS", "ICON_MAX_MS"),
 ]
 
 # Metadata define prefixes (parsed but not emitted as C defines)
@@ -42,7 +42,7 @@ def parse_header(filepath, icon_prefix):
     seen = set()
     icon_pattern = re.compile(r'^#define\s+({}(\w+))\s+"([^"]*)"'.format(re.escape(icon_prefix)))
     meta_str_pattern = re.compile(r'^#define\s+(\w+)\s+"([^"]*)"')
-    meta_int_pattern = re.compile(r'^#define\s+(\w+)\s+(0x[0-9A-Fa-f]+)')
+    meta_int_pattern = re.compile(r"^#define\s+(\w+)\s+(0x[0-9A-Fa-f]+)")
 
     with open(filepath, "r") as f:
         for line in f:
@@ -59,8 +59,8 @@ def parse_header(filepath, icon_prefix):
 
             m = icon_pattern.match(line)
             if m:
-                short_name = m.group(2)   # e.g. ADDRESS_BOOK
-                utf8_value = m.group(3)   # e.g. \xef\x80\x80
+                short_name = m.group(2)  # e.g. ADDRESS_BOOK
+                utf8_value = m.group(3)  # e.g. \xef\x80\x80
                 key = short_name.lower()
                 if key not in seen:
                     seen.add(key)

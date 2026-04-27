@@ -316,16 +316,16 @@ for k, v in messages.items():
     setattr(Messages, k, v)
 
 # http://stackoverflow.com/questions/14245893/efficiently-list-all-characters-in-a-given-unicode-category
-BOM = "\uFEFF"
-ZWJ = "\u200D"
-ZWNJ = "\u200C"
+BOM = "\ufeff"
+ZWJ = "\u200d"
+ZWNJ = "\u200c"
 TAB = "\u0009"
-VT = "\u000B"
-FF = "\u000C"
+VT = "\u000b"
+FF = "\u000c"
 SP = "\u0020"
-NBSP = "\u00A0"
-LF = "\u000A"
-CR = "\u000D"
+NBSP = "\u00a0"
+LF = "\u000a"
+CR = "\u000d"
 LS = "\u2028"
 PS = "\u2029"
 

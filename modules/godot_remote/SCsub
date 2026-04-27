@@ -82,8 +82,10 @@ thirdparty_sources_bit_dependent = [
     "jquant2.c",
 ]
 
+
 def source_paths(files):
     return [thirdparty_dir + "/src/" + f for f in files]
+
 
 # Build bit-dependent sources twice (8-bit and 12-bit) with distinct object suffixes
 for bit_depth in [8, 12]:
@@ -109,7 +111,7 @@ module_env.Append(CPPPATH=[thirdparty_dir + "/src"])
 # =========================================================================
 # OpenH264 headers (dynamic loading — no lib linking)
 # =========================================================================
-module_env.Append(CPPPATH=["deps/openh264/include"])
+module_env.Append(CPPPATH=["thirdparty/openh264/include"])
 
 # =========================================================================
 # Module sources

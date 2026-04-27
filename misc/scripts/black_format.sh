@@ -13,6 +13,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 fi
 
+black=black
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [ -e "/opt/local/bin/black" ]; then
+        black="/opt/local/bin/black"
+    fi
+fi
+
+echo "** find  = $find"
+echo "** black = $black"
+
 # Apply black.
 echo -e "Formatting Python files..."
 PY_FILES=$($find \( -path "./.git" \
@@ -23,7 +33,7 @@ PY_FILES=$($find \( -path "./.git" \
                 -o -name "SCsub" \
                 -o -name "*.py" \
                 \) -print)
-black -l 120 $PY_FILES
+$black -l 120 $PY_FILES
 
 git diff --color > patch.patch
 

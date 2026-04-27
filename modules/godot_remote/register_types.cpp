@@ -20,7 +20,7 @@
 // Force-link GRCodecManager (ensures doctest registration survives linker)
 static GRCodecManager *_codec_mgr_instance = nullptr;
 
-void register_gd_godot_remote_types() {
+void register_godot_remote_types() {
 	_codec_mgr_instance = memnew(GRCodecManager);
 
 	ClassDB::register_class<GodotRemote>();
@@ -83,7 +83,7 @@ void register_gd_godot_remote_types() {
 	ClassDB::register_class<GRIEDataScreenTouch>();
 }
 
-void unregister_gd_godot_remote_types() {
+void unregister_godot_remote_types() {
 	if (_codec_mgr_instance) {
 		_codec_mgr_instance->deinit();
 		memdelete(_codec_mgr_instance);

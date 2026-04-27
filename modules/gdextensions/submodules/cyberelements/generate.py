@@ -38,9 +38,7 @@ import sys
 
 # --- Configuration ---
 
-GITHUB_RAW_BASE = (
-    "https://raw.githubusercontent.com/thiswallz/react-cyber-elements/master/src"
-)
+GITHUB_RAW_BASE = "https://raw.githubusercontent.com/thiswallz/react-cyber-elements/master/src"
 ELEMENT_COUNT = 90
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOCAL_TSX_DIR = os.path.join(SCRIPT_DIR, "react-cyber-elements", "src")
@@ -60,9 +58,7 @@ def camel_to_css(name):
 
 def convert_style_block(m):
     style_content = m.group(1)
-    pairs = re.findall(
-        r"([\w-]+):\s*[\"']?([^\"',$}]+)[\"']?\s*[,}]?", style_content
-    )
+    pairs = re.findall(r"([\w-]+):\s*[\"']?([^\"',$}]+)[\"']?\s*[,}]?", style_content)
     css = "; ".join(f"{camel_to_css(k)}: {v.strip()}" for k, v in pairs)
     return f'style="{css}"'
 
@@ -172,9 +168,7 @@ def extract_defs(svg):
 
     # clipPath (preserve as raw SVG snippet for future use)
     # Match both self-closing and child-bearing forms
-    for m in re.finditer(
-        r"(<clipPath\s+[^>]*(?:/>|>[\s\S]*?</clipPath>))", svg
-    ):
+    for m in re.finditer(r"(<clipPath\s+[^>]*(?:/>|>[\s\S]*?</clipPath>))", svg):
         clip_id_match = re.search(r'id="([^"]*)"', m.group(1))
         entry = {"type": "clipPath", "raw": m.group(1)}
         if clip_id_match:
@@ -217,11 +211,7 @@ def preprocess_svg(svg):
     """Convert SVG to preprocessed element with resolved fill types and preserved defs."""
     # viewBox
     vb_match = re.search(r'viewBox="([^"]+)"', svg)
-    viewbox = (
-        [int(float(x)) for x in vb_match.group(1).split()]
-        if vb_match
-        else [0, 0, 100, 100]
-    )
+    viewbox = [int(float(x)) for x in vb_match.group(1).split()] if vb_match else [0, 0, 100, 100]
 
     # Parse CSS defs
     style_match = re.search(r"<style[^>]*>(.*?)</style>", svg, re.DOTALL)
@@ -416,12 +406,8 @@ def read_tsx_local(src_dir, index):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Generate preprocessed cyberelements.json"
-    )
-    parser.add_argument(
-        "--local", metavar="PATH", help="Local react-cyber-elements/src/ directory"
-    )
+    parser = argparse.ArgumentParser(description="Generate preprocessed cyberelements.json")
+    parser.add_argument("--local", metavar="PATH", help="Local react-cyber-elements/src/ directory")
     parser.add_argument(
         "--existing",
         metavar="JSON",
@@ -499,14 +485,9 @@ def main():
     total_defs = sum(len(e.get("defs", [])) for e in elements)
     extra_color_count = sum(len(e.get("colors", [])) for e in elements)
     gradient_count = sum(
-        1
-        for e in elements
-        for d in e.get("defs", [])
-        if d["type"] in ("linearGradient", "radialGradient")
+        1 for e in elements for d in e.get("defs", []) if d["type"] in ("linearGradient", "radialGradient")
     )
-    clip_count = sum(
-        1 for e in elements for d in e.get("defs", []) if d["type"] == "clipPath"
-    )
+    clip_count = sum(1 for e in elements for d in e.get("defs", []) if d["type"] == "clipPath")
 
     print(f"\nGenerated {args.output}")
     print(f"  Elements: {len(elements)}")

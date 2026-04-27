@@ -371,9 +371,7 @@ def _encode_fpath(fpath):
 def _hex_literal(content):
     """Convert binary content to a comma-separated hex literal string."""
     hex_str = binascii.hexlify(content)
-    return ",".join(
-        "0x" + hex_str[i : i + 2].decode("ascii") for i in range(0, len(hex_str), 2)
-    )
+    return ",".join("0x" + hex_str[i : i + 2].decode("ascii") for i in range(0, len(hex_str), 2))
 
 
 class CMRCLibrary:
@@ -462,22 +460,13 @@ class CMRCLibrary:
 
             lines.append("// %s" % relpath)
             if n_bytes > 0:
-                lines.append(
-                    "namespace { const char %s_array[] = { %s }; }"
-                    % (sym, _hex_literal(content))
-                )
+                lines.append("namespace { const char %s_array[] = { %s }; }" % (sym, _hex_literal(content)))
             else:
                 lines.append("namespace { const char %s_array[] = { 0 }; }" % sym)
 
-            lines.append(
-                "namespace cmrc { namespace %s { namespace res_chars {" % self.namespace
-            )
-            lines.append(
-                "extern const char* const %s_begin = %s_array;" % (sym, sym)
-            )
-            lines.append(
-                "extern const char* const %s_end = %s_array + %d;" % (sym, sym, n_bytes)
-            )
+            lines.append("namespace cmrc { namespace %s { namespace res_chars {" % self.namespace)
+            lines.append("extern const char* const %s_begin = %s_array;" % (sym, sym))
+            lines.append("extern const char* const %s_end = %s_array + %d;" % (sym, sym, n_bytes))
             lines.append("}}}")
             lines.append("")
 
@@ -489,14 +478,10 @@ class CMRCLibrary:
         lines.append("const cmrc::detail::index_type&")
         lines.append("get_root_index() {")
         lines.append("    static cmrc::detail::directory root_directory_;")
-        lines.append(
-            "    static cmrc::detail::file_or_directory root_directory_fod{root_directory_};"
-        )
+        lines.append("    static cmrc::detail::file_or_directory root_directory_fod{root_directory_};")
         lines.append("    static cmrc::detail::index_type root_index;")
         lines.append('    root_index.emplace("", &root_directory_fod);')
-        lines.append(
-            "    struct dir_inl { class cmrc::detail::directory& directory; };"
-        )
+        lines.append("    struct dir_inl { class cmrc::detail::directory& directory; };")
         lines.append("    dir_inl root_directory_dir{root_directory_};")
         lines.append("    (void)root_directory_dir;")
 
@@ -509,14 +494,8 @@ class CMRCLibrary:
                 parent_sym = "root_directory"
             else:
                 parent_sym = _encode_fpath("/".join(parts[:-1]))
-            lines.append(
-                '    static auto %s_dir = %s_dir.directory.add_subdir("%s");'
-                % (dir_sym, parent_sym, leaf)
-            )
-            lines.append(
-                '    root_index.emplace("%s", &%s_dir.index_entry);'
-                % (dirpath, dir_sym)
-            )
+            lines.append('    static auto %s_dir = %s_dir.directory.add_subdir("%s");' % (dir_sym, parent_sym, leaf))
+            lines.append('    root_index.emplace("%s", &%s_dir.index_entry);' % (dirpath, dir_sym))
 
         # Register files in their parent directories
         for relpath, sym, _ in self._files:
@@ -526,30 +505,14 @@ class CMRCLibrary:
                 parent_sym = "root_directory"
             else:
                 parent_sym = _encode_fpath("/".join(parts[:-1]))
-            lines.append(
-                "    root_index.emplace("
-            )
-            lines.append(
-                '        "%s",' % relpath
-            )
-            lines.append(
-                '        %s_dir.directory.add_file(' % parent_sym
-            )
-            lines.append(
-                '            "%s",' % leaf
-            )
-            lines.append(
-                "            res_chars::%s_begin," % sym
-            )
-            lines.append(
-                "            res_chars::%s_end" % sym
-            )
-            lines.append(
-                "        )"
-            )
-            lines.append(
-                "    );"
-            )
+            lines.append("    root_index.emplace(")
+            lines.append('        "%s",' % relpath)
+            lines.append("        %s_dir.directory.add_file(" % parent_sym)
+            lines.append('            "%s",' % leaf)
+            lines.append("            res_chars::%s_begin," % sym)
+            lines.append("            res_chars::%s_end" % sym)
+            lines.append("        )")
+            lines.append("    );")
 
         lines.append("    return root_index;")
         lines.append("}")

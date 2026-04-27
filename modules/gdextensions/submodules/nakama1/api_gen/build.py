@@ -69,6 +69,7 @@ def patch_file_insert_after(filepath, needle, lines_to_insert):
 
 # ---- FlatBuffers generation ------------------------------------------------
 
+
 def generate_flatbuffers():
     """Generate C++ code from FlatBuffers schema."""
     print("*** FlatBuffers generation")
@@ -83,19 +84,24 @@ def generate_flatbuffers():
 
     # Generate C++ from .fbs
     print("  Generating C++ from api.fbs ...")
-    run([
-        FLATC, "--cpp",
-        "--force-empty-vectors",
-        "--scoped-enums",
-        "--oneof-union",
-        "--gen-all",
-        "--gen-object-api",
-        "--gen-name-strings",
-        "--cpp-str-type", "CharString",
-        "--cpp-str-flex-ctor",
-        "--cpp-dictionary-api",
-        API_FBS,
-    ], cwd=SCRIPT_DIR)
+    run(
+        [
+            FLATC,
+            "--cpp",
+            "--force-empty-vectors",
+            "--scoped-enums",
+            "--oneof-union",
+            "--gen-all",
+            "--gen-object-api",
+            "--gen-name-strings",
+            "--cpp-str-type",
+            "CharString",
+            "--cpp-str-flex-ctor",
+            "--cpp-dictionary-api",
+            API_FBS,
+        ],
+        cwd=SCRIPT_DIR,
+    )
 
     # Post-generation patches on api_generated.h
     print("  Patching api_generated.h ...")
@@ -119,15 +125,21 @@ def generate_flatbuffers():
         f.write(content)
 
     # Fix _timezone macro conflict (POSIX defines _timezone)
-    patch_file(API_GENERATED_H, [
-        (r"namespace server \{", "#undef _timezone\n\nnamespace server {"),
-    ])
+    patch_file(
+        API_GENERATED_H,
+        [
+            (r"namespace server \{", "#undef _timezone\n\nnamespace server {"),
+        ],
+    )
 
     # Rename 'assert' to 'assertion' to avoid macro conflicts
     # Use word boundary to avoid replacing 'assertion' itself
-    patch_file(API_GENERATED_H, [
-        (r"\bassert\b", "assertion"),
-    ])
+    patch_file(
+        API_GENERATED_H,
+        [
+            (r"\bassert\b", "assertion"),
+        ],
+    )
 
     # Generate the standalone compilation stub
     print("  Generating api_generated.cpp ...")
@@ -151,14 +163,21 @@ using Dictionary = std::map<std::string, Variant>;
 def compile_flatbuffers():
     """Compile the generated FlatBuffers C++ to verify correctness."""
     print("  Compiling api_generated.cpp (verification) ...")
-    run([
-        "g++", "--std=c++11", "-c",
-        "-I", FLATB_INCLUDE,
-        API_GENERATED_CPP,
-    ], cwd=SCRIPT_DIR)
+    run(
+        [
+            "g++",
+            "--std=c++11",
+            "-c",
+            "-I",
+            FLATB_INCLUDE,
+            API_GENERATED_CPP,
+        ],
+        cwd=SCRIPT_DIR,
+    )
 
 
 # ---- Protocol Buffers generation -------------------------------------------
+
 
 def find_protoc():
     """Find protoc binary - check env var, then PATH."""
@@ -190,10 +209,14 @@ def generate_protobuf():
     # Patch: add assert macro workaround
     print("  Patching v1_proto/api.pb.h ...")
     pb_h = os.path.join(V1_PROTO_DIR, "api.pb.h")
-    patch_file_insert_after(pb_h, "@@protoc_insertion_point(includes)", [
-        '#pragma push_macro("assert")',
-        "#undef assert",
-    ])
+    patch_file_insert_after(
+        pb_h,
+        "@@protoc_insertion_point(includes)",
+        [
+            '#pragma push_macro("assert")',
+            "#undef assert",
+        ],
+    )
 
     return True
 
@@ -215,23 +238,27 @@ def compile_protobuf():
     pb_cc = os.path.join(V1_PROTO_DIR, "api.pb.cc")
     if os.path.isfile(pb_cc):
         print("  Compiling v1_proto/api.pb.cc (verification) ...")
-        run([
-            "g++", "-c", "--std=c++11",
-            "-I", proto_include,
-            pb_cc,
-        ], cwd=SCRIPT_DIR)
+        run(
+            [
+                "g++",
+                "-c",
+                "--std=c++11",
+                "-I",
+                proto_include,
+                pb_cc,
+            ],
+            cwd=SCRIPT_DIR,
+        )
 
 
 # ---- Main ------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(description="Nakama v1 API code generator")
-    parser.add_argument("--flatbuffers-only", action="store_true",
-                        help="Only generate FlatBuffers code")
-    parser.add_argument("--protobuf-only", action="store_true",
-                        help="Only generate Protocol Buffers code")
-    parser.add_argument("--skip-compile", action="store_true",
-                        help="Skip compilation verification step")
+    parser.add_argument("--flatbuffers-only", action="store_true", help="Only generate FlatBuffers code")
+    parser.add_argument("--protobuf-only", action="store_true", help="Only generate Protocol Buffers code")
+    parser.add_argument("--skip-compile", action="store_true", help="Skip compilation verification step")
     args = parser.parse_args()
 
     os.chdir(SCRIPT_DIR)

@@ -26,22 +26,26 @@ if File("custom.py").exists():
     classgen_sources.append("custom.py")
 
 env.CommandNoCache(
-    ["classes_enabled.gen.h", "classes_enabled.gen.cpp"], classgen_sources,
+    ["classes_enabled.gen.h", "classes_enabled.gen.cpp"],
+    classgen_sources,
     builders.make_classes_enabled,
 )
 # Generate version header.
 env.CommandNoCache(
-    "core/version.gen.h", "goost.py",
+    "core/version.gen.h",
+    "goost.py",
     builders.make_version_header,
 )
 # Authors.
 env.CommandNoCache(
-    "core/authors.gen.h", "AUTHORS.md",
+    "core/authors.gen.h",
+    "AUTHORS.md",
     builders.make_authors_header,
 )
 # License.
 env.CommandNoCache(
-    "core/license.gen.h", ["COPYRIGHT.txt", "LICENSE.txt"],
+    "core/license.gen.h",
+    ["COPYRIGHT.txt", "LICENSE.txt"],
     builders.make_license_header,
 )
 
@@ -52,8 +56,10 @@ env_goost.Prepend(CPPDEFINES={"SCALE_FACTOR": env["goost_scale_factor"]})
 # modifying each and every SCSub file, making it work everywhere in Goost.
 godot_add_source_files = env_goost.__class__.add_source_files
 
+
 def goost_add_source_files(self, sources, files):
     from compat import isbasestring
+
     # Convert string to list of absolute paths (including expanding wildcard)
     if isbasestring(files):
         # Keep SCons project-absolute path as they are (no wildcard support)
@@ -137,5 +143,5 @@ env_goost.add_source_files(env_goost.sources, "classes_enabled.gen.cpp")
 # Restore the method back (not sure if needed, but good for consistency).
 env_goost.__class__.add_source_files = godot_add_source_files
 
-lib = env_goost.Library("gd_goost", env_goost.sources) # Compile as a static library
-env.Prepend(LIBS=[lib]) # Add the library as a dependency of the final executable
+lib = env_goost.Library("gd_goost", env_goost.sources)  # Compile as a static library
+env.Prepend(LIBS=[lib])  # Add the library as a dependency of the final executable

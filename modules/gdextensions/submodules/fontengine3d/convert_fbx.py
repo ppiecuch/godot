@@ -28,8 +28,7 @@ def setup_logging(dst_dir: Path):
     dst_dir.mkdir(parents=True, exist_ok=True)
     log_file = dst_dir / f"convert_{datetime.now():%Y%m%d_%H%M%S}.log"
 
-    fmt = logging.Formatter("%(asctime)s  %(levelname)-5s  %(message)s",
-                            datefmt="%H:%M:%S")
+    fmt = logging.Formatter("%(asctime)s  %(levelname)-5s  %(message)s", datefmt="%H:%M:%S")
 
     # Console: concise, INFO+
     ch = logging.StreamHandler(sys.stdout)

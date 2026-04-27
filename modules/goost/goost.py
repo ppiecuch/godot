@@ -31,6 +31,7 @@ components = [
     "editor/vcs",
 ]
 
+
 def get_component_readable_name(component):
     name = {
         "audio": "Audio",
@@ -40,11 +41,12 @@ def get_component_readable_name(component):
         "geometry": "Geometry",
         "physics": "Physics",
         "gui": "User Interface",
-        "vcs": "Version Control"
+        "vcs": "Version Control",
     }.get(component, "")
     if not name:
         name = component.capitalize()
     return name
+
 
 def get_components(config={}, enabled_by_default=True):
     import sys
@@ -141,8 +143,9 @@ class GoostClass:
     def add_depencency(self, goost_class):
         self.deps.append(goost_class)
 
+
 # Classes currently implemented in the extension.
-# 
+#
 # This is used by `config.py::get_doc_classes()` and to configure each class of
 # interest via user-defined `custom.py::classes` dictionary.
 #
@@ -225,30 +228,29 @@ classes = _classes
 class_dependencies = {
     "CommandLineParser": ["CommandLineOption", "CommandLineHelpFormat"],
     "Debug2D": ["DebugCapture", "GoostGeometry2D", "GridRect"],
-    "GoostEngine" : "InvokeState",
-    "GoostGeometry2D" : ["PolyBoolean2D", "PolyDecomp2D", "PolyOffset2D"],
-    "LinkedList" : "ListNode",
-    "Graph" : ["GraphVertex", "GraphEdge", "GraphIterator"],
-    "GraphEdge" : "GraphVertex",
-    "MixinScript" : "Mixin",
-    "PolyBoolean2D" : ["PolyBooleanParameters2D", "PolyNode2D"],
-    "PolyDecomp2D" : "PolyDecompParameters2D",
-    "PolyCapsule2D" : ["GoostGeometry2D", "PolyNode2D"],
-    "PolyCircle2D" : ["GoostGeometry2D", "PolyNode2D"],
-    "PolyEllipse2D" : ["GoostGeometry2D", "PolyNode2D"],
-    "PolyOffset2D" : "PolyOffsetParameters2D",
-    "PolyPath2D" : ["PolyOffset2D", "PolyOffsetParameters2D"],
-    "PolyRectangle2D" : "PolyNode2D",
-    "PolyShape2D" : "PolyNode2D",
-    "PolyCollisionShape2D" : ["PolyShape2D", "PolyNode2D"],
-    "Random2D" : ["Random", "GoostGeometry2D"],
+    "GoostEngine": "InvokeState",
+    "GoostGeometry2D": ["PolyBoolean2D", "PolyDecomp2D", "PolyOffset2D"],
+    "LinkedList": "ListNode",
+    "Graph": ["GraphVertex", "GraphEdge", "GraphIterator"],
+    "GraphEdge": "GraphVertex",
+    "MixinScript": "Mixin",
+    "PolyBoolean2D": ["PolyBooleanParameters2D", "PolyNode2D"],
+    "PolyDecomp2D": "PolyDecompParameters2D",
+    "PolyCapsule2D": ["GoostGeometry2D", "PolyNode2D"],
+    "PolyCircle2D": ["GoostGeometry2D", "PolyNode2D"],
+    "PolyEllipse2D": ["GoostGeometry2D", "PolyNode2D"],
+    "PolyOffset2D": "PolyOffsetParameters2D",
+    "PolyPath2D": ["PolyOffset2D", "PolyOffsetParameters2D"],
+    "PolyRectangle2D": "PolyNode2D",
+    "PolyShape2D": "PolyNode2D",
+    "PolyCollisionShape2D": ["PolyShape2D", "PolyNode2D"],
+    "Random2D": ["Random", "GoostGeometry2D"],
 }
 for name, dependencies in class_dependencies.items():
     if isinstance(dependencies, str):
         dependencies = [dependencies]
     for d in dependencies:
         classes[name].add_depencency(classes[d])
-
 
 
 def resolve_dependency(goost_class):
@@ -264,6 +266,7 @@ def resolve_dependency(goost_class):
     for c in resolved:
         resolved_list.append(c.name)
     return resolved_list
+
 
 def get_classes(config={}, enabled_by_default=True, def_classes_disabled=[]):
     import sys
@@ -336,22 +339,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="goost")
     sub = parser.add_subparsers(dest="tool")
 
-    parser_config = sub.add_parser("config",
-            help="Configure Goost components and classes.")
+    parser_config = sub.add_parser("config", help="Configure Goost components and classes.")
     config_action = parser_config.add_mutually_exclusive_group()
 
-    config_action.add_argument("--enable", action="store_true",
-            help="Enable all components and classes by default.")
+    config_action.add_argument("--enable", action="store_true", help="Enable all components and classes by default.")
 
-    config_action.add_argument("--disable", action="store_true",
-            help="Disable all components and classes by default.")
+    config_action.add_argument("--disable", action="store_true", help="Disable all components and classes by default.")
 
-    config_action.add_argument("--update", action="store_true",
-            help="Update existing configuration (default).")
+    config_action.add_argument("--update", action="store_true", help="Update existing configuration (default).")
 
     parser_doc = sub.add_parser("doc", help="Generate Goost API documentation.")
-    parser_doc.add_argument("--generate-api", metavar="<path>", required=True,
-            help="Generates a list of classes per component in `.rst` format.")
+    parser_doc.add_argument(
+        "--generate-api",
+        metavar="<path>",
+        required=True,
+        help="Generates a list of classes per component in `.rst` format.",
+    )
 
     args = parser.parse_args()
 
@@ -369,7 +372,7 @@ if __name__ == "__main__":
         custom_exists = os.path.exists("custom.py")
 
         def write_config():
-            scons_options = {} # The ones defined in SConstruct.
+            scons_options = {}  # The ones defined in SConstruct.
             components_config = {}
             components_enabled_by_default = enable_by_default
             classes_config = {}
@@ -378,9 +381,15 @@ if __name__ == "__main__":
             if must_update_config:
                 try:
                     import custom
+
                     custom_attributes = [item for item in dir(custom) if not item.startswith("__")]
                     for attr in custom_attributes:
-                        if attr in ["components", "components_enabled_by_default", "classes", "classes_enabled_by_default"]:
+                        if attr in [
+                            "components",
+                            "components_enabled_by_default",
+                            "classes",
+                            "classes_enabled_by_default",
+                        ]:
                             continue
                         scons_options[attr] = getattr(custom, attr)
 
@@ -405,12 +414,14 @@ if __name__ == "__main__":
                         classes_enabled_by_default = custom.classes_enabled_by_default
 
                 except ImportError:
-                    pass # Does not exist yet.
+                    pass  # Does not exist yet.
                 except SyntaxError as e:
                     print("Goost: " + str(e))
+
                     def skip_and_exit():
                         print("Goost: Skipping configuration.")
                         sys.exit(255)
+
                     try:
                         answer = input("Would you like to overwrite `custom.py`? (y/N): ")
                         if not answer or answer.lower() == "n":
@@ -452,7 +463,7 @@ if __name__ == "__main__":
                 components_max_length = len(max(components_config.keys(), key=len))
                 for name, enabled in sorted(components_config.items()):
                     # Write aligned, makes it easier to edit.
-                    f.write('    %-0*s %s,\n' % (components_max_length + 3, '"%s":' %  name, enabled))
+                    f.write("    %-0*s %s,\n" % (components_max_length + 3, '"%s":' % name, enabled))
                 f.write("}\n")
                 f.write("\n")
 
@@ -468,18 +479,21 @@ if __name__ == "__main__":
                         if i < len(class_components) - 1:
                             comps += " > "
                     # Write aligned, makes it easier to edit.
-                    f.write('    %-0*s %s,  # %s\n' % (classes_max_length + 3, '"%s":' %  name, enabled, comps))
+                    f.write("    %-0*s %s,  # %s\n" % (classes_max_length + 3, '"%s":' % name, enabled, comps))
                 f.write("}\n")
 
                 # Add links to each of the class in the Goost API documentation.
                 def write_row_line(f):
                     f.write("#" + "=" * 119 + "\n")
+
                 f.write("\n")
                 write_row_line(f)
                 f.write("# Goost API:\n")
                 write_row_line(f)
                 for name in classes_config:
-                    f.write("# %-0*s" % (classes_max_length + 1, name) + doc_url + "classes/class_%s.html\n" % name.lower())
+                    f.write(
+                        "# %-0*s" % (classes_max_length + 1, name) + doc_url + "classes/class_%s.html\n" % name.lower()
+                    )
                 write_row_line(f)
 
             return update_count
@@ -529,15 +543,20 @@ if __name__ == "__main__":
             print("Please run `scons` command first.")
             sys.exit(255)
 
-        subprocess.run([sys.executable,
-            "godot/doc/tools/make_rst.py",
-            "godot/doc/classes",
-            "godot/modules",
-            "doc",
-            "modules",
-            "--output", output_path,
-            "--filter", "^(?!.*godot)",
-        ])
+        subprocess.run(
+            [
+                sys.executable,
+                "godot/doc/tools/make_rst.py",
+                "godot/doc/classes",
+                "godot/modules",
+                "doc",
+                "modules",
+                "--output",
+                output_path,
+                "--filter",
+                "^(?!.*godot)",
+            ]
+        )
 
         print("Generating Goost API per component... ")
         with open(os.path.join(output_path, "index.rst"), "w") as f:
@@ -551,9 +570,11 @@ if __name__ == "__main__":
             f.write("\n")
             f.write("This is a list of all classes provided by Goost components.\n")
             f.write("\n")
-            f.write("All components are enabled by default, unless overridden via command-line or\n"
-                    "configuration file, please refer to :ref:`doc_configuring_the_build` page for\n"
-                    "further instructions.\n")
+            f.write(
+                "All components are enabled by default, unless overridden via command-line or\n"
+                "configuration file, please refer to :ref:`doc_configuring_the_build` page for\n"
+                "further instructions.\n"
+            )
             f.write("\n")
             for component in sorted(get_component_list()):
                 class_list = sorted(get_component_classes(component))
@@ -600,10 +621,10 @@ if __name__ == "__main__":
                 f.write("\n")
                 f.write(".. code-block:: shell\n")
                 f.write("\n")
-                f.write("    # Disable \"%s\" component.\n" % get_component_readable_name(component))
+                f.write('    # Disable "%s" component.\n' % get_component_readable_name(component))
                 f.write("    scons goost_%s_enabled=no\n" % component)
                 f.write("\n")
-                f.write("    # Enable \"%s\" component, disable all others.\n" % get_component_readable_name(component))
+                f.write('    # Enable "%s" component, disable all others.\n' % get_component_readable_name(component))
                 f.write("    scons goost_components_enabled=no goost_%s_enabled=yes\n" % component)
                 f.write("\n")
 

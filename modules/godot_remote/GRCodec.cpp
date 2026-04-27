@@ -406,9 +406,9 @@ Error GRCodecJpegTurbo::decompress(const PoolByteArray &compressed_data, Ref<Ima
 // GRCodecH264 — OpenH264 with dynamic loading
 // =========================================================================
 
-#include "deps/openh264/include/codec_api.h"
-#include "deps/openh264/include/codec_app_def.h"
-#include "deps/openh264/include/codec_def.h"
+#include "thirdparty/openh264/include/codec_api.h"
+#include "thirdparty/openh264/include/codec_app_def.h"
+#include "thirdparty/openh264/include/codec_def.h"
 
 // Function pointer typedefs matching the OpenH264 C API
 typedef int (*CreateEncoderFunc)(ISVCEncoder **ppEncoder);

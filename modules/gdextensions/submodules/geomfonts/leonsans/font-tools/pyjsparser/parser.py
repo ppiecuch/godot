@@ -656,7 +656,7 @@ class PyJsParser:
                     elif ch == "f":
                         st += "\f"
                     elif ch == "v":
-                        st += "\x0B"
+                        st += "\x0b"
                     # elif ch in '89':
                     #    self.throwUnexpectedToken() # again with throw....
                     else:

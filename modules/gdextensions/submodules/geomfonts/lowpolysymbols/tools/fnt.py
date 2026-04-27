@@ -211,11 +211,7 @@ def main():
             local_i0 = i0 - obj["vert_start"]
             local_i1 = i1 - obj["vert_start"]
             local_i2 = i2 - obj["vert_start"]
-            if (
-                0 <= local_i0 < len(norm_verts)
-                and 0 <= local_i1 < len(norm_verts)
-                and 0 <= local_i2 < len(norm_verts)
-            ):
+            if 0 <= local_i0 < len(norm_verts) and 0 <= local_i1 < len(norm_verts) and 0 <= local_i2 < len(norm_verts):
                 tri_stream.append(norm_verts[local_i0])
                 tri_stream.append(norm_verts[local_i1])
                 tri_stream.append(norm_verts[local_i2])
@@ -329,12 +325,9 @@ def main():
         % (sum(1 for g in glyph_data if g is not None), totalsize, totalsize // 3),
         file=sys.stderr,
     )
-    assigned = [
-        i for i in range(NUM_GLYPHS) if glyph_data[i] is not None and sizes[i] > 0
-    ]
+    assigned = [i for i in range(NUM_GLYPHS) if glyph_data[i] is not None and sizes[i] > 0]
     print(
-        "// Assigned glyphs: %s"
-        % " ".join(chr(c) if 32 < c < 127 else "(%d)" % c for c in assigned),
+        "// Assigned glyphs: %s" % " ".join(chr(c) if 32 < c < 127 else "(%d)" % c for c in assigned),
         file=sys.stderr,
     )
 

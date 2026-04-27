@@ -30,6 +30,7 @@ import itertools
 # communicate more gracefully?
 __COMPILATION_DB_ENTRIES = []
 
+
 # We make no effort to avoid rebuilding the entries. Someday, perhaps we could and even
 # integrate with the cache, but there doesn't seem to be much call for it.
 class __CompilationDbNode(SCons.Node.Python.Value):

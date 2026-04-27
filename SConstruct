@@ -584,11 +584,13 @@ if selected_platform in platform_list:
         # compile flags if no -std is specified.
         env.Prepend(CFLAGS=["-std=gnu11"])
         env.Prepend(CXXFLAGS=["-std=gnu++17"])
-        env.Append(CPPDEFINES=[
-            "_LIBCPP_DISABLE_DEPRECATION_WARNINGS", 
-            "_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION", 
-            "_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR"
-        ])        
+        env.Append(
+            CPPDEFINES=[
+                "_LIBCPP_DISABLE_DEPRECATION_WARNINGS",
+                "_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION",
+                "_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR",
+            ]
+        )
     else:
         # MSVC doesn't have clear C standard support, /std only covers C++.
         # We apply it to CCFLAGS (both C and C++ code) in case it impacts C features.
