@@ -174,6 +174,9 @@ struct _NO_DISCARD_CLASS_ Vector2 {
 
 	Vector2 rotated_around(const Vector2 &p_origin, real_t p_radians) const;
 	Vector2 rotated(real_t p_by) const;
+	_FORCE_INLINE_ Vector2 from_polar(real_t p_length, real_t p_angle) const {
+		return Vector2(p_length * Math::cos(p_angle), p_length * Math::sin(p_angle));
+	}
 	_FORCE_INLINE_ Vector2 orthogonal() const {
 		return Vector2(y, -x);
 	}

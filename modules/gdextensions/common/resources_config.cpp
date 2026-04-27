@@ -44,6 +44,10 @@
 //   axe_surf = Mesh {
 //     file = data/gfx/pickaxe.png
 //   }
+//   font = Font {
+//     file = res/fonts/font.ttf
+//     size = 16
+//   }
 // }
 
 #include "resources_config.h"
@@ -51,6 +55,7 @@
 #include "core/io/json.h"
 #include "core/io/resource_loader.h"
 #include "core/os/file_access.h"
+#include "scene/resources/dynamic_font.h"
 
 #ifdef DOCTEST
 #include "doctest/doctest.h"
@@ -237,6 +242,44 @@ void Resources::load_config() {
 	}
 }
 
+static RES _load_font(const ObjectNode &p_node) {
+	ERR_FAIL_COND_V_MSG(!p_node.attribs.has("file"), RES(),
+			"Font node '" + p_node.name + "' missing required 'file' attribute.");
+
+	const String file = p_node.attribs["file"].value;
+	Ref<DynamicFontData> font_data = ResourceLoader::load(file, "DynamicFontData");
+	ERR_FAIL_COND_V_MSG(!font_data.is_valid(), RES(),
+			"Failed to load font data from: " + file);
+
+	Ref<DynamicFont> font;
+	font.instance();
+	font->set_font_data(font_data);
+
+	if (p_node.attribs.has("size")) {
+		font->set_size(p_node.attribs["size"].value.to_int());
+	}
+	if (p_node.attribs.has("outline_size")) {
+		font->set_outline_size(p_node.attribs["outline_size"].value.to_int());
+	}
+	if (p_node.attribs.has("outline_color")) {
+		font->set_outline_color(Color::html(p_node.attribs["outline_color"].value));
+	}
+	if (p_node.attribs.has("extra_spacing_top")) {
+		font->set_spacing(DynamicFont::SPACING_TOP, p_node.attribs["extra_spacing_top"].value.to_int());
+	}
+	if (p_node.attribs.has("extra_spacing_bottom")) {
+		font->set_spacing(DynamicFont::SPACING_BOTTOM, p_node.attribs["extra_spacing_bottom"].value.to_int());
+	}
+	if (p_node.attribs.has("extra_spacing_char")) {
+		font->set_spacing(DynamicFont::SPACING_CHAR, p_node.attribs["extra_spacing_char"].value.to_int());
+	}
+	if (p_node.attribs.has("extra_spacing_space")) {
+		font->set_spacing(DynamicFont::SPACING_SPACE, p_node.attribs["extra_spacing_space"].value.to_int());
+	}
+
+	return font;
+}
+
 RES Resources::get_resource(const String &p_res_name) {
 	if (!loaded) {
 		load_config();
@@ -257,6 +300,11 @@ RES Resources::get_resource(const String &p_res_name) {
 		ERR_FAIL_COND_V_MSG(res_path.empty(), RES(), "Resource not found: " + p_res_name);
 		_resources_loaded.insert(p_res_name, Pair<String, String>(res_path, res_hint));
 	}
+	if (res_hint == "Font" || res_hint == "DynamicFont") {
+		const ObjectNode &font_node = config_root.get(p_res_name);
+		return _load_font(font_node);
+	}
+
 	return ResourceLoader::load(res_path, res_hint);
 }
 
@@ -707,6 +755,96 @@ TEST_SUITE("resources_config") {
 		// UI section
 		const ObjectNode &font = root.get("ui.font");
 		CHECK(font.value == "res://fonts/main.ttf");
+	}
+	// -----------------------------------------------------------------------
+	// Font entity
+	// -----------------------------------------------------------------------
+
+	TEST_CASE("Parser: Font entity is parsed with file attribute") {
+		String err;
+		String input =
+				"font = Font {\n"
+				"  file = res/fonts/font.ttf\n"
+				"}";
+		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		CHECK(err.empty());
+		REQUIRE(root.attribs.has("font"));
+		const ObjectNode &font = root.attribs["font"];
+		CHECK(font.value == "Font");
+		CHECK(font.attribs["file"].value == "res/fonts/font.ttf");
+	}
+
+	TEST_CASE("Parser: Font entity with size attribute") {
+		String err;
+		String input =
+				"font = Font {\n"
+				"  file = res/fonts/font.ttf\n"
+				"  size = 16\n"
+				"}";
+		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		CHECK(err.empty());
+		const ObjectNode &font = root.attribs["font"];
+		CHECK(font.value == "Font");
+		CHECK(font.attribs["file"].value == "res/fonts/font.ttf");
+		CHECK(font.attribs["size"].value == "16");
+	}
+
+	TEST_CASE("Parser: Font entity with all spacing/outline attributes") {
+		String err;
+		String input =
+				"font = Font {\n"
+				"  file = res/fonts/font.ttf\n"
+				"  size = 24\n"
+				"  outline_size = 2\n"
+				"  outline_color = ff0000ff\n"
+				"  extra_spacing_top = 1\n"
+				"  extra_spacing_bottom = 2\n"
+				"  extra_spacing_char = 0\n"
+				"  extra_spacing_space = 4\n"
+				"}";
+		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		CHECK(err.empty());
+		const ObjectNode &font = root.attribs["font"];
+		CHECK(font.value == "Font");
+		CHECK(font.attribs.size() == 8);
+		CHECK(font.attribs["size"].value == "24");
+		CHECK(font.attribs["outline_size"].value == "2");
+		CHECK(font.attribs["outline_color"].value == "ff0000ff");
+		CHECK(font.attribs["extra_spacing_top"].value == "1");
+		CHECK(font.attribs["extra_spacing_bottom"].value == "2");
+		CHECK(font.attribs["extra_spacing_char"].value == "0");
+		CHECK(font.attribs["extra_spacing_space"].value == "4");
+	}
+
+	TEST_CASE("Parser: Font entity nested in section") {
+		String err;
+		String input =
+				"ui = Section {\n"
+				"  font = Font {\n"
+				"    file = res/fonts/main.ttf\n"
+				"    size = 24\n"
+				"  }\n"
+				"}";
+		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		CHECK(err.empty());
+		const ObjectNode &font = root.get("ui.font");
+		CHECK(font.value == "Font");
+		CHECK(font.attribs["file"].value == "res/fonts/main.ttf");
+		CHECK(font.attribs["size"].value == "24");
+	}
+
+	TEST_CASE("Parser: DynamicFont type label is also valid") {
+		String err;
+		String input =
+				"label_font = DynamicFont {\n"
+				"  file = res/fonts/label.ttf\n"
+				"  size = 12\n"
+				"}";
+		ObjectNode root = ObjectConfig::load_config_string(input, err);
+		CHECK(err.empty());
+		const ObjectNode &font = root.attribs["label_font"];
+		CHECK(font.value == "DynamicFont");
+		CHECK(font.attribs["file"].value == "res/fonts/label.ttf");
 	}
 }
 

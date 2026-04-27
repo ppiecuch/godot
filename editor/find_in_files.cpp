@@ -224,17 +224,39 @@ void FindInFiles::_scan_dir(String path, PoolStringArray &out_folders) {
 		return;
 	}
 
+	// Read .gdignore for this directory before listing entries.
+	// Plain marker (no match= line) → skip entire directory (legacy behavior).
+	// match= patterns → filter individual entries; directory itself is entered.
+	Vector<String> gdignore_patterns;
+	{
+		FileAccessRef gf = FileAccess::open(path.plus_file(".gdignore"), FileAccess::READ);
+		if (gf) {
+			bool has_match = false;
+			while (!gf->eof_reached()) {
+				String line = gf->get_line().strip_edges();
+				if (line.begins_with("match=")) {
+					Vector<String> parts = line.substr(6).split(",");
+					for (int i = 0; i < parts.size(); i++) {
+						String p = parts[i].strip_edges();
+						if (!p.empty()) {
+							gdignore_patterns.push_back(p);
+						}
+					}
+					has_match = true;
+				}
+			}
+			if (!has_match) {
+				return; // plain marker: skip whole directory
+			}
+		}
+	}
+
 	dir->list_dir_begin();
 
 	for (int i = 0; i < 1000; ++i) {
 		String file = dir->get_next();
 
 		if (file == "") {
-			break;
-		}
-
-		// If there is a .gdignore file in the directory, don't bother searching it
-		if (file == ".gdignore") {
 			break;
 		}
 
@@ -245,6 +267,20 @@ void FindInFiles::_scan_dir(String path, PoolStringArray &out_folders) {
 		}
 		if (dir->current_is_hidden()) {
 			continue;
+		}
+
+		// Filter by .gdignore match= patterns
+		if (!gdignore_patterns.empty()) {
+			bool skip = false;
+			for (int j = 0; j < gdignore_patterns.size(); j++) {
+				if (file.matchn(gdignore_patterns[j])) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip) {
+				continue;
+			}
 		}
 
 		if (dir->current_is_dir()) {

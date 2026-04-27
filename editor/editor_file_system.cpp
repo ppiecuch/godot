@@ -30,6 +30,13 @@
 
 #include "editor_file_system.h"
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "core/io/resource_importer.h"
 #include "core/io/resource_loader.h"
 #include "core/io/resource_saver.h"
@@ -649,13 +656,86 @@ EditorFileSystem::ScanProgress EditorFileSystem::ScanProgress::get_sub(int p_cur
 	return sp;
 }
 
-void EditorFileSystem::_scan_new_dir(EditorFileSystemDirectory *p_dir, DirAccess *da, const ScanProgress &p_progress) {
+// Parses lines from a .gdignore file for match= and recursive= directives.
+// Returns true if a match= line is found (selective filtering mode).
+// Returns false if no match= line exists (legacy whole-dir-skip mode).
+// r_patterns receives parsed glob patterns; r_recursive receives the flag (default true).
+static bool _parse_gdignore_lines(const Vector<String> &p_lines, Vector<String> &r_patterns, bool &r_recursive) {
+	r_patterns.clear();
+	r_recursive = true;
+	bool has_match = false;
+
+	for (int i = 0; i < p_lines.size(); i++) {
+		String line = p_lines[i].strip_edges();
+		if (line.begins_with("match=")) {
+			Vector<String> parts = line.substr(6).split(",");
+			for (int j = 0; j < parts.size(); j++) {
+				String p = parts[j].strip_edges();
+				if (!p.empty()) {
+					r_patterns.push_back(p);
+				}
+			}
+			has_match = true;
+		} else if (line.begins_with("recursive=")) {
+			String val = line.substr(10).strip_edges();
+			r_recursive = (val != "false" && val != "0");
+		}
+	}
+	return has_match;
+}
+
+// Opens p_dir_path/.gdignore and delegates to _parse_gdignore_lines.
+// Returns false if the file is absent or has no match= line (caller should skip whole dir).
+static bool _parse_gdignore(const String &p_dir_path, Vector<String> &r_patterns, bool &r_recursive) {
+	FileAccessRef f = FileAccess::open(p_dir_path.plus_file(".gdignore"), FileAccess::READ);
+	if (!f) {
+		r_patterns.clear();
+		r_recursive = true;
+		return false;
+	}
+	Vector<String> lines;
+	while (!f->eof_reached()) {
+		lines.push_back(f->get_line());
+	}
+	return _parse_gdignore_lines(lines, r_patterns, r_recursive);
+}
+
+// Returns true if p_name matches any of the glob patterns (case-insensitive).
+static bool _matches_gdignore_patterns(const String &p_name, const Vector<String> &p_patterns) {
+	for (int i = 0; i < p_patterns.size(); i++) {
+		if (p_name.matchn(p_patterns[i])) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void EditorFileSystem::_scan_new_dir(EditorFileSystemDirectory *p_dir, DirAccess *da, const ScanProgress &p_progress,
+		const Vector<String> &p_inherited_patterns) {
 	List<String> dirs;
 	List<String> files;
 
 	String cd = da->get_current_dir();
 
 	p_dir->modified_time = FileAccess::get_modified_time(cd);
+
+	// Read this directory's own .gdignore patterns and combine with inherited ones.
+	Vector<String> own_patterns;
+	bool own_recursive = true;
+	_parse_gdignore(cd, own_patterns, own_recursive);
+
+	Vector<String> effective_patterns = p_inherited_patterns;
+	for (int i = 0; i < own_patterns.size(); i++) {
+		effective_patterns.push_back(own_patterns[i]);
+	}
+
+	// Patterns to propagate into children: always carry inherited; carry own only if recursive=true.
+	Vector<String> child_inherited = p_inherited_patterns;
+	if (own_recursive) {
+		for (int i = 0; i < own_patterns.size(); i++) {
+			child_inherited.push_back(own_patterns[i]);
+		}
+	}
 
 	da->list_dir_begin();
 	while (true) {
@@ -673,6 +753,10 @@ void EditorFileSystem::_scan_new_dir(EditorFileSystemDirectory *p_dir, DirAccess
 				continue;
 			}
 
+			if (!effective_patterns.empty() && _matches_gdignore_patterns(f, effective_patterns)) {
+				continue;
+			}
+
 			if (_should_skip_directory(cd.plus_file(f))) {
 				continue;
 			}
@@ -680,6 +764,10 @@ void EditorFileSystem::_scan_new_dir(EditorFileSystemDirectory *p_dir, DirAccess
 			dirs.push_back(f);
 
 		} else {
+			if (!effective_patterns.empty() && _matches_gdignore_patterns(f, effective_patterns)) {
+				continue;
+			}
+
 			files.push_back(f);
 		}
 	}
@@ -704,7 +792,7 @@ void EditorFileSystem::_scan_new_dir(EditorFileSystemDirectory *p_dir, DirAccess
 				efd->parent = p_dir;
 				efd->name = E->get();
 
-				_scan_new_dir(efd, da, p_progress.get_sub(idx, total));
+				_scan_new_dir(efd, da, p_progress.get_sub(idx, total), child_inherited);
 
 				int idx2 = 0;
 				for (int i = 0; i < p_dir->subdirs.size(); i++) {
@@ -2010,9 +2098,15 @@ bool EditorFileSystem::_should_skip_directory(const String &p_path) {
 		return true;
 	}
 
-	if (FileAccess::exists(p_path.plus_file(".gdignore"))) { // skip if a `.gdignore` file is inside this
-		print_verbose("Skip " + p_path + " because of .gdignore exists");
-		return true;
+	if (FileAccess::exists(p_path.plus_file(".gdignore"))) {
+		Vector<String> patterns;
+		bool recursive;
+		if (!_parse_gdignore(p_path, patterns, recursive)) {
+			// Plain marker (no match= line): skip entire directory (legacy behavior)
+			print_verbose("Skip " + p_path + " because of .gdignore exists");
+			return true;
+		}
+		// Has match= patterns: enter the directory; filtering happens inside _scan_new_dir
 	}
 
 	return false;
@@ -2137,3 +2231,276 @@ EditorFileSystem::EditorFileSystem() {
 
 EditorFileSystem::~EditorFileSystem() {
 }
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#ifdef DOCTEST
+
+TEST_SUITE("editor_file_system.gdignore") {
+	// -----------------------------------------------------------------------
+	// _parse_gdignore_lines: basic parsing
+	// -----------------------------------------------------------------------
+
+	TEST_CASE("parse: empty input returns false (legacy skip-all mode)") {
+		Vector<String> patterns;
+		bool recursive;
+		bool result = _parse_gdignore_lines(Vector<String>(), patterns, recursive);
+		CHECK(result == false);
+		CHECK(patterns.size() == 0);
+		CHECK(recursive == true); // default
+	}
+
+	TEST_CASE("parse: plain marker (no match= line) returns false") {
+		Vector<String> lines;
+		lines.push_back("# just a marker");
+		Vector<String> patterns;
+		bool recursive;
+		bool result = _parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(result == false);
+		CHECK(patterns.size() == 0);
+	}
+
+	TEST_CASE("parse: match= line returns true with patterns") {
+		Vector<String> lines;
+		lines.push_back("match=*.xml,*.json,build");
+		Vector<String> patterns;
+		bool recursive;
+		bool result = _parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(result == true);
+		REQUIRE(patterns.size() == 3);
+		CHECK(patterns[0] == "*.xml");
+		CHECK(patterns[1] == "*.json");
+		CHECK(patterns[2] == "build");
+		CHECK(recursive == true); // default when not specified
+	}
+
+	TEST_CASE("parse: match= with whitespace around patterns is trimmed") {
+		Vector<String> lines;
+		lines.push_back("match= *.xml , *.json , build ");
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+		REQUIRE(patterns.size() == 3);
+		CHECK(patterns[0] == "*.xml");
+		CHECK(patterns[1] == "*.json");
+		CHECK(patterns[2] == "build");
+	}
+
+	TEST_CASE("parse: empty pattern entries are skipped") {
+		Vector<String> lines;
+		lines.push_back("match=*.xml,,*.json,");
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(patterns.size() == 2);
+		CHECK(patterns[0] == "*.xml");
+		CHECK(patterns[1] == "*.json");
+	}
+
+	TEST_CASE("parse: recursive=false sets flag") {
+		Vector<String> lines;
+		lines.push_back("match=*.xml");
+		lines.push_back("recursive=false");
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(recursive == false);
+	}
+
+	TEST_CASE("parse: recursive=0 sets flag to false") {
+		Vector<String> lines;
+		lines.push_back("match=*.xml");
+		lines.push_back("recursive=0");
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(recursive == false);
+	}
+
+	TEST_CASE("parse: recursive=true keeps flag true (explicit)") {
+		Vector<String> lines;
+		lines.push_back("match=*.xml");
+		lines.push_back("recursive=true");
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(recursive == true);
+	}
+
+	TEST_CASE("parse: recursive=1 keeps flag true") {
+		Vector<String> lines;
+		lines.push_back("match=*.xml");
+		lines.push_back("recursive=1");
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(recursive == true);
+	}
+
+	TEST_CASE("parse: match= and recursive= in any order") {
+		Vector<String> lines;
+		lines.push_back("recursive=false");
+		lines.push_back("match=*.bak,tmp");
+		Vector<String> patterns;
+		bool recursive;
+		bool result = _parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(result == true);
+		CHECK(recursive == false);
+		REQUIRE(patterns.size() == 2);
+		CHECK(patterns[0] == "*.bak");
+		CHECK(patterns[1] == "tmp");
+	}
+
+	TEST_CASE("parse: unknown lines are ignored") {
+		Vector<String> lines;
+		lines.push_back("# comment");
+		lines.push_back("match=*.log");
+		lines.push_back("someunknownkey=value");
+		Vector<String> patterns;
+		bool recursive;
+		bool result = _parse_gdignore_lines(lines, patterns, recursive);
+		CHECK(result == true);
+		CHECK(patterns.size() == 1);
+		CHECK(patterns[0] == "*.log");
+	}
+
+	TEST_CASE("parse: single pattern (no comma)") {
+		Vector<String> lines;
+		lines.push_back("match=build");
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+		REQUIRE(patterns.size() == 1);
+		CHECK(patterns[0] == "build");
+	}
+
+	// -----------------------------------------------------------------------
+	// _matches_gdignore_patterns: wildcard matching
+	// -----------------------------------------------------------------------
+
+	TEST_CASE("match: exact name matches") {
+		Vector<String> patterns;
+		patterns.push_back("build");
+		CHECK(_matches_gdignore_patterns("build", patterns) == true);
+		CHECK(_matches_gdignore_patterns("build2", patterns) == false);
+		CHECK(_matches_gdignore_patterns("mybuild", patterns) == false);
+	}
+
+	TEST_CASE("match: star extension matches") {
+		Vector<String> patterns;
+		patterns.push_back("*.xml");
+		CHECK(_matches_gdignore_patterns("config.xml", patterns) == true);
+		CHECK(_matches_gdignore_patterns("data.xml", patterns) == true);
+		CHECK(_matches_gdignore_patterns("config.json", patterns) == false);
+		CHECK(_matches_gdignore_patterns("xml", patterns) == false);
+	}
+
+	TEST_CASE("match: star prefix pattern") {
+		Vector<String> patterns;
+		patterns.push_back("tmp_*");
+		CHECK(_matches_gdignore_patterns("tmp_file", patterns) == true);
+		CHECK(_matches_gdignore_patterns("tmp_123.bin", patterns) == true);
+		CHECK(_matches_gdignore_patterns("file_tmp", patterns) == false);
+	}
+
+	TEST_CASE("match: question mark wildcard") {
+		Vector<String> patterns;
+		patterns.push_back("file?.txt");
+		CHECK(_matches_gdignore_patterns("file1.txt", patterns) == true);
+		CHECK(_matches_gdignore_patterns("fileA.txt", patterns) == true);
+		CHECK(_matches_gdignore_patterns("file12.txt", patterns) == false);
+		CHECK(_matches_gdignore_patterns("file.txt", patterns) == false);
+	}
+
+	TEST_CASE("match: case-insensitive") {
+		Vector<String> patterns;
+		patterns.push_back("*.XML");
+		CHECK(_matches_gdignore_patterns("config.xml", patterns) == true);
+		CHECK(_matches_gdignore_patterns("CONFIG.XML", patterns) == true);
+		CHECK(_matches_gdignore_patterns("Config.Xml", patterns) == true);
+	}
+
+	TEST_CASE("match: multiple patterns, any one matching returns true") {
+		Vector<String> patterns;
+		patterns.push_back("*.xml");
+		patterns.push_back("*.json");
+		patterns.push_back("build");
+		CHECK(_matches_gdignore_patterns("config.xml", patterns) == true);
+		CHECK(_matches_gdignore_patterns("data.json", patterns) == true);
+		CHECK(_matches_gdignore_patterns("build", patterns) == true);
+		CHECK(_matches_gdignore_patterns("icon.png", patterns) == false);
+		CHECK(_matches_gdignore_patterns("script.gd", patterns) == false);
+	}
+
+	TEST_CASE("match: empty pattern list never matches") {
+		Vector<String> empty;
+		CHECK(_matches_gdignore_patterns("anything.xml", empty) == false);
+		CHECK(_matches_gdignore_patterns("build", empty) == false);
+	}
+
+	TEST_CASE("match: star-only pattern matches everything") {
+		Vector<String> patterns;
+		patterns.push_back("*");
+		CHECK(_matches_gdignore_patterns("file.gd", patterns) == true);
+		CHECK(_matches_gdignore_patterns("subdir", patterns) == true);
+		CHECK(_matches_gdignore_patterns("icon.png", patterns) == true);
+	}
+
+	// -----------------------------------------------------------------------
+	// Integration: parse then match
+	// -----------------------------------------------------------------------
+
+	TEST_CASE("integration: parsed patterns correctly filter files") {
+		Vector<String> lines;
+		lines.push_back("match=*.xml,*.json,build");
+		lines.push_back("recursive=false");
+
+		Vector<String> patterns;
+		bool recursive;
+		bool result = _parse_gdignore_lines(lines, patterns, recursive);
+
+		CHECK(result == true);
+		CHECK(recursive == false);
+
+		// Should be excluded
+		CHECK(_matches_gdignore_patterns("config.xml", patterns) == true);
+		CHECK(_matches_gdignore_patterns("data.json", patterns) == true);
+		CHECK(_matches_gdignore_patterns("build", patterns) == true);
+		// Should NOT be excluded
+		CHECK(_matches_gdignore_patterns("icon.png", patterns) == false);
+		CHECK(_matches_gdignore_patterns("script.gd", patterns) == false);
+		CHECK(_matches_gdignore_patterns("scene.tscn", patterns) == false);
+	}
+
+	TEST_CASE("integration: recursive default true when not specified") {
+		Vector<String> lines;
+		lines.push_back("match=*.log");
+
+		Vector<String> patterns;
+		bool recursive;
+		_parse_gdignore_lines(lines, patterns, recursive);
+
+		CHECK(recursive == true);
+		CHECK(_matches_gdignore_patterns("error.log", patterns) == true);
+		CHECK(_matches_gdignore_patterns("error.txt", patterns) == false);
+	}
+
+	TEST_CASE("integration: whitespace-only match= value yields no patterns (legacy mode)") {
+		Vector<String> lines;
+		lines.push_back("match=  ,  ,  ");
+
+		Vector<String> patterns;
+		bool recursive;
+		bool result = _parse_gdignore_lines(lines, patterns, recursive);
+
+		// match= line is present (has_match=true) but all patterns are empty
+		CHECK(result == true);
+		CHECK(patterns.size() == 0);
+		// Nothing matches empty pattern list
+		CHECK(_matches_gdignore_patterns("anything.xml", patterns) == false);
+	}
+}
+
+#endif // DOCTEST

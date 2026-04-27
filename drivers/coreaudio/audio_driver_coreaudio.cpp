@@ -116,7 +116,20 @@ Error AudioDriverCoreAudio::init() {
 			break;
 	}
 
-	mix_rate = GLOBAL_GET("audio/mix_rate");
+	// Prefer the device's native sample rate to avoid CoreAudio resampling, which
+	// can cause crackling when the project rate differs from the hardware rate.
+	// Common case: project defaults to 44100 Hz but macOS devices run at 48000 Hz.
+	// If the device reports a valid rate, use it; otherwise fall back to project setting.
+	{
+		Float64 device_rate = strdesc.mSampleRate;
+		int project_rate = GLOBAL_GET("audio/mix_rate");
+		if (device_rate > 0.0 && device_rate != project_rate) {
+			mix_rate = (int)device_rate;
+			print_verbose("CoreAudio: using device native sample rate " + itos(mix_rate) + " Hz (project setting: " + itos(project_rate) + " Hz)");
+		} else {
+			mix_rate = project_rate;
+		}
+	}
 
 	memset(&strdesc, 0, sizeof(strdesc));
 	strdesc.mFormatID = kAudioFormatLinearPCM;
@@ -132,6 +145,16 @@ Error AudioDriverCoreAudio::init() {
 	ERR_FAIL_COND_V(result != noErr, FAILED);
 
 	int latency = GLOBAL_GET("audio/output_latency");
+	// macOS override: default 50ms to avoid crackling during CPU spikes (e.g. scene loads).
+	// Overrides the base output_latency only when it's still at the engine default.
+#ifdef OSX_ENABLED
+	{
+		int osx_latency = GLOBAL_GET("audio/output_latency.osx");
+		if (osx_latency > latency) {
+			latency = osx_latency;
+		}
+	}
+#endif
 	// Sample rate is independent of channels (ref: https://stackoverflow.com/questions/11048825/audio-sample-frequency-rely-on-channels)
 	buffer_frames = closest_power_of_2(latency * mix_rate / 1000);
 

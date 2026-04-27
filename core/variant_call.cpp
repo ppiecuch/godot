@@ -392,6 +392,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM1R(Vector2, angle_to);
 	VCALL_LOCALMEM1R(Vector2, angle_to_point);
 	VCALL_LOCALMEM1R(Vector2, direction_to);
+	VCALL_LOCALMEM2R(Vector2, from_polar);
 	VCALL_LOCALMEM2R(Vector2, linear_interpolate);
 	VCALL_LOCALMEM2R(Vector2, slerp);
 	VCALL_LOCALMEM4R(Vector2, cubic_interpolate);
@@ -1812,6 +1813,7 @@ void register_variant_methods() {
 	ADDFUNC0R(STRING, POOL_BYTE_ARRAY, String, to_utf8, varray());
 	ADDFUNC0R(STRING, POOL_BYTE_ARRAY, String, to_wchar, varray());
 
+	ADDFUNC2R(VECTOR2, VECTOR2, Vector2, from_polar, REAL, "length", REAL, "angle", varray());
 	ADDFUNC0R(VECTOR2, REAL, Vector2, angle, varray());
 	ADDFUNC1R(VECTOR2, REAL, Vector2, angle_to, VECTOR2, "to", varray());
 	ADDFUNC1R(VECTOR2, REAL, Vector2, angle_to_point, VECTOR2, "to", varray());

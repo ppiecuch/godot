@@ -324,6 +324,7 @@ void AudioDriverManager::initialize(int p_driver) {
 	GLOBAL_DEF_RST("audio/mix_rate", DEFAULT_MIX_RATE);
 	GLOBAL_DEF_RST("audio/mix_rate.web", 0); // Safer default output_latency for web (use browser default).
 	GLOBAL_DEF_RST("audio/output_latency", DEFAULT_OUTPUT_LATENCY);
+	GLOBAL_DEF_RST("audio/output_latency.osx", 50); // Higher default for macOS to avoid crackling during CPU spikes.
 	GLOBAL_DEF_RST("audio/output_latency.web", 50); // Safer default output_latency for web.
 
 	// These Project settings are only actually set and used outside the editor.

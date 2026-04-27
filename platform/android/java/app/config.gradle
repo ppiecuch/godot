@@ -209,6 +209,13 @@ ext.getExportPath = {
     if (exportPath == null || exportPath.isEmpty()) {
         exportPath = "."
     }
+    // Godot passes a file: URI (e.g. "file:/path/to/dir"); strip the scheme so
+    // Gradle's Copy task gets a plain filesystem path, not a URI string.
+    if (exportPath.startsWith("file://")) {
+        exportPath = exportPath.substring(7)
+    } else if (exportPath.startsWith("file:")) {
+        exportPath = exportPath.substring(5)
+    }
     return exportPath
 }
 

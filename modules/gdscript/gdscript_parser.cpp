@@ -3250,6 +3250,17 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 
 				tokenizer->advance();
 
+				DataType iter_type;
+
+				// Optional type annotation: for x: Type in container
+				// _parse_type() advances past ':' itself, so pass it the colon token.
+				if (tokenizer->get_token() == GDScriptTokenizer::TK_COLON) {
+					if (!_parse_type(iter_type)) {
+						_set_error("Expected a type after \":\" in for statement.");
+						return;
+					}
+				}
+
 				if (tokenizer->get_token() != GDScriptTokenizer::TK_OP_IN) {
 					_set_error("\"in\" expected after identifier.");
 					return;
@@ -3264,8 +3275,6 @@ void GDScriptParser::_parse_block(BlockNode *p_block, bool p_static) {
 					}
 					return;
 				}
-
-				DataType iter_type;
 
 				if (container->type == Node::TYPE_OPERATOR) {
 					OperatorNode *op = static_cast<OperatorNode *>(container);

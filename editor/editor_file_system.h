@@ -199,7 +199,8 @@ class EditorFileSystem : public Node {
 	Set<String> valid_extensions;
 	Set<String> import_extensions;
 
-	void _scan_new_dir(EditorFileSystemDirectory *p_dir, DirAccess *da, const ScanProgress &p_progress);
+	void _scan_new_dir(EditorFileSystemDirectory *p_dir, DirAccess *da, const ScanProgress &p_progress,
+			const Vector<String> &p_inherited_patterns = Vector<String>());
 
 	Thread thread_sources;
 	bool scanning_changes;
