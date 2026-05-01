@@ -38,6 +38,15 @@
 class ScrollContainer : public Container {
 	GDCLASS(ScrollContainer, Container);
 
+public:
+	enum ScrollMode {
+		SCROLL_MODE_DISABLED = 0,
+		SCROLL_MODE_AUTO = 1,
+		SCROLL_MODE_SHOW_ALWAYS = 2,
+		SCROLL_MODE_SHOW_NEVER = 3,
+	};
+
+private:
 	HScrollBar *h_scroll;
 	VScrollBar *v_scroll;
 
@@ -59,6 +68,8 @@ class ScrollContainer : public Container {
 
 	bool scroll_h;
 	bool scroll_v;
+	ScrollMode horizontal_scroll_mode;
+	ScrollMode vertical_scroll_mode;
 
 	int deadzone;
 	bool follow_focus;
@@ -91,6 +102,12 @@ public:
 	void set_enable_v_scroll(bool p_enable);
 	bool is_v_scroll_enabled() const;
 
+	void set_horizontal_scroll_mode(ScrollMode p_mode);
+	ScrollMode get_horizontal_scroll_mode() const;
+
+	void set_vertical_scroll_mode(ScrollMode p_mode);
+	ScrollMode get_vertical_scroll_mode() const;
+
 	int get_deadzone() const;
 	void set_deadzone(int p_deadzone);
 
@@ -107,5 +124,7 @@ public:
 
 	ScrollContainer();
 };
+
+VARIANT_ENUM_CAST(ScrollContainer::ScrollMode);
 
 #endif // SCROLL_CONTAINER_H

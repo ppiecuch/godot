@@ -97,4 +97,5 @@ void CenterContainer::_bind_methods() {
 
 CenterContainer::CenterContainer() {
 	use_top_left = false;
+	set_mouse_filter(MOUSE_FILTER_PASS);
 }

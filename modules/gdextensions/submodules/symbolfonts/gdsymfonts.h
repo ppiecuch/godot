@@ -56,7 +56,8 @@ public:
 		FONT_FORK_AWESOME,
 		FONT_CODICONS,
 		FONT_LUCIDE,
-		FONT_MATERIAL_SYMBOLS,
+		// Material Symbols deliberately not listed here — owned by the
+		// `material_symbols` submodule (axis-aware variable-font rasterisation).
 		FONT_TYPE_COUNT,
 	};
 

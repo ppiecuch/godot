@@ -2,5 +2,5 @@
 /*  register_types.h                                                     */
 /*************************************************************************/
 
-void register_gd_svg_mesh_types();
-void unregister_gd_svg_mesh_types();
+void register_svg_mesh_types();
+void unregister_svg_mesh_types();

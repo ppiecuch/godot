@@ -105,4 +105,5 @@ void PanelContainer::_notification(int p_what) {
 }
 
 PanelContainer::PanelContainer() {
+	set_mouse_filter(MOUSE_FILTER_PASS);
 }

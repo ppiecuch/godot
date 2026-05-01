@@ -419,6 +419,16 @@ void ScrollContainer::update_scrollbars() {
 
 	bool hide_scroll_v = !scroll_v || min.height <= size.height;
 	bool hide_scroll_h = !scroll_h || min.width <= size.width;
+	if (vertical_scroll_mode == SCROLL_MODE_SHOW_ALWAYS) {
+		hide_scroll_v = false;
+	} else if (vertical_scroll_mode == SCROLL_MODE_SHOW_NEVER) {
+		hide_scroll_v = true;
+	}
+	if (horizontal_scroll_mode == SCROLL_MODE_SHOW_ALWAYS) {
+		hide_scroll_h = false;
+	} else if (horizontal_scroll_mode == SCROLL_MODE_SHOW_NEVER) {
+		hide_scroll_h = true;
+	}
 
 	v_scroll->set_max(min.height);
 	if (hide_scroll_v) {
@@ -466,13 +476,7 @@ void ScrollContainer::_scroll_moved(float) {
 };
 
 void ScrollContainer::set_enable_h_scroll(bool p_enable) {
-	if (scroll_h == p_enable) {
-		return;
-	}
-
-	scroll_h = p_enable;
-	minimum_size_changed();
-	queue_sort();
+	set_horizontal_scroll_mode(p_enable ? SCROLL_MODE_AUTO : SCROLL_MODE_DISABLED);
 }
 
 bool ScrollContainer::is_h_scroll_enabled() const {
@@ -480,17 +484,39 @@ bool ScrollContainer::is_h_scroll_enabled() const {
 }
 
 void ScrollContainer::set_enable_v_scroll(bool p_enable) {
-	if (scroll_v == p_enable) {
-		return;
-	}
-
-	scroll_v = p_enable;
-	minimum_size_changed();
-	queue_sort();
+	set_vertical_scroll_mode(p_enable ? SCROLL_MODE_AUTO : SCROLL_MODE_DISABLED);
 }
 
 bool ScrollContainer::is_v_scroll_enabled() const {
 	return scroll_v;
+}
+
+void ScrollContainer::set_horizontal_scroll_mode(ScrollMode p_mode) {
+	if (horizontal_scroll_mode == p_mode) {
+		return;
+	}
+	horizontal_scroll_mode = p_mode;
+	scroll_h = (p_mode != SCROLL_MODE_DISABLED);
+	minimum_size_changed();
+	queue_sort();
+}
+
+ScrollContainer::ScrollMode ScrollContainer::get_horizontal_scroll_mode() const {
+	return horizontal_scroll_mode;
+}
+
+void ScrollContainer::set_vertical_scroll_mode(ScrollMode p_mode) {
+	if (vertical_scroll_mode == p_mode) {
+		return;
+	}
+	vertical_scroll_mode = p_mode;
+	scroll_v = (p_mode != SCROLL_MODE_DISABLED);
+	minimum_size_changed();
+	queue_sort();
+}
+
+ScrollContainer::ScrollMode ScrollContainer::get_vertical_scroll_mode() const {
+	return vertical_scroll_mode;
 }
 
 int ScrollContainer::get_v_scroll() const {
@@ -571,6 +597,10 @@ void ScrollContainer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_h_scroll_enabled"), &ScrollContainer::is_h_scroll_enabled);
 	ClassDB::bind_method(D_METHOD("set_enable_v_scroll", "enable"), &ScrollContainer::set_enable_v_scroll);
 	ClassDB::bind_method(D_METHOD("is_v_scroll_enabled"), &ScrollContainer::is_v_scroll_enabled);
+	ClassDB::bind_method(D_METHOD("set_horizontal_scroll_mode", "mode"), &ScrollContainer::set_horizontal_scroll_mode);
+	ClassDB::bind_method(D_METHOD("get_horizontal_scroll_mode"), &ScrollContainer::get_horizontal_scroll_mode);
+	ClassDB::bind_method(D_METHOD("set_vertical_scroll_mode", "mode"), &ScrollContainer::set_vertical_scroll_mode);
+	ClassDB::bind_method(D_METHOD("get_vertical_scroll_mode"), &ScrollContainer::get_vertical_scroll_mode);
 	ClassDB::bind_method(D_METHOD("_update_scrollbar_position"), &ScrollContainer::_update_scrollbar_position);
 	ClassDB::bind_method(D_METHOD("set_h_scroll", "value"), &ScrollContainer::set_h_scroll);
 	ClassDB::bind_method(D_METHOD("get_h_scroll"), &ScrollContainer::get_h_scroll);
@@ -596,8 +626,15 @@ void ScrollContainer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "scroll_vertical_enabled"), "set_enable_v_scroll", "is_v_scroll_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "scroll_vertical"), "set_v_scroll", "get_v_scroll");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "scroll_deadzone"), "set_deadzone", "get_deadzone");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "horizontal_scroll_mode", PROPERTY_HINT_ENUM, "Disabled,Auto,Show Always,Show Never"), "set_horizontal_scroll_mode", "get_horizontal_scroll_mode");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "vertical_scroll_mode", PROPERTY_HINT_ENUM, "Disabled,Auto,Show Always,Show Never"), "set_vertical_scroll_mode", "get_vertical_scroll_mode");
 
-	GLOBAL_DEF("gui/common/default_scroll_deadzone", 0);
+	BIND_ENUM_CONSTANT(SCROLL_MODE_DISABLED);
+	BIND_ENUM_CONSTANT(SCROLL_MODE_AUTO);
+	BIND_ENUM_CONSTANT(SCROLL_MODE_SHOW_ALWAYS);
+	BIND_ENUM_CONSTANT(SCROLL_MODE_SHOW_NEVER);
+
+	GLOBAL_DEF("gui/common/default_scroll_deadzone", 12);
 };
 
 ScrollContainer::ScrollContainer() {
@@ -617,6 +654,8 @@ ScrollContainer::ScrollContainer() {
 	beyond_deadzone = false;
 	scroll_h = true;
 	scroll_v = true;
+	horizontal_scroll_mode = SCROLL_MODE_AUTO;
+	vertical_scroll_mode = SCROLL_MODE_AUTO;
 
 	deadzone = GLOBAL_GET("gui/common/default_scroll_deadzone");
 	follow_focus = false;

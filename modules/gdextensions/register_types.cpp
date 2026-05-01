@@ -72,6 +72,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "core/dist_rand.h"
 #include "core/error_reporter.h"
 #include "core/godot_error_handler.h"
+#include "core/input_helper.h"
 #include "core/input_map_editor.h"
 #include "core/input_storage.h"
 #include "core/phantom.h"
@@ -279,6 +280,16 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #ifdef GDEXT_OPENSTEER_ENABLED
 #include "opensteer/gd_opensteer.h"
 #endif
+#ifdef GDEXT_OPENSYMBOLS_ENABLED
+#include "opensymbols/opensymbols.h"
+#endif
+#ifdef GDEXT_MATERIAL_SYMBOLS_ENABLED
+#include "material_symbols/material_symbols.h"
+#ifdef TOOLS_ENABLED
+#include "material_symbols/material_symbols_browser.h"
+#include "material_symbols/material_symbols_renderer.h"
+#endif
+#endif
 #ifdef GDEXT_SIMPLEAI_ENABLED
 #include "simpleai/gd_simple_ai.h"
 #endif
@@ -360,7 +371,7 @@ static Ref<ResourceLoaderJSONVector> resource_loader_jsonvector;
 #include "thorvg/svg_texture.h"
 #include <thorvg.h>
 
-static Ref<ImageLoaderThorSVG> image_loader_thor_svg;
+static ImageLoaderThorSVG *image_loader_thor_svg = nullptr;
 #endif
 
 #ifdef GDEXT_MESHLOD_ENABLED
@@ -450,6 +461,9 @@ static void editor_init_callback() {
 	editor->add_editor_plugin(memnew(ProcRockEditorPlugin(editor)));
 	ClassDB::register_class<RestApiTesterDock>();
 	editor->add_editor_plugin(memnew(RestApiTesterPlugin(editor)));
+#ifdef GDEXT_MATERIAL_SYMBOLS_ENABLED
+	editor->add_editor_plugin(memnew(MaterialSymbolsBrowserPlugin(editor)));
+#endif
 #ifdef GDEXT_MESHLOD_ENABLED
 	editor->add_editor_plugin(memnew(MeshOptimizePlugin(editor)));
 #endif
@@ -531,6 +545,7 @@ void register_gdextensions_types() {
 #ifndef ADVANCED_GUI_DISABLED
 	ClassDB::register_class<InputMapEditor>();
 #endif
+	ClassDB::register_class<InputHelper>();
 	ClassDB::register_class<InputStorage>();
 	ClassDB::register_class<InputStorageNode>();
 	ClassDB::register_class<IntNormal>();
@@ -592,6 +607,7 @@ void register_gdextensions_types() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tween2", memnew(Tween2)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("InputStorage", memnew(InputStorage)));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("InputHelper", memnew(InputHelper)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Tags", memnew(Tags)));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Blitter", memnew(Blitter)));
 #endif // GDEXT_CORE_ENABLED
@@ -923,15 +939,29 @@ void register_gdextensions_types() {
 #endif
 
 #ifdef GDEXT_THORVG_ENABLED
-#ifdef TOOLS_ENABLED
-	tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
-	if (tvg::Initializer::init(tvgEngine, 1) != tvg::Result::Success) {
-		return;
+	// ThorVG is initialised unconditionally — both editor and shipped games
+	// can use SVGTexture / ImageLoaderThorSVG / OpenSymbols at runtime.
+	{
+		tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
+		if (tvg::Initializer::init(tvgEngine, 1) != tvg::Result::Success) {
+			return;
+		}
+		image_loader_thor_svg = memnew(ImageLoaderThorSVG);
+		ImageLoader::add_image_format_loader(image_loader_thor_svg);
 	}
-	image_loader_thor_svg.instance();
-	ImageLoader::add_image_format_loader(image_loader_thor_svg);
-#endif
 	ClassDB::register_class<SVGTexture>();
+#endif
+
+#ifdef GDEXT_OPENSYMBOLS_ENABLED
+	ClassDB::register_class<OpenSymbols>();
+#endif
+
+#ifdef GDEXT_MATERIAL_SYMBOLS_ENABLED
+	ClassDB::register_class<MaterialSymbols>();
+#ifdef TOOLS_ENABLED
+	ClassDB::register_class<MaterialSymbolsBrowser>();
+	// EditorPlugin registration happens in editor_init_callback() below.
+#endif
 #endif
 
 #ifdef GDEXT_MESHLOD_ENABLED
@@ -1051,11 +1081,15 @@ void unregister_gdextensions_types() {
 	resource_loader_jsonvector.unref();
 #endif
 #ifdef GDEXT_THORVG_ENABLED
-	if (!image_loader_thor_svg.is_null()) {
+	if (image_loader_thor_svg) {
 		ImageLoader::remove_image_format_loader(image_loader_thor_svg);
-		image_loader_thor_svg.unref();
+		memdelete(image_loader_thor_svg);
+		image_loader_thor_svg = nullptr;
 		tvg::Initializer::term(tvg::CanvasEngine::Sw);
 	}
+#endif
+#ifdef GDEXT_MATERIAL_SYMBOLS_ENABLED
+	MaterialSymbolsRenderer::shutdown();
 #endif
 #ifdef GDEXT_SETTINGS_ENABLED
 	RemoveSingleton(Settings);

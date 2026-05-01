@@ -38,11 +38,22 @@ class ImageLoaderThorSVG : public ImageFormatLoader {
 
 	void _replace_color_property(const HashMap<Color, Color> &p_color_map, const String &p_prefix, String &r_string);
 
+	// Shared core: assumes (p_width_px, p_height_px) > 0 are the final raster
+	// dimensions. Caller resolves scale-vs-explicit-size before invoking.
+	Error _rasterize(Ref<Image> p_image, const uint8_t *p_data, int p_size, uint32_t p_width_px, uint32_t p_height_px);
+
 public:
 	static void set_forced_color_map(const HashMap<Color, Color> &p_color_map);
 
+	// Scale-based API (back-compat). Final size = intrinsic SVG size * p_scale.
 	Error create_image_from_utf8_buffer(Ref<Image> p_image, const uint8_t *p_data, int p_size, float p_scale, bool p_upsample);
 	Error create_image_from_string(Ref<Image> p_image, String p_string, float p_scale, bool p_upsample, const HashMap<Color, Color> &p_color_map);
+
+	// Explicit pixel-size API. If one dimension is 0, the other is preserved
+	// and the missing dimension is derived from the SVG's aspect ratio. Both 0
+	// means "use the SVG's intrinsic size at scale 1.0".
+	Error create_image_sized_from_utf8_buffer(Ref<Image> p_image, const uint8_t *p_data, int p_size, int p_width_px, int p_height_px);
+	Error create_image_sized_from_string(Ref<Image> p_image, String p_string, int p_width_px, int p_height_px, const HashMap<Color, Color> &p_color_map);
 
 	virtual Error load_image(Ref<Image> p_image, FileAccess *p_fileaccess, bool p_force_linear, float p_scale) override;
 	virtual void get_recognized_extensions(List<String> *p_extensions) const override;

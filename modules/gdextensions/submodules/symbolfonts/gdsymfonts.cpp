@@ -118,7 +118,6 @@ void GdSymbolFonts::_bind_methods() {
 	BIND_ENUM_CONSTANT(FONT_FORK_AWESOME);
 	BIND_ENUM_CONSTANT(FONT_CODICONS);
 	BIND_ENUM_CONSTANT(FONT_LUCIDE);
-	BIND_ENUM_CONSTANT(FONT_MATERIAL_SYMBOLS);
 }
 
 GdSymbolFonts::GdSymbolFonts() {
@@ -300,11 +299,6 @@ TEST_CASE("[SymbolFonts] UTF-8 icon values") {
 	SUBCASE("Fontaudio icons") {
 		CHECK(sf.has_icon(GdSymbolFonts::FONT_FONTAUDIO, "speaker"));
 		CHECK(sf.get_icon_count(GdSymbolFonts::FONT_FONTAUDIO) > 100);
-	}
-
-	SUBCASE("Material Symbols icons") {
-		CHECK(sf.get_icon_count(GdSymbolFonts::FONT_MATERIAL_SYMBOLS) > 4000);
-		CHECK(sf.has_icon(GdSymbolFonts::FONT_MATERIAL_SYMBOLS, "search"));
 	}
 
 	SUBCASE("MDI icons") {

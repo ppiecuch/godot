@@ -23,7 +23,7 @@ static void editor_init_callback() {
 }
 #endif // TOOLS_ENABLED
 
-void register_gd_svg_mesh_types() {
+void register_svg_mesh_types() {
 	ClassDB::register_class<VGPath>();
 	ClassDB::register_virtual_class<VGPaint>();
 	ClassDB::register_class<VGColor>();
@@ -52,5 +52,5 @@ void register_gd_svg_mesh_types() {
 #endif
 }
 
-void unregister_gd_svg_mesh_types() {
+void unregister_svg_mesh_types() {
 }

@@ -86,6 +86,8 @@ def configure(env):
         "flowed",
         "geomfonts",
         "symbolfonts",
+        "opensymbols",
+        "material_symbols",
         "slugfont",
         "generator",
         "ggoxel",
@@ -108,10 +110,19 @@ def configure(env):
     opts = Variables()
     opts.Add(
         ListVariable(
-            "enable_gdextensions_submodules",
+            "gdext_enable_submodules",
             "Enable gdextensions submodules",
             "all" if env["tools"] else "none",
             modules,
+        )
+    )
+    opts.Add(
+        (
+            "gdext_material_symbols_subset",
+            "Path to a Material Symbols subset manifest. Required for non-tools "
+            "builds when material_symbols is enabled — without it the module is "
+            "disabled at build time. Tools builds ignore this option.",
+            "",
         )
     )
     opts.Update(env)

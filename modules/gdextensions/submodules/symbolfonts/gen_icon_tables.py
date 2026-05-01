@@ -28,7 +28,7 @@ FONTS = [
     ("FK", "ICON_FK_", "IconsForkAwesome.h", "FONT_ICON_FILE_NAME_FK", "ICON_MIN_FK", "ICON_MAX_FK"),
     ("CI", "ICON_CI_", "IconsCodicons.h", "FONT_ICON_FILE_NAME_CI", "ICON_MIN_CI", "ICON_MAX_CI"),
     ("LC", "ICON_LC_", "IconsLucide.h", "FONT_ICON_FILE_NAME_LC", "ICON_MIN_LC", "ICON_MAX_LC"),
-    ("MS", "ICON_MS_", "IconsMaterialSymbols.h", "FONT_ICON_FILE_NAME_MSO", "ICON_MIN_MS", "ICON_MAX_MS"),
+    # Material Symbols deliberately omitted — owned by the `material_symbols` submodule.
 ]
 
 # Metadata define prefixes (parsed but not emitted as C defines)

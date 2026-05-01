@@ -17,13 +17,13 @@ is_clang_or_gcc = (
 
 def is_enabled(m):
     mod = os.path.dirname(m) if os.path.dirname(m) else m
-    if "enable_gdextensions_submodules" in env:
-        if "none" in env["enable_gdextensions_submodules"]:
+    if "gdext_enable_submodules" in env:
+        if "none" in env["gdext_enable_submodules"]:
             return False
-        if mod in env["enable_gdextensions_submodules"]:
+        if mod in env["gdext_enable_submodules"]:
             return True
         # check for group name only
-        el = [x for x in env["enable_gdextensions_submodules"] if x.startswith(m)]
+        el = [x for x in env["gdext_enable_submodules"] if x.startswith(m)]
         return len(el) > 0
     return True
 
@@ -191,6 +191,7 @@ modules = [
     "ldrdraw",
     "lsystem",
     # M
+    "material_symbols",
     "mazegen",
     "media/ffmpeg",
     "media/flac",
@@ -202,6 +203,7 @@ modules = [
     # O
     "ofxdatgui",
     "opensteer",
+    "opensymbols",
     # P
     "polyvector",
     # Q
@@ -226,6 +228,7 @@ modules = [
     "synthbenchmark",
     # T
     "textui",
+    "thorvg",
     "threadpool",
     "tileengine",
     "timelinefx",
@@ -265,7 +268,7 @@ if env["tools"]:
             thirdparty_sources += Glob("thirdparty/hidapi/mac/*.c")
         else:
             print("(GDextensions) Spacemouse is not supported on platform '%s'." % env["platform"])
-            env["enable_gdextensions_submodules"].remove("spacemouse")
+            env["gdext_enable_submodules"].remove("spacemouse")
         if is_enabled("spacemouse"):
             env_module.Append(CPPPATH=["thirdparty/hidapi", "thirdparty/hidapi/hidapi"])
             modules += ["spacemouse"]
@@ -470,7 +473,7 @@ if is_enabled("sqlite"):
 if os.path.isdir("submodules/iap") and is_enabled("iap"):
     if secret("submodules/iap/gd_iap.cpp") and secret("submodules/iap/gd_iap.h"):
         print("(GDextensions) IAP is not available")
-        env["enable_gdextensions_submodules"].remove("iap")
+        env["gdext_enable_submodules"].remove("iap")
     else:
         env_module.Prepend(CPPPATH=["submodules/iap"])
         sources += Glob("submodules/iap/*.cpp")
@@ -483,7 +486,7 @@ if os.path.isdir("submodules/iap") and is_enabled("iap"):
             sources += Glob("iap/uwp/*.cpp")
         else:
             print("(GDextensions) IAP is not available on platform '%s'." % env["platform"])
-            env["enable_gdextensions_submodules"].remove("iap")
+            env["gdext_enable_submodules"].remove("iap")
 
 if is_enabled("playfab"):
     modules += ["playfab"]
@@ -573,6 +576,137 @@ if is_enabled("symbolfonts"):
         print("(GDextensions) Generating icon_tables.gen.h ...")
         subprocess.check_call([sys.executable, gen_script])
 
+if is_enabled("material_symbols"):
+    # Full module (33 MB of TTFs + FreeType renderer + browser plugin) ships
+    # in editor (TOOLS_ENABLED) builds. Non-tools builds opt in via
+    # `gdext_material_symbols_subset=<path>` — bake_material_symbols.py
+    # rasterises the manifest's icons via the editor binary and emits a tiny
+    # .gen.cpp with embedded PNGs. Without a manifest in a non-tools build
+    # the module is disabled entirely.
+    _ms_dir = os.path.join("submodules", "material_symbols")
+    _ms_src = os.path.join("thirdparty", "material_symbols")
+    if env["tools"]:
+        # Skip the runtime-only sources from the auto-glob; their symbols
+        # would clash with material_symbols.cpp.
+        ignore += [
+            os.path.join(_ms_dir, "material_symbols_baked.cpp"),
+        ]
+        import subprocess
+
+        _ms_gen_h = os.path.join(_ms_dir, "material_symbols_data.gen.h")
+        _ms_gen_cpp = os.path.join(_ms_dir, "material_symbols_data.gen.cpp")
+        _ms_script = os.path.join(_ms_dir, "gen_material_symbols_data.py")
+
+        _ms_need_regen = not os.path.exists(_ms_gen_cpp) or not os.path.exists(_ms_gen_h)
+        if not _ms_need_regen:
+            _ms_cpp_mtime = os.path.getmtime(_ms_gen_cpp)
+            for fn in os.listdir(_ms_src):
+                if fn.endswith(".ttf"):
+                    if os.path.getmtime(os.path.join(_ms_src, fn)) > _ms_cpp_mtime:
+                        _ms_need_regen = True
+                        break
+            if not _ms_need_regen:
+                _cp_dir = os.path.join(_ms_src, "codepoints")
+                if os.path.isdir(_cp_dir):
+                    for fn in os.listdir(_cp_dir):
+                        if os.path.getmtime(os.path.join(_cp_dir, fn)) > _ms_cpp_mtime:
+                            _ms_need_regen = True
+                            break
+        if _ms_need_regen:
+            print("(GDextensions) Generating material_symbols_data.gen.{h,cpp} ...")
+            subprocess.check_call([
+                sys.executable, _ms_script,
+                "--src", _ms_src,
+                "--out-h", _ms_gen_h,
+                "--out-cpp", _ms_gen_cpp,
+            ])
+        sources += [os.path.join(_ms_dir, "material_symbols_data.gen.cpp")]
+        if env["builtin_freetype"]:
+            env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
+    else:
+        _ms_manifest = env["gdext_material_symbols_subset"]
+        if _ms_manifest and os.path.isfile(_ms_manifest):
+            # Skip the tools-only sources from auto-glob.
+            ignore += [
+                os.path.join(_ms_dir, "material_symbols.cpp"),
+                os.path.join(_ms_dir, "material_symbols_renderer.cpp"),
+                os.path.join(_ms_dir, "material_symbols_resources.c"),
+                os.path.join(_ms_dir, "material_symbols_data.gen.cpp"),
+            ]
+            import subprocess
+
+            _ms_baked_cpp = os.path.join(_ms_dir, "material_symbols_baked.gen.cpp")
+            _ms_bake_script = os.path.join(_ms_dir, "bake_material_symbols.py")
+            _ms_need_bake = (
+                not os.path.exists(_ms_baked_cpp)
+                or os.path.getmtime(_ms_manifest) > os.path.getmtime(_ms_baked_cpp)
+            )
+            if _ms_need_bake:
+                # Best-effort editor-binary discovery. The app's bin/build_*.sh
+                # is expected to set GDEXT_BAKE_EDITOR; fall back to a few
+                # sibling-directory candidates produced by build_osx.sh.
+                _ms_editor = os.environ.get("GDEXT_BAKE_EDITOR", "")
+                if not _ms_editor:
+                    for _cand in [
+                        os.path.join("bin", "godot.osx.opt.tools.arm64"),
+                        os.path.join("bin", "godot.osx.opt.tools.64"),
+                        os.path.join("bin", "godot.osx.tools.arm64"),
+                    ]:
+                        if os.path.isfile(_cand) and os.access(_cand, os.X_OK):
+                            _ms_editor = _cand
+                            break
+                if not _ms_editor:
+                    print("(GDextensions) material_symbols: cannot find editor binary for "
+                          "baking. Set GDEXT_BAKE_EDITOR=/path/to/godot.tools or run a "
+                          "tools build first.")
+                    modules.remove("material_symbols")
+                else:
+                    print("(GDextensions) Baking material_symbols from %s ..." % _ms_manifest)
+                    subprocess.check_call([
+                        sys.executable, _ms_bake_script,
+                        "--manifest", _ms_manifest,
+                        "--editor", _ms_editor,
+                        "--out-cpp", _ms_baked_cpp,
+                    ])
+            if "material_symbols" in modules:
+                sources += [_ms_baked_cpp]
+        else:
+            print("(GDextensions) material_symbols: no gdext_material_symbols_subset set "
+                  "and target is non-tools — module disabled.")
+            modules.remove("material_symbols")
+
+if is_enabled("opensymbols"):
+    import subprocess
+
+    _os_dir = os.path.join("submodules", "opensymbols")
+    _os_src = os.path.join("thirdparty", "opensymbols", "svg")
+    _os_gen_h = os.path.join(_os_dir, "opensymbols_data.gen.h")
+    _os_gen_cpp = os.path.join(_os_dir, "opensymbols_data.gen.cpp")
+    _os_script = os.path.join(_os_dir, "gen_opensymbols_data.py")
+
+    # Regenerate when missing or when any source SVG is newer than the .cpp.
+    _need_regen = not os.path.exists(_os_gen_cpp) or not os.path.exists(_os_gen_h)
+    if not _need_regen:
+        cpp_mtime = os.path.getmtime(_os_gen_cpp)
+        for root, _dirs, files in os.walk(_os_src):
+            for fn in files:
+                if fn.endswith(".svg") and os.path.getmtime(os.path.join(root, fn)) > cpp_mtime:
+                    _need_regen = True
+                    break
+            if _need_regen:
+                break
+    if _need_regen:
+        print("(GDextensions) Generating opensymbols_data.gen.{h,cpp} ...")
+        subprocess.check_call([
+            sys.executable, _os_script,
+            "--src", _os_src,
+            "--out-h", _os_gen_h,
+            "--out-cpp", _os_gen_cpp,
+        ])
+    # Pick up the generated .cpp; opensymbols.cpp itself is collected by the
+    # default Glob() pass over submodules/opensymbols/*.cpp.
+    sources += [os.path.join(_os_dir, "opensymbols_data.gen.cpp")]
+
 if is_enabled("geomfonts"):
     env_module.Prepend(CPPPATH="submodules/geomfonts/polyfonts")
     sources += Glob("submodules/geomfonts/polyfonts/fonts/*.c")
@@ -583,7 +717,10 @@ if is_enabled("polyvector"):
     thirdparty_sources += Glob("thirdparty/libshockwave/*.cpp") + Glob("thirdparty/libshockwave/lzma/*.c")
 
 if is_enabled("thorvg"):
-    if env["tools"]:
+    # ThorVG is needed at runtime for OpenSymbols icons (and any other
+    # consumer of ImageLoaderThorSVG / SVGTexture in shipped games), so it's
+    # no longer gated on env["tools"].
+    if True:
         thirdparty_dir = "thirdparty/thorvg/"
         thorvg_sources = [
             # common
@@ -595,6 +732,7 @@ if is_enabled("thorvg"):
             "src/renderer/sw_engine/tvgSwImage.cpp",
             "src/renderer/sw_engine/tvgSwMath.cpp",
             "src/renderer/sw_engine/tvgSwMemPool.cpp",
+            "src/renderer/sw_engine/tvgSwPostEffect.cpp",
             "src/renderer/sw_engine/tvgSwRaster.cpp",
             "src/renderer/sw_engine/tvgSwRenderer.cpp",
             "src/renderer/sw_engine/tvgSwRle.cpp",
@@ -777,12 +915,12 @@ if is_enabled("openclwrapper"):
             modules += ["openclwrapper"]
         else:
             print("(GDextensions) OpenCLWrapper is not supported on platform '%s'." % env["platform"])
-            env["enable_gdextensions_submodules"].remove("openclwrapper")
+            env["gdext_enable_submodules"].remove("openclwrapper")
 
 if is_enabled("slugfont"):
     if secret("thirdparty/slugfont/ts_slug.cpp") and secret("thirdparty/slugfont/ts_slug.h"):
         print("(GDextensions) SlugFont is not available")
-        env["enable_gdextensions_submodules"].remove("slugfont")
+        env["gdext_enable_submodules"].remove("slugfont")
     else:
         env_module.Append(CPPPATH=["thirdparty/slugfont", "thirdparty/slugfont/fontbuilder"])
         thirdparty_sources += Glob("thirdparty/slugfont/*.cpp")

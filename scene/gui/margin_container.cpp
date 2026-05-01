@@ -96,4 +96,5 @@ void MarginContainer::_notification(int p_what) {
 }
 
 MarginContainer::MarginContainer() {
+	set_mouse_filter(MOUSE_FILTER_PASS);
 }

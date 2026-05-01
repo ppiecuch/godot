@@ -30,6 +30,9 @@
 
 #include "thorvg_bounds_iterator.h"
 
+#include "core/math/math_funcs.h"
+#include "core/typedefs.h"
+
 #include <tvgIteratorAccessor.h>
 #include <tvgPaint.h>
 

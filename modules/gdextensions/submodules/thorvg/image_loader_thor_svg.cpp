@@ -57,7 +57,7 @@ void ImageLoaderThorSVG::_replace_color_property(const HashMap<Color, Color> &p_
 		ERR_FAIL_COND_MSG(end_pos == -1, vformat("Malformed SVG string after property \"%s\".", p_prefix));
 		const String color_code = r_string.substr(pos, end_pos - pos);
 		if (color_code != "none" && !color_code.begins_with("url(")) {
-			const Color color = Color(color_code); // Handles both HTML codes and named colors.
+			const Color color = Color::html(color_code); // Handles both HTML codes and named colors.
 			if (p_color_map.has(color)) {
 				r_string = r_string.left(pos) + "#" + p_color_map[color].to_html(false) + r_string.substr(end_pos);
 			}
@@ -67,34 +67,27 @@ void ImageLoaderThorSVG::_replace_color_property(const HashMap<Color, Color> &p_
 	}
 }
 
-Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, const uint8_t *p_data, int p_size, float p_scale, bool p_upsample) {
-	ERR_FAIL_COND_V_MSG(Math::is_zero_approx(p_scale), ERR_INVALID_PARAMETER, "ImageLoaderThorSVG: Can't load SVG with a scale of 0.");
-	ERR_FAIL_COND_V_MSG(p_scale < 0, ERR_INVALID_PARAMETER, "ImageLoaderThorSVG: Can't load SVG with a negative scale.");
-
+Error ImageLoaderThorSVG::_rasterize(Ref<Image> p_image, const uint8_t *p_data, int p_size, uint32_t p_width_px, uint32_t p_height_px) {
 	std::unique_ptr<tvg::Picture> picture = tvg::Picture::gen();
 
 	tvg::Result result = picture->load((const char *)p_data, p_size, "svg", true);
 	if (result != tvg::Result::Success) {
 		return ERR_INVALID_DATA;
 	}
-	float fw, fh;
-	picture->size(&fw, &fh);
-
-	uint32_t width = MAX(1, (uint32_t)round(fw * p_scale));
-	uint32_t height = MAX(1, (uint32_t)round(fh * p_scale));
 
 	const uint32_t max_dimension = 16384;
+	uint32_t width = MAX(1u, p_width_px);
+	uint32_t height = MAX(1u, p_height_px);
 	if (width > max_dimension || height > max_dimension) {
-		// Clamp while preserving aspect ratio.
 		float aspect = (float)width / (float)height;
 		if (width > height) {
 			width = max_dimension;
-			height = MAX(1, (uint32_t)round(max_dimension / aspect));
+			height = MAX(1u, (uint32_t)round(max_dimension / aspect));
 		} else {
 			height = max_dimension;
-			width = MAX(1, (uint32_t)round(max_dimension * aspect));
+			width = MAX(1u, (uint32_t)round(max_dimension * aspect));
 		}
-		WARN_PRINT(vformat("ImageLoaderThorSVG: SVG dimensions clamped to %dx%d (scale %.2f).", width, height, p_scale));
+		WARN_PRINT(vformat("ImageLoaderThorSVG: SVG dimensions clamped to %dx%d.", width, height));
 	}
 
 	picture->size(width, height);
@@ -103,7 +96,7 @@ Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, cons
 	// Note: memalloc here, be sure to memfree before any return.
 	uint32_t *buffer = (uint32_t *)memalloc(sizeof(uint32_t) * width * height);
 
-	tvg::Result res = sw_canvas->target(buffer, width, width, height, tvg::SwCanvas::ARGB8888_STRAIGHT);
+	tvg::Result res = sw_canvas->target(buffer, width, width, height, tvg::SwCanvas::ARGB8888S);
 	if (res != tvg::Result::Success) {
 		memfree(buffer);
 		ERR_FAIL_V_MSG(FAILED, "ImageLoaderThorSVG: Couldn't set target on ThorVG canvas.");
@@ -127,17 +120,20 @@ Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, cons
 		ERR_FAIL_V_MSG(FAILED, "ImageLoaderThorSVG: Couldn't sync ThorVG canvas.");
 	}
 
-	Vector<uint8_t> image;
+	PoolVector<uint8_t> image;
 	image.resize(width * height * sizeof(uint32_t));
-
-	for (uint32_t y = 0; y < height; y++) {
-		for (uint32_t x = 0; x < width; x++) {
-			uint32_t n = buffer[y * width + x];
-			const size_t offset = sizeof(uint32_t) * width * y + sizeof(uint32_t) * x;
-			image.write[offset + 0] = (n >> 16) & 0xff; // R
-			image.write[offset + 1] = (n >> 8) & 0xff; // G
-			image.write[offset + 2] = n & 0xff; // B
-			image.write[offset + 3] = (n >> 24) & 0xff; // A
+	{
+		PoolVector<uint8_t>::Write w = image.write();
+		uint8_t *dst = w.ptr();
+		for (uint32_t y = 0; y < height; y++) {
+			for (uint32_t x = 0; x < width; x++) {
+				uint32_t n = buffer[y * width + x];
+				const size_t offset = sizeof(uint32_t) * width * y + sizeof(uint32_t) * x;
+				dst[offset + 0] = (n >> 16) & 0xff; // R
+				dst[offset + 1] = (n >> 8) & 0xff; // G
+				dst[offset + 2] = n & 0xff; // B
+				dst[offset + 3] = (n >> 24) & 0xff; // A
+			}
 		}
 	}
 
@@ -146,6 +142,57 @@ Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, cons
 
 	p_image->create(width, height, false, Image::FORMAT_RGBA8, image);
 	return OK;
+}
+
+Error ImageLoaderThorSVG::create_image_from_utf8_buffer(Ref<Image> p_image, const uint8_t *p_data, int p_size, float p_scale, bool p_upsample) {
+	ERR_FAIL_COND_V_MSG(Math::is_zero_approx(p_scale), ERR_INVALID_PARAMETER, "ImageLoaderThorSVG: Can't load SVG with a scale of 0.");
+	ERR_FAIL_COND_V_MSG(p_scale < 0, ERR_INVALID_PARAMETER, "ImageLoaderThorSVG: Can't load SVG with a negative scale.");
+
+	// Probe intrinsic dimensions, then forward to _rasterize with explicit pixel size.
+	std::unique_ptr<tvg::Picture> probe = tvg::Picture::gen();
+	tvg::Result probe_res = probe->load((const char *)p_data, p_size, "svg", true);
+	if (probe_res != tvg::Result::Success) {
+		return ERR_INVALID_DATA;
+	}
+	float fw, fh;
+	probe->size(&fw, &fh);
+	probe.reset();
+
+	uint32_t width = MAX(1u, (uint32_t)round(fw * p_scale));
+	uint32_t height = MAX(1u, (uint32_t)round(fh * p_scale));
+	return _rasterize(p_image, p_data, p_size, width, height);
+}
+
+Error ImageLoaderThorSVG::create_image_sized_from_utf8_buffer(Ref<Image> p_image, const uint8_t *p_data, int p_size, int p_width_px, int p_height_px) {
+	ERR_FAIL_COND_V_MSG(p_width_px < 0 || p_height_px < 0, ERR_INVALID_PARAMETER, "ImageLoaderThorSVG: width/height must be >= 0.");
+
+	uint32_t width = (uint32_t)p_width_px;
+	uint32_t height = (uint32_t)p_height_px;
+
+	// Probe intrinsic dimensions when we need to derive the missing axis.
+	if (width == 0 || height == 0) {
+		std::unique_ptr<tvg::Picture> probe = tvg::Picture::gen();
+		tvg::Result probe_res = probe->load((const char *)p_data, p_size, "svg", true);
+		if (probe_res != tvg::Result::Success) {
+			return ERR_INVALID_DATA;
+		}
+		float fw, fh;
+		probe->size(&fw, &fh);
+		probe.reset();
+
+		if (width == 0 && height == 0) {
+			width = MAX(1u, (uint32_t)round(fw));
+			height = MAX(1u, (uint32_t)round(fh));
+		} else if (width == 0) {
+			float aspect = (fh > 0.0f) ? (fw / fh) : 1.0f;
+			width = MAX(1u, (uint32_t)round((float)height * aspect));
+		} else { // height == 0
+			float aspect = (fh > 0.0f) ? (fw / fh) : 1.0f;
+			height = MAX(1u, (uint32_t)round((float)width / aspect));
+		}
+	}
+
+	return _rasterize(p_image, p_data, p_size, width, height);
 }
 
 Error ImageLoaderThorSVG::create_image_from_string(Ref<Image> p_image, String p_string, float p_scale, bool p_upsample, const HashMap<Color, Color> &p_color_map) {
@@ -158,6 +205,18 @@ Error ImageLoaderThorSVG::create_image_from_string(Ref<Image> p_image, String p_
 	CharString cs = p_string.utf8();
 
 	return create_image_from_utf8_buffer(p_image, (const uint8_t *)cs.get_data(), cs.length(), p_scale, p_upsample);
+}
+
+Error ImageLoaderThorSVG::create_image_sized_from_string(Ref<Image> p_image, String p_string, int p_width_px, int p_height_px, const HashMap<Color, Color> &p_color_map) {
+	if (p_color_map.size()) {
+		_replace_color_property(p_color_map, "stop-color=\"", p_string);
+		_replace_color_property(p_color_map, "fill=\"", p_string);
+		_replace_color_property(p_color_map, "stroke=\"", p_string);
+	}
+
+	CharString cs = p_string.utf8();
+
+	return create_image_sized_from_utf8_buffer(p_image, (const uint8_t *)cs.get_data(), cs.length(), p_width_px, p_height_px);
 }
 
 void ImageLoaderThorSVG::get_recognized_extensions(List<String> *p_extensions) const {
