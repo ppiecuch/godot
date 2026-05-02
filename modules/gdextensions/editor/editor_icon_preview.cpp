@@ -283,6 +283,12 @@ AcceptDialog *EditorIconPreviewDialog::load_ui() {
 			dlg = cast_to<AcceptDialog>(ui->instance());
 			dlg_script = newref(EditorIconPreviewUIScript, this);
 			dlg->set_script(dlg_script.get_ref_ptr());
+			// Resolve node pointers immediately. Without this, the first
+			// display() emits `update_request` before _on_window_about_to_show
+			// has run, so add_icon() trips its ERR_FAIL_NULL on
+			// previews_container and silently drops every icon — the grid
+			// then renders empty.
+			_cache_nodes();
 		}
 	}
 	return dlg;

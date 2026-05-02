@@ -17,14 +17,17 @@
 #ifdef TOOLS_ENABLED
 
 #include "core/reference.h"
+#include "editor/editor_file_dialog.h"
 #include "editor/editor_plugin.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/button.h"
 #include "scene/gui/color_picker.h"
+#include "scene/gui/dialogs.h"
 #include "scene/gui/item_list.h"
 #include "scene/gui/label.h"
 #include "scene/gui/line_edit.h"
 #include "scene/gui/option_button.h"
+#include "scene/gui/scroll_container.h"
 #include "scene/gui/slider.h"
 #include "scene/gui/spin_box.h"
 
@@ -33,31 +36,33 @@
 class MaterialSymbolsBrowser : public VBoxContainer {
 	GDCLASS(MaterialSymbolsBrowser, VBoxContainer);
 
-	// Top row
+	// Single dense top row: search (compact) + style + axes + size + color.
 	LineEdit *search_field;
 	OptionButton *style_picker;
+	OptionButton *weight_picker;
+	OptionButton *grade_picker;
+	OptionButton *opsz_picker;
+	OptionButton *fill_picker;
 	SpinBox *preview_size;
 	ColorPickerButton *color_picker;
-
-	// Axis sliders row
-	HSlider *weight_slider;
-	Label *weight_value;
-	HSlider *grade_slider;
-	Label *grade_value;
-	HSlider *opsz_slider;
-	Label *opsz_value;
-	HSlider *fill_slider;
-	Label *fill_value;
 
 	// Icon list
 	ItemList *icon_list;
 
-	// Bottom row
+	// Bottom row: status | copy name | copy info | tag | manifest | view | + | clear
 	Label *status_label;
 	LineEdit *tag_field;
 	Button *copy_button;
-	Button *add_to_subset_button;
+	Button *copy_info_button;
 	LineEdit *manifest_path_field;
+	Button *manifest_view_button;
+	Button *add_to_subset_button;
+	Button *clear_manifest_button;
+
+	// Manifest viewer popup
+	WindowDialog *manifest_viewer;
+	VBoxContainer *manifest_rows;
+	EditorFileDialog *manifest_save_dialog;
 
 	Ref<MaterialSymbols> ms;
 
@@ -72,12 +77,28 @@ class MaterialSymbolsBrowser : public VBoxContainer {
 	void _refresh_filter();
 	void _refresh_status();
 	void _on_search_changed(const String &p_q);
-	void _on_axis_changed(double p_v);
+	void _on_axis_changed(int p_idx);
 	void _on_style_changed(int p_idx);
 	void _on_size_changed(double p_v);
 	void _on_color_changed(const Color &p_c);
 	void _on_copy_pressed();
+	void _on_copy_info_pressed();
 	void _on_add_to_subset_pressed();
+	void _on_item_selected(int p_idx);
+	void _on_manifest_view_pressed();
+	void _on_manifest_remove(int p_line_index);
+	void _on_manifest_clear_pressed();
+	void _on_manifest_edit_pressed();
+	void _on_manifest_reveal_pressed();
+	void _on_manifest_copy_path_pressed();
+	void _on_viewer_close_pressed();
+	void _on_viewer_save_pressed();
+	void _on_viewer_save_path_selected(const String &p_path);
+	void _on_viewer_copy_pressed();
+	void _on_tag_changed(const String &p_t);
+	void _rebuild_manifest_view();
+	String _build_manifest_line(const String &p_name) const;
+	bool _is_in_manifest(const String &p_name, const String &p_tag) const;
 	String _resolve_manifest_path() const;
 
 protected:

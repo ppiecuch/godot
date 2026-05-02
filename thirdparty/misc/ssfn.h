@@ -600,7 +600,9 @@ static int _ssfn__zexpand(_ssfn__zbuf *z, char *zout)
 {
    char *q;
    unsigned int cur, limit;
-#ifdef __GNUC__
+/* -Wuse-after-free is GCC-only. Clang also defines __GNUC__ for compatibility
+   but doesn't recognise this warning name and emits -Wunknown-warning-option. */
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuse-after-free"
 #endif
@@ -609,7 +611,7 @@ static int _ssfn__zexpand(_ssfn__zbuf *z, char *zout)
    q = (char *) SSFN_realloc(z->zout_start, limit);
    if (q == NULL) return 0;
    z->zout_start = q; z->zout = q + cur; z->zout_end = q + limit;
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
    return 1;

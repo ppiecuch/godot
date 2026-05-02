@@ -135,6 +135,16 @@ $cp -rv "$GODOT_DIR/misc/dist/osx_tools.app" "$GODOT_DIR/bin/Godot-master.app"
 sed 's/Godot\.icns/Godot MASTER.icns/' "$GODOT_DIR/misc/dist/osx_tools.app/Contents/Info.plist" > "$GODOT_DIR/bin/Godot-master.app/Contents/Info.plist"
 mkdir -p "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS"
 $cp -v "$GODOT_DIR/bin/godot.osx.opt.tools.$A" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/Godot"
+# Bundle any runtime shared libraries staged into bin/ by modules
+# (e.g. epicservices drops libEOSSDK-Mac-Shipping.dylib there). The engine
+# resolves them via @executable_path / @loader_path rpaths, so
+# Contents/MacOS is the right destination. codesign --deep below covers
+# the bundled dylibs.
+shopt -s nullglob
+for dylib in "$GODOT_DIR/bin/"*.dylib; do
+	$cp -v "$dylib" "$GODOT_DIR/bin/Godot-master.app/Contents/MacOS/"
+done
+shopt -u nullglob
 if [ ! -z "$EDITOR_BUNDLE_ID" ]; then
 	log_info "Bundle identifier: $EDITOR_BUNDLE_ID"
 	/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $EDITOR_BUNDLE_ID" "$GODOT_DIR/bin/Godot-master.app/Contents/Info.plist"

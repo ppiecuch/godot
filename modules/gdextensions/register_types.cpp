@@ -404,6 +404,20 @@ static ImageLoaderThorSVG *image_loader_thor_svg = nullptr;
 #include "nakama1/gd_nakama1.h"
 #endif
 
+#ifdef GDEXT_EPICSERVICES_ENABLED
+#include "epicservices/epic_active_session.h"
+#include "epicservices/epic_continuance_token.h"
+#include "epicservices/epic_file_transfer_request.h"
+#include "epicservices/epic_lobby_details.h"
+#include "epicservices/epic_lobby_modification.h"
+#include "epicservices/epic_lobby_search.h"
+#include "epicservices/epic_presence_modification.h"
+#include "epicservices/epic_session_details.h"
+#include "epicservices/epic_session_modification.h"
+#include "epicservices/epic_session_search.h"
+#include "epicservices/gd_epic_services.h"
+#endif
+
 #ifdef GDEXT_DISCORD_ENABLED
 #include "discord/gd_discord.h"
 #endif
@@ -458,7 +472,9 @@ static void editor_init_callback() {
 #ifdef GDEXT_SFXR_ENABLED
 	editor->add_editor_plugin(memnew(SfxrEditorPlugin(editor)));
 #endif
+#ifdef GDEXT_ENVIRONMENT_PROC_ROCKS_ENABLED
 	editor->add_editor_plugin(memnew(ProcRockEditorPlugin(editor)));
+#endif
 	ClassDB::register_class<RestApiTesterDock>();
 	editor->add_editor_plugin(memnew(RestApiTesterPlugin(editor)));
 #ifdef GDEXT_MATERIAL_SYMBOLS_ENABLED
@@ -887,6 +903,22 @@ void register_gdextensions_types() {
 	memnew(GdNakama1); // internal singleton — not exposed to GDScript
 #endif
 
+#ifdef GDEXT_EPICSERVICES_ENABLED
+	ClassDB::register_class<EpicServices>();
+	ClassDB::register_class<EpicContinuanceToken>();
+	ClassDB::register_class<EpicLobbyDetails>();
+	ClassDB::register_class<EpicLobbyModification>();
+	ClassDB::register_class<EpicLobbySearch>();
+	ClassDB::register_class<EpicSessionDetails>();
+	ClassDB::register_class<EpicSessionModification>();
+	ClassDB::register_class<EpicSessionSearch>();
+	ClassDB::register_class<EpicActiveSession>();
+	ClassDB::register_class<EpicPresenceModification>();
+	ClassDB::register_class<EpicPlayerDataStorageFileTransferRequest>();
+	ClassDB::register_class<EpicTitleStorageFileTransferRequest>();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("EpicServices", memnew(EpicServices)));
+#endif
+
 #ifdef GDEXT_DISCORD_ENABLED
 	ClassDB::register_class<GdDiscordClient>();
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Discord", memnew(GdDiscordClient)));
@@ -1110,6 +1142,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_SILENTWOLF_ENABLED
 	RemoveSingleton(SilentWolf);
+#endif
+#ifdef GDEXT_EPICSERVICES_ENABLED
+	RemoveSingleton(EpicServices);
 #endif
 #ifdef GDEXT_MULTIPEER_ENABLED
 	RemoveSingleton(GdMultiPeer);

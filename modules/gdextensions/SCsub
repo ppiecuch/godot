@@ -501,6 +501,115 @@ if is_enabled("playfab"):
     sources += Glob("submodules/playfab/PlayFabSDK/*.cpp")
     thirdparty_sources += Glob("thirdparty/xplatcppsdk/code/source/playfab/*.cpp")
 
+if is_enabled("epicservices"):
+    # Epic Online Services SDK (closed-source shipping shared library).
+    # Desktop SDK lives in `thirdparty/eos_sdk/`, Android SDK ships as an AAR
+    # in `thirdparty/eos_sdk_android/`. The macOS dylib has install_name
+    # `@rpath/libEOSSDK-Mac-Shipping.dylib`, so we add an executable-relative
+    # rpath; the user must place the dylib next to the engine binary at
+    # runtime (or alongside the export template).
+    eos_root = "thirdparty/eos_sdk"
+    eos_android_root = "thirdparty/eos_sdk_android"
+    eos_supported = True
+
+    if env["platform"] == "osx":
+        env_module.Append(CPPPATH=[eos_root + "/Include"])
+        env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/" + eos_root + "/Bin"])
+        env.Append(LIBS=["EOSSDK-Mac-Shipping"])
+        env.Append(LINKFLAGS=["-Wl,-rpath,@executable_path", "-Wl,-rpath,@loader_path"])
+    elif env["platform"] == "x11" or env["platform"] == "linuxbsd":
+        eos_arch = (env["arch"] if "arch" in env and env["arch"] else platform.machine()).lower()
+        env_module.Append(CPPPATH=[eos_root + "/Include"])
+        env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/" + eos_root + "/Bin"])
+        if "arm64" in eos_arch or "aarch64" in eos_arch:
+            env.Append(LIBS=["EOSSDK-LinuxArm64-Shipping"])
+        else:
+            env.Append(LIBS=["EOSSDK-Linux-Shipping"])
+        env.Append(LINKFLAGS=["-Wl,-rpath,'$$ORIGIN'"])
+    elif env["platform"] == "windows":
+        env_module.Append(CPPPATH=[eos_root + "/Include"])
+        env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/" + eos_root + "/Lib"])
+        add_external_libs(env, ["EOSSDK-Win64-Shipping"])
+    elif env["platform"] == "android":
+        # Extract the AAR once into a sibling `aar_extracted/` so SCons can find
+        # the Android headers, libEOSSDK.so per-ABI, and classes.jar without
+        # touching the upstream archive.
+        import zipfile
+
+        eos_aar = (
+            eos_android_root + "/Bin/Android/static-stdc++/aar/eossdk-StaticSTDC-release.aar"
+        )
+        eos_aar_dst = eos_android_root + "/Bin/Android/static-stdc++/aar_extracted"
+        if os.path.isfile(eos_aar) and not os.path.isdir(eos_aar_dst):
+            print("(GDextensions) Extracting EOS Android AAR to %s" % eos_aar_dst)
+            os.makedirs(eos_aar_dst)
+            with zipfile.ZipFile(eos_aar) as _zf:
+                _zf.extractall(eos_aar_dst)
+        env_module.Append(
+            CPPPATH=[eos_android_root + "/Include", eos_android_root + "/Include/Android"]
+        )
+        # Map Godot's android_arch to AAR ABI directory; AAR ships arm64-v8a + x86_64.
+        _abi_map = {
+            "armv8": "arm64-v8a",
+            "arm64v8": "arm64-v8a",
+            "arm64": "arm64-v8a",
+            "aarch64": "arm64-v8a",
+            "x86_64": "x86_64",
+            "x86-64": "x86_64",
+        }
+        eos_abi = _abi_map.get(env.get("android_arch", "arm64v8"), "arm64-v8a")
+        env.Append(LIBPATH=[os.path.realpath(os.curdir) + "/" + eos_aar_dst + "/jni/" + eos_abi])
+        env.Append(LIBS=["EOSSDK"])
+    else:
+        print("(GDextensions) EpicServices is not supported on platform '%s'." % env["platform"])
+        if "epicservices" in env["gdext_enable_submodules"]:
+            env["gdext_enable_submodules"].remove("epicservices")
+        eos_supported = False
+
+    if eos_supported:
+        modules += ["epicservices"]
+
+        # Shared-object distribution: the SCsub stages the EOS shipping
+        # library into <godot>/bin/ alongside the engine binary. The macOS
+        # rpath (@executable_path) and Linux $ORIGIN resolve it from there
+        # so the raw binary in bin/ runs unmodified. Platform-specific
+        # bundling (e.g. wrapping into the .app) is the platform build
+        # script's job — see misc/build/build_osx.sh which copies any
+        # bin/*.dylib into the .app's Contents/MacOS before codesigning.
+        import shutil
+
+        _gd_root = os.path.dirname(os.path.dirname(os.path.realpath(os.curdir)))
+        _bin_dir = os.path.join(_gd_root, "bin")
+        try:
+            os.makedirs(_bin_dir, exist_ok=True)
+        except OSError:
+            pass
+
+        _eos_runtime_files = []
+        if env["platform"] == "osx":
+            _eos_runtime_files = [eos_root + "/Bin/libEOSSDK-Mac-Shipping.dylib"]
+        elif env["platform"] == "x11" or env["platform"] == "linuxbsd":
+            if "arm64" in eos_arch or "aarch64" in eos_arch:
+                _eos_runtime_files = [eos_root + "/Bin/libEOSSDK-LinuxArm64-Shipping.so"]
+            else:
+                _eos_runtime_files = [eos_root + "/Bin/libEOSSDK-Linux-Shipping.so"]
+        elif env["platform"] == "windows":
+            _eos_runtime_files = [
+                eos_root + "/Bin/EOSSDK-Win64-Shipping.dll",
+                eos_root + "/Bin/x64/xaudio2_9redist.dll",
+            ]
+
+        for _src in _eos_runtime_files:
+            if not os.path.isfile(_src):
+                continue
+            _dst = os.path.join(_bin_dir, os.path.basename(_src))
+            try:
+                if os.path.isfile(_dst) and os.path.getmtime(_dst) >= os.path.getmtime(_src) and os.path.getsize(_dst) == os.path.getsize(_src):
+                    continue
+                shutil.copy2(_src, _dst)
+            except (OSError, shutil.SameFileError):
+                pass
+
 if is_enabled("albmpgfx"):
     thirdparty_sources += ["thirdparty/al_gfx/al_gfx.c", "thirdparty/al_gfx/al_gfx_extra.c"]
 

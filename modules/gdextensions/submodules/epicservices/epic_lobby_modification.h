@@ -1,0 +1,66 @@
+/**************************************************************************/
+/*  epic_lobby_modification.h                                             */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
+
+#ifndef EPIC_LOBBY_MODIFICATION_H
+#define EPIC_LOBBY_MODIFICATION_H
+
+#include "core/reference.h"
+
+#include "eos_lobby_types.h"
+
+class EpicLobbyModification : public Reference {
+	GDCLASS(EpicLobbyModification, Reference);
+
+	EOS_HLobbyModification handle = nullptr;
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_handle(EOS_HLobbyModification p_handle);
+	EOS_HLobbyModification get_handle() const { return handle; }
+	bool is_valid() const { return handle != nullptr; }
+
+	int set_permission_level(int p_level);
+	int set_max_members(int p_count);
+	int set_bucket_id(const String &p_bucket_id);
+	int set_invites_allowed(bool p_invites_allowed);
+	int set_allowed_platform_ids(const Array &p_platform_ids);
+	// Attribute is a Dictionary {key, value (Variant), value_type, visibility}.
+	int add_attribute(const Dictionary &p_attribute);
+	int remove_attribute(const String &p_key);
+	int add_member_attribute(const Dictionary &p_attribute);
+	int remove_member_attribute(const String &p_key);
+
+	EpicLobbyModification() {}
+	~EpicLobbyModification();
+};
+
+#endif // EPIC_LOBBY_MODIFICATION_H

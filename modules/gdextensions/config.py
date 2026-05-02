@@ -62,6 +62,7 @@ def configure(env):
         "discord",
         "playfab",
         "silentwolf",
+        "epicservices",
         "qrcodetexture",
         "landiscovery",
         "multipeer",
