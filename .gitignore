@@ -426,6 +426,7 @@ $RECYCLE.BIN/
 ##################################
 ### Modules tools and binaries ###
 ##################################
+modules/gd_*
 
 misc/tools/glinfo
 misc/tools/qoiconv
