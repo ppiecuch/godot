@@ -125,6 +125,11 @@ public:
 	// ---- platform_interface.cpp ----------------------------------------
 	int platform_interface_initialize(const Dictionary &p_options);
 	Dictionary platform_interface_create(const Dictionary &p_options);
+#ifdef TOOLS_ENABLED
+	// Copies EpicServices.gdap and the EOS AAR into res://android/plugins/ so the
+	// Godot Android build system picks them up. Call once from an editor tool script.
+	Dictionary android_install_plugin(const String &p_eos_sdk_android_root);
+#endif
 	void platform_interface_release();
 	void platform_interface_tick();
 	int platform_interface_check_for_launcher_and_restart();

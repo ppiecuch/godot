@@ -567,6 +567,30 @@ if is_enabled("epicservices"):
         eos_supported = False
 
     if eos_supported:
+        # Resolve EPIC_SECRETS — credentials header required for all builds:
+        #   tools=yes  : auto-detected from submodules/epicservices/.secrets.h (gitignored)
+        #   tools=no   : caller must supply gdext_eos_secrets=/abs/path/to/secrets.h
+        # If secrets are unavailable the module is disabled so no credential-less
+        # binary ever ships.
+        _secrets_h = None
+        if env["tools"]:
+            _auto = os.path.join(Dir('.').abspath, "submodules/epicservices/.secrets.h")
+            if os.path.isfile(_auto):
+                _secrets_h = _auto
+            else:
+                print("(GDextensions) EpicServices: submodules/epicservices/.secrets.h not found — module disabled for this editor build")
+                eos_supported = False
+        else:
+            _arg = ARGUMENTS.get("gdext_eos_secrets", "")
+            if _arg and os.path.isfile(_arg):
+                _secrets_h = _arg
+            else:
+                print("(GDextensions) EpicServices: gdext_eos_secrets not provided for template build — module disabled. Pass gdext_eos_secrets=/path/to/secrets.h")
+                eos_supported = False
+
+    if eos_supported:
+        if _secrets_h:
+            env_module.Append(CPPDEFINES=[("EPIC_SECRETS", '\\"' + _secrets_h.replace("\\", "/") + '\\"')])
         modules += ["epicservices"]
 
         # Shared-object distribution: the SCsub stages the EOS shipping

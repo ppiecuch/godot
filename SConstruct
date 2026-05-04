@@ -128,6 +128,7 @@ opts.Add(EnumVariable("bits", "Target platform bits", "default", ("default", "32
 opts.Add(EnumVariable("optimize", "Optimization type", "speed", ("speed", "size", "none")))
 opts.Add(BoolVariable("production", "Set defaults to build Godot for use in production", False))
 opts.Add(EnumVariable("lto", "Link-time optimization (production builds)", "none", ("none", "auto", "thin", "full")))
+opts.Add("spec", "Write build spec to a file or directory after a successful build (e.g. spec=./bin)", "")
 
 # Components
 opts.Add(BoolVariable("deprecated", "Enable deprecated features", True))
@@ -331,6 +332,14 @@ for path in module_search_paths:
     # Note: custom modules can override built-in ones.
     modules_detected.update(modules)
 
+# Modules that are off by default in production template builds and on by default
+# in editor builds, regardless of their own is_enabled() value.
+# Can always be overridden explicitly via module_<name>_enabled=yes/no.
+_GAME_MODULE_PREFIXES = ("gd_", "goost", "godot_remote")
+
+_args_tools = ARGUMENTS.get("tools", "yes") == "yes"
+_args_production = ARGUMENTS.get("production", "no") == "yes"
+
 # Add module options
 for name, path in modules_detected.items():
     sys.path.insert(0, path)
@@ -344,6 +353,13 @@ for name, path in modules_detected.items():
             pass
     else:
         enabled = False
+
+    # Game/optional modules: follow tools/production defaults regardless of is_enabled().
+    if name.startswith(_GAME_MODULE_PREFIXES):
+        if _args_tools:
+            enabled = True   # editor: always on by default
+        elif _args_production:
+            enabled = False  # production template: off by default
 
     sys.path.remove(path)
     sys.modules.pop("config")
@@ -767,6 +783,84 @@ if selected_platform in platform_list:
         sys.modules.pop("config")
 
     env.module_list = modules_enabled
+
+    # spec: write a build spec file after a successful build.
+    _spec_file = env.get("spec", "")
+    if _spec_file:
+        import datetime as _dt
+
+        _spec_platform = selected_platform
+        _spec_suffix = suffix
+        _spec_modules = list(modules_enabled.keys())
+        _spec_t0 = time_at_start
+        _spec_env_snap = {
+            k: env[k]
+            for k in ("target", "tools", "bits", "arch", "production", "lto", "scu_build", "extra_suffix")
+            if k in env
+        }
+
+        def _write_spec(
+            _plat=_spec_platform,
+            _sfx=_spec_suffix,
+            _mods=_spec_modules,
+            _t0=_spec_t0,
+            _snap=_spec_env_snap,
+            _fname=_spec_file,
+        ):
+            from SCons.Script import GetBuildFailures
+
+            if GetBuildFailures():
+                return
+            root = Dir("#").abspath
+            lines = []
+            lines.append("[build]")
+            lines.append("date = %s" % _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            lines.append("platform = %s" % _plat)
+            for key in ("target", "tools", "bits", "arch", "production", "lto", "scu_build", "extra_suffix"):
+                if key in _snap:
+                    lines.append("%s = %s" % (key, _snap[key]))
+            # Find artifacts newer than build start matching the build suffix.
+            # Search bin/ and the android AAR output dir; report paths relative to project root.
+            search_dirs = [
+                os.path.join(root, "bin"),
+                os.path.join(root, "platform", "android", "java", "lib", "build", "outputs", "aar"),
+            ]
+            artifacts = []
+            for search_dir in search_dirs:
+                if not os.path.isdir(search_dir):
+                    continue
+                for fname in sorted(os.listdir(search_dir)):
+                    fpath = os.path.join(search_dir, fname)
+                    if os.path.isfile(fpath) and _sfx in fname and os.path.getmtime(fpath) >= _t0:
+                        artifacts.append((os.path.relpath(fpath, root), os.path.getsize(fpath)))
+            if artifacts:
+                lines.append("")
+                lines.append("[binary]")
+                for rel, fsize in artifacts:
+                    lines.append("path = %s" % rel)
+                    lines.append("size_bytes = %d" % fsize)
+                    lines.append("size_mb = %.2f" % (fsize / (1024.0 * 1024.0)))
+            lines.append("")
+            lines.append("[modules]")
+            for name in sorted(_mods):
+                lines.append("%s = yes" % name)
+            # Resolve output path:
+            #   spec=./bin         → existing dir → ./bin/spec.info
+            #   spec=path/to/name  → use that path directly (relative to cwd or absolute)
+            #   spec=name          → write to cwd (the directory scons was invoked from)
+            raw = _fname if os.path.isabs(_fname) else os.path.join(os.getcwd(), _fname)
+            if os.path.isdir(raw):
+                spec_path = os.path.join(raw, "spec.info")
+            else:
+                spec_path = raw
+            spec_dir = os.path.dirname(spec_path)
+            if spec_dir and not os.path.isdir(spec_dir):
+                os.makedirs(spec_dir)
+            with open(spec_path, "w") as f:
+                f.write("\n".join(lines) + "\n")
+            print("Spec written: %s" % spec_path)
+
+        atexit.register(_write_spec)
 
     methods.generate_version_header(env.module_version_string)
 

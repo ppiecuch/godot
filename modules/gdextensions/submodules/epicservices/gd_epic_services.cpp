@@ -116,6 +116,9 @@ void EpicServices::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("platform_interface_set_network_status", "status"), &EpicServices::platform_interface_set_network_status);
 	ClassDB::bind_method(D_METHOD("platform_interface_get_network_status"), &EpicServices::platform_interface_get_network_status);
 	ClassDB::bind_method(D_METHOD("platform_interface_get_desktop_crossplay_status"), &EpicServices::platform_interface_get_desktop_crossplay_status);
+#ifdef TOOLS_ENABLED
+	ClassDB::bind_method(D_METHOD("android_install_plugin", "eos_sdk_android_root"), &EpicServices::android_install_plugin);
+#endif
 
 	// Logging ------------------------------------------------------------
 	ClassDB::bind_method(D_METHOD("logging_interface_set_callback"), &EpicServices::logging_interface_set_callback);

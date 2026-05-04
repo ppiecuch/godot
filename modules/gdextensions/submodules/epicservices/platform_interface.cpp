@@ -38,6 +38,10 @@
 #include "eos_sdk.h"
 #include "eos_types.h"
 
+#ifdef EPIC_SECRETS
+#include EPIC_SECRETS
+#endif
+
 int EpicServices::platform_interface_initialize(const Dictionary &p_options) {
 	if (sdk_initialized) {
 		return int(EOS_EResult::EOS_AlreadyConfigured);
@@ -84,12 +88,39 @@ Dictionary EpicServices::platform_interface_create(const Dictionary &p_options) 
 		return out;
 	}
 
-	const CharString product_id = dict_get_string(p_options, "product_id").utf8();
-	const CharString sandbox_id = dict_get_string(p_options, "sandbox_id").utf8();
-	const CharString deployment_id = dict_get_string(p_options, "deployment_id").utf8();
-	const CharString client_id = dict_get_string(p_options, "client_id").utf8();
-	const CharString client_secret = dict_get_string(p_options, "client_secret").utf8();
-	const CharString encryption_key = dict_get_string(p_options, "encryption_key").utf8();
+	// Caller-supplied dict values win; fall back to compile-time EPIC_SECRETS constants.
+	String product_id_s = dict_get_string(p_options, "product_id");
+	String sandbox_id_s = dict_get_string(p_options, "sandbox_id");
+	String deployment_id_s = dict_get_string(p_options, "deployment_id");
+	String client_id_s = dict_get_string(p_options, "client_id");
+	String client_secret_s = dict_get_string(p_options, "client_secret");
+	String encryption_key_s = dict_get_string(p_options, "encryption_key");
+#ifdef EPIC_SECRETS
+	if (product_id_s.empty()) {
+		product_id_s = EpicServicesConstants::ProductId;
+	}
+	if (sandbox_id_s.empty()) {
+		sandbox_id_s = EpicServicesConstants::SandboxId;
+	}
+	if (deployment_id_s.empty()) {
+		deployment_id_s = EpicServicesConstants::DeploymentId;
+	}
+	if (client_id_s.empty()) {
+		client_id_s = EpicServicesConstants::ClientCredentialsId;
+	}
+	if (client_secret_s.empty()) {
+		client_secret_s = EpicServicesConstants::ClientCredentialsSecret;
+	}
+	if (encryption_key_s.empty()) {
+		encryption_key_s = EpicServicesConstants::EncryptionKey;
+	}
+#endif
+	const CharString product_id = product_id_s.utf8();
+	const CharString sandbox_id = sandbox_id_s.utf8();
+	const CharString deployment_id = deployment_id_s.utf8();
+	const CharString client_id = client_id_s.utf8();
+	const CharString client_secret = client_secret_s.utf8();
+	const CharString encryption_key = encryption_key_s.utf8();
 	const CharString cache_directory = dict_get_string(p_options, "cache_directory").utf8();
 	const CharString override_country = dict_get_string(p_options, "override_country_code").utf8();
 	const CharString override_locale = dict_get_string(p_options, "override_locale_code").utf8();
@@ -277,3 +308,70 @@ int EpicServices::platform_interface_get_desktop_crossplay_status() {
 	}
 	return int(info.Status);
 }
+
+#ifdef TOOLS_ENABLED
+#include "core/os/dir_access.h"
+#include "core/os/file_access.h"
+#include "core/project_settings.h"
+
+// Embed the .gdap content directly — avoids dependency on source file location at runtime.
+static const char *_eos_gdap_content =
+		"[config]\n\n"
+		"name=\"EpicServices\"\n"
+		"binary_type=\"local\"\n"
+		"binary=\"eossdk-StaticSTDC-release.aar\"\n\n"
+		"[dependencies]\n\n"
+		"local=[]\n"
+		"remote=[]\n"
+		"custom_maven_repos=[]\n";
+
+Dictionary EpicServices::android_install_plugin(const String &p_eos_sdk_android_root) {
+	Dictionary out;
+
+	const String aar_src = p_eos_sdk_android_root.plus_file("Bin/Android/static-stdc++/aar/eossdk-StaticSTDC-release.aar");
+	const String dst_dir = ProjectSettings::get_singleton()->globalize_path("res://android/plugins");
+	const String dst_gdap = dst_dir.plus_file("EpicServices.gdap");
+	const String dst_aar = dst_dir.plus_file("eossdk-StaticSTDC-release.aar");
+
+	// Create destination directory.
+	DirAccess *res_da = DirAccess::open("res://");
+	if (!res_da) {
+		out["error"] = "Cannot open res://";
+		return out;
+	}
+	res_da->make_dir_recursive("android/plugins");
+	memdelete(res_da);
+
+	// Write .gdap from embedded content.
+	FileAccess *f = FileAccess::open(dst_gdap, FileAccess::WRITE);
+	if (!f) {
+		out["error"] = "Cannot write: " + dst_gdap;
+		return out;
+	}
+	f->store_string(String(_eos_gdap_content));
+	memdelete(f);
+
+	// Copy AAR from EOS SDK android root.
+	DirAccess *fs = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+	if (!fs) {
+		out["error"] = "Cannot create filesystem DirAccess";
+		return out;
+	}
+	if (!fs->file_exists(aar_src)) {
+		out["error"] = "EOS AAR not found at: " + aar_src;
+		memdelete(fs);
+		return out;
+	}
+	Error err = fs->copy(aar_src, dst_aar);
+	memdelete(fs);
+	if (err != OK) {
+		out["error"] = "Failed to copy AAR (error " + itos(err) + ")";
+		return out;
+	}
+
+	out["ok"] = true;
+	out["gdap"] = dst_gdap;
+	out["aar"] = dst_aar;
+	return out;
+}
+#endif

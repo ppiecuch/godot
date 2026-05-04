@@ -1,0 +1,11 @@
+[config]
+
+name="EpicServices"
+binary_type="local"
+binary="eossdk-StaticSTDC-release.aar"
+
+[dependencies]
+
+local=[]
+remote=[]
+custom_maven_repos=[]
