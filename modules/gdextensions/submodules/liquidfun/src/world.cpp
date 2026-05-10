@@ -1,3 +1,33 @@
+/**************************************************************************/
+/*  world.cpp                                                             */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
+
 #include "godot_box2d.h"
 
 #include "world.h"
@@ -12,11 +42,41 @@ WorldB2::WorldB2(b2World *entity) :
 }
 
 WorldB2::~WorldB2() {
+	// Destroy particle systems first (each calls DestroyParticleSystem internally)
+	for (int i = m_particle_systems.size() - 1; i >= 0; --i) {
+		memdelete(m_particle_systems[i]);
+	}
+	m_particle_systems.clear();
+
 	// Destroy all bodies
 	while (auto *o = entity->GetBodyList())
 		memdelete_notnull(BodyB2::get(o));
 
 	memdelete(entity);
+}
+
+ParticleSystemB2 *WorldB2::create_particle_system(ParticleSystemDefB2 *psd) {
+	ERR_FAIL_NULL_V(psd, nullptr);
+	b2ParticleSystem *b2ps = entity->CreateParticleSystem(psd->get_b2_def());
+	ParticleSystemB2 *ps = memnew(ParticleSystemB2(b2ps, entity));
+	m_particle_systems.push_back(ps);
+	return ps;
+}
+
+void WorldB2::destroy_particle_system(ParticleSystemB2 *ps) {
+	ERR_FAIL_NULL(ps);
+	int idx = m_particle_systems.find(ps);
+	if (idx >= 0)
+		m_particle_systems.remove(idx);
+	memdelete(ps);
+}
+
+Array WorldB2::get_particle_systems() const {
+	Array arr;
+	for (int i = 0; i < m_particle_systems.size(); ++i) {
+		arr.push_back(m_particle_systems[i]);
+	}
+	return arr;
 }
 
 void WorldB2::step(float timeStep, int velocityIterations, int positionIterations) {
@@ -120,6 +180,10 @@ void WorldB2::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("shift_origin", "new_origin"), &WorldB2::shift_origin);
 
 	BOX2D_PROPERTY(WorldB2, metadata, Variant::NIL);
+
+	ClassDB::bind_method(D_METHOD("create_particle_system", "psd"), &WorldB2::create_particle_system);
+	ClassDB::bind_method(D_METHOD("destroy_particle_system", "ps"), &WorldB2::destroy_particle_system);
+	ClassDB::bind_method(D_METHOD("get_particle_systems"), &WorldB2::get_particle_systems);
 }
 
 WorldB2 *WorldB2::get(const b2World *o) {
