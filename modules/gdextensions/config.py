@@ -56,6 +56,7 @@ def configure(env):
         "msalibs",
         # network extensions
         "benet",
+        "penet",
         "httpserver",
         "isotools",
         "keychains",

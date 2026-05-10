@@ -206,6 +206,7 @@ modules = [
     "opensteer",
     "opensymbols",
     # P
+    "penet",
     "polyvector",
     # Q
     "qurobullet",
@@ -669,6 +670,29 @@ if is_enabled("dragonbones"):
         + Glob("thirdparty/dragonBones/model/*.cpp")
         + Glob("thirdparty/dragonBones/parser/*.cpp")
     )
+
+if is_enabled("penet"):
+    env_module.Prepend(CPPPATH=["thirdparty/penet/include"])
+    if env["platform"] in ["x11", "server", "osx", "frt"]:
+        for flag in [
+            "HAS_FCNTL=1",
+            "HAS_POLL=1",
+            "HAS_GETNAMEINFO=1",
+            "HAS_GETADDRINFO=1",
+            "HAS_GETHOSTBYNAME_R=1",
+            "HAS_GETHOSTBYADDR_R=1",
+            "HAS_INET_PTON=1",
+            "HAS_INET_NTOP=1",
+            "HAS_MSGHDR_FLAGS=1",
+            "HAS_SOCKLEN_T=1",
+        ]:
+            env_module.Append(CPPDEFINES=[flag])
+    if env["platform"] == "windows":
+        if env["CC"] == "cl":
+            env_module.Append(LINKFLAGS=["ws2_32.lib"])
+        else:
+            env_module.Append(LIBS=["ws2_32"])
+    thirdparty_sources += Glob("thirdparty/penet/*.cpp")
 
 if is_enabled("environment/waterfall"):
     if env["tools"]:

@@ -142,6 +142,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "dragonbones/register_types.h"
 #endif
 
+#ifdef GDEXT_PENET_ENABLED
+#include "penet/register_types.h"
+#endif
+
 #include "landiscovery/lan.h"
 
 #ifdef GDEXT_MULTIPEER_ENABLED
@@ -675,6 +679,9 @@ void register_gdextensions_types() {
 #ifdef GDEXT_DRAGONBONES_ENABLED
 	register_dragonbones_types();
 #endif
+#ifdef GDEXT_PENET_ENABLED
+	register_penet_types();
+#endif
 #ifdef GDEXT_IAP_ENABLED
 	register_iap_platform();
 #endif // GDEXT_IAP_ENABLED
@@ -1114,6 +1121,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_DRAGONBONES_ENABLED
 	unregister_dragonbones_types();
+#endif
+#ifdef GDEXT_PENET_ENABLED
+	unregister_penet_types();
 #endif
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 	RemoveSingleton(RuntimeProfilerOverlay);
