@@ -36,6 +36,8 @@ def configure(env):
         "openclwrapper",
         "sfxr",
         "vgamepaddesign",
+        # animation extensions
+        "dragonbones",
         # navigation/ai extensions
         "detournav",
         "behaviornode",

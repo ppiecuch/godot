@@ -357,7 +357,7 @@ for name, path in modules_detected.items():
     # Game/optional modules: follow tools/production defaults regardless of is_enabled().
     if name.startswith(_GAME_MODULE_PREFIXES):
         if _args_tools:
-            enabled = True   # editor: always on by default
+            enabled = True  # editor: always on by default
         elif _args_production:
             enabled = False  # production template: off by default
 

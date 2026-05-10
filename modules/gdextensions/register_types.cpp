@@ -138,6 +138,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 
 #include "debugdraw/debugdraw.h"
 
+#ifdef GDEXT_DRAGONBONES_ENABLED
+#include "dragonbones/register_types.h"
+#endif
+
 #include "landiscovery/lan.h"
 
 #ifdef GDEXT_MULTIPEER_ENABLED
@@ -668,6 +672,9 @@ void register_gdextensions_types() {
 #ifdef GDEXT_DEBUGDRAW_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugDraw", memnew(DebugDraw)));
 #endif
+#ifdef GDEXT_DRAGONBONES_ENABLED
+	register_dragonbones_types();
+#endif
 #ifdef GDEXT_IAP_ENABLED
 	register_iap_platform();
 #endif // GDEXT_IAP_ENABLED
@@ -1104,6 +1111,9 @@ void unregister_gdextensions_types() {
 #endif // GDEXT_CORE_ENABLED
 #ifdef GDEXT_DEBUGDRAW_ENABLED
 	RemoveSingleton(DebugDraw);
+#endif
+#ifdef GDEXT_DRAGONBONES_ENABLED
+	unregister_dragonbones_types();
 #endif
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 	RemoveSingleton(RuntimeProfilerOverlay);

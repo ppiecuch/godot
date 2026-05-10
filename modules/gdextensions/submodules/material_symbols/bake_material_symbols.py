@@ -78,7 +78,11 @@ def make_runner_script(records, out_dir: Path):
         "",
         "func _init():",
         "    var ms = MaterialSymbols.new()",
-        '    print("[bake] %d records" % %d)' % (len(records), 0) if False else f'    print("[bake] {len(records)} records")',
+        (
+            '    print("[bake] %d records" % %d)' % (len(records), 0)
+            if False
+            else f'    print("[bake] {len(records)} records")'
+        ),
     ]
     # Strip the failed conditional from above; just emit directly.
     lines = [
@@ -98,14 +102,13 @@ def make_runner_script(records, out_dir: Path):
         r, g, b = hex_to_floats(opts["color"])
         png_path = str(out_dir / f"{i:04d}.png")
         lines += [
-            "    var img_%d = ms.get_image(%s, \"%s\", %d, {"
-            "\"color\": Color(%g, %g, %g), \"weight\": %d, \"grade\": %d, "
-            "\"opsz\": %d, \"fill\": %g})"
-            % (i, style_const, name, size, r, g, b, weight, grade, opsz, fill),
+            '    var img_%d = ms.get_image(%s, "%s", %d, {'
+            '"color": Color(%g, %g, %g), "weight": %d, "grade": %d, '
+            '"opsz": %d, "fill": %g})' % (i, style_const, name, size, r, g, b, weight, grade, opsz, fill),
             "    if img_%d:" % i,
-            "        img_%d.save_png(\"%s\")" % (i, png_path),
+            '        img_%d.save_png("%s")' % (i, png_path),
             "    else:",
-            "        push_warning(\"[bake] missing: %s @ %s\")" % (name, opts["style"]),
+            '        push_warning("[bake] missing: %s @ %s")' % (name, opts["style"]),
         ]
     lines += ["    quit()", ""]
     return "\n".join(lines)
@@ -135,7 +138,7 @@ def emit_cpp(records, png_files, out_cpp: Path):
         lines.append(f"static const unsigned char png_{i}[{len(blob)}] = {{")
         chunks = []
         for k in range(0, len(blob), 16):
-            chunks.append("    " + ", ".join(f"0x{b:02x}" for b in blob[k:k + 16]))
+            chunks.append("    " + ", ".join(f"0x{b:02x}" for b in blob[k : k + 16]))
         lines.append(",\n".join(chunks))
         lines.append("};")
     lines.append("")

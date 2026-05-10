@@ -221,7 +221,7 @@ def get_version_info(module_version_string="", silent=False):
                 for line in open(packedrefs, "r").read().splitlines():
                     if line.startswith("#"):
                         continue
-                    (line_hash, line_ref) = line.split(" ")
+                    line_hash, line_ref = line.split(" ")
                     if ref == line_ref:
                         githash = line_hash
                         break
@@ -239,8 +239,7 @@ def generate_version_header(module_version_string=""):
     # NOTE: It is safe to generate these files here, since this is still executed serially.
 
     f = open("core/version_generated.gen.h", "w")
-    f.write(
-        """/* THIS FILE IS GENERATED DO NOT EDIT */
+    f.write("""/* THIS FILE IS GENERATED DO NOT EDIT */
 #ifndef VERSION_GENERATED_GEN_H
 #define VERSION_GENERATED_GEN_H
 #define VERSION_SHORT_NAME "{short_name}"
@@ -256,21 +255,14 @@ def generate_version_header(module_version_string=""):
 #define VERSION_DOCS_BRANCH "{docs_branch}"
 #define VERSION_DOCS_URL "https://docs.godotengine.org/en/" VERSION_DOCS_BRANCH
 #endif // VERSION_GENERATED_GEN_H
-""".format(
-            **version_info
-        )
-    )
+""".format(**version_info))
     f.close()
 
     fhash = open("core/version_hash.gen.cpp", "w")
-    fhash.write(
-        """/* THIS FILE IS GENERATED DO NOT EDIT */
+    fhash.write("""/* THIS FILE IS GENERATED DO NOT EDIT */
 #include "core/version.h"
 const char *const VERSION_HASH = "{git_hash}";
-""".format(
-            **version_info
-        )
-    )
+""".format(**version_info))
     fhash.close()
 
 
@@ -844,9 +836,9 @@ def find_visual_c_batch_file(env):
     msvc_version = get_default_version(env)
 
     if scons_ver >= (4, 4, 0):
-        (host_platform, target_platform, _) = get_host_target(env, msvc_version)
+        host_platform, target_platform, _ = get_host_target(env, msvc_version)
     else:
-        (host_platform, target_platform, _) = get_host_target(env)
+        host_platform, target_platform, _ = get_host_target(env)
 
     if scons_ver < (4, 6, 0):
         return find_batch_file(env, msvc_version, host_platform, target_platform)[0]

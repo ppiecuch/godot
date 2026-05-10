@@ -16,7 +16,6 @@ import re
 import binascii
 import hashlib
 
-
 CMRC_HEADER = """\
 #ifndef CMRC_H_INCLUDED
 #define CMRC_H_INCLUDED

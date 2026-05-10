@@ -97,17 +97,14 @@ for f in all_files:
     shutil.copy2(f, d)
 
 with open(os.path.join(dest_dir, "kernels/hash.h"), "w") as hash_file:
-    hash_file.write(
-        f"""// Copyright 2009-2021 Intel Corporation
+    hash_file.write(f"""// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #define RTC_HASH "{commit_hash}"
-"""
-    )
+""")
 
 with open(os.path.join(dest_dir, "kernels/config.h"), "w") as config_file:
-    config_file.write(
-        """// Copyright 2009-2021 Intel Corporation
+    config_file.write("""// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 /* #undef EMBREE_RAY_MASK */
@@ -183,8 +180,7 @@ with open(os.path.join(dest_dir, "kernels/config.h"), "w") as config_file:
 #else
   #define IF_ENABLED_GRIDS(x)
 #endif
-"""
-    )
+""")
 
 
 with open("CMakeLists.txt", "r") as cmake_file:
@@ -194,8 +190,7 @@ with open("CMakeLists.txt", "r") as cmake_file:
     patch_version = int(re.compile(r"EMBREE_VERSION_PATCH\s(\d+)").findall(cmake_content)[0])
 
 with open(os.path.join(dest_dir, "include/embree3/rtcore_config.h"), "w") as config_file:
-    config_file.write(
-        f"""// Copyright 2009-2021 Intel Corporation
+    config_file.write(f"""// Copyright 2009-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -253,8 +248,7 @@ with open(os.path.join(dest_dir, "include/embree3/rtcore_config.h"), "w") as con
 #else
 #  define RTC_API RTC_API_IMPORT
 #endif
-"""
-    )
+""")
 
 os.chdir("..")
 shutil.rmtree("embree-tmp")

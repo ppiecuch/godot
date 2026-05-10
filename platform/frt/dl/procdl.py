@@ -85,8 +85,7 @@ def build_cc(dl, cc):
         ls = libname + "_" + s
         resolutions += "\tfrt_fn_" + ls + " = (FRT_FN_" + ls + ")"
         resolutions += 'get_proc_address("' + s + '");\n'
-    f.write(
-        """\
+    f.write("""\
 #include "%(libname)s.gen.h"
 
 #include <stdio.h>
@@ -96,9 +95,7 @@ def build_cc(dl, cc):
 void frt_resolve_symbols_%(libname)s(FRT_FN_%(libname)s_GetProcAddress get_proc_address) {
 %(resolutions)s
 }
-"""
-        % {"libname": libname, "assignments": assignments[:-1], "resolutions": resolutions[:-1]}
-    )
+""" % {"libname": libname, "assignments": assignments[:-1], "resolutions": resolutions[:-1]})
     f.close()
 
 

@@ -4,7 +4,6 @@
 import sys
 import xml.etree.ElementTree as ET
 
-
 tree = ET.parse(sys.argv[1])
 old_doc = tree.getroot()
 

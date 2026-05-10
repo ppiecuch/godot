@@ -18,8 +18,7 @@ def generate_compressed_config(config_src, output_dir):
                     bytes_seq_str += ", "
                 bytes_seq_str += byte_to_str(buf[buf_idx])
 
-            cpp.write(
-                """/* THIS FILE IS GENERATED DO NOT EDIT */
+            cpp.write("""/* THIS FILE IS GENERATED DO NOT EDIT */
 #include "android_mono_config.h"
 
 #ifdef ANDROID_ENABLED
@@ -50,6 +49,4 @@ String get_godot_android_mono_config() {
 }
 
 #endif // ANDROID_ENABLED
-"""
-                % (compr_size, decompr_size, bytes_seq_str)
-            )
+""" % (compr_size, decompr_size, bytes_seq_str))

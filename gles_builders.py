@@ -292,8 +292,7 @@ def build_legacygl_header(filename, include, class_suffix, output_attribs, gles2
         "\t_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, float p_a, float p_b, float p_c, float p_d) { _FU glUniform4f(get_uniform(p_uniform),p_a,p_b,p_c,p_d); }\n\n"
     )
 
-    fd.write(
-        """\t_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, const Transform& p_transform) {  _FU
+    fd.write("""\t_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, const Transform& p_transform) {  _FU
 
 		const Transform &tr = p_transform;
 
@@ -322,11 +321,9 @@ def build_legacygl_header(filename, include, class_suffix, output_attribs, gles2
 
 	}
 
-	"""
-    )
+	""")
 
-    fd.write(
-        """_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, const Transform2D& p_transform) {  _FU
+    fd.write("""_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, const Transform2D& p_transform) {  _FU
 
 		const Transform2D &tr = p_transform;
 
@@ -355,11 +352,9 @@ def build_legacygl_header(filename, include, class_suffix, output_attribs, gles2
 
 	}
 
-	"""
-    )
+	""")
 
-    fd.write(
-        """_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, const CameraMatrix& p_matrix) {  _FU
+    fd.write("""_FORCE_INLINE_ void set_uniform(Uniforms p_uniform, const CameraMatrix& p_matrix) {  _FU
 
 		GLfloat matrix[16];
 
@@ -371,8 +366,7 @@ def build_legacygl_header(filename, include, class_suffix, output_attribs, gles2
 		}
 
 		glUniformMatrix4fv(get_uniform(p_uniform),1,false,matrix);
-}"""
-    )
+}""")
 
     fd.write("\n\n#undef _FU\n\n\n")
 

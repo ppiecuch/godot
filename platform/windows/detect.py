@@ -102,13 +102,11 @@ def build_res_file(target, source, env):
 def setup_msvc_manual(env):
     """Set up env to use MSVC manually, using VCINSTALLDIR"""
     if env["bits"] != "default":
-        print(
-            """
+        print("""
             Bits argument is not supported for MSVC compilation. Architecture depends on the Native/Cross Compile Tools Prompt/Developer Console
             (or Visual Studio settings) that is being used to run SCons. As a consequence, bits argument is disabled. Run scons again without bits
             argument (example: scons p=windows) and SCons will attempt to detect what MSVC compiler will be executed and inform you.
-            """
-        )
+            """)
         raise SCons.Errors.UserError("Bits argument should not be used when using VCINSTALLDIR")
 
     # Force bits arg

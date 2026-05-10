@@ -45,7 +45,7 @@ def add_external_libs(env, libs):
 
 def finalize_for_incbin(filepaths, prefix="", style="snake"):
     styled = {"camel": ["Data", "End", "Size"], "snake": ["_data", "_end", "_size"]}
-    (kData, kEnd, kSize) = (0, 1, 2)
+    kData, kEnd, kSize = (0, 1, 2)
     if style != "snake" and style != "camel":
         print("(GDExtensions) incbin unknown style '%s'. Default to 'snake'" % style)
         style = "snake"
@@ -161,6 +161,7 @@ modules = [
     # D
     "daedalus",
     "debugdraw",
+    "dragonbones",
     "discord",
     # E
     "environment/spherical_waves",
@@ -536,18 +537,14 @@ if is_enabled("epicservices"):
         # touching the upstream archive.
         import zipfile
 
-        eos_aar = (
-            eos_android_root + "/Bin/Android/static-stdc++/aar/eossdk-StaticSTDC-release.aar"
-        )
+        eos_aar = eos_android_root + "/Bin/Android/static-stdc++/aar/eossdk-StaticSTDC-release.aar"
         eos_aar_dst = eos_android_root + "/Bin/Android/static-stdc++/aar_extracted"
         if os.path.isfile(eos_aar) and not os.path.isdir(eos_aar_dst):
             print("(GDextensions) Extracting EOS Android AAR to %s" % eos_aar_dst)
             os.makedirs(eos_aar_dst)
             with zipfile.ZipFile(eos_aar) as _zf:
                 _zf.extractall(eos_aar_dst)
-        env_module.Append(
-            CPPPATH=[eos_android_root + "/Include", eos_android_root + "/Include/Android"]
-        )
+        env_module.Append(CPPPATH=[eos_android_root + "/Include", eos_android_root + "/Include/Android"])
         # Map Godot's android_arch to AAR ABI directory; AAR ships arm64-v8a + x86_64.
         _abi_map = {
             "armv8": "arm64-v8a",
@@ -574,18 +571,22 @@ if is_enabled("epicservices"):
         # binary ever ships.
         _secrets_h = None
         if env["tools"]:
-            _auto = os.path.join(Dir('.').abspath, "submodules/epicservices/.secrets.h")
+            _auto = os.path.join(Dir(".").abspath, "submodules/epicservices/.secrets.h")
             if os.path.isfile(_auto):
                 _secrets_h = _auto
             else:
-                print("(GDextensions) EpicServices: submodules/epicservices/.secrets.h not found — module disabled for this editor build")
+                print(
+                    "(GDextensions) EpicServices: submodules/epicservices/.secrets.h not found — module disabled for this editor build"
+                )
                 eos_supported = False
         else:
             _arg = ARGUMENTS.get("gdext_eos_secrets", "")
             if _arg and os.path.isfile(_arg):
                 _secrets_h = _arg
             else:
-                print("(GDextensions) EpicServices: gdext_eos_secrets not provided for template build — module disabled. Pass gdext_eos_secrets=/path/to/secrets.h")
+                print(
+                    "(GDextensions) EpicServices: gdext_eos_secrets not provided for template build — module disabled. Pass gdext_eos_secrets=/path/to/secrets.h"
+                )
                 eos_supported = False
 
     if eos_supported:
@@ -628,7 +629,11 @@ if is_enabled("epicservices"):
                 continue
             _dst = os.path.join(_bin_dir, os.path.basename(_src))
             try:
-                if os.path.isfile(_dst) and os.path.getmtime(_dst) >= os.path.getmtime(_src) and os.path.getsize(_dst) == os.path.getsize(_src):
+                if (
+                    os.path.isfile(_dst)
+                    and os.path.getmtime(_dst) >= os.path.getmtime(_src)
+                    and os.path.getsize(_dst) == os.path.getsize(_src)
+                ):
                     continue
                 shutil.copy2(_src, _dst)
             except (OSError, shutil.SameFileError):
@@ -645,6 +650,25 @@ if is_enabled("behaviortree"):
 
 if is_enabled("daedalus"):
     env_module.Append(CPPPATH=["submodules/daedalus/DDLS"])
+
+if is_enabled("dragonbones"):
+    # Godot binding layer — src/*.cpp are not collected by the standard modules glob.
+    sources += Glob("submodules/dragonbones/src/*.cpp")
+    # thirdparty/dragonBones parent must be on CPPPATH so that
+    # #include <dragonBones/DragonBonesHeaders.h> resolves correctly.
+    # The dragonBones sources themselves use relative includes, so we also
+    # add thirdparty/dragonBones for internal header resolution.
+    env_module.Prepend(CPPPATH=["thirdparty/dragonBones"])
+    thirdparty_sources += (
+        Glob("thirdparty/dragonBones/animation/*.cpp")
+        + Glob("thirdparty/dragonBones/armature/*.cpp")
+        + Glob("thirdparty/dragonBones/core/*.cpp")
+        + Glob("thirdparty/dragonBones/event/*.cpp")
+        + Glob("thirdparty/dragonBones/factory/*.cpp")
+        + Glob("thirdparty/dragonBones/geom/*.cpp")
+        + Glob("thirdparty/dragonBones/model/*.cpp")
+        + Glob("thirdparty/dragonBones/parser/*.cpp")
+    )
 
 if is_enabled("environment/waterfall"):
     if env["tools"]:
@@ -747,12 +771,18 @@ if is_enabled("material_symbols"):
                             break
         if _ms_need_regen:
             print("(GDextensions) Generating material_symbols_data.gen.{h,cpp} ...")
-            subprocess.check_call([
-                sys.executable, _ms_script,
-                "--src", _ms_src,
-                "--out-h", _ms_gen_h,
-                "--out-cpp", _ms_gen_cpp,
-            ])
+            subprocess.check_call(
+                [
+                    sys.executable,
+                    _ms_script,
+                    "--src",
+                    _ms_src,
+                    "--out-h",
+                    _ms_gen_h,
+                    "--out-cpp",
+                    _ms_gen_cpp,
+                ]
+            )
         sources += [os.path.join(_ms_dir, "material_symbols_data.gen.cpp")]
         if env["builtin_freetype"]:
             env_module.Prepend(CPPPATH=["#thirdparty/freetype/include"])
@@ -770,9 +800,8 @@ if is_enabled("material_symbols"):
 
             _ms_baked_cpp = os.path.join(_ms_dir, "material_symbols_baked.gen.cpp")
             _ms_bake_script = os.path.join(_ms_dir, "bake_material_symbols.py")
-            _ms_need_bake = (
-                not os.path.exists(_ms_baked_cpp)
-                or os.path.getmtime(_ms_manifest) > os.path.getmtime(_ms_baked_cpp)
+            _ms_need_bake = not os.path.exists(_ms_baked_cpp) or os.path.getmtime(_ms_manifest) > os.path.getmtime(
+                _ms_baked_cpp
             )
             if _ms_need_bake:
                 # Best-effort editor-binary discovery. The app's bin/build_*.sh
@@ -789,23 +818,33 @@ if is_enabled("material_symbols"):
                             _ms_editor = _cand
                             break
                 if not _ms_editor:
-                    print("(GDextensions) material_symbols: cannot find editor binary for "
-                          "baking. Set GDEXT_BAKE_EDITOR=/path/to/godot.tools or run a "
-                          "tools build first.")
+                    print(
+                        "(GDextensions) material_symbols: cannot find editor binary for "
+                        "baking. Set GDEXT_BAKE_EDITOR=/path/to/godot.tools or run a "
+                        "tools build first."
+                    )
                     modules.remove("material_symbols")
                 else:
                     print("(GDextensions) Baking material_symbols from %s ..." % _ms_manifest)
-                    subprocess.check_call([
-                        sys.executable, _ms_bake_script,
-                        "--manifest", _ms_manifest,
-                        "--editor", _ms_editor,
-                        "--out-cpp", _ms_baked_cpp,
-                    ])
+                    subprocess.check_call(
+                        [
+                            sys.executable,
+                            _ms_bake_script,
+                            "--manifest",
+                            _ms_manifest,
+                            "--editor",
+                            _ms_editor,
+                            "--out-cpp",
+                            _ms_baked_cpp,
+                        ]
+                    )
             if "material_symbols" in modules:
                 sources += [_ms_baked_cpp]
         else:
-            print("(GDextensions) material_symbols: no gdext_material_symbols_subset set "
-                  "and target is non-tools — module disabled.")
+            print(
+                "(GDextensions) material_symbols: no gdext_material_symbols_subset set "
+                "and target is non-tools — module disabled."
+            )
             modules.remove("material_symbols")
 
 if is_enabled("opensymbols"):
@@ -830,12 +869,18 @@ if is_enabled("opensymbols"):
                 break
     if _need_regen:
         print("(GDextensions) Generating opensymbols_data.gen.{h,cpp} ...")
-        subprocess.check_call([
-            sys.executable, _os_script,
-            "--src", _os_src,
-            "--out-h", _os_gen_h,
-            "--out-cpp", _os_gen_cpp,
-        ])
+        subprocess.check_call(
+            [
+                sys.executable,
+                _os_script,
+                "--src",
+                _os_src,
+                "--out-h",
+                _os_gen_h,
+                "--out-cpp",
+                _os_gen_cpp,
+            ]
+        )
     # Pick up the generated .cpp; opensymbols.cpp itself is collected by the
     # default Glob() pass over submodules/opensymbols/*.cpp.
     sources += [os.path.join(_os_dir, "opensymbols_data.gen.cpp")]

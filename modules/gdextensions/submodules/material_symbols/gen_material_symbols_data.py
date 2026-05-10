@@ -16,9 +16,10 @@ from pathlib import Path
 
 STYLES = [
     ("Outlined", "outlined"),
-    ("Rounded",  "rounded"),
-    ("Sharp",    "sharp"),
+    ("Rounded", "rounded"),
+    ("Sharp", "sharp"),
 ]
+
 
 def read_codepoints(path: Path):
     out = []
@@ -37,6 +38,7 @@ def read_codepoints(path: Path):
         out.append((name, cp))
     out.sort(key=lambda x: x[0])
     return out
+
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
@@ -98,18 +100,18 @@ def main():
         "",
         "// TTFs are embedded via INCBIN in material_symbols_resources.c — these",
         "// declarations live at global scope to match INCBIN's emitted symbols.",
-        '#ifdef __cplusplus',
+        "#ifdef __cplusplus",
         'extern "C" {',
-        '#endif',
+        "#endif",
         "extern const unsigned char ttf_outlined_data[];",
         "extern const unsigned int ttf_outlined_size;",
         "extern const unsigned char ttf_rounded_data[];",
         "extern const unsigned int ttf_rounded_size;",
         "extern const unsigned char ttf_sharp_data[];",
         "extern const unsigned int ttf_sharp_size;",
-        '#ifdef __cplusplus',
+        "#ifdef __cplusplus",
         '} // extern "C"',
-        '#endif',
+        "#endif",
         "",
         "#endif // MATERIAL_SYMBOLS_DATA_GEN_H",
         "",
@@ -118,6 +120,7 @@ def main():
 
     args.out_h.write_text("\n".join(h), encoding="utf-8")
     args.out_cpp.write_text("\n".join(cpp), encoding="utf-8")
+
 
 if __name__ == "__main__":
     main()

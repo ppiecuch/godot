@@ -42,13 +42,11 @@ def configure(env):
 
     if env["bits"] != "default":
         print("Error: bits argument is disabled for MSVC")
-        print(
-            """
+        print("""
             Bits argument is not supported for MSVC compilation. Architecture depends on the Native/Cross Compile Tools Prompt/Developer Console
             (or Visual Studio settings) that is being used to run SCons. As a consequence, bits argument is disabled. Run scons again without bits
             argument (example: scons p=uwp) and SCons will attempt to detect what MSVC compiler will be executed and inform you.
-            """
-        )
+            """)
         sys.exit()
 
     ## Build type

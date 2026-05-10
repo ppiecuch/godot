@@ -30,7 +30,7 @@ from pathlib import Path
 
 # Variant directory name -> 1-based index used in the generated array names.
 VARIANT_DIRS = [
-    ("DeepinOpenSymbol",  1),
+    ("DeepinOpenSymbol", 1),
     ("DeepinOpenSymbol2", 2),
     ("DeepinOpenSymbol3", 3),
 ]
@@ -38,6 +38,7 @@ VARIANT_DIRS = [
 # ── viewBox tightening (port of mini-midi-player/_scripts/tighten_svgs.py) ──
 
 _TOKEN_RE = re.compile(r"[MmLlHhVvCcSsQqTtAaZz]|-?\d+\.?\d*(?:[eE][-+]?\d+)?")
+
 
 def _parse_path_d(d):
     pts = []
@@ -96,30 +97,38 @@ def _parse_path_d(d):
                 pts.append((px, py))
         elif cu == "H":
             while idx < len(args):
-                v = args[idx]; idx += 1
+                v = args[idx]
+                idx += 1
                 px = px + v if rel else v
                 pts.append((px, py))
         elif cu == "V":
             while idx < len(args):
-                v = args[idx]; idx += 1
+                v = args[idx]
+                idx += 1
                 py = py + v if rel else v
                 pts.append((px, py))
         elif cu == "C":
             while True:
-                a = next_pair(); b = next_pair(); c = next_pair()
+                a = next_pair()
+                b = next_pair()
+                c = next_pair()
                 if c is None:
                     break
                 if rel:
-                    a = (px + a[0], py + a[1]); b = (px + b[0], py + b[1]); c = (px + c[0], py + c[1])
+                    a = (px + a[0], py + a[1])
+                    b = (px + b[0], py + b[1])
+                    c = (px + c[0], py + c[1])
                 pts.extend([a, b, c])
                 px, py = c
         elif cu in ("S", "Q"):
             while True:
-                a = next_pair(); b = next_pair()
+                a = next_pair()
+                b = next_pair()
                 if b is None:
                     break
                 if rel:
-                    a = (px + a[0], py + a[1]); b = (px + b[0], py + b[1])
+                    a = (px + a[0], py + a[1])
+                    b = (px + b[0], py + b[1])
                 pts.extend([a, b])
                 px, py = b
         elif cu == "T":
@@ -135,13 +144,14 @@ def _parse_path_d(d):
             while True:
                 if idx + 6 >= len(args):
                     break
-                _rx, _ry, _rot, _large, _sweep, x, y = args[idx:idx + 7]
+                _rx, _ry, _rot, _large, _sweep, x, y = args[idx : idx + 7]
                 idx += 7
                 if rel:
                     x, y = px + x, py + y
                 px, py = x, y
                 pts.append((px, py))
     return pts
+
 
 def _parse_matrix(transform):
     m = re.search(r"matrix\(([^)]+)\)", transform)
@@ -155,10 +165,12 @@ def _parse_matrix(transform):
     except ValueError:
         return None
 
+
 def _apply_matrix(mat, pt):
     a, b, c, d, e, f = mat
     x, y = pt
     return (a * x + c * y + e, b * x + d * y + f)
+
 
 def _tighten_viewbox(text):
     """Return text with a tightened viewBox (and the redundant <g matrix>
@@ -201,7 +213,8 @@ def _tighten_viewbox(text):
         return s.rstrip("0").rstrip(".") if "." in s else f"{int(v)}"
 
     new_vb = f'viewBox="{fmt(nx)} {fmt(ny)} {fmt(nw)} {fmt(nh)}"'
-    return text[:vb_match.start()] + new_vb + text[vb_match.end():]
+    return text[: vb_match.start()] + new_vb + text[vb_match.end() :]
+
 
 # ── SVG minification ───────────────────────────────────────────────────────
 
@@ -211,6 +224,7 @@ _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 _BETWEEN_TAGS_RE = re.compile(r">\s+<")
 _INNER_WS_RE = re.compile(r"[ \t\r\n]+")
 
+
 def _minify(text):
     text = _PROLOG_RE.sub("", text)
     text = _DOCTYPE_RE.sub("", text)
@@ -219,7 +233,9 @@ def _minify(text):
     text = _INNER_WS_RE.sub(" ", text).strip()
     return text
 
+
 # ── C++ string-literal escaping ────────────────────────────────────────────
+
 
 def _escape_cpp(s):
     out = []
@@ -245,7 +261,9 @@ def _escape_cpp(s):
                 out.append(f"\\x{b:02x}")
     return "".join(out)
 
+
 # ── Main ───────────────────────────────────────────────────────────────────
+
 
 def gather(root, tighten):
     """Return list of (variant_index, name, svg_text) tuples sorted by (variant, name)."""
@@ -265,6 +283,7 @@ def gather(root, tighten):
             text = _minify(text)
             entries.append((vidx, f.stem, text))
     return entries
+
 
 def write_outputs(entries, out_h, out_cpp):
     by_variant = {1: [], 2: [], 3: []}
@@ -317,13 +336,13 @@ def write_outputs(entries, out_h, out_cpp):
 
     return counts
 
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--src", type=Path, required=True, help="thirdparty/opensymbols/svg root")
     ap.add_argument("--out-h", type=Path, required=True)
     ap.add_argument("--out-cpp", type=Path, required=True)
-    ap.add_argument("--no-tighten", action="store_true",
-                    help="skip viewBox tightening (faster, smaller icons)")
+    ap.add_argument("--no-tighten", action="store_true", help="skip viewBox tightening (faster, smaller icons)")
     args = ap.parse_args()
     if not args.src.is_dir():
         sys.exit(f"no such dir: {args.src}")
@@ -335,6 +354,7 @@ def main():
     counts = write_outputs(entries, args.out_h, args.out_cpp)
     total = sum(counts.values())
     print(f"opensymbols_data: {counts[1]} + {counts[2]} + {counts[3]} = {total} entries")
+
 
 if __name__ == "__main__":
     main()
