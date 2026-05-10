@@ -1,6 +1,6 @@
+#include "godot_box2d.h"
 
 #include "distance_joint.h"
-#include "godot_box2d.h"
 
 #include <Box2D/Box2D.h>
 
@@ -47,8 +47,6 @@ float DistanceJointDefB2::get_damping() const { return DEF->dampingRatio; }
 void DistanceJointDefB2::set_damping(float o) { DEF->dampingRatio = o; }
 
 void DistanceJointDefB2::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("instance", "world"), &DistanceJointDefB2::instance);
-
 	BOX2D_PROPERTY(DistanceJointDefB2, anchor_a, Variant::VECTOR2);
 	BOX2D_PROPERTY(DistanceJointDefB2, anchor_b, Variant::VECTOR2);
 	BOX2D_PROPERTY(DistanceJointDefB2, length, Variant::REAL);

@@ -29,6 +29,12 @@ void register_liquidfun_types() {
 	ClassDB::register_virtual_class<DistanceJointB2>();
 	ClassDB::register_virtual_class<WeldJointB2>();
 	ClassDB::register_virtual_class<PrismaticJointB2>();
+	ClassDB::register_virtual_class<PulleyJointB2>();
+	ClassDB::register_virtual_class<GearJointB2>();
+	ClassDB::register_virtual_class<WheelJointB2>();
+	ClassDB::register_virtual_class<FrictionJointB2>();
+	ClassDB::register_virtual_class<RopeJointB2>();
+	ClassDB::register_virtual_class<MotorJointB2>();
 
 	ClassDB::register_virtual_class<JointDefB2>();
 	ClassDB::register_class<RevoluteJointDefB2>();
@@ -36,6 +42,12 @@ void register_liquidfun_types() {
 	ClassDB::register_class<DistanceJointDefB2>();
 	ClassDB::register_class<WeldJointDefB2>();
 	ClassDB::register_class<PrismaticJointDefB2>();
+	ClassDB::register_class<PulleyJointDefB2>();
+	ClassDB::register_class<GearJointDefB2>();
+	ClassDB::register_class<WheelJointDefB2>();
+	ClassDB::register_class<FrictionJointDefB2>();
+	ClassDB::register_class<RopeJointDefB2>();
+	ClassDB::register_class<MotorJointDefB2>();
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Box2D", memnew(Box2D)));
 }

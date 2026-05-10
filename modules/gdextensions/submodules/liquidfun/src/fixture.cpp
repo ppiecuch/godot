@@ -1,6 +1,6 @@
+#include "godot_box2d.h"
 
 #include "fixture.h"
-#include "godot_box2d.h"
 
 #include <Box2D/Box2D.h>
 

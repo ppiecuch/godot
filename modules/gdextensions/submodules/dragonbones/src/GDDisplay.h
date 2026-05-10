@@ -6,6 +6,8 @@
 #include "scene/resources/texture.h"
 #include "servers/visual_server.h"
 
+#include <dragonBones/DragonBonesHeaders.h>
+
 DRAGONBONES_USING_NAME_SPACE;
 
 class GDOwnerNode : public Node2D {

@@ -1,6 +1,6 @@
+#include "godot_box2d.h"
 
 #include "prismatic_joint.h"
-#include "godot_box2d.h"
 
 #include <Box2D/Box2D.h>
 
@@ -87,8 +87,6 @@ float PrismaticJointDefB2::get_motor_speed() const { return DEF->motorSpeed; }
 void PrismaticJointDefB2::set_motor_speed(float o) { DEF->motorSpeed = o; }
 
 void PrismaticJointDefB2::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("instance", "world"), &PrismaticJointDefB2::instance);
-
 	BOX2D_PROPERTY(PrismaticJointDefB2, anchor_a, Variant::VECTOR2);
 	BOX2D_PROPERTY(PrismaticJointDefB2, anchor_b, Variant::VECTOR2);
 	BOX2D_PROPERTY(PrismaticJointDefB2, local_axis_a, Variant::VECTOR2);

@@ -71,9 +71,9 @@ static void b2FreeDefault(void* mem, void* callbackData)
 {
 	B2_NOT_USED(callbackData);
 #ifdef GD_BOX2D
-	free(mem);
-#else
 	memfree(mem);
+#else
+	free(mem);
 #endif
 }
 

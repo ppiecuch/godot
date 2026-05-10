@@ -86,11 +86,17 @@ struct Transform2D GD(const struct b2Transform &);
 #include "world.h"
 
 #include "distance_joint.h"
+#include "friction_joint.h"
+#include "gear_joint.h"
 #include "joint.h"
+#include "motor_joint.h"
 #include "mouse_joint.h"
 #include "prismatic_joint.h"
+#include "pulley_joint.h"
 #include "revolute_joint.h"
+#include "rope_joint.h"
 #include "weld_joint.h"
+#include "wheel_joint.h"
 
 /***********************************************************************
  * Type Factory

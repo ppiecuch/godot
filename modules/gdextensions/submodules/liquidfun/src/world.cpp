@@ -1,6 +1,6 @@
+#include "godot_box2d.h"
 
 #include "world.h"
-#include "godot_box2d.h"
 
 #include "core/func_ref.h"
 

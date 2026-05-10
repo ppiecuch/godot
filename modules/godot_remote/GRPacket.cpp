@@ -694,11 +694,13 @@ TEST_SUITE("[[gd_godot_remote]] GRUtils") {
 	}
 
 	TEST_CASE("[gr] validate_packet with valid header") {
+		REQUIRE(GRUtils::_grutils_data != nullptr);
 		uint8_t valid[] = { 'G', 'R', 'H', 'D' };
 		CHECK(GRUtils::validate_packet(valid));
 	}
 
 	TEST_CASE("[gr] validate_packet with invalid header") {
+		REQUIRE(GRUtils::_grutils_data != nullptr);
 		uint8_t invalid[] = { 'B', 'A', 'D', '!' };
 		CHECK_FALSE(GRUtils::validate_packet(invalid));
 	}

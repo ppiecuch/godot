@@ -1,6 +1,6 @@
+#include "godot_box2d.h"
 
 #include "weld_joint.h"
-#include "godot_box2d.h"
 
 #include <Box2D/Box2D.h>
 
@@ -46,8 +46,6 @@ float WeldJointDefB2::get_damping() const { return DEF->dampingRatio; }
 void WeldJointDefB2::set_damping(float o) { DEF->dampingRatio = o; }
 
 void WeldJointDefB2::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("instance", "world"), &WeldJointDefB2::instance);
-
 	BOX2D_PROPERTY(WeldJointDefB2, anchor_a, Variant::VECTOR2);
 	BOX2D_PROPERTY(WeldJointDefB2, anchor_b, Variant::VECTOR2);
 	BOX2D_PROPERTY(WeldJointDefB2, reference_angle, Variant::REAL);
