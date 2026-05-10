@@ -51,6 +51,7 @@ def configure(env):
         # environment components
         "environment",
         # physics and simulation extensions
+        "liquidfun",
         "ropesim",
         "hydro",
         "msalibs",

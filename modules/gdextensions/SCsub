@@ -190,6 +190,7 @@ modules = [
     # L
     "landiscovery",
     "ldrdraw",
+    "liquidfun",
     "lsystem",
     # M
     "material_symbols",
@@ -693,6 +694,25 @@ if is_enabled("penet"):
         else:
             env_module.Append(LIBS=["ws2_32"])
     thirdparty_sources += Glob("thirdparty/penet/*.cpp")
+
+if is_enabled("liquidfun"):
+    # Binding layer src/*.cpp are not collected by the standard modules glob.
+    sources += Glob("submodules/liquidfun/src/*.cpp")
+    # include/ holds local headers; thirdparty/ provides <Box2D/Box2D.h>.
+    env_module.Prepend(CPPPATH=["submodules/liquidfun/include"])
+    env_module.Append(CPPDEFINES=["GD_BOX2D"])
+    thirdparty_sources += (
+        Glob("thirdparty/Box2D/Collision/*.cpp")
+        + Glob("thirdparty/Box2D/Collision/Shapes/*.cpp")
+        + Glob("thirdparty/Box2D/Common/*.cpp")
+        + Glob("thirdparty/Box2D/Dynamics/*.cpp")
+        + Glob("thirdparty/Box2D/Dynamics/Contacts/*.cpp")
+        + Glob("thirdparty/Box2D/Dynamics/Joints/*.cpp")
+        + Glob("thirdparty/Box2D/Rope/*.cpp")
+        + Glob("thirdparty/Box2D/Particle/*.cpp")
+        + Glob("thirdparty/Box2D/Util/*.cpp")
+        + Glob("thirdparty/Box2D/Enhancements/Controllers/*.cpp")
+    )
 
 if is_enabled("environment/waterfall"):
     if env["tools"]:
