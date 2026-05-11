@@ -1,53 +1,36 @@
+// MSAInterpolator - Catmull-Rom / linear spline interpolation
+//
 // Usage:
-//   MSA::InterpolatorT<real_t>      myInterpolator1; // create spline of real_ts
-//   MSA::InterpolatorT<myDataType> myInterpolator2; // create spline of custom data types (more info below)
+//   msa::InterpolatorT<real_t>   myInterp1D;
+//   msa::InterpolatorT<Vector2>  myInterp2D;
+//   msa::InterpolatorT<Vector3>  myInterp3D;
 //
-// or use preset classes:
+// or use the preset typedefs:
+//   msa::Interpolator1D  interp1;   // real_t spline
+//   msa::Interpolator2D  interp2;   // Vector2 spline
+//   msa::Interpolator3D  interp3;   // Vector3 spline
 //
-//   MSA::Interpolator1D myInterpolator1D; // create spline of real_ts (1D)
-//   MSA::Interpolator2D myInterpolator2D; // create spline of Vec2f (2D)
-//   MSA::Interpolator3D myInterpolator3D; // create spline of Vec3f (3D)
-//
-// splines wrap basic functionality of stl::vector:
-//   myInterpolator.size();             // return number of data elements
-//   myInterpolator.reserve(int count); // if you know how many elements up front it will improved performance when adding (you can still add more than this number of elements)
-//   myInterpolator.at(int i);          // return data at i'th index
-//   myInterpolator.clear();            // remove all elements
-//   myInterpolator.push_back(data1);   // add some data to the spline
-//   myInterpolator.push_back(data2);
-//
-//   myInterpolator.sampleAt(real_t t);  // (e.g. t:0.34 =>) samples along 34% of the whole spline using the current interpolation method and options
-//
-//   setInterpolation(i);               // set interpolation type, see MSAInterpolationTypes.h (currently cubic catmull rom and linear)
-//   int getInterpolation();            // get interpolation type
-//
-//   setUseLength(bool b);              // whether to use Length or not. using Length is slightly slower than not using (depending on number of data points)
-//   bool getUseLength();               // if useLength is true, sampleAt(0.57) means sample at 57% along the physical length of the spline (using the interpolated spline for Length calculation)
-//                                      // if useLength is false, the %t refers to % along the data points. If data points are evenly spaced its no problem, but if they are randomly spaced, the interpolation will not be uniform
-//
-//   myInterpolator.drawRaw(int dotSize, int lineWidth);                  // draws raw data with dotSize and lineWidth (make either zero to not draw dots or lines)
-//   myInterpolator.drawSmooth(int numSteps, int dotSize, int lineWidth); // draws smoothed data in  (make either zero to not draw dots or lines)
-//
-// Using custom data type:
-//   MSA::InterpolatorT<myDataType> myInterpolator2; // create spline of custom data types (more info below)
-//   myDataType has to be a scalar or class with the overloaded operators:
-//      +  (myDataType&)
-//      -  (myDataType&)
-//      == (myDataType&)
-//      =  (myDataType&)
-//      *  (real_t)
-//
-// and also define the function lengthOf(myDataType&) to return a scalar real_t value depicting the 'magnitude' of the data type (used in calculating Length)
-
+//   interp.push_back(data);          // append a control point
+//   interp.sampleAt(t);              // sample along 0..1 of the spline
+//   interp.setInterpolation(i);      // kInterpolationLinear or kInterpolationCubic
+//   interp.setUseLength(true);       // uniform arc-length parameterization
+//   interp.getLength();              // total arc length (only when useLength is true)
 
 #ifndef MSAINTERPOLATOR_H
 #define MSAINTERPOLATOR_H
 
-#include "core/math_defs.h"
+#include "core/math/math_defs.h"
+#include "core/math/vector2.h"
+#include "core/math/vector3.h"
 
 #include <vector>
 
 namespace msa {
+
+// Forward declarations so two-phase template lookup finds them at definition time.
+_FORCE_INLINE_ real_t lengthOf(real_t f);
+inline real_t lengthOf(const Vector2 &v);
+_FORCE_INLINE_ real_t lengthOf(const Vector3 &v);
 
 typedef enum {
 	kInterpolationLinear,
@@ -59,27 +42,22 @@ class InterpolatorT {
 protected:
 	InterpolationType _interpolationMethod;
 	bool _useLength;
-	int _lengthSubdivisions; // number of subdivisions used for length calculation
-	std::vector<T> _data; // vector of all data
-	std::vector<real_t> _dist; // vector of cumulative Lengths from i'th data point to beginning of spline
+	int _lengthSubdivisions;
+	std::vector<T> _data;
+	std::vector<real_t> _dist; // cumulative arc lengths at each control point
 
-	real_t calcSegmentLength(int i); // calculates length of segment prior to (leading up to) i'th point
-
-	void updateAllLengths(); // update all Lengths in _dist array
-
-	void findPosition(real_t t, int &leftIndex, real_t &mu); // given t(0...1) find the node index directly to the left of the point
+	real_t calcSegmentLength(int i);
+	void updateAllLengths();
+	void findPosition(real_t t, int &leftIndex, real_t &mu);
 
 	T linearInterpolate(const T &y1, const T &y2, real_t mu);
 
-	// this function is from Paul Bourke's site
-	// http://local.wasp.uwa.edu.au/~pbourke/miscellaneous/interpolation/
+	// Catmull-Rom cubic: http://local.wasp.uwa.edu.au/~pbourke/miscellaneous/interpolation/
 	T cubicInterpolate(const T &y0, const T &y1, const T &y2, const T &y3, real_t mu);
 
 public:
 	bool verbose;
 
-	// interpolate and re-sample at t position along the spline
-	// where t: 0....1 based on length of spline
 	T sampleAt(real_t t);
 
 	void setInterpolation(InterpolationType i = kInterpolationCubic);
@@ -88,18 +66,14 @@ public:
 	void setUseLength(bool b);
 	bool getUseLength();
 
-	// return length upto data point i
-	// leave blank (-1) to return length of entire data set
-	// only valid if setUseLength is true
-	// uses current interpolation settings for lenth calculation
-	// returns cached value, no calculations done in this function
+	// Returns cumulative length up to data point i, or total length if i == -1.
+	// Only valid when setUseLength(true) has been called.
 	const real_t getLength(int i = -1);
 
-	// set number of subdivisions used to calculation length of segment
 	void setLengthSubdivisions(int i = 100);
 	int getLengthSubdivisions();
 
-	// stl::container wrapper functions
+	// Container wrappers
 	void push_back(const T &newData);
 	int size();
 	void reserve(int i);
@@ -120,27 +94,20 @@ InterpolatorT<T>::InterpolatorT() {
 	verbose = false;
 }
 
-// use catmull rom interpolation to re-sample At normT position along the spline
-// where normT: 0....1 based on length of spline
 template <typename T>
 T InterpolatorT<T>::sampleAt(real_t t) {
 	int numItems = size();
 	if (numItems == 0) {
-		// if (verbose) printf("InterpolatorT: not enough samples", t);
 		return T();
 	}
 
-	if (t > 1) {
-		t = 1;
-	} else if (t < 0) {
-		t = 0;
-	}
+	t = CLAMP(t, 0.0f, 1.0f);
+
 	int i0, i1, i2, i3;
 	real_t mu;
 
 	findPosition(t, i1, mu);
 
-	// if less than 4 data points, force linear interpolation
 	InterpolationType it = _interpolationMethod;
 	if (numItems < 4)
 		it = kInterpolationLinear;
@@ -157,15 +124,14 @@ T InterpolatorT<T>::sampleAt(real_t t) {
 				i3 = numItems - 1;
 
 			return cubicInterpolate(at(i0), at(i1), at(i2), at(i3), mu);
-			break;
 
 		case kInterpolationLinear:
 			i2 = i1 + 1;
 			if (i2 >= numItems)
 				i2 = numItems - 1;
 			return linearInterpolate(at(i1), at(i2), mu);
-			break;
 	}
+	return T();
 }
 
 template <typename T>
@@ -207,16 +173,13 @@ int InterpolatorT<T>::getLengthSubdivisions() { return _lengthSubdivisions; }
 
 template <typename T>
 void InterpolatorT<T>::push_back(const T &newData) {
-	_data.push_back(newData); // add data
+	_data.push_back(newData);
 
 	if (getUseLength()) {
 		real_t segmentLength;
 		real_t totalLength;
 
 		if (size() > 1) {
-			// T distT = newData - _data.at(prevIndex); // get offset to previous node
-			// real_t dist = lengthOf(distT); // actual Length to node
-
 			segmentLength = calcSegmentLength(size() - 1);
 			totalLength = segmentLength + _dist.at(size() - 2);
 		} else {
@@ -225,8 +188,6 @@ void InterpolatorT<T>::push_back(const T &newData) {
 		}
 
 		_dist.push_back(totalLength);
-
-		// if (verbose) printf("segment length = %f | total length = %f\n", segmentLength, totalLength);
 	}
 }
 
@@ -246,10 +207,10 @@ void InterpolatorT<T>::clear() {
 }
 
 template <typename T>
-const T &InterpolatorT<T>::at(int i) { return _data.at(constrain(i, 0, size() - 1)); }
+const T &InterpolatorT<T>::at(int i) { return _data.at(CLAMP(i, 0, size() - 1)); }
 
 template <typename T>
-vector<T> InterpolatorT<T>::getData() { return _data; }
+std::vector<T> InterpolatorT<T>::getData() { return _data; }
 
 template <typename T>
 real_t InterpolatorT<T>::calcSegmentLength(int i) {
@@ -277,10 +238,6 @@ real_t InterpolatorT<T>::calcSegmentLength(int i) {
 
 	_useLength = saveUseLength;
 
-	if (verbose) {
-		printf("segment length for %i is %f\n", i, segmentLength);
-	}
-
 	return segmentLength;
 }
 
@@ -302,10 +259,6 @@ void InterpolatorT<T>::findPosition(real_t t, int &leftIndex, real_t &mu) {
 
 	switch (numItems) {
 		case 0:
-			leftIndex = 0;
-			mu = 0;
-			break;
-
 		case 1:
 			leftIndex = 0;
 			mu = 0;
@@ -317,19 +270,17 @@ void InterpolatorT<T>::findPosition(real_t t, int &leftIndex, real_t &mu) {
 			break;
 
 		default:
-			if (_useLength) { // need to use
-				real_t totalLengthOfInterpolator = _dist.at(numItems - 1);
-				real_t tDist = totalLengthOfInterpolator * t; // the Length we want to be from the start
-				int startIndex = floor(t * (numItems - 1)); // start approximation here
-				int i1 = startIndex;
+			if (_useLength) {
+				real_t totalLength = _dist.at(numItems - 1);
+				real_t tDist = totalLength * t;
+				int i1 = CLAMP((int)(t * (numItems - 1)), 0, numItems - 1);
 				int limitLeft = 0;
 				int limitRight = numItems - 1;
 
-				real_t distAt1, distAt2;
-				for (int iterations = 0; iterations < 100; iterations++) { // limit iterations
-					distAt1 = _dist.at(i1);
-					if (distAt1 <= tDist) { // if Length at i1 is less than desired Length (this is good)
-						distAt2 = _dist.at(constrain(i1 + 1, 0, (int)_dist.size() - 1));
+				for (int iter = 0; iter < 100; iter++) {
+					real_t distAt1 = _dist.at(i1);
+					if (distAt1 <= tDist) {
+						real_t distAt2 = _dist.at(CLAMP(i1 + 1, 0, (int)_dist.size() - 1));
 						if (distAt2 > tDist) {
 							leftIndex = i1;
 							mu = (tDist - distAt1) / (distAt2 - distAt1);
@@ -345,7 +296,7 @@ void InterpolatorT<T>::findPosition(real_t t, int &leftIndex, real_t &mu) {
 
 			} else {
 				real_t actT = t * (numItems - 1);
-				leftIndex = Math::floor(actT);
+				leftIndex = (int)Math::floor(actT);
 				mu = actT - leftIndex;
 			}
 	}
@@ -354,8 +305,6 @@ void InterpolatorT<T>::findPosition(real_t t, int &leftIndex, real_t &mu) {
 template <typename T>
 T InterpolatorT<T>::linearInterpolate(const T &y1, const T &y2, real_t mu) { return (y2 - y1) * mu + y1; }
 
-// this function is from Paul Bourke's site
-// http://local.wasp.uwa.edu.au/~pbourke/miscellaneous/interpolation/
 template <typename T>
 T InterpolatorT<T>::cubicInterpolate(const T &y0, const T &y1, const T &y2, const T &y3, real_t mu) {
 	real_t mu2 = mu * mu;
@@ -367,167 +316,33 @@ T InterpolatorT<T>::cubicInterpolate(const T &y0, const T &y1, const T &y2, cons
 	return (a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3);
 }
 
-// BEGIN Interpolator1D
+// ============================================================
+// Interpolator1D (real_t)
+// ============================================================
 
 _FORCE_INLINE_ real_t lengthOf(real_t f) { return f; }
 
 typedef InterpolatorT<real_t> Interpolator1D;
 
-// END Interpolator1D
+// ============================================================
+// Interpolator2D (Vector2)
+// ============================================================
 
-// BEGIN Interpolator2D
+typedef InterpolatorT<Vector2> Interpolator2D;
 
-typedef InterpolatorT<Vec2f> Interpolator2D;
-
-inline real_t lengthOf(const Vec2f &v) {
+inline real_t lengthOf(const Vector2 &v) {
 	return v.length();
 }
 
-// OpenGL ES compatibility added by Rob Seward
-// http://www.openframeworks.cc/forum/viewtopic.php?f=25&t=3767&p=19865
+// ============================================================
+// Interpolator3D (Vector3)
+// ============================================================
 
-_FORCE_INLINE_ void drawInterpolatorRaw(Canvas *canvas, Interpolator2D &spline, int dotSize = 20, int lineWidth = 4) {
-	int numItems = spline.size();
+typedef InterpolatorT<Vector3> Interpolator3D;
 
-	if (lineWidth) {
-		glLineWidth(lineWidth);
-		GLfloat vertex[numItems * 2];
-		for (int i = 0; i < numItems; i++) {
-			vertex[i * 2] = spline.at(i).x;
-			vertex[(i * 2) + 1] = spline.at(i).y;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_LINE_STRIP, 0, numItems);
-	}
-
-	if (dotSize) {
-		glPointSize(dotSize);
-		GLfloat vertex[numItems * 2];
-		for (int i = 0; i < numItems; i++) {
-			vertex[i * 2] = spline.at(i).x;
-			vertex[(i * 2) + 1] = spline.at(i).y;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_POINTS, 0, numItems);
-	}
-}
-
-_FORCE_INLINE_ void drawInterpolatorSmooth(Canvas *canvas, Interpolator2D &spline, int numSteps, int dotSize = 8, int lineWidth = 2) {
-	real_t spacing = 1.0 / numSteps;
-	if (lineWidth) {
-		glLineWidth(lineWidth);
-
-		GLfloat vertex[numSteps * 2];
-		int i = 0;
-		for (real_t f = 0; f < 1; f += spacing) {
-			Vec2f v = spline.sampleAt(f);
-			vertex[i * 2] = v.x;
-			vertex[(i * 2) + 1] = v.y;
-			i++;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_LINE_STRIP, 0, numSteps);
-	}
-
-	if (dotSize) {
-		glPointSize(dotSize);
-		GLfloat vertex[numSteps * 2];
-		int i = 0;
-		for (real_t f = 0; f < 1; f += spacing) {
-			Vec2f v = spline.sampleAt(f);
-			vertex[i * 2] = v.x;
-			vertex[(i * 2) + 1] = v.y;
-			i++;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_POINTS, 0, numSteps);
-	}
-}
-
-// END Interpolator2D
-
-// BEGIN Interpolator3D
-
-typedef InterpolatorT<Vec3f> Interpolator3D;
-
-_FORCE_INLINE_ real_t lengthOf(const Vec3f &v) {
+_FORCE_INLINE_ real_t lengthOf(const Vector3 &v) {
 	return v.length();
 }
-
-// OpenGL ES compatibility added by Rob Seward
-// http://www.openframeworks.cc/forum/viewtopic.php?f=25&t=3767&p=19865
-
-_FORCE_INLINE_ void drawInterpolatorRaw(Canvas *canvas, Interpolator3D spline, int dotSize = 20, int lineWidth = 4) {
-	int numItems = spline.size();
-
-	if (lineWidth) {
-		glLineWidth(lineWidth);
-		GLfloat vertex[numItems * 3];
-		for (int i = 0; i < numItems; i++) {
-			vertex[i * 3] = spline.at(i).x;
-			vertex[(i * 3) + 1] = spline.at(i).y;
-			vertex[(i * 3) + 2] = spline.at(i).z;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_LINE_STRIP, 0, numItems);
-	}
-
-	if (dotSize) {
-		glPointSize(dotSize);
-		GLfloat vertex[numItems * 3];
-		for (int i = 0; i < numItems; i++) {
-			vertex[i * 3] = spline.at(i).x;
-			vertex[(i * 3) + 1] = spline.at(i).y;
-			vertex[(i * 3) + 2] = spline.at(i).z;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_POINTS, 0, numItems);
-	}
-}
-
-_FORCE_INLINE_ void drawInterpolatorSmooth(Canvas *canvas, Interpolator3D spline, int numSteps, int dotSize = 8, int lineWidth = 2) {
-	real_t spacing = 1.0 / numSteps;
-	if (lineWidth) {
-		glLineWidth(lineWidth);
-
-		GLfloat vertex[numSteps * 3];
-		int i = 0;
-		for (real_t f = 0; f < 1; f += spacing) {
-			Vec3f v = spline.sampleAt(f);
-			vertex[i * 3] = v.x;
-			vertex[(i * 3) + 1] = v.y;
-			vertex[(i * 3) + 2] = v.z;
-			i++;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_LINE_STRIP, 0, numSteps);
-	}
-
-	if (dotSize) {
-		glPointSize(dotSize);
-		GLfloat vertex[numSteps * 3];
-		int i = 0;
-		for (real_t f = 0; f < 1; f += spacing) {
-			Vec3f v = spline.sampleAt(f);
-			vertex[i * 3] = v.x;
-			vertex[(i * 3) + 1] = v.y;
-			vertex[(i * 3) + 2] = v.z;
-			i++;
-		}
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, vertex);
-		glDrawArrays(GL_POINTS, 0, numSteps);
-	}
-}
-
-// END Interpolator3D
 
 } // namespace msa
 

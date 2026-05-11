@@ -150,6 +150,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "liquidfun/register_types.h"
 #endif
 
+#ifdef GDEXT_MSALIBS_ENABLED
+#include "msalibs/register_types.h"
+#endif
+
 #include "landiscovery/lan.h"
 
 #ifdef GDEXT_MULTIPEER_ENABLED
@@ -689,6 +693,9 @@ void register_gdextensions_types() {
 #ifdef GDEXT_LIQUIDFUN_ENABLED
 	register_liquidfun_types();
 #endif
+#ifdef GDEXT_MSALIBS_ENABLED
+	register_msalibs_types();
+#endif
 #ifdef GDEXT_IAP_ENABLED
 	register_iap_platform();
 #endif // GDEXT_IAP_ENABLED
@@ -1134,6 +1141,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_LIQUIDFUN_ENABLED
 	unregister_liquidfun_types();
+#endif
+#ifdef GDEXT_MSALIBS_ENABLED
+	unregister_msalibs_types();
 #endif
 #ifdef GDEXT_RUNTIMEPROFILER_ENABLED
 	RemoveSingleton(RuntimeProfilerOverlay);

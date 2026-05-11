@@ -1,31 +1,24 @@
 #include "mpmfluid.h"
 
-#include "core/2d/core_item.h"
-#include "core/math/vector2.h"
+#include "core/math/math_funcs.h"
 
-// Demo controls:
-// --------------
-// gui.addSlider("# Particles",    "N_PARTICLES",    100000/4, 1000, 100000, true);
-// gui.addSlider("Density",        "DENSITY",        5.0,      0,    30.0,   false);
-// gui.addSlider("Stiffness",      "STIFFNESS",      0.5,      0,    2.0,    false);
-// gui.addSlider("Bulk Viscosity", "BULK_VISCOSITY", 3.0,      0,    10.0,   false);
-// gui.addSlider("Elasticity",     "ELASTICITY",     1.0,      0,    4.0,    false);
-// gui.addSlider("Viscosity",      "VISCOSITY",      1.0,      0,    4.0,    false);
-// gui.addSlider("Yield Rate",     "YIELD_RATE",     1.0,      0,    2.0,    false);
-// gui.addSlider("Gravity",        "GRAVITY",        0.002,    0,    0.02,   false);
-// gui.addSlider("Smoothing",      "SMOOTHING",      1.0,      0,    3.0,    false);
-// gui.addToggle("Do Obstacles?",  "DO_OBSTACLES",   true);
+// Demo parameter reference (for GDScript callers):
+//   numParticles    - active particle count (100–100000)
+//   densitySetting  - target density (0–30, default 5)
+//   stiffness       - pressure stiffness (0–2, default 0.5)
+//   bulkViscosity   - bulk viscosity (0–10, default 3)
+//   elasticity      - elasticity (0–4, default 1)
+//   viscosity       - viscosity (0–4, default 1)
+//   yieldRate       - yield rate (0–2, default 1)
+//   gravity         - gravity per step (0–0.02, default 0.002)
+//   smoothing       - velocity smoothing (0–3, default 1)
+//   bDoObstacles    - enable circular obstacle
+//   bGradient       - spatially-varying density (for experimentation)
 
-// Now, this horizontal gradient in the Density parameter is just for yuks.
-// It demonstrates that spatial variations in the Density parameter can yield interesting results.
-// For an interesting experiment, try making Density proportional to the luminance of a photograph.
-
-// gui.addToggle("Horizontal Density Gradient?", "DENSITY_GRADIENT", false);
-// -----
-
-//TODO make varying
 #define gridSizeX 160
 #define gridSizeY 120
+
+using namespace mpm::fluid;
 
 MPMFluid::MPMFluid() :
 		densitySetting(5.0),
@@ -37,7 +30,9 @@ MPMFluid::MPMFluid() :
 		gravity(.002),
 		bGradient(false),
 		bDoObstacles(true),
-		elapsed(0.0),
+		numParticles(0),
+		maxNumParticles(0),
+		numActiveNodes(0),
 		scaleFactor(1.0),
 		smoothing(1.0) {
 	//
@@ -46,7 +41,6 @@ MPMFluid::MPMFluid() :
 void MPMFluid::setup(int maxParticles) {
 	maxNumParticles = maxParticles;
 
-	// This creates a 2-dimensional array (i.e. grid) of Node objects.
 	for (int i = 0; i < gridSizeX; i++) {
 		grid.push_back(std::vector<MPMNode *>());
 		for (int j = 0; j < gridSizeY; j++) {
@@ -61,19 +55,18 @@ void MPMFluid::setup(int maxParticles) {
 	for (int i = 0; i < maxParticles; i++) {
 		int x0 = 5;
 		int x1 = gridSizeX - 5;
-		real_t rx = ofRandom(x0, x1);
-		real_t ry = ofRandom(5, gridSizeY / 5);
+		real_t rx = Math::random((real_t)x0, (real_t)x1);
+		real_t ry = Math::random(5.0f, (real_t)(gridSizeY / 5));
 		particles.push_back(new MPMParticle(rx, ry, 0.0, 0.0));
 	}
 
-	//TODO: JG add and remove obistacles through API
 	obstacles.push_back(new MPMObstacle(gridSizeX * 0.75, gridSizeY * 0.75, gridSizeX * 0.075));
 }
 
 void MPMFluid::update() {
-	numParticles = MIN(numParticles, maxNumParticles); // Important: can't exceed maxNParticles!
+	numParticles = MIN(numParticles, maxNumParticles);
 
-	// Clear the grid. Necessary to begin the simulation.
+	// Clear the grid.
 	for (int i = 0; i < gridSizeX; i++) {
 		for (int j = 0; j < gridSizeY; j++) {
 			grid[i][j]->clear();
@@ -82,9 +75,7 @@ void MPMFluid::update() {
 
 	numActiveNodes = 0;
 
-	long t0 = ofGetElapsedTimeMillis();
-
-	// -- Particles pass 1
+	// -- Particles pass 1: scatter momentum to grid
 	real_t phi;
 	int pcxTmp, pcyTmp;
 	for (int ip = 0; ip < numParticles; ip++) {
@@ -102,7 +93,6 @@ void MPMFluid::update() {
 		p->pu = pu;
 		p->pv = pv;
 
-		// N.B.: The constants below are not playthings.
 		real_t x = (real_t)p->cx - p->x;
 		px[0] = (0.5 * x * x + 1.5 * x) + 1.125;
 		gx[0] = x + 1.5;
@@ -128,7 +118,7 @@ void MPMFluid::update() {
 			pcxi = pcx + i;
 
 			if ((pcxi >= 0) && (pcxi < gridSizeX)) {
-				std::vector<MPMNode *> &nrow = grid[pcxi]; // potential for array index out of bounds here if simulation explodes.
+				std::vector<MPMNode *> &nrow = grid[pcxi];
 				real_t pxi = px[i];
 				real_t gxi = gx[i];
 
@@ -136,7 +126,7 @@ void MPMFluid::update() {
 					pcyj = pcy + j;
 
 					if ((pcyj >= 0) && (pcyj < gridSizeY)) {
-						MPMNode *n = nrow[pcyj]; // potential for array index out of bounds here if simulation explodes.
+						MPMNode *n = nrow[pcyj];
 
 						if (!n->active) {
 							n->active = true;
@@ -163,11 +153,8 @@ void MPMFluid::update() {
 		}
 	}
 
-	long t1 = ofGetElapsedTimeMillis();
-
-	// -- Particles pass 2
+	// -- Particles pass 2: compute stress and acceleration
 	real_t stiffnessBulk = stiffness * bulkViscosity;
-	int nBounced = 0;
 
 	for (int ip = 0; ip < numParticles; ip++) {
 		MPMParticle *p = particles[ip];
@@ -186,7 +173,6 @@ void MPMFluid::update() {
 		real_t gxi, pxi;
 		real_t gxf, gyf;
 
-		int pcxi;
 		for (int i = 0; i < 3; i++) {
 			std::vector<MPMNode *> &nrow = grid[pcx + i];
 			gxi = gx[i];
@@ -217,7 +203,7 @@ void MPMFluid::update() {
 		p->T01 += (wT1 + D01) - yieldRate * p->T01;
 		p->T11 += (wT0 + D11) - yieldRate * p->T11;
 
-		// here's our protection against exploding simulations...
+		// Clamp deformation tensor to prevent simulation explosion.
 		real_t norma = p->T00 * p->T00 + 2 * p->T01 * p->T01 + p->T11 * p->T11;
 		if (norma > 10) {
 			p->T00 = p->T01 = p->T11 = 0;
@@ -281,8 +267,7 @@ void MPMFluid::update() {
 
 		real_t DS = densitySetting;
 		if (bGradient) {
-			// Just for yuks, a spatially varying density function
-			DS = densitySetting * (Math::pow(p->x / (real_t)gridSizeX, 4.0));
+			DS = densitySetting * (Math::pow(p->x / (real_t)gridSizeX, (real_t)4.0));
 		}
 
 		real_t pressure = (stiffness / MAX(1.0, DS)) * (density - DS);
@@ -292,8 +277,7 @@ void MPMFluid::update() {
 
 		p->d = 1.0 / MAX(0.001, density);
 
-		// COLLISIONS-1
-		// Determine if there has been a collision with the wall.
+		// COLLISIONS-1: wall bounce forces
 		real_t fx = 0.0F;
 		real_t fy = 0.0F;
 		bool bounced = false;
@@ -314,19 +298,14 @@ void MPMFluid::update() {
 			bounced = true;
 		}
 
-		// Interact with a simple demonstration obstacle.
-		// Note: an accurate obstacle implementation would also need to implement
-		// some velocity fiddling as in the section labeled "COLLISIONS-2" below.
-		// Otherwise, this obstacle is "soft"; particles can enter it slightly.
 		if (bDoObstacles && obstacles.size() > 0) {
-			// circular obstacle
 			real_t oR = obstacles[0]->radius;
 			real_t oR2 = obstacles[0]->radius2;
 			real_t odx = obstacles[0]->cx - p->x;
 			real_t ody = obstacles[0]->cy - p->y;
 			real_t oD2 = odx * odx + ody * ody;
 			if (oD2 < oR2) {
-				real_t oD = sql::sqrtf(oD2);
+				real_t oD = Math::sqrt(oD2);
 				real_t dR = oR - oD;
 				fx -= dR * (odx / oD);
 				fy -= dR * (ody / oD);
@@ -363,8 +342,8 @@ void MPMFluid::update() {
 			for (int i = 0; i < 3; i++) {
 				std::vector<MPMNode *> &nrow = grid[pcx + i];
 
-				real_t ppxi = *(pppxi++); //px[i];
-				real_t pgxi = *(ppgxi++); //gx[i];
+				real_t ppxi = *(pppxi++);
+				real_t pgxi = *(ppgxi++);
 				for (int j = 0; j < 3; j++) {
 					MPMNode *nj = nrow[pcy + j];
 					dx = pgxi * py[j];
@@ -386,9 +365,7 @@ void MPMFluid::update() {
 		}
 	}
 
-	long t2 = ofGetElapsedTimeMillis();
-
-	// -- Particles pass 3
+	// -- Particles pass 3: integrate velocity
 	const real_t rightEdge = gridSizeX - 3;
 	const real_t bottomEdge = gridSizeY - 3;
 
@@ -403,7 +380,7 @@ void MPMFluid::update() {
 			std::vector<MPMNode *> &nrow = grid[pcx + i];
 			real_t ppxi = px[i];
 			for (int j = 0; j < 3; j++) {
-				ofxMPMNode *nj = nrow[pcy + j];
+				MPMNode *nj = nrow[pcy + j];
 				phi = ppxi * py[j];
 				p->u += phi * nj->ax;
 				p->v += phi * nj->ay;
@@ -411,32 +388,20 @@ void MPMFluid::update() {
 		}
 
 		p->v += gravity;
-		if (ofGetMousePressed(0)) {
-			real_t vx = Math::abs(p->x - ofGetMouseX() / scaleFactor);
-			real_t vy = Math::abs(p->y - ofGetMouseY() / scaleFactor);
-			real_t mdx = (ofGetMouseX() - ofGetPreviousMouseX()) / scaleFactor;
-			real_t mdy = (ofGetMouseY() - ofGetPreviousMouseY()) / scaleFactor;
-			if (vx < 10 && vy < 10) {
-				real_t weight = (1 - vx / 10) * (1 - vy / 10);
-				p->u += weight * (mdx - p->u);
-				p->v += weight * (mdy - p->v);
-			}
-		}
 
-		// COLLISIONS-2
-		// Plus, an opportunity to add randomness when accounting for wall collisions.
+		// COLLISIONS-2: small random bounce at walls to prevent sticking
 		real_t xf = p->x + p->u;
 		real_t yf = p->y + p->v;
-		real_t wallBounceMaxRandomness = 0.03;
+		const real_t wallBounceMaxRandomness = 0.03;
 		if (xf < 2) {
-			p->u += (2 - xf) + ofRandom(wallBounceMaxRandomness);
+			p->u += (2 - xf) + Math::randf() * wallBounceMaxRandomness;
 		} else if (xf > rightEdge) {
-			p->u += rightEdge - xf - ofRandom(wallBounceMaxRandomness);
+			p->u += rightEdge - xf - Math::randf() * wallBounceMaxRandomness;
 		}
 		if (yf < 2) {
-			p->v += (2 - yf) + ofRandom(wallBounceMaxRandomness);
+			p->v += (2 - yf) + Math::randf() * wallBounceMaxRandomness;
 		} else if (yf > bottomEdge) {
-			p->v += bottomEdge - yf - ofRandom(wallBounceMaxRandomness);
+			p->v += bottomEdge - yf - Math::randf() * wallBounceMaxRandomness;
 		}
 
 		real_t pu = p->u;
@@ -445,7 +410,7 @@ void MPMFluid::update() {
 			std::vector<MPMNode *> &nrow = grid[pcx + i];
 			real_t ppxi = px[i];
 			for (int j = 0; j < 3; j++) {
-				ofxMPMNode *nj = nrow[pcy + j];
+				MPMNode *nj = nrow[pcy + j];
 				phi = ppxi * py[j];
 				nj->u += phi * pu;
 				nj->v += phi * pv;
@@ -461,9 +426,7 @@ void MPMFluid::update() {
 		}
 	}
 
-	long t3 = ofGetElapsedTimeMillis();
-
-	// -- Particles pass 4
+	// -- Particles pass 4: update positions
 	real_t gu, gv;
 	for (int ip = 0; ip < numParticles; ip++) {
 		MPMParticle *p = particles[ip];
@@ -491,34 +454,19 @@ void MPMFluid::update() {
 		p->u += smoothing * (gu - p->u);
 		p->v += smoothing * (gv - p->v);
 	}
-
-	//----------------------------------
-	long t4 = ofGetElapsedTimeMillis();
-
-	long dt0 = t1 - t0;
-	long dt1 = t2 - t1;
-	long dt2 = t3 - t2;
-	long dt3 = t4 - t3;
-	long dt = t4 - t0;
-	elapsed = 0.95 * elapsed + 0.05 * (dt);
-
-	// Timing: in case you're curious about CPU consumption, uncomment this:
-	// printf("Elapsed = %d	%d	%d	%d	%f\n", dt0, dt1, dt2, dt3, elapsed);
 }
 
-void MPMFluid::draw(CanvasItem *canvas) {
-	ERR_FAIL_NULL(canvas);
-
-	// Draw the active particles as a short line,
-	// using their velocity for their length.
-	Vector<Point2> verts;
-
+void MPMFluid::applyImpulse(real_t cx, real_t cy, real_t dx, real_t dy, real_t radius) {
 	for (int ip = 0; ip < numParticles; ip++) {
 		MPMParticle *p = particles[ip];
-		verts.push_back(Vector2(p->x, p->y));
-		verts.push_back(Vector2(p->x - p->u, p->y - p->v));
+		real_t vx = Math::abs(p->x - cx);
+		real_t vy = Math::abs(p->y - cy);
+		if (vx < radius && vy < radius) {
+			real_t weight = (1.0f - vx / radius) * (1.0f - vy / radius);
+			p->u += weight * (dx - p->u);
+			p->v += weight * (dy - p->v);
+		}
 	}
-	canvas->draw_lines(verts, Color(255, 255, 255, 204), Transform2(0, Size2(scaleFactor, scaleFactor)));
 }
 
 std::vector<MPMParticle *> &MPMFluid::getParticles() { return particles; }

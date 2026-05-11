@@ -194,6 +194,7 @@ modules = [
     "lsystem",
     # M
     "material_symbols",
+    "msalibs",
     "mazegen",
     "media/ffmpeg",
     "media/flac",
@@ -713,6 +714,17 @@ if is_enabled("liquidfun"):
         + Glob("thirdparty/Box2D/Util/*.cpp")
         + Glob("thirdparty/Box2D/Enhancements/Controllers/*.cpp")
     )
+
+if is_enabled("msalibs"):
+    sources += Glob("submodules/msalibs/src/*.cpp")
+    sources += ["submodules/msalibs/register_types.cpp"]
+    env_module.Prepend(CPPPATH=["submodules/msalibs/include"])
+    env_module.Prepend(CPPPATH=["thirdparty/msalibs"])
+    env_module.Append(CPPDEFINES=["GDEXT_MSALIBS_ENABLED"])
+    sources += [
+        "thirdparty/msalibs/msaphysics.cpp",
+        "thirdparty/msalibs/mpmfluid.cpp",
+    ]
 
 if is_enabled("environment/waterfall"):
     if env["tools"]:

@@ -1,23 +1,11 @@
-// MPM FLuid Simulation
+// MPM Fluid Simulation
 //
-// OpenFrameworks version by Golan Levin
-// http://www.flong.com
+// OpenFrameworks version by Golan Levin — http://www.flong.com
+// ofxAddon by James George (@obviousjm) — http://www.jamesgeorge.org
 //
-// ofxAddon created by James George (@obviousjm)
-// http://www.jamesgeorge.org
-//
-// Original Java version:
-// http://grantkot.com/MPM/Liquid.html
-//
-// Flash version:
-// Copyright iunpin ( http://wonderfl.net/user/iunpin )
-// MIT License ( http://www.opensource.org/licenses/mit-license.php )
-// Downloaded from: http://wonderfl.net/c/6eu4
-//
-// Javascript version:
-// Copyright Stephen Sinclair (radarsat1) ( http://www.music.mcgill.ca/~sinclair )
-// MIT License ( http://www.opensource.org/licenses/mit-license.php )
-// Downloaded from: http://www.music.mcgill.ca/~sinclair/blog
+// Original Java version: http://grantkot.com/MPM/Liquid.html
+// Flash version: Copyright iunpin, MIT License
+// Javascript version: Copyright Stephen Sinclair (radarsat1), MIT License
 
 #ifndef MPMFLUID_H
 #define MPMFLUID_H
@@ -90,13 +78,15 @@ public:
 		v = inv;
 		pu = pv = 0;
 		cx = cy = 0;
+		gu = gv = 0;
+		d = 0;
+		T00 = T01 = T11 = 0;
+		for (int i = 0; i < 3; i++) { px[i] = py[i] = gx[i] = gy[i] = 0; }
 	}
 };
 
 class MPMFluid {
 protected:
-	real_t elapsed;
-
 	std::vector<MPMParticle *> particles;
 	int maxNumParticles;
 	std::vector<std::vector<MPMNode *>> grid;
@@ -108,7 +98,9 @@ protected:
 public:
 	void setup(int maxParticles);
 	void update();
-	void draw();
+
+	// Apply a velocity impulse at (cx, cy) in grid coordinates, blending toward (dx, dy).
+	void applyImpulse(real_t cx, real_t cy, real_t dx, real_t dy, real_t radius = 10.0f);
 
 	int getGridSizeX();
 	int getGridSizeY();
