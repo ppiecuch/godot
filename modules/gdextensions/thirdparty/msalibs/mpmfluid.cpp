@@ -21,19 +21,19 @@
 using namespace mpm::fluid;
 
 MPMFluid::MPMFluid() :
+		maxNumParticles(0),
+		numActiveNodes(0),
+		scaleFactor(1.0),
+		numParticles(0),
 		densitySetting(5.0),
 		stiffness(.5),
 		bulkViscosity(3.0),
 		elasticity(1.0),
 		viscosity(1.0),
 		yieldRate(1.0),
-		gravity(.002),
 		bGradient(false),
+		gravity(.002),
 		bDoObstacles(true),
-		numParticles(0),
-		maxNumParticles(0),
-		numActiveNodes(0),
-		scaleFactor(1.0),
 		smoothing(1.0) {
 	//
 }
