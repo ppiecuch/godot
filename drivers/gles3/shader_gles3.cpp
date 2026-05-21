@@ -1035,9 +1035,11 @@ bool ShaderGLES3::_complete_compile(Version::Ids p_ids, bool p_retrievable) cons
 			}
 		}
 
+#ifndef METAL_ENABLED
 		if (feedback.size()) {
 			glTransformFeedbackVaryings(p_ids.main, feedback.size(), feedback.ptr(), GL_INTERLEAVED_ATTRIBS);
 		}
+#endif
 	}
 
 	if (p_retrievable) {

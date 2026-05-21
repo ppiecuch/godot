@@ -30,6 +30,10 @@
 
 #include "rasterizer_storage_gles3.h"
 
+#ifdef METAL_ENABLED
+#include "../gles3+mgl/metal/metal_compute_dispatch.h"
+#endif
+
 #include "core/engine.h"
 #include "core/os/os.h"
 #include "core/project_settings.h"
@@ -4358,6 +4362,39 @@ void RasterizerStorageGLES3::mesh_render_blend_shapes(Surface *s, const float *p
 		}
 	}
 
+#ifdef METAL_ENABLED
+	// Metal compute path: use blend_shape.metal compute kernel
+	{
+		uint32_t format_flags = 0;
+		for (int i = 1; i < VS::ARRAY_MAX - 1; i++) {
+			if (s->format & (1 << i)) {
+				format_flags |= (1 << i);
+			}
+		}
+
+		// First pass: scale base mesh by base_weight
+		metal_compute_blend_shape_dispatch(
+				s->vertex_id, 0,
+				resources.transform_feedback_buffers[0],
+				s->array_len, base_weight, format_flags);
+
+		// Subsequent passes: accumulate each blend shape
+		for (int ti = 0; ti < mtc; ti++) {
+			float weight = p_weights[ti];
+			if (Math::is_zero_approx(weight)) {
+				continue;
+			}
+
+			metal_compute_blend_shape_dispatch(
+					s->blend_shapes[ti].vertex_id,
+					resources.transform_feedback_buffers[0],
+					resources.transform_feedback_buffers[1],
+					s->array_len, weight, format_flags);
+
+			SWAP(resources.transform_feedback_buffers[0], resources.transform_feedback_buffers[1]);
+		}
+	}
+#else
 	shaders.blend_shapes.set_conditional(BlendShapeShaderGLES3::ENABLE_BLEND, false); //first pass does not blend
 	shaders.blend_shapes.set_conditional(BlendShapeShaderGLES3::USE_2D_VERTEX, s->format & VS::ARRAY_FLAG_USE_2D_VERTICES); //use 2D vertices if needed
 	shaders.blend_shapes.set_conditional(BlendShapeShaderGLES3::ENABLE_OCTAHEDRAL_COMPRESSION, s->format & VS::ARRAY_FLAG_USE_OCTAHEDRAL_COMPRESSION); //use octahedral normal compression
@@ -4453,6 +4490,7 @@ void RasterizerStorageGLES3::mesh_render_blend_shapes(Surface *s, const float *p
 
 	glDisable(GL_RASTERIZER_DISCARD);
 	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, 0);
+#endif // METAL_ENABLED
 
 	glBindVertexArray(resources.transform_feedback_array);
 	glBindBuffer(GL_ARRAY_BUFFER, resources.transform_feedback_buffers[0]);
@@ -6586,11 +6624,83 @@ void RasterizerStorageGLES3::_particles_process(Particles *p_particles, float p_
 	} else if (new_phase < p_particles->phase) {
 		if (p_particles->one_shot) {
 			p_particles->emitting = false;
+#ifndef METAL_ENABLED
 			shaders.particles.set_uniform(ParticlesShaderGLES3::EMITTING, false);
+#endif
 		}
 		p_particles->cycle_number++;
 	}
 
+#ifdef METAL_ENABLED
+	// Metal compute path: build uniform struct and dispatch compute shader
+	{
+		struct ParticleUniforms {
+			float emission_transform[16];
+			float system_phase;
+			float prev_system_phase;
+			float time;
+			float delta;
+			float lifetime;
+			float explosiveness;
+			float randomness;
+			int total_particles;
+			int attractor_count;
+			uint32_t cycle;
+			uint32_t random_seed;
+			uint32_t emitting;
+			uint32_t clear;
+		};
+
+		ParticleUniforms uniforms;
+		memset(&uniforms, 0, sizeof(uniforms));
+
+		Transform et = p_particles->use_local_coords ? Transform() : p_particles->emission_transform;
+		// Column-major 4x4 matrix
+		uniforms.emission_transform[0] = et.basis[0][0];
+		uniforms.emission_transform[1] = et.basis[1][0];
+		uniforms.emission_transform[2] = et.basis[2][0];
+		uniforms.emission_transform[3] = 0;
+		uniforms.emission_transform[4] = et.basis[0][1];
+		uniforms.emission_transform[5] = et.basis[1][1];
+		uniforms.emission_transform[6] = et.basis[2][1];
+		uniforms.emission_transform[7] = 0;
+		uniforms.emission_transform[8] = et.basis[0][2];
+		uniforms.emission_transform[9] = et.basis[1][2];
+		uniforms.emission_transform[10] = et.basis[2][2];
+		uniforms.emission_transform[11] = 0;
+		uniforms.emission_transform[12] = et.origin.x;
+		uniforms.emission_transform[13] = et.origin.y;
+		uniforms.emission_transform[14] = et.origin.z;
+		uniforms.emission_transform[15] = 1;
+
+		uniforms.system_phase = new_phase;
+		uniforms.prev_system_phase = p_particles->phase;
+		uniforms.time = 0; // Not used in base shader
+		uniforms.delta = p_delta * p_particles->speed_scale;
+		uniforms.lifetime = p_particles->lifetime;
+		uniforms.explosiveness = p_particles->explosiveness;
+		uniforms.randomness = p_particles->randomness;
+		uniforms.total_particles = p_particles->amount;
+		uniforms.attractor_count = 0;
+		uniforms.cycle = p_particles->cycle_number;
+		uniforms.random_seed = p_particles->random_seed;
+		uniforms.emitting = p_particles->emitting ? 1 : 0;
+		uniforms.clear = p_particles->clear ? 1 : 0;
+
+		p_particles->phase = new_phase;
+		p_particles->clear = false;
+
+		metal_compute_particles_dispatch(
+				p_particles->particle_buffers[0],
+				p_particles->particle_buffers[1],
+				p_particles->amount,
+				&uniforms, sizeof(uniforms),
+				nullptr, 0);
+
+		SWAP(p_particles->particle_buffers[0], p_particles->particle_buffers[1]);
+		SWAP(p_particles->particle_vaos[0], p_particles->particle_vaos[1]);
+	}
+#else
 	shaders.particles.set_uniform(ParticlesShaderGLES3::SYSTEM_PHASE, new_phase);
 	shaders.particles.set_uniform(ParticlesShaderGLES3::PREV_SYSTEM_PHASE, p_particles->phase);
 	p_particles->phase = new_phase;
@@ -6626,6 +6736,7 @@ void RasterizerStorageGLES3::_particles_process(Particles *p_particles, float p_
 
 	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, 0);
 	glBindVertexArray(0);
+#endif
 	/* //debug particles :D
 	glBindBuffer(GL_ARRAY_BUFFER, p_particles->particle_buffers[0]);
 
@@ -6648,7 +6759,9 @@ void RasterizerStorageGLES3::_particles_process(Particles *p_particles, float p_
 }
 
 void RasterizerStorageGLES3::update_particles() {
+#ifndef METAL_ENABLED
 	glEnable(GL_RASTERIZER_DISCARD);
+#endif
 
 	while (particle_update_list.first()) {
 		//use transform feedback to process particles
@@ -6691,6 +6804,7 @@ void RasterizerStorageGLES3::update_particles() {
 			}
 		}
 
+#ifndef METAL_ENABLED
 		Material *material = material_owner.getornull(particles->process_material);
 		if (!material || !material->shader || material->shader->mode != VS::SHADER_PARTICLES) {
 			shaders.particles.set_custom_shader(0);
@@ -6756,6 +6870,7 @@ void RasterizerStorageGLES3::update_particles() {
 		shaders.particles.set_uniform(ParticlesShaderGLES3::ATTRACTOR_COUNT, 0);
 		shaders.particles.set_uniform(ParticlesShaderGLES3::EMITTING, particles->emitting);
 		shaders.particles.set_uniform(ParticlesShaderGLES3::RANDOMNESS, particles->randomness);
+#endif // !METAL_ENABLED
 
 		bool zero_time_scale = Engine::get_singleton()->get_time_scale() <= 0.0;
 
@@ -6826,7 +6941,9 @@ void RasterizerStorageGLES3::update_particles() {
 		particles->instance_change_notify(true, false); //make sure shadows are updated
 	}
 
+#ifndef METAL_ENABLED
 	glDisable(GL_RASTERIZER_DISCARD);
+#endif
 }
 
 bool RasterizerStorageGLES3::particles_is_inactive(RID p_particles) const {
@@ -8512,18 +8629,25 @@ void RasterizerStorageGLES3::initialize() {
 
 	{
 		//transform feedback buffers
+#ifdef METAL_ENABLED
+		GLOBAL_DEF_RST("rendering/limits/buffers/blend_shape_max_buffer_size_kb", 4096);
+		ProjectSettings::get_singleton()->set_custom_property_info("rendering/limits/buffers/blend_shape_max_buffer_size_kb", PropertyInfo(Variant::INT, "rendering/limits/buffers/blend_shape_max_buffer_size_kb", PROPERTY_HINT_RANGE, "0,8192,1,or_greater"));
+		metal_compute_init();
+#else
 		uint32_t xf_feedback_size = GLOBAL_DEF_RST("rendering/limits/buffers/blend_shape_max_buffer_size_kb", 4096);
 		ProjectSettings::get_singleton()->set_custom_property_info("rendering/limits/buffers/blend_shape_max_buffer_size_kb", PropertyInfo(Variant::INT, "rendering/limits/buffers/blend_shape_max_buffer_size_kb", PROPERTY_HINT_RANGE, "0,8192,1,or_greater"));
-
 		for (int i = 0; i < 2; i++) {
 			glGenBuffers(1, &resources.transform_feedback_buffers[i]);
 			glBindBuffer(GL_ARRAY_BUFFER, resources.transform_feedback_buffers[i]);
 			glBufferData(GL_ARRAY_BUFFER, xf_feedback_size * 1024, nullptr, GL_STREAM_DRAW);
 		}
+#endif
 
 		shaders.blend_shapes.init();
 
+#ifndef METAL_ENABLED
 		glGenVertexArrays(1, &resources.transform_feedback_array);
+#endif
 	}
 
 	shaders.cubemap_filter.init();
