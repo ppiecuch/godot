@@ -241,6 +241,7 @@ modules = [
     "vaserenderer",
     "vgamepaddesign",
     "visual",
+    "vncserver",
 ]
 
 thirdparty_sources = [

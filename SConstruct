@@ -784,6 +784,21 @@ if selected_platform in platform_list:
 
     env.module_list = modules_enabled
 
+    # Guard against stale modules_enabled.gen.h (e.g. leftover from a
+    # different arch or module set).  The SCons Value() dependency can
+    # miss this under the MD5-timestamp decider, so verify content here.
+    _gen_path = os.path.join(str(Dir("#").abspath), "modules", "modules_enabled.gen.h")
+    if os.path.isfile(_gen_path):
+        _expected = set("MODULE_" + m.upper() + "_ENABLED" for m in modules_enabled)
+        _actual = set()
+        with open(_gen_path, "r") as _f:
+            for _line in _f:
+                if _line.startswith("#define MODULE_") and _line.strip().endswith("_ENABLED"):
+                    _actual.add(_line.strip().split(" ", 1)[1])
+        if _actual != _expected:
+            os.remove(_gen_path)
+            print("Module list changed: cleared stale modules_enabled.gen.h")
+
     # spec: write a build spec file after a successful build.
     _spec_file = env.get("spec", "")
     if _spec_file:

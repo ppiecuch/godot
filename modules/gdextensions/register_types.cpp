@@ -164,6 +164,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "httpserver/gd_http_server.h"
 #endif
 
+#ifdef GDEXT_VNCSERVER_ENABLED
+#include "vncserver/vnc_server.h"
+#endif
+
 #ifdef GDEXT_GENERATOR_ENABLED
 #include "generator/gd_procedural_mesh.h"
 #endif
@@ -468,6 +472,13 @@ static void editor_init_callback() {
 		GdHttpServer::get_singleton()->start();
 	}
 #endif
+#ifdef GDEXT_VNCSERVER_ENABLED
+	if (VNCServer::get_singleton() && GLOBAL_GET("network/vnc_server/autostart") &&
+			!OS::get_singleton()->is_no_window_mode_enabled()) {
+		print_verbose("Auto-start VNC server on port " + itos(GLOBAL_GET("network/vnc_server/port")));
+		VNCServer::get_singleton()->start();
+	}
+#endif
 
 #ifdef GDEXT_POLYVECTOR_ENABLED
 	if (Engine::get_singleton()->is_editor_hint()) {
@@ -634,6 +645,9 @@ void register_gdextensions_types() {
 #endif
 #ifdef GDEXT_HTTPSERVER_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GdHttpServer", memnew(GdHttpServer)));
+#endif
+#ifdef GDEXT_VNCSERVER_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("VNCServer", memnew(VNCServer)));
 #endif
 #ifdef GDEXT_CORE_ENABLED
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Timer2", memnew(Timer2)));
@@ -1191,6 +1205,9 @@ void unregister_gdextensions_types() {
 #endif
 #ifdef GDEXT_HTTPSERVER_ENABLED
 	RemoveSingleton(GdHttpServer);
+#endif
+#ifdef GDEXT_VNCSERVER_ENABLED
+	RemoveSingleton(VNCServer);
 #endif
 #ifdef GDEXT_SPACEMOUSE_ENABLED
 	RemoveSingleton(SpaceMouse);
