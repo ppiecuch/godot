@@ -341,6 +341,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "geomfonts//gd_geomfonts.h"
 #include "geomfonts/geom_font_2d.h"
 
+#ifdef GDEXT_FONTENGINE3D_ENABLED
+#include "fontengine3d/font_engine_3d.h"
+#endif
+
 #ifdef GDEXT_GLITEHTML_ENABLED
 #include "glitehtml/gd_lite_html.h"
 #endif
@@ -725,6 +729,11 @@ void register_gdextensions_types() {
 #ifdef GDEXT_GEOMFONTS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
 	ClassDB::register_class<GeomFont2D>();
+#endif
+
+#ifdef GDEXT_FONTENGINE3D_ENABLED
+	ClassDB::register_class<FontEngine3D>();
+	ClassDB::register_class<Font3DLabel>();
 #endif
 
 #ifdef GDEXT_GLITEHTML_ENABLED

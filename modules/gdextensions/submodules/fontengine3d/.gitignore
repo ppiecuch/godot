@@ -1,0 +1,4 @@
+# Source materials and build artifacts
+source-data
+work-dir
+*.pck
