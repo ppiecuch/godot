@@ -60,6 +60,8 @@ private:
 	Vector<texpack::rect_xywhf *> _rects;
 	Vector<Ref<ImageTexture>> _generated_textures;
 
+	int _find_rect_index(const Ref<Texture> &texture) const;
+
 protected:
 	static void _bind_methods();
 
@@ -100,6 +102,7 @@ public:
 	int get_generated_texture_count();
 
 	void merge();
+	Array get_all_mappings() const;
 
 	int get_offset_for_format(const Image::Format format);
 

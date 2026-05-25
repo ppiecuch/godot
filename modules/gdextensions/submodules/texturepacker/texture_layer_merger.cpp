@@ -199,13 +199,13 @@ void TextureLayerMerger::merge() {
 
 		ERR_CONTINUE(!e.texture.is_valid());
 
-		int rx = e.rect.position.x + 0.1;
-		int ry = e.rect.position.y + 0.1;
-		int rw = e.rect.size.x + 0.1;
-		int rh = e.rect.size.y + 0.1;
+		int rx = Math::floor(e.rect.position.x);
+		int ry = Math::floor(e.rect.position.y);
+		int rw = Math::floor(e.rect.size.x);
+		int rh = Math::floor(e.rect.size.y);
 
-		int posx = e.position.x + 0.1;
-		int posy = e.position.y + 0.1;
+		int posx = Math::floor(e.position.x);
+		int posy = Math::floor(e.position.y);
 
 		int atlas_x = 0;
 		int atlas_y = 0;
@@ -214,16 +214,16 @@ void TextureLayerMerger::merge() {
 			continue;
 		}
 
-		Ref<AtlasTexture> altas_texture = e.texture;
+		Ref<AtlasTexture> atlas_texture = e.texture;
 		Ref<Image> input_image;
 
-		if (altas_texture.is_valid()) {
-			Ref<Texture> atlas = altas_texture->get_atlas();
+		if (atlas_texture.is_valid()) {
+			Ref<Texture> atlas = atlas_texture->get_atlas();
 
 			ERR_CONTINUE(!atlas.is_valid());
 
 			input_image = atlas->get_data();
-			Rect2 region = altas_texture->get_region();
+			Rect2 region = atlas_texture->get_region();
 
 			atlas_x = region.position.x + 0.1;
 			atlas_y = region.position.y + 0.1;
@@ -294,13 +294,7 @@ void TextureLayerMerger::merge() {
 
 				if (elen == 4) {
 					float orig_alpha = input_image_data.get(img_input_index + 3) / 255.0;
-
-					blend_alpha -= 1.0 - orig_alpha;
-
-					if (blend_alpha < 0)
-						blend_alpha = 0;
-
-					blend_alpha = orig_alpha;
+					blend_alpha *= orig_alpha;
 				}
 
 				for (int sp = 0; sp < elen; ++sp) {

@@ -38,6 +38,18 @@ class AtlasInfo : public Resource {
 	GDCLASS(AtlasInfo, Resource);
 
 public:
+	enum Algorithm {
+		ALGO_BSP = 0,
+		ALGO_GUILLOTINE = 1,
+		ALGO_MAXRECTS = 2,
+	};
+
+	enum BorderMode {
+		BORDER_EMPTY = 0,
+		BORDER_MIRROR = 1,
+		BORDER_BLUR = 2,
+	};
+
 	struct Item {
 		String name;
 		Rect2 rect;
@@ -52,6 +64,7 @@ public:
 private:
 	Vector<Item> items;
 	Ref<Texture> default_texture;
+	Array generated_textures;
 
 protected:
 	bool _set(const StringName &p_name, const Variant &p_value);
@@ -97,8 +110,28 @@ public:
 
 	void load_from_merge_result(const Dictionary &p_result, const Vector<String> &p_names);
 
+	// Pack images into atlas. Options Dictionary keys (all optional):
+	//   algorithm: int (ALGO_BSP/ALGO_GUILLOTINE/ALGO_MAXRECTS)
+	//   margin: int, max_atlas_size: int, force_single_page: bool
+	//   allow_rotation: bool, power_of_two: bool, square_atlas: bool
+	//   trim_alpha: bool, trim_alpha_threshold: int
+	//   trim_color: bool, trim_color_threshold: float
+	//   fix_halo: bool, border_mode: int (BORDER_*)
+	//   hull_compute: bool, hull_vertex_count: int, hull_alpha_threshold: int
+	//   hull_max_size: int, hull_sub_pixel: int
+	//   separate_alpha: bool
+	//   debug_borders: bool, debug_hull_outline: bool, debug_hull_triangulation: bool
+	Error pack(const Array &p_images, const PoolStringArray &p_names, const Dictionary &p_options = Dictionary());
+
+	int get_page_count() const;
+	Ref<Texture> get_page_texture(int p_index) const;
+	Array get_page_textures() const;
+
 	AtlasInfo() {}
 };
+
+VARIANT_ENUM_CAST(AtlasInfo::Algorithm);
+VARIANT_ENUM_CAST(AtlasInfo::BorderMode);
 
 class AtlasInfoTexture : public Texture {
 	GDCLASS(AtlasInfoTexture, Texture);

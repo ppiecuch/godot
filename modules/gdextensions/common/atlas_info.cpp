@@ -30,6 +30,8 @@
 
 #include "atlas_info.h"
 
+#include "gd_pack.h"
+#include "scene/resources/texture.h"
 #include "servers/visual_server.h"
 
 // ---------------------------------------------------------------------------
@@ -180,7 +182,19 @@ void AtlasInfo::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("find_item", "name"), &AtlasInfo::find_item);
 	ClassDB::bind_method(D_METHOD("load_from_merge_result", "result", "names"), &AtlasInfo::load_from_merge_result);
 
+	ClassDB::bind_method(D_METHOD("pack", "images", "names", "options"), &AtlasInfo::pack, DEFVAL(Dictionary()));
+	ClassDB::bind_method(D_METHOD("get_page_count"), &AtlasInfo::get_page_count);
+	ClassDB::bind_method(D_METHOD("get_page_texture", "index"), &AtlasInfo::get_page_texture);
+	ClassDB::bind_method(D_METHOD("get_page_textures"), &AtlasInfo::get_page_textures);
+
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "default_texture", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_default_texture", "get_default_texture");
+
+	BIND_ENUM_CONSTANT(ALGO_BSP);
+	BIND_ENUM_CONSTANT(ALGO_GUILLOTINE);
+	BIND_ENUM_CONSTANT(ALGO_MAXRECTS);
+	BIND_ENUM_CONSTANT(BORDER_EMPTY);
+	BIND_ENUM_CONSTANT(BORDER_MIRROR);
+	BIND_ENUM_CONSTANT(BORDER_BLUR);
 }
 
 int AtlasInfo::get_item_count() const {
@@ -356,6 +370,113 @@ void AtlasInfo::load_from_merge_result(const Dictionary &p_result, const Vector<
 	}
 
 	emit_changed();
+}
+
+Error AtlasInfo::pack(const Array &p_images, const PoolStringArray &p_names, const Dictionary &p_options) {
+	items.clear();
+	generated_textures = Array();
+
+	Vector<Ref<Image>> images;
+	images.resize(p_images.size());
+	for (int i = 0; i < p_images.size(); ++i) {
+		Ref<Image> img = p_images[i];
+		ERR_FAIL_COND_V_MSG(img.is_null(), ERR_INVALID_PARAMETER,
+				"pack(): element " + itos(i) + " is not a valid Image.");
+		images.write[i] = img;
+	}
+
+	ImageMergeOptions opts;
+	if (p_options.has("algorithm"))
+		opts.algorithm = (PackingAlgorithm)(int)p_options["algorithm"];
+	if (p_options.has("margin"))
+		opts.margin = p_options["margin"];
+	if (p_options.has("max_atlas_size"))
+		opts.max_atlas_size = p_options["max_atlas_size"];
+	if (p_options.has("force_single_page"))
+		opts.force_single_page_atlas = p_options["force_single_page"];
+	if (p_options.has("allow_rotation"))
+		opts.allow_rotation = p_options["allow_rotation"];
+	if (p_options.has("power_of_two"))
+		opts.power_of_two = p_options["power_of_two"];
+	if (p_options.has("square_atlas"))
+		opts.square_atlas = p_options["square_atlas"];
+	if (p_options.has("trim_alpha"))
+		opts.trim_alpha = p_options["trim_alpha"];
+	if (p_options.has("trim_alpha_threshold"))
+		opts.trim_alpha_threshold = p_options["trim_alpha_threshold"];
+	if (p_options.has("trim_color"))
+		opts.trim_color = p_options["trim_color"];
+	if (p_options.has("trim_color_threshold"))
+		opts.trim_color_threshold = p_options["trim_color_threshold"];
+	if (p_options.has("fix_halo"))
+		opts.fix_halo = p_options["fix_halo"];
+	if (p_options.has("border_mode"))
+		opts.border_mode = (::BorderMode)(int)p_options["border_mode"];
+	if (p_options.has("hull_compute"))
+		opts.hull_compute = p_options["hull_compute"];
+	if (p_options.has("hull_vertex_count"))
+		opts.hull_vertex_count = p_options["hull_vertex_count"];
+	if (p_options.has("hull_alpha_threshold"))
+		opts.hull_alpha_threshold = p_options["hull_alpha_threshold"];
+	if (p_options.has("hull_max_size"))
+		opts.hull_max_size = p_options["hull_max_size"];
+	if (p_options.has("hull_sub_pixel"))
+		opts.hull_sub_pixel = p_options["hull_sub_pixel"];
+	if (p_options.has("separate_alpha"))
+		opts.separate_alpha = p_options["separate_alpha"];
+	if (p_options.has("debug_borders"))
+		opts.debug_borders = p_options["debug_borders"];
+	if (p_options.has("debug_hull_outline"))
+		opts.debug_hull_outline = p_options["debug_hull_outline"];
+	if (p_options.has("debug_hull_triangulation"))
+		opts.debug_hull_triangulation = p_options["debug_hull_triangulation"];
+	if (p_options.has("background_color"))
+		opts.background_color = p_options["background_color"];
+	if (p_options.has("force_atlas_channels"))
+		opts.force_atlas_channels = p_options["force_atlas_channels"];
+
+	Dictionary result = merge_images(images, opts);
+	if (!result.has("_rects"))
+		return ERR_CANT_CREATE;
+
+	// Populate items
+	Vector<String> names_vec;
+	names_vec.resize(p_names.size());
+	for (int i = 0; i < p_names.size(); ++i)
+		names_vec.write[i] = p_names[i];
+	load_from_merge_result(result, names_vec);
+
+	// Store generated textures
+	if (result.has("_generated_images")) {
+		Array gen_imgs = result["_generated_images"];
+		for (int i = 0; i < gen_imgs.size(); ++i) {
+			Ref<Image> img = gen_imgs[i];
+			if (img.is_valid()) {
+				Ref<ImageTexture> tex;
+				tex.instance();
+				tex->create_from_image(img, 0);
+				generated_textures.append(tex);
+			}
+		}
+		if (generated_textures.size() > 0)
+			default_texture = generated_textures[0];
+	}
+
+	emit_changed();
+	return OK;
+}
+
+int AtlasInfo::get_page_count() const {
+	return generated_textures.size();
+}
+
+Ref<Texture> AtlasInfo::get_page_texture(int p_index) const {
+	ERR_FAIL_INDEX_V(p_index, generated_textures.size(), Ref<Texture>());
+	return generated_textures[p_index];
+}
+
+Array AtlasInfo::get_page_textures() const {
+	return generated_textures;
 }
 
 // ---------------------------------------------------------------------------

@@ -77,22 +77,10 @@ Ref<AtlasTexture> TexturePacker::add_texture(const Ref<Texture> &texture) {
 	Ref<AtlasTexture> atlas_text = texture;
 
 	if (atlas_text.is_valid()) {
-		//we need to check differently this case
-		for (int i = 0; i < _rects.size(); ++i) {
-			rect_xywhf *r = _rects.get(i);
-
-			Ref<Texture> t;
-			Ref<AtlasTexture> at = texture;
-
-			if (_keep_original_atlases && at.is_valid()) {
-				t = r->atlas_texture;
-			} else {
-				t = r->original_texture;
-			}
-			if (t == texture) {
-				++(r->refcount);
-				return r->atlas_texture;
-			}
+		int existing = _find_rect_index(texture);
+		if (existing >= 0) {
+			++(_rects.get(existing)->refcount);
+			return _rects.get(existing)->atlas_texture;
 		}
 
 		Ref<AtlasTexture> tex = memnew(AtlasTexture);
@@ -119,13 +107,10 @@ Ref<AtlasTexture> TexturePacker::add_texture(const Ref<Texture> &texture) {
 		}
 	}
 
-	for (int i = 0; i < _rects.size(); ++i) {
-		rect_xywhf *r = _rects.get(i);
-
-		if (r->original_texture == texture) {
-			++(r->refcount);
-			return r->atlas_texture;
-		}
+	int existing = _find_rect_index(texture);
+	if (existing >= 0) {
+		++(_rects.get(existing)->refcount);
+		return _rects.get(existing)->atlas_texture;
 	}
 
 	Ref<AtlasTexture> tex = memnew(AtlasTexture);
@@ -148,24 +133,23 @@ Ref<AtlasTexture> TexturePacker::add_texture(const Ref<Texture> &texture) {
 	return tex;
 }
 
-Ref<AtlasTexture> TexturePacker::get_texture(const Ref<Texture> &texture) {
+int TexturePacker::_find_rect_index(const Ref<Texture> &texture) const {
+	Ref<AtlasTexture> at = texture;
+	bool use_atlas = _keep_original_atlases && at.is_valid();
 	for (int i = 0; i < _rects.size(); ++i) {
 		rect_xywhf *r = _rects.get(i);
-
-		Ref<Texture> t;
-		Ref<AtlasTexture> at = texture;
-
-		if (_keep_original_atlases && at.is_valid()) {
-			t = r->atlas_texture;
-		} else {
-			t = r->original_texture;
-		}
-		if (t == texture) {
-			return _rects.get(i)->atlas_texture;
-		}
+		Ref<Texture> t = use_atlas ? Ref<Texture>(r->atlas_texture) : r->original_texture;
+		if (t == texture)
+			return i;
 	}
+	return -1;
+}
 
-	return Ref<Texture>();
+Ref<AtlasTexture> TexturePacker::get_texture(const Ref<Texture> &texture) {
+	int idx = _find_rect_index(texture);
+	if (idx < 0)
+		return Ref<Texture>();
+	return _rects.get(idx)->atlas_texture;
 }
 
 Ref<AtlasTexture> TexturePacker::get_texture_index(const int index) {
@@ -179,23 +163,7 @@ Ref<Texture> TexturePacker::get_original_texture(const int index) {
 }
 
 bool TexturePacker::contains_texture(const Ref<Texture> &texture) {
-	for (int i = 0; i < _rects.size(); ++i) {
-		rect_xywhf *r = _rects.get(i);
-
-		Ref<Texture> t;
-		Ref<AtlasTexture> at = texture;
-
-		if (_keep_original_atlases && at.is_valid()) {
-			t = r->atlas_texture;
-		} else {
-			t = r->original_texture;
-		}
-		if (t == texture) {
-			return true;
-		}
-	}
-
-	return false;
+	return _find_rect_index(texture) >= 0;
 }
 
 bool TexturePacker::unref_texture_index(const int index) {
@@ -219,33 +187,10 @@ bool TexturePacker::unref_texture_index(const int index) {
 }
 
 bool TexturePacker::unref_texture(const Ref<Texture> &texture) {
-	for (int i = 0; i < _rects.size(); ++i) {
-		rect_xywhf *r = _rects.get(i);
-
-		Ref<Texture> t;
-		Ref<AtlasTexture> at = texture;
-
-		if (_keep_original_atlases && at.is_valid())
-			t = r->atlas_texture;
-		else
-			t = r->original_texture;
-
-		if (t == texture) {
-			int rc = --(r->refcount);
-
-			if (rc <= 0) {
-				_rects.remove(i);
-
-				r->original_texture.unref();
-				r->atlas_texture.unref();
-
-				memdelete(r);
-				return true;
-			}
-			return false;
-		}
-	}
-	return false;
+	int idx = _find_rect_index(texture);
+	if (idx < 0)
+		return false;
+	return unref_texture_index(idx);
 }
 
 void TexturePacker::remove_texture_index(const int index) {
@@ -260,27 +205,9 @@ void TexturePacker::remove_texture_index(const int index) {
 }
 
 void TexturePacker::remove_texture(const Ref<Texture> &texture) {
-	for (int i = 0; i < _rects.size(); ++i) {
-		rect_xywhf *r = _rects.get(i);
-
-		Ref<Texture> t;
-		Ref<AtlasTexture> at = texture;
-
-		if (_keep_original_atlases && at.is_valid())
-			t = r->atlas_texture;
-		else
-			t = r->original_texture;
-
-		if (t == texture) {
-			_rects.remove(i);
-
-			r->original_texture.unref();
-			r->atlas_texture.unref();
-
-			memdelete(r);
-			return;
-		}
-	}
+	int idx = _find_rect_index(texture);
+	if (idx >= 0)
+		remove_texture_index(idx);
 }
 
 int TexturePacker::get_texture_count() {
@@ -366,11 +293,15 @@ void TexturePacker::merge() {
 
 				ERR_CONTINUE(!img.is_valid());
 
+				int input_format_offset = get_offset_for_format(img->get_format());
+				if (input_format_offset == 0) {
+					img = img->duplicate();
+					img->convert(Image::FORMAT_RGBA8);
+					input_format_offset = 4;
+				}
+
 				int img_width = img->get_width();
 				PoolByteArray image_data = img->get_data();
-				int input_format_offset = get_offset_for_format(img->get_format());
-
-				ERR_CONTINUE_MSG(input_format_offset == 0, "Format is not implemented, Skipping!");
 
 				int h_wo_margin = r->h - 2 * _margin;
 				for (int y = 0; y < h_wo_margin; ++y) {
@@ -456,6 +387,20 @@ int TexturePacker::get_offset_for_format(const Image::Format format) {
 	return 0;
 }
 
+Array TexturePacker::get_all_mappings() const {
+	Array result;
+	for (int i = 0; i < _rects.size(); ++i) {
+		rect_xywhf *r = _rects.get(i);
+		Dictionary entry;
+		entry["rect"] = Rect2(r->x + _margin, r->y + _margin, r->w - 2 * _margin, r->h - 2 * _margin);
+		entry["flipped"] = r->flipped;
+		entry["original_texture"] = r->original_texture;
+		entry["atlas_texture"] = r->atlas_texture;
+		result.append(entry);
+	}
+	return result;
+}
+
 TexturePacker::TexturePacker() {
 	_texture_flags = Texture::FLAG_MIPMAPS | Texture::FLAG_FILTER;
 
@@ -508,4 +453,5 @@ void TexturePacker::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_generated_texture_count"), &TexturePacker::get_generated_texture_count);
 
 	ClassDB::bind_method(D_METHOD("merge"), &TexturePacker::merge);
+	ClassDB::bind_method(D_METHOD("get_all_mappings"), &TexturePacker::get_all_mappings);
 }
