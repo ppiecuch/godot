@@ -448,8 +448,10 @@ class GuillotinePacker {
 		const bool horiz = (rw <= rh); // ShorterLeftoverAxis
 		_fr bottom(free.x, free.y + placed.h, horiz ? free.w : placed.w, rh);
 		_fr right(free.x + placed.w, free.y, rw, horiz ? placed.h : free.h);
-		if (bottom.w > 0 && bottom.h > 0) free_rects.push_back(bottom);
-		if (right.w > 0 && right.h > 0) free_rects.push_back(right);
+		if (bottom.w > 0 && bottom.h > 0)
+			free_rects.push_back(bottom);
+		if (right.w > 0 && right.h > 0)
+			free_rects.push_back(right);
 	}
 
 	void _merge() {
@@ -489,9 +491,11 @@ public:
 		_fr placed = _find(r->w(), r->h(), &idx);
 		if (idx == -1 && allow_flip) {
 			placed = _find(r->h(), r->w(), &idx);
-			if (idx != -1) r->flip();
+			if (idx != -1)
+				r->flip();
 		}
-		if (idx == -1) return _fr();
+		if (idx == -1)
+			return _fr();
 		r->x = placed.x;
 		r->y = placed.y;
 		_split(free_rects[idx], placed);
@@ -597,10 +601,12 @@ public:
 		bool flipped = false;
 		int s1, s2;
 		_fr node = _find_bssf(r->w(), r->h(), allow_flip, flipped, s1, s2);
-		if (s1 == std::numeric_limits<int>::max()) return _fr();
+		if (s1 == std::numeric_limits<int>::max())
+			return _fr();
 		r->x = node.x;
 		r->y = node.y;
-		if (flipped) r->flip();
+		if (flipped)
+			r->flip();
 		_place(node);
 		return node;
 	}
@@ -673,7 +679,8 @@ static bool _pack_rects_free(rect_xywhf *const *v, int n, int max_side, bool sin
 		b->size = rect_wh(clip_x, clip_y);
 		remaining = unpacked;
 
-		if (single_page) break;
+		if (single_page)
+			break;
 	}
 
 	return true;
@@ -822,19 +829,25 @@ static Ref<Image> _trim_alpha_border(const Ref<Image> &src, int threshold,
 	};
 	auto has_opaque_row = [&](int y) {
 		for (int x = 0; x < w; ++x)
-			if (alpha_at(x, y) > threshold) return true;
+			if (alpha_at(x, y) > threshold)
+				return true;
 		return false;
 	};
 	auto has_opaque_col = [&](int x) {
 		for (int y = 0; y < h; ++y)
-			if (alpha_at(x, y) > threshold) return true;
+			if (alpha_at(x, y) > threshold)
+				return true;
 		return false;
 	};
 
-	while (trim_t < h && !has_opaque_row(trim_t)) ++trim_t;
-	while (trim_b < h - trim_t && !has_opaque_row(h - 1 - trim_b)) ++trim_b;
-	while (trim_l < w && !has_opaque_col(trim_l)) ++trim_l;
-	while (trim_r < w - trim_l && !has_opaque_col(w - 1 - trim_r)) ++trim_r;
+	while (trim_t < h && !has_opaque_row(trim_t))
+		++trim_t;
+	while (trim_b < h - trim_t && !has_opaque_row(h - 1 - trim_b))
+		++trim_b;
+	while (trim_l < w && !has_opaque_col(trim_l))
+		++trim_l;
+	while (trim_r < w - trim_l && !has_opaque_col(w - 1 - trim_r))
+		++trim_r;
 
 	const int nw = w - trim_l - trim_r;
 	const int nh = h - trim_t - trim_b;
@@ -864,15 +877,18 @@ static void _fix_halo(Ref<Image> &img) {
 	for (int y = 0; y < h; ++y) {
 		for (int x = 0; x < w; ++x) {
 			Color c = rgba->get_pixel(x, y);
-			if (c.a > 0) continue;
+			if (c.a > 0)
+				continue;
 			float rs = 0, gs = 0, bs = 0;
 			int count = 0;
 			for (int dy = -1; dy <= 1; ++dy) {
 				for (int dx = -1; dx <= 1; ++dx) {
 					int nx = x + dx, ny = y + dy;
-					if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+					if (nx < 0 || ny < 0 || nx >= w || ny >= h)
+						continue;
 					Color nc = rgba->get_pixel(nx, ny);
-					if (nc.a <= 0) continue;
+					if (nc.a <= 0)
+						continue;
 					rs += nc.r * nc.a;
 					gs += nc.g * nc.a;
 					bs += nc.b * nc.a;
@@ -897,7 +913,8 @@ static void _fix_halo(Ref<Image> &img) {
 static Ref<Image> _blur_border(Ref<Image> image, int border) {
 	Ref<Image> extended = _mirror_borders(image, border, border);
 	ERR_FAIL_COND_V(!extended.is_valid(), extended);
-	if (border <= 1) return extended;
+	if (border <= 1)
+		return extended;
 
 	const int ew = extended->get_width();
 	const int eh = extended->get_height();
@@ -909,7 +926,8 @@ static Ref<Image> _blur_border(Ref<Image> image, int border) {
 	for (int y = 0; y < eh; ++y) {
 		for (int x = 0; x < ew; ++x) {
 			// Only process the outer border ring.
-			if (x >= border && x < ew - border && y >= border && y < eh - border) continue;
+			if (x >= border && x < ew - border && y >= border && y < eh - border)
+				continue;
 			float r = 0, g = 0, b = 0, a = 0;
 			int cnt = 0;
 			for (int dy = -1; dy <= 1; ++dy) {
@@ -995,7 +1013,8 @@ static Ref<Image> _trim_color_border(const Ref<Image> &src, float threshold,
 
 	const int W = rgba->get_width();
 	const int H = rgba->get_height();
-	if (W <= 1 || H <= 1) return src;
+	if (W <= 1 || H <= 1)
+		return src;
 
 	rgba->lock();
 
@@ -1013,7 +1032,8 @@ static Ref<Image> _trim_color_border(const Ref<Image> &src, float threshold,
 	for (int i = 0; i < 4; ++i) {
 		int score = 0;
 		for (int j = 0; j < 4; ++j)
-			if (_delta_e(corners[i], corners[j]) <= threshold) ++score;
+			if (_delta_e(corners[i], corners[j]) <= threshold)
+				++score;
 		if (score > best_score) {
 			best_score = score;
 			best_idx = i;
@@ -1024,26 +1044,33 @@ static Ref<Image> _trim_color_border(const Ref<Image> &src, float threshold,
 	// Helper: does every pixel in this row match the background?
 	auto row_matches = [&](int y, int x0, int x1) -> bool {
 		for (int x = x0; x < x1; ++x)
-			if (_delta_e(rgba->get_pixel(x, y), bg) > threshold) return false;
+			if (_delta_e(rgba->get_pixel(x, y), bg) > threshold)
+				return false;
 		return true;
 	};
 	auto col_matches = [&](int x, int y0, int y1) -> bool {
 		for (int y = y0; y < y1; ++y)
-			if (_delta_e(rgba->get_pixel(x, y), bg) > threshold) return false;
+			if (_delta_e(rgba->get_pixel(x, y), bg) > threshold)
+				return false;
 		return true;
 	};
 
 	int x0 = 0, y0 = 0, x1 = W, y1 = H;
-	while (y0 < y1 && row_matches(y0, x0, x1)) ++y0;
-	while (y1 > y0 && row_matches(y1 - 1, x0, x1)) --y1;
-	while (x0 < x1 && col_matches(x0, y0, y1)) ++x0;
-	while (x1 > x0 && col_matches(x1 - 1, y0, y1)) --x1;
+	while (y0 < y1 && row_matches(y0, x0, x1))
+		++y0;
+	while (y1 > y0 && row_matches(y1 - 1, x0, x1))
+		--y1;
+	while (x0 < x1 && col_matches(x0, y0, y1))
+		++x0;
+	while (x1 > x0 && col_matches(x1 - 1, y0, y1))
+		--x1;
 
 	rgba->unlock();
 
 	const int nw = x1 - x0;
 	const int nh = y1 - y0;
-	if (nw <= 0 || nh <= 0 || (x0 == 0 && y0 == 0 && nw == W && nh == H)) return src;
+	if (nw <= 0 || nh <= 0 || (x0 == 0 && y0 == 0 && nw == W && nh == H))
+		return src;
 
 	trim_l += x0;
 	trim_r += W - x1;
@@ -1059,7 +1086,8 @@ static Ref<Image> _trim_color_border(const Ref<Image> &src, float threshold,
 // ---------------------------------------------------------------------------
 static void _draw_debug_border(PoolByteArray &atlas_data, int atlas_w, int atlas_channels,
 		int rx, int ry, int rw, int rh, int margin, const Color &col) {
-	if (margin <= 0 || rw <= 2 * margin || rh <= 2 * margin) return;
+	if (margin <= 0 || rw <= 2 * margin || rh <= 2 * margin)
+		return;
 
 	const int x1 = rx + margin;
 	const int y1 = ry + margin;
@@ -1072,12 +1100,17 @@ static void _draw_debug_border(PoolByteArray &atlas_data, int atlas_w, int atlas
 	uint8_t ca = (uint8_t)(col.a * 255);
 
 	auto put = [&](int x, int y) {
-		if (x < 0 || y < 0 || x >= atlas_w) return;
+		if (x < 0 || y < 0 || x >= atlas_w)
+			return;
 		const int idx = y * atlas_w * atlas_channels + x * atlas_channels;
-		if (atlas_channels >= 1) atlas_data.set(idx + 0, cr);
-		if (atlas_channels >= 2) atlas_data.set(idx + 1, cg);
-		if (atlas_channels >= 3) atlas_data.set(idx + 2, cb);
-		if (atlas_channels >= 4) atlas_data.set(idx + 3, ca);
+		if (atlas_channels >= 1)
+			atlas_data.set(idx + 0, cr);
+		if (atlas_channels >= 2)
+			atlas_data.set(idx + 1, cg);
+		if (atlas_channels >= 3)
+			atlas_data.set(idx + 2, cb);
+		if (atlas_channels >= 4)
+			atlas_data.set(idx + 3, ca);
 	};
 
 	int step = 0;
@@ -1135,8 +1168,10 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 	// Build a packing order: opaque first, then alpha.
 	// If separate_alpha is false, all images are in opaque_indices.
 	Vector<int> pack_order;
-	for (int i = 0; i < opaque_indices.size(); ++i) pack_order.push_back(opaque_indices[i]);
-	for (int i = 0; i < alpha_indices.size(); ++i) pack_order.push_back(alpha_indices[i]);
+	for (int i = 0; i < opaque_indices.size(); ++i)
+		pack_order.push_back(opaque_indices[i]);
+	for (int i = 0; i < alpha_indices.size(); ++i)
+		pack_order.push_back(alpha_indices[i]);
 
 	const int n = images.size();
 
@@ -1250,8 +1285,10 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 	if (options.separate_alpha && alpha_indices.size() > 0 && opaque_indices.size() > 0) {
 		// Build sub-arrays of rects for each group.
 		Vector<rect_xywhf *> opaque_rects, alpha_rects;
-		for (int i = 0; i < opaque_indices.size(); ++i) opaque_rects.push_back(rects[opaque_indices[i]]);
-		for (int i = 0; i < alpha_indices.size(); ++i) alpha_rects.push_back(rects[alpha_indices[i]]);
+		for (int i = 0; i < opaque_indices.size(); ++i)
+			opaque_rects.push_back(rects[opaque_indices[i]]);
+		for (int i = 0; i < alpha_indices.size(); ++i)
+			alpha_rects.push_back(rects[alpha_indices[i]]);
 
 		std::vector<bin> alpha_bins;
 		bool ok1 = _pack_rects(opaque_rects.ptr(), opaque_rects.size(), options.max_atlas_size, options.force_single_page_atlas, options.allow_rotation, options.algorithm, bins);
@@ -1260,7 +1297,8 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		// Renumber alpha-group bin indices (offset by opaque bin count).
 		const int offset = (int)bins.size();
 		for (auto &b : alpha_bins) {
-			for (rect_xywhf *r : b.rects) r->bin += offset;
+			for (rect_xywhf *r : b.rects)
+				r->bin += offset;
 			bins.push_back(b);
 		}
 		pack_ok = ok1 && ok2;
@@ -2060,7 +2098,10 @@ TEST_SUITE("[[gd_pack]] ImagePacker") {
 		int tl, tr, tt, tb;
 		_trim_alpha_border(fully_trans, 0, tl, tr, tt, tb);
 		// All zeros because nothing is opaque - we fall through to the guard.
-		CHECK(tl == 0); CHECK(tr == 0); CHECK(tt == 0); CHECK(tb == 0);
+		CHECK(tl == 0);
+		CHECK(tr == 0);
+		CHECK(tt == 0);
+		CHECK(tb == 0);
 	}
 
 	TEST_CASE("[gd_pack] trim_alpha with threshold=127 trims semi-transparent pixels") {
@@ -2128,7 +2169,8 @@ TEST_SUITE("[[gd_pack]] ImagePacker") {
 		// The 8 neighbours of the center should now have reddish tint (not pure white).
 		for (int dy = -1; dy <= 1; ++dy) {
 			for (int dx = -1; dx <= 1; ++dx) {
-				if (dx == 0 && dy == 0) continue;
+				if (dx == 0 && dy == 0)
+					continue;
 				Color c = img->get_pixel(1 + dx, 1 + dy);
 				CHECK(c.a == 0); // still transparent
 				CHECK(c.r > 0); // repaired to red-ish
