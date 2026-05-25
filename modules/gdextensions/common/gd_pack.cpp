@@ -53,6 +53,622 @@ static int _next_pow2(int v) {
 	return v + 1;
 }
 
+// ---------------------------------------------------------------------------
+// ConvexHull — ported from Humus (http://www.humus.name)
+// Used for optimal polygon fitting around sprite alpha boundaries.
+// ---------------------------------------------------------------------------
+
+namespace {
+
+struct _chvec2 {
+	float x, y;
+	_chvec2() :
+			x(0), y(0) {}
+	_chvec2(float ix, float iy) :
+			x(ix), y(iy) {}
+};
+
+static inline _chvec2 operator+(const _chvec2 &u, const _chvec2 &v) { return _chvec2(u.x + v.x, u.y + v.y); }
+static inline _chvec2 operator-(const _chvec2 &u, const _chvec2 &v) { return _chvec2(u.x - v.x, u.y - v.y); }
+static inline _chvec2 operator*(float s, const _chvec2 &v) { return _chvec2(v.x * s, v.y * s); }
+static inline float _chdot(const _chvec2 &u, const _chvec2 &v) { return u.x * v.x + u.y * v.y; }
+static inline float _chperp(const _chvec2 &u, const _chvec2 &v) { return u.x * v.y - u.y * v.x; }
+
+struct _CHNode {
+	_CHNode *Prev;
+	_CHNode *Next;
+	_chvec2 Point;
+};
+
+struct _CHLine {
+	_chvec2 v;
+	_chvec2 d;
+};
+
+static float _CHAreaX2(const _chvec2 &v0, const _chvec2 &v1, const _chvec2 &v2) {
+	_chvec2 u = v1 - v0;
+	_chvec2 w = v2 - v0;
+	return u.y * w.x - u.x * w.y;
+}
+
+static bool _CHIntersect(_chvec2 &point, const _CHLine &line0, const _CHLine &line1) {
+	float d = _chperp(line0.d, line1.d);
+	if (fabsf(d) < 1e-12f)
+		return false;
+	float t = _chperp(line1.d, line0.v - line1.v) / d;
+	if (t < 0.5f)
+		return false;
+	point = line0.v + t * line0.d;
+	return true;
+}
+
+static bool _CHIntersectNPC(_chvec2 &point, const _CHLine &line0, const _CHLine &line1) {
+	float d = _chperp(line0.d, line1.d);
+	float t = _chperp(line1.d, line0.v - line1.v) / d;
+	if (t < 0.5f)
+		return false;
+	point = line0.v + t * line0.d;
+	return true;
+}
+
+class _ConvexHull {
+	_CHNode *m_Root;
+	_CHNode *m_Curr;
+	unsigned int m_Count;
+
+public:
+	_ConvexHull() :
+			m_Root(NULL), m_Curr(NULL), m_Count(0) {}
+	~_ConvexHull() { Clear(); }
+
+	void Clear() {
+		if (m_Root) {
+			_CHNode *node = m_Root;
+			_CHNode *next;
+			do {
+				next = node->Next;
+				delete node;
+				node = next;
+			} while (node != m_Root);
+			m_Root = NULL;
+			m_Count = 0;
+		}
+		m_Curr = NULL;
+	}
+
+	bool InsertPoint(const _chvec2 &point) {
+		if (m_Count < 2) {
+			_CHNode *node = new _CHNode;
+			node->Point = point;
+			if (m_Root == NULL) {
+				m_Root = node;
+			} else {
+				node->Prev = m_Root;
+				node->Next = m_Root;
+			}
+			m_Root->Next = node;
+			m_Root->Prev = node;
+			++m_Count;
+			return true;
+		}
+
+		_CHNode *node = m_Root;
+		const _chvec2 &v0 = node->Prev->Point;
+		const _chvec2 &v1 = node->Point;
+		_chvec2 dir = v1 - v0;
+		_chvec2 nrm(-dir.y, dir.x);
+
+		if (_chdot(point - v0, nrm) > 0) {
+			do {
+				node = node->Prev;
+				const _chvec2 &pv0 = node->Prev->Point;
+				const _chvec2 &pv1 = node->Point;
+				_chvec2 pd = pv1 - pv0;
+				_chvec2 pn(-pd.y, pd.x);
+				if (_chdot(point - pv0, pn) <= 0) {
+					node = node->Next;
+					break;
+				}
+			} while (true);
+		} else {
+			do {
+				const _chvec2 &pv0 = node->Point;
+				node = node->Next;
+				const _chvec2 &pv1 = node->Point;
+				_chvec2 pd = pv1 - pv0;
+				_chvec2 pn(-pd.y, pd.x);
+				if (_chdot(point - pv0, pn) > 0)
+					break;
+				if (node == m_Root)
+					return false;
+			} while (true);
+		}
+
+		do {
+			const _chvec2 &cv0 = node->Point;
+			const _chvec2 &cv1 = node->Next->Point;
+			_chvec2 cd = cv1 - cv0;
+			_chvec2 cn(-cd.y, cd.x);
+			if (_chdot(point - cv0, cn) <= 0)
+				break;
+			node->Prev->Next = node->Next;
+			node->Next->Prev = node->Prev;
+			_CHNode *del = node;
+			node = node->Next;
+			delete del;
+			--m_Count;
+		} while (true);
+
+		_CHNode *new_node = new _CHNode;
+		new_node->Point = point;
+		++m_Count;
+		new_node->Prev = node->Prev;
+		new_node->Next = node;
+		node->Prev->Next = new_node;
+		node->Prev = new_node;
+		m_Root = new_node;
+		return true;
+	}
+
+	bool RemoveLeastRelevantEdge() {
+		_CHNode *min_node = NULL;
+		_chvec2 min_pos;
+		float min_area = 1e10f;
+
+		_CHNode *node = m_Root;
+		do {
+			const _chvec2 &ev0 = node->Prev->Point;
+			const _chvec2 &ev1 = node->Point;
+			const _chvec2 &ev2 = node->Next->Point;
+			const _chvec2 &ev3 = node->Next->Next->Point;
+			_CHLine line0 = { ev0, ev1 - ev0 };
+			_CHLine line1 = { ev2, ev3 - ev2 };
+			_chvec2 iv;
+			if (_CHIntersectNPC(iv, line0, line1)) {
+				float a = _CHAreaX2(ev1, iv, ev2);
+				if (a < min_area) {
+					min_node = node;
+					min_pos = iv;
+					min_area = a;
+				}
+			}
+			node = node->Next;
+		} while (node != m_Root);
+
+		if (min_node) {
+			min_node->Point = min_pos;
+			_CHNode *del = min_node->Next;
+			min_node->Next->Next->Prev = min_node;
+			min_node->Next = min_node->Next->Next;
+			if (del == m_Root)
+				m_Root = min_node;
+			delete del;
+			--m_Count;
+			return true;
+		}
+		return false;
+	}
+
+	unsigned int FindOptimalPolygon(_chvec2 *dest, unsigned int vertex_count) const {
+		if (vertex_count > m_Count)
+			vertex_count = m_Count;
+		if (vertex_count < 3)
+			return 0;
+		if (vertex_count > 8)
+			vertex_count = 8;
+
+		_CHLine lines[50];
+		_CHNode *node = m_Root;
+		unsigned int n = 0;
+		do {
+			if (n >= 50)
+				break;
+			lines[n].v = node->Point;
+			lines[n].d = node->Next->Point - node->Point;
+			node = node->Next;
+			++n;
+		} while (node != m_Root);
+
+		float min_area = 1e10f;
+		_chvec2 v[8];
+
+		switch (vertex_count) {
+			case 3:
+				for (unsigned int x = 0; x < n; x++)
+					for (unsigned int y = x + 1; y < n; y++)
+						if (_CHIntersect(v[0], lines[x], lines[y]))
+							for (unsigned int z = y + 1; z < n; z++)
+								if (_CHIntersect(v[1], lines[y], lines[z]))
+									if (_CHIntersect(v[2], lines[z], lines[x])) {
+										_chvec2 u0 = v[1] - v[0], u1 = v[2] - v[0];
+										float a = u0.y * u1.x - u0.x * u1.y;
+										if (a < min_area) {
+											min_area = a;
+											dest[0] = v[0];
+											dest[1] = v[1];
+											dest[2] = v[2];
+										}
+									}
+				break;
+			case 4:
+				for (unsigned int x = 0; x < n; x++)
+					for (unsigned int y = x + 1; y < n; y++)
+						if (_CHIntersect(v[0], lines[x], lines[y]))
+							for (unsigned int z = y + 1; z < n; z++)
+								if (_CHIntersect(v[1], lines[y], lines[z]))
+									for (unsigned int w = z + 1; w < n; w++)
+										if (_CHIntersect(v[2], lines[z], lines[w]))
+											if (_CHIntersect(v[3], lines[w], lines[x])) {
+												_chvec2 u0 = v[1] - v[0], u1 = v[2] - v[0], u2 = v[3] - v[0];
+												float a = (u0.y * u1.x - u0.x * u1.y) + (u1.y * u2.x - u1.x * u2.y);
+												if (a < min_area) {
+													min_area = a;
+													dest[0] = v[0];
+													dest[1] = v[1];
+													dest[2] = v[2];
+													dest[3] = v[3];
+												}
+											}
+				break;
+			case 5:
+				for (unsigned int x = 0; x < n; x++)
+					for (unsigned int y = x + 1; y < n; y++)
+						if (_CHIntersect(v[0], lines[x], lines[y]))
+							for (unsigned int z = y + 1; z < n; z++)
+								if (_CHIntersect(v[1], lines[y], lines[z]))
+									for (unsigned int w = z + 1; w < n; w++)
+										if (_CHIntersect(v[2], lines[z], lines[w]))
+											for (unsigned int r = w + 1; r < n; r++)
+												if (_CHIntersect(v[3], lines[w], lines[r]))
+													if (_CHIntersect(v[4], lines[r], lines[x])) {
+														_chvec2 u0 = v[1] - v[0], u1 = v[2] - v[0], u2 = v[3] - v[0], u3 = v[4] - v[0];
+														float a = (u0.y * u1.x - u0.x * u1.y) + (u1.y * u2.x - u1.x * u2.y) + (u2.y * u3.x - u2.x * u3.y);
+														if (a < min_area) {
+															min_area = a;
+															dest[0] = v[0];
+															dest[1] = v[1];
+															dest[2] = v[2];
+															dest[3] = v[3];
+															dest[4] = v[4];
+														}
+													}
+				break;
+			case 6:
+				for (unsigned int x = 0; x < n; x++)
+					for (unsigned int y = x + 1; y < n; y++)
+						if (_CHIntersect(v[0], lines[x], lines[y]))
+							for (unsigned int z = y + 1; z < n; z++)
+								if (_CHIntersect(v[1], lines[y], lines[z]))
+									for (unsigned int w = z + 1; w < n; w++)
+										if (_CHIntersect(v[2], lines[z], lines[w]))
+											for (unsigned int r = w + 1; r < n; r++)
+												if (_CHIntersect(v[3], lines[w], lines[r]))
+													for (unsigned int s = r + 1; s < n; s++)
+														if (_CHIntersect(v[4], lines[r], lines[s]))
+															if (_CHIntersect(v[5], lines[s], lines[x])) {
+																_chvec2 u0 = v[1] - v[0], u1 = v[2] - v[0], u2 = v[3] - v[0], u3 = v[4] - v[0], u4 = v[5] - v[0];
+																float a = (u0.y * u1.x - u0.x * u1.y) + (u1.y * u2.x - u1.x * u2.y) + (u2.y * u3.x - u2.x * u3.y) + (u3.y * u4.x - u3.x * u4.y);
+																if (a < min_area) {
+																	min_area = a;
+																	dest[0] = v[0];
+																	dest[1] = v[1];
+																	dest[2] = v[2];
+																	dest[3] = v[3];
+																	dest[4] = v[4];
+																	dest[5] = v[5];
+																}
+															}
+				break;
+			case 7:
+				for (unsigned int x = 0; x < n; x++)
+					for (unsigned int y = x + 1; y < n; y++)
+						if (_CHIntersect(v[0], lines[x], lines[y]))
+							for (unsigned int z = y + 1; z < n; z++)
+								if (_CHIntersect(v[1], lines[y], lines[z]))
+									for (unsigned int w = z + 1; w < n; w++)
+										if (_CHIntersect(v[2], lines[z], lines[w]))
+											for (unsigned int r = w + 1; r < n; r++)
+												if (_CHIntersect(v[3], lines[w], lines[r]))
+													for (unsigned int s = r + 1; s < n; s++)
+														if (_CHIntersect(v[4], lines[r], lines[s]))
+															for (unsigned int t = s + 1; t < n; t++)
+																if (_CHIntersect(v[5], lines[s], lines[t]))
+																	if (_CHIntersect(v[6], lines[t], lines[x])) {
+																		_chvec2 u0 = v[1] - v[0], u1 = v[2] - v[0], u2 = v[3] - v[0], u3 = v[4] - v[0], u4 = v[5] - v[0], u5 = v[6] - v[0];
+																		float a = (u0.y * u1.x - u0.x * u1.y) + (u1.y * u2.x - u1.x * u2.y) + (u2.y * u3.x - u2.x * u3.y) + (u3.y * u4.x - u3.x * u4.y) + (u4.y * u5.x - u4.x * u5.y);
+																		if (a < min_area) {
+																			min_area = a;
+																			dest[0] = v[0];
+																			dest[1] = v[1];
+																			dest[2] = v[2];
+																			dest[3] = v[3];
+																			dest[4] = v[4];
+																			dest[5] = v[5];
+																			dest[6] = v[6];
+																		}
+																	}
+				break;
+			case 8:
+				for (unsigned int x = 0; x < n; x++)
+					for (unsigned int y = x + 1; y < n; y++)
+						if (_CHIntersect(v[0], lines[x], lines[y]))
+							for (unsigned int z = y + 1; z < n; z++)
+								if (_CHIntersect(v[1], lines[y], lines[z]))
+									for (unsigned int w = z + 1; w < n; w++)
+										if (_CHIntersect(v[2], lines[z], lines[w]))
+											for (unsigned int r = w + 1; r < n; r++)
+												if (_CHIntersect(v[3], lines[w], lines[r]))
+													for (unsigned int s = r + 1; s < n; s++)
+														if (_CHIntersect(v[4], lines[r], lines[s]))
+															for (unsigned int t = s + 1; t < n; t++)
+																if (_CHIntersect(v[5], lines[s], lines[t]))
+																	for (unsigned int u = t + 1; u < n; u++)
+																		if (_CHIntersect(v[6], lines[t], lines[u]))
+																			if (_CHIntersect(v[7], lines[u], lines[x])) {
+																				_chvec2 u0 = v[1] - v[0], u1 = v[2] - v[0], u2 = v[3] - v[0], u3 = v[4] - v[0], u4 = v[5] - v[0], u5 = v[6] - v[0], u6 = v[7] - v[0];
+																				float a = (u0.y * u1.x - u0.x * u1.y) + (u1.y * u2.x - u1.x * u2.y) + (u2.y * u3.x - u2.x * u3.y) + (u3.y * u4.x - u3.x * u4.y) + (u4.y * u5.x - u4.x * u5.y) + (u5.y * u6.x - u5.x * u6.y);
+																				if (a < min_area) {
+																					min_area = a;
+																					dest[0] = v[0];
+																					dest[1] = v[1];
+																					dest[2] = v[2];
+																					dest[3] = v[3];
+																					dest[4] = v[4];
+																					dest[5] = v[5];
+																					dest[6] = v[6];
+																					dest[7] = v[7];
+																				}
+																			}
+				break;
+		}
+		return vertex_count;
+	}
+
+	unsigned int GetCount() const { return m_Count; }
+};
+
+} // anonymous namespace
+
+// ---------------------------------------------------------------------------
+// Hull computation helpers
+// ---------------------------------------------------------------------------
+
+static std::vector<int> _fan_triangulate(int vertex_count) {
+	std::vector<int> idx;
+	if (vertex_count < 3)
+		return idx;
+	idx.reserve(3 * (vertex_count - 2));
+	for (int i = 1; i < vertex_count - 1; ++i) {
+		idx.push_back(0);
+		idx.push_back(i);
+		idx.push_back(i + 1);
+	}
+	return idx;
+}
+
+static void _build_alpha_hull(_ConvexHull &hull, const uint8_t *pixels, int w, int h, int threshold, int sub_pixel) {
+	const float threshold_f = (float)threshold;
+	const float off_x = 0.5f * (w - 1);
+	const float off_y = 0.5f * (h - 1);
+	const float corner_off_x = 0.5f * w;
+	const float corner_off_y = 0.5f * h;
+
+	if (pixels[0] > threshold)
+		hull.InsertPoint(_chvec2(-corner_off_x, -corner_off_y));
+	if (pixels[w - 1] > threshold)
+		hull.InsertPoint(_chvec2(corner_off_x, -corner_off_y));
+	if (pixels[(h - 1) * w] > threshold)
+		hull.InsertPoint(_chvec2(-corner_off_x, corner_off_y));
+	if (pixels[(h - 1) * w + (w - 1)] > threshold)
+		hull.InsertPoint(_chvec2(corner_off_x, corner_off_y));
+
+	// Top edge
+	const uint8_t *top_row = pixels;
+	for (int x = 0; x < w - 1; ++x) {
+		int c0 = top_row[x], c1 = top_row[x + 1];
+		if ((c0 > threshold) != (c1 > threshold)) {
+			float sub_x = (threshold_f - c0) / (float)(c1 - c0);
+			hull.InsertPoint(_chvec2(x - off_x + sub_x, -corner_off_y));
+		}
+	}
+	// Bottom edge
+	const uint8_t *bot_row = pixels + (h - 1) * w;
+	for (int x = 0; x < w - 1; ++x) {
+		int c0 = bot_row[x], c1 = bot_row[x + 1];
+		if ((c0 > threshold) != (c1 > threshold)) {
+			float sub_x = (threshold_f - c0) / (float)(c1 - c0);
+			hull.InsertPoint(_chvec2(x - off_x + sub_x, corner_off_y));
+		}
+	}
+	// Left edge
+	for (int y = 0; y < h - 1; ++y) {
+		int c0 = pixels[y * w], c1 = pixels[(y + 1) * w];
+		if ((c0 > threshold) != (c1 > threshold)) {
+			float sub_y = (threshold_f - c0) / (float)(c1 - c0);
+			hull.InsertPoint(_chvec2(-corner_off_x, y - off_y + sub_y));
+		}
+	}
+	// Right edge
+	for (int y = 0; y < h - 1; ++y) {
+		int c0 = pixels[y * w + (w - 1)], c1 = pixels[(y + 1) * w + (w - 1)];
+		if ((c0 > threshold) != (c1 > threshold)) {
+			float sub_y = (threshold_f - c0) / (float)(c1 - c0);
+			hull.InsertPoint(_chvec2(corner_off_x, y - off_y + sub_y));
+		}
+	}
+
+	// Interior boundary via bilinear sub-pixel scan
+	for (int y = 0; y < h - 1; ++y) {
+		const uint8_t *row0 = pixels + y * w;
+		const uint8_t *row1 = pixels + (y + 1) * w;
+		for (int x = 0; x < w - 1; ++x) {
+			int c00 = row0[x], c01 = row0[x + 1];
+			int c10 = row1[x], c11 = row1[x + 1];
+			int cnt = (c00 > threshold) + (c01 > threshold) + (c10 > threshold) + (c11 > threshold);
+			if (cnt == 0 || cnt == 4)
+				continue;
+			float d00 = (float)c00, d01 = (float)c01;
+			float d10 = (float)c10, d11 = (float)c11;
+			for (int sp = 0; sp <= sub_pixel; ++sp) {
+				float f0 = (float)sp / (float)sub_pixel;
+				float f1 = 1.0f - f0;
+				float x0 = d00 * f1 + d10 * f0;
+				float x1 = d01 * f1 + d11 * f0;
+				if ((x0 > threshold_f) != (x1 > threshold_f)) {
+					float sub_x = (threshold_f - x0) / (x1 - x0);
+					hull.InsertPoint(_chvec2(x - off_x + sub_x, y - off_y + f0));
+				}
+				float y0 = d00 * f1 + d01 * f0;
+				float y1 = d10 * f1 + d11 * f0;
+				if ((y0 > threshold_f) != (y1 > threshold_f)) {
+					float sub_y = (threshold_f - y0) / (y1 - y0);
+					hull.InsertPoint(_chvec2(x - off_x + f0, y - off_y + sub_y));
+				}
+			}
+		}
+	}
+}
+
+static HullMesh _compute_hull_mesh(const Ref<Image> &img, int threshold, int vertex_count, int max_hull_size, int sub_pixel) {
+	HullMesh result;
+	if (!img.is_valid())
+		return result;
+
+	const int w = img->get_width();
+	const int h = img->get_height();
+	if (w < 2 || h < 2)
+		return result;
+
+	// Extract single-channel alpha buffer
+	Ref<Image> alpha_img = img->duplicate();
+	Image::Format fmt = alpha_img->get_format();
+	int alpha_ch = -1;
+	if (fmt == Image::FORMAT_RGBA8) {
+		alpha_ch = 3;
+	} else if (fmt == Image::FORMAT_LA8) {
+		alpha_ch = 1;
+	} else if (fmt == Image::FORMAT_L8) {
+		alpha_ch = 0;
+	} else {
+		alpha_img->convert(Image::FORMAT_RGBA8);
+		alpha_ch = 3;
+	}
+
+	PoolByteArray data = alpha_img->get_data();
+	PoolByteArray::Read rd = data.read();
+	const uint8_t *src = rd.ptr();
+
+	int bpp = (alpha_ch == 0) ? 1 : (alpha_ch == 1) ? 2
+													: 4;
+	// Extract alpha into flat buffer
+	std::vector<uint8_t> alpha_buf(w * h);
+	for (int i = 0; i < w * h; ++i)
+		alpha_buf[i] = src[i * bpp + alpha_ch];
+
+	// Build convex hull
+	_ConvexHull hull;
+	_build_alpha_hull(hull, alpha_buf.data(), w, h, threshold, sub_pixel);
+
+	if (hull.GetCount() < 3)
+		return result;
+
+	// Reduce to max_hull_size
+	while ((int)hull.GetCount() > max_hull_size)
+		if (!hull.RemoveLeastRelevantEdge())
+			break;
+
+	// Find optimal simplified polygon
+	const int n = MAX(3, MIN(8, vertex_count));
+	_chvec2 poly[8];
+	const unsigned int actual = hull.FindOptimalPolygon(poly, (unsigned int)n);
+	if (actual < 3)
+		return result;
+
+	// Convert from center-origin pixel coords to normalized [0..1] UV
+	const float fw = (float)w;
+	const float fh = (float)h;
+	result.verts.resize(actual);
+	for (unsigned int i = 0; i < actual; ++i) {
+		result.verts[i].u = (poly[i].x + fw * 0.5f) / fw;
+		result.verts[i].v = (poly[i].y + fh * 0.5f) / fh;
+	}
+
+	result.indices = _fan_triangulate((int)actual);
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+// Hull debug drawing
+// ---------------------------------------------------------------------------
+
+static void _draw_hull_line(PoolByteArray &atlas_data, int atlas_w, int atlas_h, int channels,
+		int x0, int y0, int x1, int y1, const Color &col) {
+	uint8_t cr = (uint8_t)(col.r * 255);
+	uint8_t cg = (uint8_t)(col.g * 255);
+	uint8_t cb = (uint8_t)(col.b * 255);
+	uint8_t ca = (uint8_t)(col.a * 255);
+
+	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+	int err = dx + dy;
+	for (;;) {
+		if (x0 >= 0 && y0 >= 0 && x0 < atlas_w && y0 < atlas_h) {
+			int idx = y0 * atlas_w * channels + x0 * channels;
+			if (channels >= 1)
+				atlas_data.set(idx + 0, cr);
+			if (channels >= 2)
+				atlas_data.set(idx + 1, cg);
+			if (channels >= 3)
+				atlas_data.set(idx + 2, cb);
+			if (channels >= 4)
+				atlas_data.set(idx + 3, ca);
+		}
+		if (x0 == x1 && y0 == y1)
+			break;
+		int e2 = 2 * err;
+		if (e2 >= dy) {
+			err += dy;
+			x0 += sx;
+		}
+		if (e2 <= dx) {
+			err += dx;
+			y0 += sy;
+		}
+	}
+}
+
+static void _draw_hull_outline(PoolByteArray &atlas_data, int atlas_w, int atlas_h, int channels,
+		int ox, int oy, int w, int h, const HullMesh &hm, const Color &col) {
+	const int n = hm.vert_count();
+	if (n < 3)
+		return;
+	for (int i = 0; i < n; ++i) {
+		int j = (i + 1) % n;
+		int x0 = ox + (int)(hm.verts[i].u * (float)(w - 1) + 0.5f);
+		int y0 = oy + (int)(hm.verts[i].v * (float)(h - 1) + 0.5f);
+		int x1 = ox + (int)(hm.verts[j].u * (float)(w - 1) + 0.5f);
+		int y1 = oy + (int)(hm.verts[j].v * (float)(h - 1) + 0.5f);
+		_draw_hull_line(atlas_data, atlas_w, atlas_h, channels, x0, y0, x1, y1, col);
+	}
+}
+
+static void _draw_hull_triangulation(PoolByteArray &atlas_data, int atlas_w, int atlas_h, int channels,
+		int ox, int oy, int w, int h, const HullMesh &hm, const Color &col) {
+	if (hm.indices.empty())
+		return;
+	for (int t = 0; t < hm.tri_count(); ++t) {
+		const HullVert &a = hm.verts[hm.indices[t * 3 + 0]];
+		const HullVert &b = hm.verts[hm.indices[t * 3 + 1]];
+		const HullVert &c = hm.verts[hm.indices[t * 3 + 2]];
+		int ax = ox + (int)(a.u * (float)(w - 1) + 0.5f), ay = oy + (int)(a.v * (float)(h - 1) + 0.5f);
+		int bx = ox + (int)(b.u * (float)(w - 1) + 0.5f), by = oy + (int)(b.v * (float)(h - 1) + 0.5f);
+		int cx = ox + (int)(c.u * (float)(w - 1) + 0.5f), cy = oy + (int)(c.v * (float)(h - 1) + 0.5f);
+		_draw_hull_line(atlas_data, atlas_w, atlas_h, channels, ax, ay, bx, by, col);
+		_draw_hull_line(atlas_data, atlas_w, atlas_h, channels, bx, by, cx, cy, col);
+		_draw_hull_line(atlas_data, atlas_w, atlas_h, channels, cx, cy, ax, ay, col);
+	}
+}
+
 // just add another comparing function name to cmpf to perform another packing attempt
 // more functions == slower but probably more efficient cases covered and hence less area wasted
 
@@ -1205,6 +1821,13 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 		data.write[i].trim_t = tt;
 		data.write[i].trim_b = tb;
 
+		// --- Hull mesh (on post-trim image, before margin) ---
+		if (options.hull_compute || options.debug_hull_outline || options.debug_hull_triangulation) {
+			data.write[i].hull_mesh = _compute_hull_mesh(image,
+					options.hull_alpha_threshold, options.hull_vertex_count,
+					options.hull_max_size, options.hull_sub_pixel);
+		}
+
 		// --- Margin / border fill ---
 		if (margin > 0) {
 			switch (options.border_mode) {
@@ -1479,6 +2102,19 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 					_draw_debug_border(atlas_data, (int)atlas_size.width, atlas_channels,
 							r->x, r->y, r->w(), r->h(), margin, options.debug_border_color);
 				}
+				// --- Hull debug overlays ---
+				if (!r->hull_mesh.empty()) {
+					const int content_cw = r->w() - 2 * margin;
+					const int content_ch = r->h() - 2 * margin;
+					if (options.debug_hull_outline) {
+						_draw_hull_outline(atlas_data, (int)atlas_size.width, (int)atlas_size.height, atlas_channels,
+								r->x + margin, r->y + margin, content_cw, content_ch, r->hull_mesh, options.debug_hull_color);
+					}
+					if (options.debug_hull_triangulation) {
+						_draw_hull_triangulation(atlas_data, (int)atlas_size.width, (int)atlas_size.height, atlas_channels,
+								r->x + margin, r->y + margin, content_cw, content_ch, r->hull_mesh, options.debug_hull_tri_color);
+					}
+				}
 			}
 
 			atlas->create(atlas_size.width, atlas_size.height, false, atlas_format, atlas_data);
@@ -1504,6 +2140,18 @@ Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOption
 			entry["trim_r"] = rc.trim_r;
 			entry["trim_t"] = rc.trim_t;
 			entry["trim_b"] = rc.trim_b;
+			if (!rc.hull_mesh.empty()) {
+				PoolVector2Array hull_verts;
+				hull_verts.resize(rc.hull_mesh.vert_count());
+				for (int vi = 0; vi < rc.hull_mesh.vert_count(); ++vi)
+					hull_verts.set(vi, Vector2(rc.hull_mesh.verts[vi].u, rc.hull_mesh.verts[vi].v));
+				entry["hull"] = hull_verts;
+				PoolIntArray hull_indices;
+				hull_indices.resize((int)rc.hull_mesh.indices.size());
+				for (int vi = 0; vi < (int)rc.hull_mesh.indices.size(); ++vi)
+					hull_indices.set(vi, rc.hull_mesh.indices[vi]);
+				entry["hull_indices"] = hull_indices;
+			}
 			atlas_rects[r] = entry;
 		}
 
@@ -2651,5 +3299,193 @@ TEST_SUITE("[[gd_pack]] ImagePacker") {
 		Array rects = res["_rects"];
 		REQUIRE(rects.size() == 2);
 	}
+	// -----------------------------------------------------------------------
+	// Hull mesh tests
+	// -----------------------------------------------------------------------
+
+	TEST_CASE("[gd_pack] _fan_triangulate: degenerate vertex counts produce empty result") {
+		CHECK(_fan_triangulate(0).empty());
+		CHECK(_fan_triangulate(1).empty());
+		CHECK(_fan_triangulate(2).empty());
+	}
+
+	TEST_CASE("[gd_pack] _fan_triangulate: triangle → 1 triangle, 3 indices") {
+		auto idx = _fan_triangulate(3);
+		REQUIRE(idx.size() == 3u);
+		CHECK(idx[0] == 0);
+		CHECK(idx[1] == 1);
+		CHECK(idx[2] == 2);
+	}
+
+	TEST_CASE("[gd_pack] _fan_triangulate: quad → 2 triangles, 6 indices") {
+		auto idx = _fan_triangulate(4);
+		REQUIRE(idx.size() == 6u);
+		CHECK(idx[0] == 0);
+		CHECK(idx[1] == 1);
+		CHECK(idx[2] == 2);
+		CHECK(idx[3] == 0);
+		CHECK(idx[4] == 2);
+		CHECK(idx[5] == 3);
+	}
+
+	TEST_CASE("[gd_pack] _fan_triangulate: index count = 3*(N-2)") {
+		for (int n = 3; n <= 8; ++n) {
+			auto idx = _fan_triangulate(n);
+			CHECK((int)idx.size() == 3 * (n - 2));
+		}
+	}
+
+	TEST_CASE("[gd_pack] _fan_triangulate: pivot is always vertex 0") {
+		for (int n = 3; n <= 8; ++n) {
+			auto idx = _fan_triangulate(n);
+			int tri_count = n - 2;
+			for (int t = 0; t < tri_count; ++t)
+				CHECK(idx[t * 3] == 0);
+		}
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: null image returns empty") {
+		Ref<Image> null_img;
+		HullMesh hm = _compute_hull_mesh(null_img, 0, 4, 50, 16);
+		CHECK(hm.empty());
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: 1x1 image returns empty") {
+		Ref<Image> img = memnew(Image);
+		img->create(1, 1, false, Image::FORMAT_RGBA8);
+		img->fill(Color(1, 1, 1, 1));
+		HullMesh hm = _compute_hull_mesh(img, 0, 4, 50, 16);
+		CHECK(hm.empty());
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: fully transparent image returns empty") {
+		Ref<Image> img = memnew(Image);
+		img->create(32, 32, false, Image::FORMAT_RGBA8);
+		img->fill(Color(0, 0, 0, 0));
+		HullMesh hm = _compute_hull_mesh(img, 0, 4, 50, 16);
+		CHECK(hm.empty());
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: fully opaque RGBA → non-empty hull") {
+		Ref<Image> img = memnew(Image);
+		img->create(32, 32, false, Image::FORMAT_RGBA8);
+		img->fill(Color(1, 1, 1, 1));
+		HullMesh hm = _compute_hull_mesh(img, 0, 4, 50, 16);
+		CHECK(!hm.empty());
+		CHECK(hm.vert_count() >= 3);
+		CHECK(hm.vert_count() <= 4);
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: hull verts in [0,1] range") {
+		Ref<Image> img = memnew(Image);
+		img->create(32, 32, false, Image::FORMAT_RGBA8);
+		img->fill(Color(1, 1, 1, 1));
+		HullMesh hm = _compute_hull_mesh(img, 0, 4, 50, 16);
+		for (const auto &v : hm.verts) {
+			CHECK(v.u >= 0.f);
+			CHECK(v.u <= 1.f);
+			CHECK(v.v >= 0.f);
+			CHECK(v.v <= 1.f);
+		}
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: tri_count == vert_count - 2") {
+		Ref<Image> img = memnew(Image);
+		img->create(32, 32, false, Image::FORMAT_RGBA8);
+		img->fill(Color(1, 1, 1, 1));
+		for (int vc = 3; vc <= 8; ++vc) {
+			HullMesh hm = _compute_hull_mesh(img, 0, vc, 16, 16);
+			if (!hm.empty()) {
+				CHECK((int)hm.indices.size() == 3 * (hm.vert_count() - 2));
+			}
+		}
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: vertex_count=3 → triangle") {
+		Ref<Image> img = memnew(Image);
+		img->create(64, 64, false, Image::FORMAT_RGBA8);
+		img->fill(Color(0, 0, 0, 0));
+		// Draw a filled circle via pixel manipulation
+		img->lock();
+		for (int y = 0; y < 64; ++y)
+			for (int x = 0; x < 64; ++x) {
+				float dx = (float)(x - 32), dy = (float)(y - 32);
+				if (dx * dx + dy * dy <= 28.f * 28.f)
+					img->set_pixel(x, y, Color(1, 1, 1, 1));
+			}
+		img->unlock();
+		HullMesh hm = _compute_hull_mesh(img, 0, 3, 16, 16);
+		REQUIRE(!hm.empty());
+		CHECK(hm.vert_count() == 3);
+		CHECK(hm.tri_count() == 1);
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: high threshold treats semi-transparent as transparent") {
+		Ref<Image> img = memnew(Image);
+		img->create(32, 32, false, Image::FORMAT_RGBA8);
+		img->fill(Color(1, 1, 1, 100.f / 255.f));
+		HullMesh hm = _compute_hull_mesh(img, 200, 4, 50, 16);
+		CHECK(hm.empty());
+	}
+
+	TEST_CASE("[gd_pack] _compute_hull_mesh: L8 format works") {
+		Ref<Image> img = memnew(Image);
+		img->create(32, 32, false, Image::FORMAT_L8);
+		img->fill(Color(1, 1, 1, 1));
+		HullMesh hm = _compute_hull_mesh(img, 0, 4, 50, 16);
+		CHECK(!hm.empty());
+	}
+
+	TEST_CASE("[gd_pack] merge_images with hull_compute returns hull keys") {
+		_doctest_prepare_folder();
+		Vector<Ref<Image>> images;
+		images.push_back(_make_solid_rgba(32, 32, Color(1, 0, 0, 1)));
+		images.push_back(_make_solid_rgba(24, 24, Color(0, 1, 0, 1)));
+
+		ImageMergeOptions opts;
+		opts.hull_compute = true;
+		opts.hull_vertex_count = 4;
+		opts.margin = 1;
+
+		Dictionary res = merge_images(images, opts);
+		REQUIRE(res.has("_rects"));
+		Array rects = res["_rects"];
+		REQUIRE(rects.size() == 2);
+
+		for (int i = 0; i < rects.size(); ++i) {
+			Dictionary entry = rects[i];
+			CHECK(entry.has("hull"));
+			CHECK(entry.has("hull_indices"));
+			PoolVector2Array hull = entry["hull"];
+			PoolIntArray hull_idx = entry["hull_indices"];
+			CHECK(hull.size() >= 3);
+			CHECK(hull.size() <= 4);
+			CHECK(hull_idx.size() == 3 * (hull.size() - 2));
+			for (int vi = 0; vi < hull.size(); ++vi) {
+				Vector2 v = hull[vi];
+				CHECK(v.x >= 0.f);
+				CHECK(v.x <= 1.f);
+				CHECK(v.y >= 0.f);
+				CHECK(v.y <= 1.f);
+			}
+		}
+	}
+
+	TEST_CASE("[gd_pack] merge_images with debug_hull_outline does not crash") {
+		Vector<Ref<Image>> images;
+		images.push_back(_make_solid_rgba(32, 32, Color(1, 1, 1, 1)));
+
+		ImageMergeOptions opts;
+		opts.hull_compute = true;
+		opts.debug_hull_outline = true;
+		opts.debug_hull_triangulation = true;
+		opts.margin = 1;
+
+		Dictionary res = merge_images(images, opts);
+		REQUIRE(res.has("_generated_images"));
+		Array pages = res["_generated_images"];
+		CHECK(pages.size() >= 1);
+	}
+
 } // TEST_SUITE
 #endif

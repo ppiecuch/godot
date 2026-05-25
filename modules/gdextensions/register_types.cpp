@@ -50,10 +50,12 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 // Common resources end.
 
 #ifdef TOOLS_ENABLED
+#include "common/atlas_info_editor_plugin.h"
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
 #endif
 
+#include "common/atlas_info.h"
 #include "common/gd_history_plot.h"
 #include "common/gd_plotter_draw_node.h"
 #include "common/resources_cache.h"
@@ -524,6 +526,7 @@ static void editor_init_callback() {
 	editor->add_editor_plugin(memnew(PowerStationEditorPlugin(editor)));
 	editor->add_editor_plugin(memnew(EditorIconPreview(editor)));
 	editor->add_editor_plugin(memnew(SpriteQuickOffsetPlugin(editor)));
+	editor->add_editor_plugin(memnew(AtlasInfoEditorPlugin(editor)));
 }
 #endif // TOOLS_ENABLED
 
@@ -541,6 +544,8 @@ void register_gdextensions_types() {
 	ClassDB::register_class<SRGraph>();
 	ClassDB::register_class<GdHistoryPlot>();
 	ClassDB::register_class<GdPlotterDraw>();
+	ClassDB::register_class<AtlasInfo>();
+	ClassDB::register_class<AtlasInfoTexture>();
 #ifdef GDEXT_BULLETKIT_ENABLED
 	register_bulletkit();
 #endif

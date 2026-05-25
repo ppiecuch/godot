@@ -67,6 +67,18 @@
 //
 // For description how to tune the algorithm and how it actually works see the .cpp file.
 
+struct HullVert {
+	float u, v; // normalized [0..1] sprite-local UV
+};
+
+struct HullMesh {
+	std::vector<HullVert> verts; // CCW polygon (3-8 verts)
+	std::vector<int> indices; // fan triangle indices (3*(N-2))
+	bool empty() const { return verts.empty(); }
+	int vert_count() const { return (int)verts.size(); }
+	int tri_count() const { return (int)indices.size() / 3; }
+};
+
 struct rect_ltrb {
 	rect_ltrb() :
 			l(0), t(0), r(0), b(0) {}
@@ -152,6 +164,7 @@ struct rect_xywhf : public rect_xywh {
 	// Trim margins: pixels removed from each side of the original image before packing.
 	// All zeros when trim_alpha is disabled.
 	int trim_l, trim_r, trim_t, trim_b;
+	HullMesh hull_mesh; // populated when hull_compute is enabled
 };
 
 struct bin {
@@ -230,6 +243,19 @@ struct ImageMergeOptions {
 	// --- Alpha separation ---
 	bool separate_alpha = false; // pack opaque and alpha-bearing sprites into separate atlas pages
 
+	// --- Hull mesh ---
+	bool hull_compute = false; // compute convex hull polygon per sprite
+	int hull_vertex_count = 4; // target polygon vertex count [3..8]
+	int hull_alpha_threshold = 0; // alpha threshold for boundary detection
+	int hull_max_size = 50; // max hull vertices before simplification
+	int hull_sub_pixel = 16; // sub-pixel sampling subdivisions
+
+	// --- Hull debug ---
+	bool debug_hull_outline = false;
+	bool debug_hull_triangulation = false;
+	Color debug_hull_color = Color(0, 1, 0, 1); // green
+	Color debug_hull_tri_color = Color(1, 1, 0, 1); // yellow
+
 	ImageMergeOptions &set_max_size(int v) {
 		max_atlas_size = v;
 		return *this;
@@ -262,6 +288,8 @@ struct ImageMergeOptions {
 //          "atlas"      -> atlas image reference
 //          "flipped"    -> bool: true if sprite was rotated 90° CW
 //          "trim_l/r/t/b" -> pixels cropped from original before packing
+//          "hull"       -> PoolVector2Array of hull polygon verts (normalized UV, when hull_compute=true)
+//          "hull_indices" -> PoolIntArray of fan triangle indices (when hull_compute=true)
 Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOptions &options = ImageMergeOptions());
 
 #endif // GD_PACK_H
