@@ -33,8 +33,8 @@ static const char particles_metal_src[] = R"METAL_SRC(
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "_metal_common.h"
-#include "_godot_common.h"
+#include <metal_stdlib>
+using namespace metal;
 
 // GPU Particles compute shader - converts Transform Feedback to compute
 // This shader simulates particle behavior

@@ -136,11 +136,11 @@ struct rect_xywh : public rect_wh {
 
 struct rect_xywhf : public rect_xywh {
 	rect_xywhf(const rect_ltrb &rr) :
-			rect_xywh(rr), flipped(false) {}
+			rect_xywh(rr), flipped(false), bin(0), trim_l(0), trim_r(0), trim_t(0), trim_b(0) {}
 	rect_xywhf(int x, int y, int w, int h) :
-			rect_xywh(x, y, w, h), flipped(false) {}
+			rect_xywh(x, y, w, h), flipped(false), bin(0), trim_l(0), trim_r(0), trim_t(0), trim_b(0) {}
 	rect_xywhf() :
-			flipped(false) {}
+			flipped(false), bin(0), trim_l(0), trim_r(0), trim_t(0), trim_b(0) {}
 	void flip() {
 		flipped = !flipped;
 		std::swap(_w, _h);
@@ -149,6 +149,9 @@ struct rect_xywhf : public rect_xywh {
 	int bin;
 	Ref<Image> atlas_image;
 	Ref<Image> original_image;
+	// Trim margins: pixels removed from each side of the original image before packing.
+	// All zeros when trim_alpha is disabled.
+	int trim_l, trim_r, trim_t, trim_b;
 };
 
 struct bin {
@@ -172,13 +175,60 @@ static inline bool max_height(rect_xywhf *a, rect_xywhf *b) {
 	return a->h() > b->h();
 }
 
+// Packing algorithm selection.
+// PACK_BSP      - binary space partitioning (original); performs bin-size search, good all-rounder.
+// PACK_GUILLOTINE - guillotine free-rect split; fast, slightly less efficient than MaxRects.
+// PACK_MAXRECTS   - maximum rectangles; best packing quality, slightly slower.
+enum PackingAlgorithm {
+	PACK_BSP = 0,
+	PACK_GUILLOTINE = 1,
+	PACK_MAXRECTS = 2,
+};
+
+// Border fill mode for the per-sprite margin area.
+// BORDER_EMPTY  - leave margin filled with background_color.
+// BORDER_MIRROR - mirror edge pixels into the margin (default, prevents texture bleeding).
+// BORDER_BLUR   - mirror then box-blur the margin ring (smoother fades at edges).
+enum BorderMode {
+	BORDER_EMPTY = 0,
+	BORDER_MIRROR = 1,
+	BORDER_BLUR = 2,
+};
+
 struct ImageMergeOptions {
 	int max_atlas_size = 0; // default: autofit
-	bool force_single_page_atlas = true; // default: rescale to fit
+	bool force_single_page_atlas = true; // default: rescale to fit (BSP) or single bin
 	int margin = 2;
 	int force_atlas_channels = 0; // default: autodetect
 
 	Color background_color = Color(0, 0, 0, 0);
+
+	// --- Algorithm & rotation ---
+	PackingAlgorithm algorithm = PACK_BSP;
+	bool allow_rotation = false; // allow 90° sprite rotation for tighter packing
+
+	// --- Trimming ---
+	bool trim_alpha = false; // crop fully-transparent borders before packing
+	int trim_alpha_threshold = 0; // pixels with alpha <= threshold are trimmed (0 = fully transparent only)
+
+	// --- Image quality ---
+	bool fix_halo = false; // repair Photoshop white-fringe: fill alpha=0 pixel RGB from neighbours
+	BorderMode border_mode = BORDER_MIRROR; // fill mode for the margin ring
+
+	// --- Atlas constraints ---
+	bool power_of_two = false; // round atlas dimensions up to next power of two
+	bool square_atlas = false; // force atlas width == height (max of both)
+
+	// --- Color border trimming ---
+	bool trim_color = false; // crop solid-color borders (detected from corner pixels)
+	float trim_color_threshold = 1.0f; // CIE94 delta-E threshold (1.0 = just-noticeable difference)
+
+	// --- Debug ---
+	bool debug_borders = false; // draw dashed sprite outlines on atlas (for debugging UV placement)
+	Color debug_border_color = Color(1, 0, 1, 1); // magenta by default
+
+	// --- Alpha separation ---
+	bool separate_alpha = false; // pack opaque and alpha-bearing sprites into separate atlas pages
 
 	ImageMergeOptions &set_max_size(int v) {
 		max_atlas_size = v;
@@ -192,6 +242,10 @@ struct ImageMergeOptions {
 		margin = v;
 		return *this;
 	}
+	ImageMergeOptions &set_algorithm(PackingAlgorithm v) {
+		algorithm = v;
+		return *this;
+	}
 };
 
 // Merge images from 'images' and returns dictionary with
@@ -202,10 +256,12 @@ struct ImageMergeOptions {
 //    "_bins_size" -> size of working area of atlas
 //    "_rects" -> array of atlas rects, eg:
 //       "_rects[0..images]:
-//          "rect" -> Rect2 of image rect on atlas
-//          "rrect" -> Rect2 of texture rect on atlas
+//          "rect"       -> Rect2 of image rect on atlas (content area, no margin)
+//          "rrect"      -> Rect2 normalized (0-1) texture coordinates
 //          "atlas_page" -> atlas page index (of '_generated_images')
-//          "atlas" -> atlas image reference
+//          "atlas"      -> atlas image reference
+//          "flipped"    -> bool: true if sprite was rotated 90° CW
+//          "trim_l/r/t/b" -> pixels cropped from original before packing
 Dictionary merge_images(const Vector<Ref<Image>> &images, const ImageMergeOptions &options = ImageMergeOptions());
 
 #endif // GD_PACK_H
