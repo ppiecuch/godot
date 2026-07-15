@@ -98,6 +98,12 @@ public:
 	int canvas_add_lcd_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2(), const Dictionary &p_style = Dictionary());
 	int canvas_add_square_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2(), const Dictionary &p_style = Dictionary());
 
+	// Leon Sans
+	int leon_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos = Point2(), real_t p_size = 60, real_t p_weight = 200);
+	Size2 leon_font_text_size(const String &p_text, real_t p_size = 60);
+	Array leon_get_paths(const String &p_text, real_t p_size = 60, real_t p_weight = 200, real_t p_path_gap = 5);
+	Array leon_get_draw_data(const String &p_text, real_t p_size = 60, real_t p_weight = 200);
+
 	// manage text instance
 	void set_transform(int p_index, const Transform2D &p_xform);
 	void set_modulate_color(int p_index, const Color &p_color);

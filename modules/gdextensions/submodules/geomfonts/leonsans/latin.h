@@ -34,7 +34,7 @@
 #include "util.h"
 
 // clang-format off
-std::vector<FontPath> getLatin1(real_t x, real_t y) {
+inline std::vector<FontPath> getLatin1(real_t x, real_t y) {
   const real_t tx = 140+x;
   const real_t ty = -390-78+y;
 #ifdef __clang__
@@ -54,7 +54,7 @@ std::vector<FontPath> getLatin1(real_t x, real_t y) {
 #endif
 }
 
-std::vector<FontPath> getLatin2(real_t x, real_t y) {
+inline std::vector<FontPath> getLatin2(real_t x, real_t y) {
   const real_t tx = 150+x;
   const real_t ty = -390-78+y;
 #ifdef __clang__
@@ -74,7 +74,7 @@ std::vector<FontPath> getLatin2(real_t x, real_t y) {
 #endif
 }
 
-std::vector<FontPath> getLatin3(real_t x, real_t y) {
+inline std::vector<FontPath> getLatin3(real_t x, real_t y) {
   const real_t tx = 77+x;
   const real_t ty = -30-78+y;
 #ifdef __clang__
@@ -103,7 +103,7 @@ std::vector<FontPath> getLatin3(real_t x, real_t y) {
 #endif
 }
 
-std::vector<FontPath> getLatin4(real_t x, real_t y) {
+inline std::vector<FontPath> getLatin4(real_t x, real_t y) {
   const real_t tx = 65+x;
   const real_t ty = -16-78+y;
   const real_t scale = 0.8;
@@ -132,7 +132,7 @@ std::vector<FontPath> getLatin4(real_t x, real_t y) {
 #endif
 }
 
-std::vector<FontPath> getLatin5(real_t x, real_t y) {
+inline std::vector<FontPath> getLatin5(real_t x, real_t y) {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
@@ -149,7 +149,7 @@ std::vector<FontPath> getLatin5(real_t x, real_t y) {
 #endif
 }
 
-std::vector<FontPath> getLatin6(real_t x, real_t y) {
+inline std::vector<FontPath> getLatin6(real_t x, real_t y) {
   const real_t tx = x;
   const real_t ty = y;
 #ifdef __clang__
@@ -179,7 +179,7 @@ std::vector<FontPath> getLatin6(real_t x, real_t y) {
 #endif
 }
 
-std::vector<FontPath> getLatin7(real_t x, real_t y) {
+inline std::vector<FontPath> getLatin7(real_t x, real_t y) {
   const real_t tx = 88+x;
   const real_t ty = -116+y;
   const real_t scale = 0.5;

@@ -37,6 +37,10 @@
 
 // Wrap font source includes in anonymous namespace to avoid duplicate symbols
 // with gd_geomfonts.cpp (which includes the same files).
+#include "leonsans/leon_render.h"
+
+// Wrap font source includes in anonymous namespace to avoid duplicate symbols
+// with gd_geomfonts.cpp (which includes the same files).
 namespace {
 #include "bob3d/bob_font.cpp"
 #include "easyfont/stb_easy_font.h"
@@ -488,6 +492,43 @@ void GeomFont2D::_build_hershey_mesh() {
 	_text_rect_size = Size2(total_width * _font_scale.x, hd.font_height * _font_scale.y);
 }
 
+void GeomFont2D::_build_leon_mesh() {
+	Vector<TextSpan> spans = _parse_bbcode(_text);
+
+	PoolVector3Array all_verts;
+	PoolColorArray all_colors;
+
+	for (int s = 0; s < spans.size(); s++) {
+		const TextSpan &span = spans[s];
+		if (span.text.empty()) {
+			continue;
+		}
+
+		PoolVector2Array data;
+		leon_make_lines(span.text, FONT_HEIGHT * _font_scale.y, _leon_weight, data);
+
+		for (int i = 0; i < data.size(); i++) {
+			const Vector2 &v = data[i];
+			all_verts.push_back(Vector3(v.x * span.scale.x, -v.y * span.scale.y, 0));
+			all_colors.push_back(span.color);
+		}
+	}
+
+	if (all_verts.size() == 0) {
+		return;
+	}
+
+	Array mesh_array;
+	mesh_array.resize(VS::ARRAY_MAX);
+	mesh_array[VS::ARRAY_VERTEX] = all_verts;
+	mesh_array[VS::ARRAY_COLOR] = all_colors;
+	_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array);
+
+	_text_rect_size = Size2(
+			leon_text_width(_text, FONT_HEIGHT * _font_scale.y) * _font_scale.x,
+			FONT_HEIGHT * _font_scale.y);
+}
+
 void GeomFont2D::_build_lowpoly_mesh() {
 	lowpoly_font_draw_string(_mesh, _text.ascii().c_str(), Point3(0, 0, 0), _font_scale.x);
 	_text_rect_size = lowpoly_font_text_size(_text.ascii().c_str(), _font_scale.x);
@@ -553,6 +594,9 @@ void GeomFont2D::_rebuild() {
 			case GEOM_FONT_HERSHEY:
 				_build_hershey_mesh();
 				break;
+			case GEOM_FONT_LEON:
+				_build_leon_mesh();
+				break;
 			case GEOM_FONT_LOWPOLY:
 				_build_lowpoly_mesh();
 				break;
@@ -617,11 +661,14 @@ void GeomFont2D::_validate_property(PropertyInfo &property) const {
 	if (property.name == "bob3d_wireframe" && _font_type != GEOM_FONT_BOB3D) {
 		property.usage = PROPERTY_USAGE_NOEDITOR;
 	}
+	if (property.name == "leon_weight" && _font_type != GEOM_FONT_LEON) {
+		property.usage = PROPERTY_USAGE_NOEDITOR;
+	}
 	if (property.name == "bitmap_dot_style" && _font_type != GEOM_FONT_BITMAP_DOT) {
 		property.usage = PROPERTY_USAGE_NOEDITOR;
 	}
 	if (property.name == "line_width") {
-		if (_font_type != GEOM_FONT_ASTEROIDS && _font_type != GEOM_FONT_HP1345 && _font_type != GEOM_FONT_HERSHEY) {
+		if (_font_type != GEOM_FONT_ASTEROIDS && _font_type != GEOM_FONT_HP1345 && _font_type != GEOM_FONT_HERSHEY && _font_type != GEOM_FONT_LEON) {
 			property.usage = PROPERTY_USAGE_NOEDITOR;
 		}
 	}
@@ -704,6 +751,18 @@ Transform GeomFont2D::get_font_transform() const {
 	return _font_transform;
 }
 
+void GeomFont2D::set_leon_weight(real_t p_weight) {
+	p_weight = CLAMP(p_weight, 1.0f, 900.0f);
+	if (_leon_weight != p_weight) {
+		_leon_weight = p_weight;
+		_mark_dirty();
+	}
+}
+
+real_t GeomFont2D::get_leon_weight() const {
+	return _leon_weight;
+}
+
 void GeomFont2D::set_line_width(real_t p_width) {
 	if (_line_width != p_width) {
 		_line_width = p_width;
@@ -778,6 +837,8 @@ void GeomFont2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_font_scale"), &GeomFont2D::get_font_scale);
 	ClassDB::bind_method(D_METHOD("set_font_transform", "xform"), &GeomFont2D::set_font_transform);
 	ClassDB::bind_method(D_METHOD("get_font_transform"), &GeomFont2D::get_font_transform);
+	ClassDB::bind_method(D_METHOD("set_leon_weight", "weight"), &GeomFont2D::set_leon_weight);
+	ClassDB::bind_method(D_METHOD("get_leon_weight"), &GeomFont2D::get_leon_weight);
 	ClassDB::bind_method(D_METHOD("set_line_width", "width"), &GeomFont2D::set_line_width);
 	ClassDB::bind_method(D_METHOD("get_line_width"), &GeomFont2D::get_line_width);
 	ClassDB::bind_method(D_METHOD("set_letter_spacing", "spacing"), &GeomFont2D::set_letter_spacing);
@@ -796,6 +857,7 @@ void GeomFont2D::_bind_methods() {
 	BIND_ENUM_CONSTANT(GEOM_FONT_HP1345);
 	BIND_ENUM_CONSTANT(GEOM_FONT_BOB3D);
 	BIND_ENUM_CONSTANT(GEOM_FONT_HERSHEY);
+	BIND_ENUM_CONSTANT(GEOM_FONT_LEON);
 	BIND_ENUM_CONSTANT(GEOM_FONT_LOWPOLY);
 	BIND_ENUM_CONSTANT(GEOM_FONT_BITMAP_DOT);
 	BIND_ENUM_CONSTANT(GEOM_FONT_LCD);
@@ -845,7 +907,7 @@ void GeomFont2D::_bind_methods() {
 
 	// Properties
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text", PROPERTY_HINT_MULTILINE_TEXT), "set_text", "get_text");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "font_type", PROPERTY_HINT_ENUM, "Easy,Asteroids,HP1345,Bob3D,Hershey,LowPoly,BitmapDot,LCD,Square"), "set_font_type", "get_font_type");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "font_type", PROPERTY_HINT_ENUM, "Easy,Asteroids,HP1345,Bob3D,Hershey,Leon,LowPoly,BitmapDot,LCD,Square"), "set_font_type", "get_font_type");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "hershey_font", PROPERTY_HINT_ENUM,
 						 "Futural,Futuram,Roman Simplex,Roman Duplex,Roman Triplex,"
 						 "Script Simplex,Script Complex,Cursive,"
@@ -856,6 +918,7 @@ void GeomFont2D::_bind_methods() {
 						 "Japanese,Symbolic,Music,Math Lower,Math Upper,"
 						 "Astrology,Meteorology,Markers"),
 			"set_hershey_font", "get_hershey_font");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "leon_weight", PROPERTY_HINT_RANGE, "1,900,1"), "set_leon_weight", "get_leon_weight");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "font_color"), "set_font_color", "get_font_color");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "font_scale"), "set_font_scale", "get_font_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM, "font_transform"), "set_font_transform", "get_font_transform");
@@ -875,6 +938,7 @@ GeomFont2D::GeomFont2D() {
 	_font_color = Color(1, 1, 1, 1);
 	_font_scale = Vector2(1, 1);
 	_font_transform = Transform();
+	_leon_weight = 200;
 	_line_width = 1.0;
 	_letter_spacing = 0.0;
 	_bbcode_enabled = false;

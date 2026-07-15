@@ -44,6 +44,7 @@ public:
 		GEOM_FONT_HP1345,
 		GEOM_FONT_BOB3D,
 		GEOM_FONT_HERSHEY,
+		GEOM_FONT_LEON,
 		GEOM_FONT_LOWPOLY,
 		GEOM_FONT_BITMAP_DOT,
 		GEOM_FONT_LCD,
@@ -103,6 +104,7 @@ private:
 	Color _font_color;
 	Vector2 _font_scale;
 	Transform _font_transform;
+	real_t _leon_weight;
 	real_t _line_width;
 	real_t _letter_spacing;
 	bool _bbcode_enabled;
@@ -127,6 +129,7 @@ private:
 	void _build_hp1345_mesh();
 	void _build_bob3d_mesh();
 	void _build_hershey_mesh();
+	void _build_leon_mesh();
 	void _build_lowpoly_mesh();
 
 	// FB digital font builders (canvas-item based)
@@ -169,6 +172,9 @@ public:
 
 	void set_font_transform(const Transform &p_xform);
 	Transform get_font_transform() const;
+
+	void set_leon_weight(real_t p_weight);
+	real_t get_leon_weight() const;
 
 	void set_line_width(real_t p_width);
 	real_t get_line_width() const;

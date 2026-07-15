@@ -39,11 +39,12 @@
 #include "easyfont/stb_easy_font.h"
 #include "fbdigitalfont/fb.cpp"
 #include "hershey/hershey_render.h"
-#include "leonsans/leonsans.h"
 #include "polyfonts/polygodot.cpp"
 #include "simplevector/asteroids.c"
 #include "simplevector/hp1345.c"
 #include "ttftriangulator/ttftriangulator.cpp"
+
+#include "leonsans/leon_render.h"
 
 #include "common/gd_core.h"
 #include "scene/main/scene_tree.h"
@@ -240,6 +241,103 @@ int GdGeomFonts::canvas_add_square_font_text(RID p_canvas, const String &p_text,
 	return item.second;
 }
 
+// --- Leon Sans ---
+
+int GdGeomFonts::leon_font_text(RID p_canvas, const String &p_text, const Point2 &p_pos, real_t p_size, real_t p_weight) {
+	ERR_FAIL_COND_V(!p_canvas.is_valid(), -1);
+	const auto item = _next_item(p_canvas);
+
+	PoolVector2Array verts;
+	leon_make_lines(p_text, p_size, p_weight, verts);
+
+	if (verts.size() > 0) {
+		for (int i = 0; i < verts.size(); i++) {
+			verts.set(i, verts[i] + p_pos);
+		}
+
+		Ref<ArrayMesh> mesh = newref(ArrayMesh);
+		Array mesh_array;
+		mesh_array.resize(VS::ARRAY_MAX);
+		mesh_array[VS::ARRAY_VERTEX] = verts;
+		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, mesh_array, Array(),
+				Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+		VS::get_singleton()->canvas_item_add_mesh(item.first, mesh->get_rid());
+	}
+	return item.second;
+}
+
+Size2 GdGeomFonts::leon_font_text_size(const String &p_text, real_t p_size) {
+	return Size2(leon_text_width(p_text, p_size), p_size);
+}
+
+Array GdGeomFonts::leon_get_paths(const String &p_text, real_t p_size, real_t p_weight, real_t p_path_gap) {
+	std::vector<LeonPathPoint> points;
+	leon_sample_paths(p_text, p_size, p_weight, p_path_gap, points);
+
+	Array result;
+	result.resize(points.size());
+	for (size_t i = 0; i < points.size(); i++) {
+		Dictionary d;
+		d["x"] = points[i].x;
+		d["y"] = points[i].y;
+		d["type"] = String::chr(points[i].type);
+		d["rotation"] = points[i].rotation;
+		d["start"] = points[i].start;
+		result[i] = d;
+	}
+	return result;
+}
+
+Array GdGeomFonts::leon_get_draw_data(const String &p_text, real_t p_size, real_t p_weight) {
+	const real_t scale = p_size / FONT_HEIGHT;
+	const real_t fontW = leon_weight_to_offset(p_weight);
+	real_t cursor_x = 0;
+	Array result;
+
+	for (int ci = 0; ci < p_text.length(); ci++) {
+		const FontData *fd = leon_lookup_char(p_text[ci]);
+		if (!fd)
+			continue;
+
+		for (size_t pi = 0; pi < fd->p.size(); pi++) {
+			const FontPath &path = fd->p[pi];
+			for (size_t si = 0; si < path.v.size(); si++) {
+				const FontPathSeg &seg = path.v[si];
+				Dictionary d;
+				d["op"] = String::chr(seg.op);
+
+				if (seg.op == 'b') {
+					real_t cp1x = seg._1, cp1y = seg._2;
+					real_t cp2x = seg._3, cp2y = seg._4;
+					real_t endx = seg._5, endy = seg._6;
+					leon_apply_weight_to_point(cp1x, cp1y, seg, *fd, fontW);
+					leon_apply_weight_to_point(cp2x, cp2y, seg, *fd, fontW);
+					leon_apply_weight_to_point(endx, endy, seg, *fd, fontW);
+					d["x1"] = (cp1x + cursor_x) * scale;
+					d["y1"] = cp1y * scale;
+					d["x2"] = (cp2x + cursor_x) * scale;
+					d["y2"] = cp2y * scale;
+					d["x"] = (endx + cursor_x) * scale;
+					d["y"] = endy * scale;
+				} else {
+					real_t px = seg._1, py = seg._2;
+					leon_apply_weight_to_point(px, py, seg, *fd, fontW);
+					d["x"] = (px + cursor_x) * scale;
+					d["y"] = py * scale;
+				}
+
+				auto rit = seg.info.find('r');
+				if (rit != seg.info.end())
+					d["rotation"] = real_t(rit->second);
+
+				result.push_back(d);
+			}
+		}
+		cursor_x += fd->rect.w;
+	}
+	return result;
+}
+
 void GdGeomFonts::set_transform(int p_index, const Transform2D &p_xform) {
 	ERR_FAIL_COND(!_valid_handle(p_index));
 	VS::get_singleton()->canvas_item_set_transform(_from_handle(p_index), p_xform);
@@ -289,6 +387,11 @@ void GdGeomFonts::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("canvas_add_bitmap_font_text", "canvas", "text", "pos", "dot_style", "style"), &GdGeomFonts::canvas_add_bitmap_font_text, DEFVAL(Point2()), DEFVAL(BITMAP_FONT_FLAT_CIRCLE), DEFVAL(Dictionary()));
 	ClassDB::bind_method(D_METHOD("canvas_add_lcd_font_text", "canvas", "text", "pos", "style"), &GdGeomFonts::canvas_add_lcd_font_text, DEFVAL(Point2()), DEFVAL(BITMAP_FONT_FLAT_CIRCLE), DEFVAL(Dictionary()));
 	ClassDB::bind_method(D_METHOD("canvas_add_square_font_text", "canvas", "text", "pos", "style"), &GdGeomFonts::canvas_add_square_font_text, DEFVAL(Point2()), DEFVAL(Dictionary()));
+
+	ClassDB::bind_method(D_METHOD("leon_font_text", "canvas", "text", "pos", "size", "weight"), &GdGeomFonts::leon_font_text, DEFVAL(Point2()), DEFVAL(60), DEFVAL(200));
+	ClassDB::bind_method(D_METHOD("leon_font_text_size", "text", "size"), &GdGeomFonts::leon_font_text_size, DEFVAL(60));
+	ClassDB::bind_method(D_METHOD("leon_get_paths", "text", "size", "weight", "path_gap"), &GdGeomFonts::leon_get_paths, DEFVAL(60), DEFVAL(200), DEFVAL(5));
+	ClassDB::bind_method(D_METHOD("leon_get_draw_data", "text", "size", "weight"), &GdGeomFonts::leon_get_draw_data, DEFVAL(60), DEFVAL(200));
 
 	ClassDB::bind_method(D_METHOD("set_transform", "index", "xform"), &GdGeomFonts::set_transform);
 	ClassDB::bind_method(D_METHOD("set_modulate_color", "index", "color"), &GdGeomFonts::set_modulate_color);

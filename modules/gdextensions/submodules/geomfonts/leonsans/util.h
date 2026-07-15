@@ -129,7 +129,7 @@ static real_t getCurveR(real_t x1, real_t y1, real_t x2, real_t y2, real_t x3, r
 	return -Math::atan2(x, y);
 }
 
-FontData generateFontData(real_t w, real_t fw, real_t fh, real_t x1, real_t x2, real_t y1, real_t y2, std::vector<FontPath> path) {
+inline FontData generateFontData(real_t w, real_t fw, real_t fh, real_t x1, real_t x2, real_t y1, real_t y2, std::vector<FontPath> path) {
 	std::vector<FontPath> arr;
 	for (int i = 0; i < path.size(); i++) {
 		arr.push_back({ path[i].d, setCenter(path[i].v, fw, fh) });
