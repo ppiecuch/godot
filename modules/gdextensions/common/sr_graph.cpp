@@ -57,7 +57,7 @@
 #define SR_GRAPH_API static
 
 SR_GRAPH_API sr_graph_t sr_setup_graph(real_t minx, real_t maxx, real_t miny, real_t maxy, real_t ratio, const Color &bg, const String &label = "");
-SR_GRAPH_API void sr_cleanup();
+SR_GRAPH_API void sr_cleanup(const Vector<int> &owned);
 SR_GRAPH_API void sr_add_axes(sr_graph_t hgraph, const Color &color, bool axis_on_side);
 SR_GRAPH_API void sr_add_grid(sr_graph_t hgraph, real_t stepx, real_t stepy, const Color &color, bool from_zero);
 SR_GRAPH_API int sr_add_curve(sr_graph_t hgraph, const Vector<real_t> &xs, const Vector<real_t> &ys, const Color &color);
@@ -73,7 +73,7 @@ SR_GRAPH_API unsigned *sr_palette(int pal, int num_cols);
 
 /// Internal structs.
 
-typedef struct {
+typedef struct _sr_curve {
 	PoolVector2Array buffer;
 	Color color;
 	real_t param0 = 0;
@@ -129,6 +129,7 @@ static _FORCE_INLINE_ _sr_graph *_from_handle(sr_graph_t hgraph) {
 	}
 }
 
+static void sr_remove_graph(sr_graph_t hgraph);
 static void _sr_get_line(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t ratio, PoolVector2Array &points);
 static void _sr_get_rectangle(real_t p0x, real_t p0y, real_t p1x, real_t p1y, real_t w, PoolVector2Array &points);
 static void _sr_get_point(real_t p0x, real_t p0y, real_t radius, real_t ratio, PoolVector2Array &points);
@@ -158,11 +159,10 @@ SR_GRAPH_API sr_graph_t sr_setup_graph(real_t minx, real_t maxx, real_t miny, re
 	return _handles.insert(graph).value;
 }
 
-void sr_cleanup() {
-	for (_sr_graph *h : _handles) {
-		memdelete(h);
+SR_GRAPH_API void sr_cleanup(const Vector<int> &owned) {
+	for (int i = 0; i < owned.size(); i++) {
+		sr_remove_graph(owned[i]);
 	}
-	_handles.reset();
 }
 
 static void sr_remove_graph(sr_graph_t hgraph) {
@@ -875,9 +875,7 @@ void SRGraph::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
-			for (int i = 0; i < _owned_graphs.size(); i++) {
-				sr_remove_graph(_owned_graphs[i]);
-			}
+			sr_cleanup(_owned_graphs);
 			_owned_graphs.clear();
 		} break;
 		case NOTIFICATION_DRAW: {

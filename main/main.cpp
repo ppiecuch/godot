@@ -157,10 +157,10 @@ static bool project_manager = false;
 static String locale;
 static bool show_help = false;
 static bool auto_quit = false;
-static bool wait_for_import = false;
 static OS::ProcessID allow_focus_steal_pid = 0;
 static bool delta_sync_after_draw = false;
 #ifdef TOOLS_ENABLED
+static bool wait_for_import = false;
 static bool auto_build_solutions = false;
 static String debug_server_uri;
 
