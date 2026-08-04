@@ -35,6 +35,7 @@
 #include "core/array.h"
 #include "core/bind/core_bind.h"
 #include "core/class_db.h"
+#include "core/color.h"
 #include "core/engine.h"
 #include "core/error_macros.h"
 #include "core/list.h"
@@ -300,6 +301,22 @@ _FORCE_INLINE_ static uint8_t g_alpha(uint32_t rgb) { return rgb >> 24; }
 _FORCE_INLINE_ static uint32_t g_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) { return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff); }
 _FORCE_INLINE_ static uint8_t g_gray(uint8_t r, uint8_t g, uint8_t b) { return (r * 11 + g * 16 + b * 5) / 32; } // convert R,G,B to gray 0..255
 
+// 256-entry lookup table: byte [0,255] -> float colour component [0,1] (i.e. b/255).
+// Defined in gd_core.cpp. Avoids a per-component division when converting many
+// 8-bit colours to Godot's float Color.
+extern const real_t _gd_ubyte_to_float_color_tab[256];
+
+// Convert a single 8-bit colour component to a [0,1] float via the LUT.
+_FORCE_INLINE_ static real_t g_ubyte_to_float(uint8_t b) { return _gd_ubyte_to_float_color_tab[b]; }
+
+// Build a Godot Color from 8-bit components (LUT-based, no divisions).
+_FORCE_INLINE_ static Color g_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
+	return Color(_gd_ubyte_to_float_color_tab[r], _gd_ubyte_to_float_color_tab[g], _gd_ubyte_to_float_color_tab[b], _gd_ubyte_to_float_color_tab[a]);
+}
+
+// Build a Godot Color from a packed 0xRRGGBB value (opaque alpha).
+_FORCE_INLINE_ static Color g_color(uint32_t rgb) { return g_color(g_red(rgb), g_green(rgb), g_blue(rgb)); }
+
 // Passthrough Script for dynamic scripting
 
 class PassthroughScriptInstance : public PlaceHolderScriptInstance {
@@ -375,7 +392,5 @@ public:
 	void set_receiver(Receiver *p_recv) { recv = p_recv; }
 	Receiver *get_receiver() const { return recv; }
 };
-
-extern const real_t _gd_ubyte_to_float_color_tab[256]; // Convert byte in [0,255] to GLfloat in [0.0,1.0]
 
 #endif // GD_CORE_H
