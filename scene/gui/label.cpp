@@ -99,7 +99,7 @@ void Label::_notification(int p_what) {
 			regenerate_word_cache();
 		}
 		if (_transition_dirty || _cache_changed) {
-			if (is_transition_enabled())
+			if (is_transition_enabled() && !transition_text.xl_text.empty())
 				_transition_controller->init_transition(this, transition_duration, ease_func_table[transition_ease], &transition_text.word_cache, &word_cache);
 			_cache_changed = _transition_dirty = false;
 		}
@@ -727,6 +727,9 @@ void Label::set_text(const String &p_string) {
 		return;
 	}
 	if (is_transition_enabled()) {
+		if (transition_text.text == p_string) {
+			return; // already transitioning to this text
+		}
 		if (is_transition_active())
 			_clear_pending_animations(); // finish now current animation
 		transition_text.text = p_string;
@@ -856,6 +859,12 @@ void Label::set_transition_effect(TransitionEffect p_effect) {
 			_clear_pending_animations();
 		} else {
 			set_process_internal(true);
+			// Sync transition_text to current text so the first draw
+			// doesn't animate from empty → current.
+			if (transition_text.text.empty()) {
+				transition_text.text = text;
+				transition_text.xl_text = xl_text;
+			}
 			_transition_dirty = true;
 		}
 		update();
