@@ -93,6 +93,8 @@ bits="${MINGW_BITS:-64}"
 
 export SCONS_FLAGS="$SCONS_FLAGS no_editor_splash=yes"
 
+# Modules known to not cross-compile with MinGW (deep platform dependencies)
+DISABLED_MODULES="${MINGW_DISABLED_MODULES:-module_gd_cpython_enabled=no}"
 # Building
 # --------
 
@@ -102,12 +104,12 @@ if [ "$build_templates" == "yes" ]; then
 	log_info "Building release_debug template..."
 	scons -j$CPU platform=windows bits=$bits target=release_debug tools=no \
 		mingw_prefix_32="$MINGW32_PREFIX" mingw_prefix_64="$MINGW64_PREFIX" \
-		use_mingw=yes $SCONS_FLAGS "$@"
+		use_mingw=yes $DISABLED_MODULES $SCONS_FLAGS "$@"
 
 	log_info "Building release template..."
 	scons -j$CPU platform=windows bits=$bits target=release tools=no \
 		mingw_prefix_32="$MINGW32_PREFIX" mingw_prefix_64="$MINGW64_PREFIX" \
-		use_mingw=yes $SCONS_FLAGS "$@"
+		use_mingw=yes $DISABLED_MODULES $SCONS_FLAGS "$@"
 
 	log_success "Export templates built"
 else
@@ -115,7 +117,7 @@ else
 
 	scons -j$CPU platform=windows bits=$bits target=$target tools=yes \
 		mingw_prefix_32="$MINGW32_PREFIX" mingw_prefix_64="$MINGW64_PREFIX" \
-		use_mingw=yes $SCONS_FLAGS "$@"
+		use_mingw=yes $DISABLED_MODULES $SCONS_FLAGS "$@"
 
 	log_success "Editor built"
 fi

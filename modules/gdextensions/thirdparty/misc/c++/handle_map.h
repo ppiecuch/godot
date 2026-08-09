@@ -23,10 +23,14 @@
 # endif // if __GNUC__ >= 4
 #endif  // ifndef _NOEXCEPT
 
+#ifndef __has_keyword
+#define __has_keyword(x) 0
+#endif
+
 #if defined(__clang__) && __has_keyword(__is_trivially_copyable)
 #define IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
-#elif __GNUC__ && __GNUC__ < 5
-# if __has_builtin(__is_trivially_copyable)
+#elif defined(__GNUC__) && __GNUC__ < 5
+# if defined(__has_builtin) && __has_builtin(__is_trivially_copyable)
 #  define IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
 # else
 #  define IS_TRIVIALLY_COPYABLE(T) __has_trivial_copy(T)

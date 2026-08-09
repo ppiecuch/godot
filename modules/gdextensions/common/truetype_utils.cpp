@@ -616,6 +616,17 @@ static String osx_font_path_by_name(const String &fontname) {
 #endif
 
 #ifdef WINDOWS_ENABLED
+#include <windows.h>
+
+namespace std {
+template <>
+struct hash<String> {
+	size_t operator()(const String &s) const {
+		return s.hash();
+	}
+};
+} // namespace std
+
 // font font face -> file name name mapping
 static std::unordered_map<String, String> fonts_table;
 // read font linking information from registry, and store in std::map
@@ -628,7 +639,7 @@ void init_windows() {
 	HKEY key_ft;
 	l_ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, Fonts, 0, KEY_QUERY_VALUE, &key_ft);
 	if (l_ret != ERROR_SUCCESS) {
-		ERR_PRINT("TrueTypeFontUtils") << "initWindows(): couldn't find fonts registery key";
+		ERR_PRINT("TrueTypeFontUtils: initWindows(): couldn't find fonts registry key");
 		return;
 	}
 
@@ -641,13 +652,13 @@ void init_windows() {
 
 	l_ret = RegQueryInfoKeyW(key_ft, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &value_count, nullptr, &max_data_len, nullptr, nullptr);
 	if (l_ret != ERROR_SUCCESS) {
-		ERR_PRINT("TrueTypeFontUtils") << "initWindows(): couldn't query registery for fonts";
+		ERR_PRINT("TrueTypeFontUtils: initWindows(): couldn't query registry for fonts");
 		return;
 	}
 
 	// no font installed
 	if (value_count == 0) {
-		ERR_PRINT("TrueTypeFontUtils") << "initWindows(): couldn't find any fonts in registery";
+		ERR_PRINT("TrueTypeFontUtils: initWindows(): couldn't find any fonts in registry");
 		return;
 	}
 
@@ -670,7 +681,7 @@ void init_windows() {
 
 		l_ret = RegEnumValueW(key_ft, i, value_name, &name_len, nullptr, nullptr, value_data, &data_len);
 		if (l_ret != ERROR_SUCCESS) {
-			ERR_PRINT("TrueTypeFontUtils") << "initWindows(): couldn't read registry key for font type";
+			ERR_PRINT("TrueTypeFontUtils: initWindows(): couldn't read registry key for font type");
 			continue;
 		}
 
@@ -678,15 +689,15 @@ void init_windows() {
 		wcstombs(value_data_char, reinterpret_cast<wchar_t *>(value_data), 2048);
 		String curr_face = value_name_char;
 		String font_file = value_data_char;
-		curr_face = curr_face.substr(0, curr_face.find('(') - 1);
-		curr_face = ofToLower(curr_face);
+		curr_face = curr_face.substr(0, curr_face.find("(") - 1);
+		curr_face = curr_face.to_lower();
 		fonts_table[curr_face] = fontsDir + font_file;
 	}
 	HeapFree(GetProcessHeap(), 0, value_data);
 	l_ret = RegCloseKey(key_ft);
 }
 
-static string win_font_path_by_name(const String &font_name) {
+static String win_font_path_by_name(const String &font_name) {
 	return fonts_table[font_name];
 }
 #endif // WINDOWS_ENABLED

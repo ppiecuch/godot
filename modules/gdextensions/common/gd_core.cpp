@@ -35,6 +35,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 
 String toStr(const std::string &s) { return String(s.c_str()); }
 std::string fromStr(const String &s) { return s.utf8().c_str(); }

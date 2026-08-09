@@ -37,6 +37,7 @@
 #include "scene/2d/canvas_item.h"
 
 #include <functional>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
