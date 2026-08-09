@@ -41,7 +41,9 @@
 
 #include <windows.h>
 
+#ifndef R_OK
 #define R_OK 0
+#endif
 #define R_ERR -1
 
 struct dirent {
@@ -210,6 +212,9 @@ static LARGE_INTEGER get_FILETIME_offset() {
 	return (t);
 }
 
+#ifndef _POSIX_TIMERS
+// Older MinGW-w64 toolchains (without winpthreads clock support) lack
+// clock_gettime; provide a fallback implementation.
 extern "C" int clock_gettime(int /* clock_id */, struct timespec *tp) {
 	LARGE_INTEGER t;
 	FILETIME f;
@@ -247,6 +252,7 @@ extern "C" int clock_gettime(int /* clock_id */, struct timespec *tp) {
 
 	return R_OK;
 }
+#endif // !_POSIX_TIMERS
 
 extern "C" char *stristr(const char *str1, const char *str2) {
 	const char *p1 = str1;

@@ -42,8 +42,23 @@
 #define CLOCK_MONOTONIC 1
 #endif
 
-// clock_id is not supported
-extern "C" int clock_gettime(int clock_id, struct timespec *tp);
-extern "C" char *stristr(const char *str1, const char *str2);
+#ifndef _POSIX_TIMERS
+// Older MinGW-w64 toolchains lack clock_gettime; declare our fallback.
+#ifdef __cplusplus
+extern "C" {
+#endif
+int clock_gettime(int clock_id, struct timespec *tp);
+#ifdef __cplusplus
+}
+#endif
+#endif // !_POSIX_TIMERS
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+char *stristr(const char *str1, const char *str2);
+#ifdef __cplusplus
+}
+#endif
 
 #define _CRT_SECURE_NO_WARNINGS
