@@ -94,7 +94,7 @@ bits="${MINGW_BITS:-64}"
 export SCONS_FLAGS="$SCONS_FLAGS no_editor_splash=yes"
 
 # Modules known to not cross-compile with MinGW (deep platform dependencies)
-DISABLED_MODULES="${MINGW_DISABLED_MODULES:-module_gd_cpython_enabled=no}"
+DISABLED_MODULES="${MINGW_DISABLED_MODULES:-}"
 # Building
 # --------
 
