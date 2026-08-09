@@ -335,6 +335,7 @@ public:
 	bool is_debug_build() const;
 
 	String get_unique_id() const;
+	String get_device_id() const;
 
 	String get_scancode_string(uint32_t p_code) const;
 	bool is_scancode_unicode(uint32_t p_unicode) const;

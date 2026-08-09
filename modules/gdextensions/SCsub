@@ -187,6 +187,7 @@ modules = [
     "isotools",
     # K
     "keychains",
+    "komsoftgw",
     # L
     "landiscovery",
     "ldrdraw",

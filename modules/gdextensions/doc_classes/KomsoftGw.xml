@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="KomsoftGw" inherits="Object" version="3.2">
+	<brief_description>
+		Singleton client for the KomSoft Gateway leaderboard API.
+	</brief_description>
+	<description>
+		[KomsoftGw] is an autoload-style singleton that talks to a KomSoft Gateway backend's leaderboard API over HTTP. It holds the connection config and exposes every action (submit, rank, top, distribution, friends). Because it is a singleton, you can call it from any script without holding a reference.
+		[b]Pumping.[/b] Every call is [i]queued[/i] and is only issued and polled while something pumps the singleton. Add one [KomsoftGwNode] to your scene tree — it calls [method pump] each frame — and all queued work progresses. You can also call [method pump] yourself if you drive processing manually. [method pending_count] reports how many requests are queued or in flight.
+		[b]Asynchronous results.[/b] Each action completes through a signal ([signal score_submitted], [signal rank_received], …) or [signal request_failed] on error. Actions never return data directly.
+		[b]Authentication.[/b] Exactly like the chat API, every call is authenticated with a per-user API key. Obtain a key from the gateway first ([code]POST /v1/request-api-key[/code] with [code]{user_id, service}[/code] — typically the app already holds this key for chat) and pass it to [method configure]. Calls without a valid key for the configured [code]user_id[/code]/[code]service[/code] pair fail with [signal request_failed] code [code]401[/code]. The client automatically attaches the headers the gateway requires ([code]User-Agent[/code], [code]X-Client-Version[/code], [code]x-api-key[/code]).
+		[b]Board types.[/b] One backend storage model drives several read projections. A board's visibility decides whether open browsing is allowed; the method you call decides what is exposed: [method get_rank] (private "you are #47 of 1,240" plus optional neighbors), [method get_distribution] (percentile bands / histogram with no names), [method get_top] (public browsable top-N), and [method get_friends] (ranking filtered to a set of friend ids).
+		[codeblock]
+		func _ready():
+		    add_child(KomsoftGwNode.new()) # required: drives the queue
+		    KomsoftGw.set_use_ssl(true)
+		    # user_id is the gateway identity: "&lt;9-char-id&gt; &lt;display name&gt;".
+		    KomsoftGw.configure("https://api.example.com", "pingpal", api_key, "abc123xyz Alice")
+		    KomsoftGw.connect("score_submitted", self, "_on_submitted")
+		    KomsoftGw.connect("request_failed", self, "_on_failed")
+		    KomsoftGw.submit_score("weekly_highscore", 4200, {"level": 7})
+
+		func _on_submitted(result):
+		    print("You are rank %d of %d" % [result.rank, result.total])
+
+		func _on_failed(endpoint, code, message):
+		    push_error("%s failed (%d): %s" % [endpoint, code, message])
+		[/codeblock]
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="configure">
+			<return type="void">
+			</return>
+			<argument index="0" name="base_url" type="String">
+			</argument>
+			<argument index="1" name="service" type="String">
+			</argument>
+			<argument index="2" name="api_key" type="String">
+			</argument>
+			<argument index="3" name="user_id" type="String">
+			</argument>
+			<description>
+				Sets the connection parameters used by every subsequent call. [code]base_url[/code] is the gateway root (a trailing slash is trimmed automatically), [code]service[/code] is the data-isolation service id, [code]api_key[/code] is the per-user key obtained from [code]POST /v1/request-api-key[/code], and [code]user_id[/code] is the gateway identity string in the form [code]"&lt;9-char-id&gt; &lt;display name&gt;"[/code].
+			</description>
+		</method>
+		<method name="reset">
+			<return type="void">
+			</return>
+			<description>
+				Clears the configuration back to defaults ([member use_ssl] = [code]true[/code], [member timeout] = 15) and drops any queued or in-flight requests. Useful on logout or when switching accounts.
+			</description>
+		</method>
+		<method name="list_leaderboards">
+			<return type="void">
+			</return>
+			<description>
+				Queues a request for the list of active boards for the configured service. Emits [signal leaderboards_received] with an [Array] of board-metadata dictionaries ([code]key[/code], [code]name[/code], [code]description[/code], [code]sortOrder[/code], [code]operator[/code], [code]period[/code], [code]visibility[/code]).
+			</description>
+		</method>
+		<method name="request_submit_token">
+			<return type="void">
+			</return>
+			<argument index="0" name="board_key" type="String">
+			</argument>
+			<description>
+				Queues a request for a short-lived HMAC submit token for [code]board_key[/code]. Only needed for boards configured with [code]requireToken = true[/code]. Emits [signal submit_token_received] with the token string and its lifetime in seconds; pass the token to [method submit_score].
+			</description>
+		</method>
+		<method name="submit_score">
+			<return type="void">
+			</return>
+			<argument index="0" name="board_key" type="String">
+			</argument>
+			<argument index="1" name="score" type="int">
+			</argument>
+			<argument index="2" name="metadata" type="Dictionary" default="{}">
+			</argument>
+			<argument index="3" name="context" type="Dictionary" default="{}">
+			</argument>
+			<argument index="4" name="token" type="String" default="">
+			</argument>
+			<description>
+				Queues a score submission to [code]board_key[/code] for the configured user. [code]metadata[/code] is free-form client display data. [code]context[/code] is a free-form blob persisted server-side for later anti-cheat auditing (e.g. a run hash). [code]token[/code] is required only for token-gated boards (see [method request_submit_token]).
+				Emits [signal score_submitted] with the caller's own private-safe view: [code]{rank, score, numScore, total, periodKey}[/code]. How [code]score[/code] combines with any existing entry is decided by the board's operator (best / set / incr / decr). Scores outside the board's plausibility bounds are silently shadow-flagged by the server (hidden from public reads) and still return a normal response.
+			</description>
+		</method>
+		<method name="get_rank">
+			<return type="void">
+			</return>
+			<argument index="0" name="board_key" type="String">
+			</argument>
+			<argument index="1" name="around" type="int" default="0">
+			</argument>
+			<description>
+				Queues a request for the configured user's own rank on [code]board_key[/code], plus [code]around[/code] neighbors above and below (0 = just the rank). Works on any board regardless of visibility — the private-safe default. Emits [signal rank_received] with [code]{rank, score, total, entries}[/code]; [code]rank[/code] is [code]null[/code] if the user has no entry yet, and each neighbor row carries an [code]isYou[/code] flag on the caller's own entry.
+			</description>
+		</method>
+		<method name="get_top">
+			<return type="void">
+			</return>
+			<argument index="0" name="board_key" type="String">
+			</argument>
+			<argument index="1" name="period_key" type="String" default="">
+			</argument>
+			<argument index="2" name="limit" type="int" default="50">
+			</argument>
+			<argument index="3" name="cursor" type="String" default="">
+			</argument>
+			<description>
+				Queues a request for the browsable top-N of [code]board_key[/code]. Only permitted on boards whose visibility is [code]public[/code]; other boards fail with [signal request_failed] code [code]403[/code]. [code]period_key[/code] selects an explicit period bucket (e.g. [code]"2026-W32"[/code]); leave empty for the current period. [code]limit[/code] caps the page size and [code]cursor[/code] continues a previous page. Emits [signal top_received] with the ranked [code]entries[/code] and a [code]next_cursor[/code] (empty when there are no more pages).
+			</description>
+		</method>
+		<method name="get_distribution">
+			<return type="void">
+			</return>
+			<argument index="0" name="board_key" type="String">
+			</argument>
+			<description>
+				Queues a request for the score distribution of [code]board_key[/code] — percentile thresholds and a histogram with [b]no player names[/b], so outlier/cheater scores barely move the bands. Emits [signal distribution_received] with [code]{total, yourScore, yourPercentile, thresholds, histogram}[/code], where [code]thresholds[/code] maps [code]"top1"/"top10"/"top25"/"top50"[/code] to score cutoffs and [code]histogram[/code] is an array of [code]{min, max, count}[/code] buckets.
+			</description>
+		</method>
+		<method name="get_friends">
+			<return type="void">
+			</return>
+			<argument index="0" name="board_key" type="String">
+			</argument>
+			<argument index="1" name="friend_ids" type="Array" default="[  ]">
+			</argument>
+			<description>
+				Queues a request for a ranking of [code]board_key[/code] filtered to [code]friend_ids[/code] (gateway identity strings). The configured user is always included, so they see their own row among friends. No social graph is stored on the server — the client supplies the id set. Emits [signal friends_received] with the ranked [code]entries[/code] (each carrying its global rank and an [code]isYou[/code] flag).
+			</description>
+		</method>
+		<method name="pump">
+			<return type="void">
+			</return>
+			<description>
+				Issues any queued actions and polls in-flight requests once. [KomsoftGwNode] calls this every frame; call it yourself only if you drive processing manually.
+			</description>
+		</method>
+		<method name="pending_count" qualifiers="const">
+			<return type="int">
+			</return>
+			<description>
+				Returns the number of requests currently queued plus in flight. Zero when the client is idle.
+			</description>
+		</method>
+		<method name="set_use_ssl">
+			<return type="void">
+			</return>
+			<argument index="0" name="enabled" type="bool">
+			</argument>
+			<description>
+				Sets whether requests use HTTPS with domain validation. See [member use_ssl].
+			</description>
+		</method>
+		<method name="get_use_ssl" qualifiers="const">
+			<return type="bool">
+			</return>
+			<description>
+				Returns whether requests use HTTPS. See [member use_ssl].
+			</description>
+		</method>
+		<method name="set_timeout">
+			<return type="void">
+			</return>
+			<argument index="0" name="seconds" type="float">
+			</argument>
+			<description>
+				Sets the per-request timeout in seconds. See [member timeout].
+			</description>
+		</method>
+		<method name="get_timeout" qualifiers="const">
+			<return type="float">
+			</return>
+			<description>
+				Returns the per-request timeout in seconds. See [member timeout].
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="use_ssl" type="bool" setter="set_use_ssl" getter="get_use_ssl" default="true">
+			If [code]true[/code], requests are made over HTTPS with domain validation. Set to [code]false[/code] for a plain-HTTP local backend during development.
+		</member>
+		<member name="timeout" type="float" setter="set_timeout" getter="get_timeout" default="15.0">
+			Per-request timeout in seconds. A request that exceeds it completes with a failure and emits [signal request_failed].
+		</member>
+	</members>
+	<signals>
+		<signal name="leaderboards_received">
+			<argument index="0" name="leaderboards" type="Array">
+			</argument>
+			<description>
+				Emitted after [method list_leaderboards] succeeds. [code]leaderboards[/code] is an array of board-metadata dictionaries.
+			</description>
+		</signal>
+		<signal name="submit_token_received">
+			<argument index="0" name="token" type="String">
+			</argument>
+			<argument index="1" name="expires_in" type="int">
+			</argument>
+			<description>
+				Emitted after [method request_submit_token] succeeds. [code]expires_in[/code] is the token lifetime in seconds.
+			</description>
+		</signal>
+		<signal name="score_submitted">
+			<argument index="0" name="result" type="Dictionary">
+			</argument>
+			<description>
+				Emitted after [method submit_score] succeeds. [code]result[/code] is the caller's own view: [code]{rank, score, numScore, total, periodKey}[/code].
+			</description>
+		</signal>
+		<signal name="rank_received">
+			<argument index="0" name="result" type="Dictionary">
+			</argument>
+			<description>
+				Emitted after [method get_rank] succeeds. [code]result[/code] is [code]{rank, score, total, entries}[/code].
+			</description>
+		</signal>
+		<signal name="top_received">
+			<argument index="0" name="entries" type="Array">
+			</argument>
+			<argument index="1" name="next_cursor" type="String">
+			</argument>
+			<description>
+				Emitted after [method get_top] succeeds. [code]next_cursor[/code] is empty when there are no further pages.
+			</description>
+		</signal>
+		<signal name="distribution_received">
+			<argument index="0" name="result" type="Dictionary">
+			</argument>
+			<description>
+				Emitted after [method get_distribution] succeeds. [code]result[/code] is [code]{total, yourScore, yourPercentile, thresholds, histogram}[/code].
+			</description>
+		</signal>
+		<signal name="friends_received">
+			<argument index="0" name="entries" type="Array">
+			</argument>
+			<description>
+				Emitted after [method get_friends] succeeds. [code]entries[/code] is the ranked subset for the supplied friend ids.
+			</description>
+		</signal>
+		<signal name="request_failed">
+			<argument index="0" name="endpoint" type="String">
+			</argument>
+			<argument index="1" name="code" type="int">
+			</argument>
+			<argument index="2" name="message" type="String">
+			</argument>
+			<description>
+				Emitted when any request fails. [code]endpoint[/code] identifies the call (e.g. [code]"submit"[/code], [code]"top"[/code]), [code]code[/code] is the HTTP status (or 0 for transport/timeout errors), and [code]message[/code] is a human-readable reason. A [code]401[/code] means the API key is missing or invalid for the configured user/service; [code]403[/code] on [method get_top] means the board is not public.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="SORT_ASC" value="0" enum="SortOrder">
+			Ascending sort — lower scores rank first (e.g. speedrun times).
+		</constant>
+		<constant name="SORT_DESC" value="1" enum="SortOrder">
+			Descending sort — higher scores rank first (e.g. high scores).
+		</constant>
+		<constant name="OP_BEST" value="0" enum="ScoreOperator">
+			Keep the best score per player (per the board's sort order).
+		</constant>
+		<constant name="OP_SET" value="1" enum="ScoreOperator">
+			Always overwrite with the latest submitted score.
+		</constant>
+		<constant name="OP_INCR" value="2" enum="ScoreOperator">
+			Add each submission to the player's running total.
+		</constant>
+		<constant name="OP_DECR" value="3" enum="ScoreOperator">
+			Subtract each submission from the player's running total.
+		</constant>
+		<constant name="PERIOD_ALL_TIME" value="0" enum="ResetPeriod">
+			A single all-time ranking that never resets.
+		</constant>
+		<constant name="PERIOD_DAILY" value="1" enum="ResetPeriod">
+			Rankings bucketed per calendar day (UTC).
+		</constant>
+		<constant name="PERIOD_WEEKLY" value="2" enum="ResetPeriod">
+			Rankings bucketed per ISO week (UTC).
+		</constant>
+		<constant name="PERIOD_MONTHLY" value="3" enum="ResetPeriod">
+			Rankings bucketed per calendar month (UTC).
+		</constant>
+	</constants>
+</class>

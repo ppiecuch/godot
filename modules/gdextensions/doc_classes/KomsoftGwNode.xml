@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="KomsoftGwNode" inherits="Node" version="3.2">
+	<brief_description>
+		Pump driver for the [KomsoftGw] leaderboard singleton.
+	</brief_description>
+	<description>
+		[KomsoftGwNode] advances the [KomsoftGw] singleton's queued and in-flight requests once per frame while it is inside the scene tree. It holds no state of its own — all configuration and actions live on [KomsoftGw]. Add a single instance to your scene (typically at startup) so leaderboard calls made anywhere in your game actually progress.
+		[codeblock]
+		func _ready():
+		    add_child(KomsoftGwNode.new())            # drives processing
+		    KomsoftGw.configure(url, "pingpal", key, user_id)
+		    KomsoftGw.connect("score_submitted", self, "_on_submitted")
+		    KomsoftGw.submit_score("weekly_highscore", 4200)
+		[/codeblock]
+		See [KomsoftGw] for the full API.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+	</methods>
+	<constants>
+	</constants>
+</class>

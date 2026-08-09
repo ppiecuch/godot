@@ -97,7 +97,9 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "editor/sprite_quick_offset_plugin.h"
 #endif
 
+#ifdef GDEXT_ALBMPGFX_ENABLED
 #include "albmpgfx/gdal_bitmap_gfx.h"
+#endif
 
 #ifdef GDEXT_ANTTWEAKBAR_ENABLED
 #include "anttweakbar/tweak_bar.h"
@@ -328,8 +330,10 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 #include "smooth/smooth.h"
 #include "smooth/smooth_2d.h"
 
+#ifdef GDEXT_BENET_ENABLED
 #include "benet/enet_node.h"
 #include "benet/enet_packet_peer.h"
+#endif
 
 #include "sfxr/gdsfxr.h"
 
@@ -428,6 +432,10 @@ static ImageLoaderThorSVG *image_loader_thor_svg = nullptr;
 
 #ifdef GDEXT_NAKAMA1_ENABLED
 #include "nakama1/gd_nakama1.h"
+#endif
+
+#ifdef GDEXT_KOMSOFTGW_ENABLED
+#include "komsoftgw/gd_komsoftgw.h"
 #endif
 
 #ifdef GDEXT_EPICSERVICES_ENABLED
@@ -959,6 +967,12 @@ void register_gdextensions_types() {
 	memnew(GdNakama1); // internal singleton — not exposed to GDScript
 #endif
 
+#ifdef GDEXT_KOMSOFTGW_ENABLED
+	Engine::get_singleton()->add_singleton(Engine::Singleton("KomsoftGw", memnew(KomsoftGw)));
+	ClassDB::register_class<KomsoftGw>();
+	ClassDB::register_class<KomsoftGwNode>();
+#endif
+
 #ifdef GDEXT_EPICSERVICES_ENABLED
 	ClassDB::register_class<EpicServices>();
 	ClassDB::register_class<EpicContinuanceToken>();
@@ -1201,6 +1215,9 @@ void unregister_gdextensions_types() {
 	if (GdNakama1::get_singleton()) {
 		memdelete(GdNakama1::get_singleton());
 	}
+#endif
+#ifdef GDEXT_KOMSOFTGW_ENABLED
+	RemoveSingleton(KomsoftGw);
 #endif
 #ifdef GDEXT_DISCORD_ENABLED
 	RemoveSingleton(GdDiscordClient);

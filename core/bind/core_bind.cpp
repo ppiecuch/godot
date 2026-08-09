@@ -248,6 +248,15 @@ String _OS::get_unique_id() const {
 	return OS::get_singleton()->get_unique_id();
 }
 
+String _OS::get_device_id() const {
+#ifdef MODULE_GDEXTENSIONS_ENABLED
+	extern String get_local_ident();
+	return get_local_ident();
+#else
+	return OS::get_singleton()->get_unique_id();
+#endif
+}
+
 bool _OS::has_touchscreen_ui_hint() const {
 	return OS::get_singleton()->has_touchscreen_ui_hint();
 }
@@ -1534,6 +1543,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_cache_dir"), &_OS::get_cache_dir);
 	ClassDB::bind_method(D_METHOD("get_temp_dir"), &_OS::get_temp_dir);
 	ClassDB::bind_method(D_METHOD("get_unique_id"), &_OS::get_unique_id);
+	ClassDB::bind_method(D_METHOD("get_device_id"), &_OS::get_device_id);
 
 	ClassDB::bind_method(D_METHOD("is_ok_left_and_cancel_right"), &_OS::is_ok_left_and_cancel_right);
 

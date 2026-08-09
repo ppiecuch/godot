@@ -66,6 +66,7 @@ def configure(env):
         "discord",
         "playfab",
         "silentwolf",
+        "komsoftgw",
         "epicservices",
         "qrcodetexture",
         "landiscovery",
@@ -144,4 +145,6 @@ def get_doc_classes():
         "FastNoiseLite",
         "Noise",
         "NoiseTexture",
+        "KomsoftGw",
+        "KomsoftGwNode",
     ]
