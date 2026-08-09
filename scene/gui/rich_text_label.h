@@ -33,6 +33,33 @@
 
 #include "rich_text_effect.h"
 #include "scene/gui/scroll_bar.h"
+#include "scene/resources/font.h"
+
+class DynamicFontResolver {
+public:
+	enum Style {
+		STYLE_NORMAL,
+		STYLE_BOLD,
+		STYLE_ITALIC,
+		STYLE_BOLD_ITALIC,
+		STYLE_MONO,
+		STYLE_MAX
+	};
+
+private:
+	Ref<Font> base_fonts[STYLE_MAX];
+	HashMap<int, Ref<Font>> size_caches[STYLE_MAX];
+
+	Ref<Font> _get_or_create(Style p_style, int p_size);
+
+public:
+	void set_base(Style p_style, const Ref<Font> &p_font);
+	Ref<Font> get(Style p_style, int p_size);
+	Ref<Font> get_sized(int p_size);
+	bool has_style(Style p_style) const;
+	void clear();
+	void invalidate();
+};
 
 class RichTextLabel : public Control {
 	GDCLASS(RichTextLabel, Control);
@@ -359,6 +386,8 @@ private:
 	void _remove_item(Item *p_item, const int p_line, const int p_subitem_line);
 
 	void _invalidate_fonts();
+
+	DynamicFontResolver font_resolver;
 
 	struct ProcessState {
 		int line_width;

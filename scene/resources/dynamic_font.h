@@ -53,13 +53,15 @@ public:
 	struct CacheID {
 		union {
 			struct {
-				uint32_t size : 15;
-				uint32_t outline_size : 8;
-				uint32_t mipmaps : 1;
-				uint32_t filter : 1;
-				uint32_t stretch : 7; // 0 .. 99%
+				uint64_t size : 15;
+				uint64_t outline_size : 8;
+				uint64_t mipmaps : 1;
+				uint64_t filter : 1;
+				uint64_t stretch : 7; // 0 .. 99%
+				uint64_t embolden : 7; // 0 .. 127 (strength in 64ths of pixel)
+				uint64_t skew : 7; // 0 .. 127 (italic slant, 12 = ~12 degrees)
 			};
-			uint32_t key;
+			uint64_t key;
 		};
 		bool operator<(CacheID right) const;
 		CacheID() {
@@ -328,6 +330,12 @@ public:
 
 	void set_stretch_scale(int p_scale);
 	int get_stretch_scale() const;
+
+	void set_embolden(int p_strength);
+	int get_embolden() const;
+
+	void set_skew(int p_skew);
+	int get_skew() const;
 
 	void set_outline_size(int p_size);
 	int get_outline_size() const;

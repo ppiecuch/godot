@@ -38,6 +38,7 @@
 #include "servers/visual/visual_server_canvas_helper.h"
 
 #include FT_STROKER_H
+#include FT_OUTLINE_H
 
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
@@ -194,10 +195,16 @@ Error DynamicFontAtSize::_load() {
 		ERR_FAIL_V_MSG(ERR_FILE_CANT_OPEN, "Error loading font.");
 	}
 
-	if (id.stretch > 0 && id.stretch < 100) {
-		const FT_Fixed stretch_factor = convertTo16Dot16<FT_Fixed>(id.stretch / 100.0);
+	if ((id.stretch > 0 && id.stretch < 100) || id.skew > 0) {
+		FT_Fixed stretch_factor = (id.stretch > 0 && id.stretch < 100)
+				? convertTo16Dot16<FT_Fixed>(id.stretch / 100.0)
+				: convertTo16Dot16<FT_Fixed>(1.0);
+		// Skew value is in units where 12 ≈ 12 degrees (tan(12°) ≈ 0.21)
+		FT_Fixed skew_factor = id.skew > 0
+				? convertTo16Dot16<FT_Fixed>(id.skew * 0.0175) // ~1 degree per unit
+				: 0;
 		FT_Matrix matrix = {
-			stretch_factor, 0,
+			stretch_factor, skew_factor,
 			0, convertTo16Dot16<FT_Fixed>(1)
 		};
 		FT_Set_Transform(face, &matrix, nullptr);
@@ -549,6 +556,9 @@ float DynamicFontAtSize::draw_char(RID p_canvas_item, const Point2 &p_pos, CharT
 		FT_GlyphSlot slot = face->glyph;
 		int error = FT_Load_Char(face, c, FT_HAS_COLOR(face) ? FT_LOAD_COLOR : FT_LOAD_DEFAULT);
 		if (!error) {
+			if (id.embolden > 0 && face->glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+				FT_Outline_Embolden(&face->glyph->outline, id.embolden * 64);
+			}
 			error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
 			if (!error) {
 				Character character = Character::not_found();
@@ -888,6 +898,10 @@ void DynamicFontAtSize::_update_char(int32_t p_char) {
 		return;
 	}
 
+	if (id.embolden > 0 && face->glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+		FT_Outline_Embolden(&face->glyph->outline, id.embolden * 64);
+	}
+
 	if (id.outline_size > 0) {
 		character = _make_outline_char(p_char);
 	} else {
@@ -1027,6 +1041,32 @@ void DynamicFont::set_stretch_scale(int p_stretch) {
 
 int DynamicFont::get_stretch_scale() const {
 	return cache_id.stretch;
+}
+
+void DynamicFont::set_embolden(int p_strength) {
+	if (cache_id.embolden == (uint64_t)p_strength) {
+		return;
+	}
+	cache_id.embolden = CLAMP(p_strength, 0, 127);
+	outline_cache_id.embolden = cache_id.embolden;
+	_reload_cache();
+}
+
+int DynamicFont::get_embolden() const {
+	return cache_id.embolden;
+}
+
+void DynamicFont::set_skew(int p_skew) {
+	if (cache_id.skew == (uint64_t)p_skew) {
+		return;
+	}
+	cache_id.skew = CLAMP(p_skew, 0, 127);
+	outline_cache_id.skew = cache_id.skew;
+	_reload_cache();
+}
+
+int DynamicFont::get_skew() const {
+	return cache_id.skew;
 }
 
 bool DynamicFont::get_use_mipmaps() const {
@@ -1378,6 +1418,12 @@ void DynamicFont::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_stretch_scale", "data"), &DynamicFont::set_stretch_scale);
 	ClassDB::bind_method(D_METHOD("get_stretch_scale"), &DynamicFont::get_stretch_scale);
 
+	ClassDB::bind_method(D_METHOD("set_embolden", "strength"), &DynamicFont::set_embolden);
+	ClassDB::bind_method(D_METHOD("get_embolden"), &DynamicFont::get_embolden);
+
+	ClassDB::bind_method(D_METHOD("set_skew", "skew"), &DynamicFont::set_skew);
+	ClassDB::bind_method(D_METHOD("get_skew"), &DynamicFont::get_skew);
+
 	ClassDB::bind_method(D_METHOD("set_outline_size", "size"), &DynamicFont::set_outline_size);
 	ClassDB::bind_method(D_METHOD("get_outline_size"), &DynamicFont::get_outline_size);
 
@@ -1400,6 +1446,8 @@ void DynamicFont::_bind_methods() {
 	ADD_GROUP("Settings", "");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "size", PROPERTY_HINT_RANGE, "1,1024,1"), "set_size", "get_size");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "stretch_scale", PROPERTY_HINT_RANGE, "0,99,1"), "set_stretch_scale", "get_stretch_scale");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "embolden", PROPERTY_HINT_RANGE, "0,127,1"), "set_embolden", "get_embolden");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "skew", PROPERTY_HINT_RANGE, "0,127,1"), "set_skew", "get_skew");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "outline_size", PROPERTY_HINT_RANGE, "0,255,1"), "set_outline_size", "get_outline_size");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "outline_color"), "set_outline_color", "get_outline_color");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_mipmaps"), "set_use_mipmaps", "get_use_mipmaps");
