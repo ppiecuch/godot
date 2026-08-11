@@ -42,6 +42,7 @@
 #include "core/os/object_db_snapshot.h"
 #include "core/os/os.h"
 #include "core/project_settings.h"
+#include "modules/modules_enabled.gen.h"
 
 /**
  *  Time constants borrowed from loc_time.h
