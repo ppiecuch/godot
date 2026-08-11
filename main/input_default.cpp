@@ -273,11 +273,12 @@ static String _hex_str(uint8_t p_byte) {
 	return ret;
 };
 
-void InputDefault::joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid) {
+void InputDefault::joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid, const Dictionary &p_info) {
 	_THREAD_SAFE_METHOD_
 	Joypad js;
 	js.name = p_connected ? p_name : "";
 	js.uid = p_connected ? p_guid : "";
+	js.info = p_info;
 
 	if (p_connected) {
 		String uidname = p_guid;
@@ -1389,6 +1390,11 @@ bool InputDefault::is_joy_known(int p_device) {
 
 String InputDefault::get_joy_guid(int p_device) const {
 	return OS::get_singleton()->get_joy_guid(p_device);
+}
+
+Dictionary InputDefault::get_joy_info(int p_device) const {
+	ERR_FAIL_COND_V(!joy_names.has(p_device), Dictionary());
+	return joy_names[p_device].info;
 }
 
 bool InputDefault::should_ignore_device(int p_vendor_id, int p_product_id) const {

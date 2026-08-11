@@ -92,6 +92,7 @@ class InputDefault : public Input {
 		int last_hat;
 		int mapping;
 		int hat_current;
+		Dictionary info;
 
 		Joypad() {
 			for (int i = 0; i < JOY_AXIS_MAX; i++) {
@@ -255,7 +256,7 @@ public:
 	virtual Vector2 get_joy_vibration_strength(int p_device);
 	virtual float get_joy_vibration_duration(int p_device);
 	virtual uint64_t get_joy_vibration_timestamp(int p_device);
-	void joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid = "");
+	void joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid = "", const Dictionary &p_info = Dictionary());
 
 	virtual Vector3 get_gravity() const;
 	virtual Vector3 get_accelerometer() const;
@@ -310,6 +311,7 @@ public:
 	virtual void remove_joy_mapping(String p_guid);
 	virtual bool is_joy_known(int p_device);
 	virtual String get_joy_guid(int p_device) const;
+	Dictionary get_joy_info(int p_device) const;
 
 	bool should_ignore_device(int p_vendor_id, int p_product_id) const;
 
