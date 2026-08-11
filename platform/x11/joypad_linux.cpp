@@ -408,7 +408,13 @@ void JoypadLinux::open_joypad(const char *p_path) {
 		sprintf(uid, "%04x%04x", BSWAP16(inpid.bustype), 0);
 		if (inpid.vendor && inpid.product && inpid.version) {
 			sprintf(uid + String(uid).length(), "%04x%04x%04x%04x%04x%04x", vendor, 0, product, 0, version, 0);
-			input->joy_connection_changed(joy_num, true, name, uid);
+			Dictionary info;
+			info["vendor_id"] = (int)inpid.vendor;
+			info["product_id"] = (int)inpid.product;
+			info["version"] = (int)inpid.version;
+			info["bustype"] = (int)inpid.bustype;
+			info["raw_name"] = name;
+			input->joy_connection_changed(joy_num, true, name, uid, info);
 		} else {
 			String uidname = uid;
 			int uidlen = MIN(name.length(), 11);
@@ -416,7 +422,9 @@ void JoypadLinux::open_joypad(const char *p_path) {
 				uidname = uidname + _hex_str(name[i]);
 			}
 			uidname += "00";
-			input->joy_connection_changed(joy_num, true, name, uidname);
+			Dictionary info;
+			info["raw_name"] = name;
+			input->joy_connection_changed(joy_num, true, name, uidname, info);
 		}
 	}
 }

@@ -324,7 +324,12 @@ bool JoypadOSX::configure_joypad(IOHIDDeviceRef p_device_ref, joypad *p_joy) {
 	if (vendor && product_id) {
 		char uid[128];
 		snprintf(uid, 128, "%08x%08x%08x%08x", OSSwapHostToBigInt32(3), OSSwapHostToBigInt32(vendor), OSSwapHostToBigInt32(product_id), OSSwapHostToBigInt32(version));
-		input->joy_connection_changed(id, true, name, uid);
+		Dictionary info;
+		info["vendor_id"] = vendor;
+		info["product_id"] = product_id;
+		info["version"] = version;
+		info["raw_name"] = name;
+		input->joy_connection_changed(id, true, name, uid, info);
 	} else {
 		//bluetooth device
 		String guid = "05000000";
@@ -334,7 +339,10 @@ bool JoypadOSX::configure_joypad(IOHIDDeviceRef p_device_ref, joypad *p_joy) {
 			else
 				guid += "00";
 		}
-		input->joy_connection_changed(id, true, name, guid);
+		Dictionary info;
+		info["raw_name"] = name;
+		info["bluetooth"] = true;
+		input->joy_connection_changed(id, true, name, guid, info);
 	}
 
 	CFArrayRef array = IOHIDDeviceCopyMatchingElements(p_device_ref, NULL, kIOHIDOptionsTypeNone);

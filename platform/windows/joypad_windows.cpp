@@ -198,7 +198,12 @@ bool JoypadWindows::setup_dinput_joypad(const DIDEVICEINSTANCE *instance) {
 	joy->joy_axis.sort();
 
 	joy->guid = instance->guidInstance;
-	input->joy_connection_changed(num, true, instance->tszProductName, uid);
+	Dictionary info;
+	info["vendor_id"] = (int)LOWORD(guid.Data1);
+	info["product_id"] = (int)HIWORD(guid.Data1);
+	info["raw_name"] = String(instance->tszProductName);
+	info["xinput"] = false;
+	input->joy_connection_changed(num, true, instance->tszProductName, uid, info);
 	joy->attached = true;
 	joy->id = num;
 	attached_joypads[num] = true;
@@ -313,7 +318,10 @@ void JoypadWindows::probe_joypads() {
 				x_joypads[i].ff_end_timestamp = 0;
 				x_joypads[i].vibrating = false;
 				attached_joypads[id] = true;
-				input->joy_connection_changed(id, true, "XInput Gamepad", "__XINPUT_DEVICE__");
+				Dictionary info;
+				info["xinput"] = true;
+				info["xinput_index"] = i;
+				input->joy_connection_changed(id, true, "XInput Gamepad", "__XINPUT_DEVICE__", info);
 			}
 		} else if (x_joypads[i].attached) {
 			x_joypads[i].attached = false;

@@ -67,11 +67,12 @@ void Input::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_vector", "negative_x", "positive_x", "negative_y", "positive_y", "deadzone"), &Input::get_vector, DEFVAL(-1.0f));
 	ClassDB::bind_method(D_METHOD("add_joy_mapping", "mapping", "update_existing"), &Input::add_joy_mapping, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_joy_mapping", "guid"), &Input::remove_joy_mapping);
-	ClassDB::bind_method(D_METHOD("joy_connection_changed", "device", "connected", "name", "guid"), &Input::joy_connection_changed);
+	ClassDB::bind_method(D_METHOD("joy_connection_changed", "device", "connected", "name", "guid", "info"), &Input::joy_connection_changed, DEFVAL(""), DEFVAL(Dictionary()));
 	ClassDB::bind_method(D_METHOD("is_joy_known", "device"), &Input::is_joy_known);
 	ClassDB::bind_method(D_METHOD("get_joy_axis", "device", "axis"), &Input::get_joy_axis);
 	ClassDB::bind_method(D_METHOD("get_joy_name", "device"), &Input::get_joy_name);
 	ClassDB::bind_method(D_METHOD("get_joy_guid", "device"), &Input::get_joy_guid);
+	ClassDB::bind_method(D_METHOD("get_joy_info", "device"), &Input::get_joy_info);
 	ClassDB::bind_method(D_METHOD("should_ignore_device", "vendor_id", "product_id"), &Input::should_ignore_device);
 	ClassDB::bind_method(D_METHOD("get_connected_joypads"), &Input::get_connected_joypads);
 	ClassDB::bind_method(D_METHOD("get_joy_vibration_strength", "device"), &Input::get_joy_vibration_strength);
