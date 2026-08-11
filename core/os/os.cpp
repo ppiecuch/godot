@@ -711,9 +711,12 @@ void OS::set_has_server_feature_callback(HasServerFeatureCallback p_callback) {
 }
 
 bool OS::has_feature(const String &p_feature) {
+	// --- Platform name ---
 	if (p_feature == get_name()) {
 		return true;
 	}
+
+	// --- Build configuration ---
 #ifdef DEBUG_ENABLED
 	if (p_feature == "debug") {
 		return true;
@@ -723,6 +726,7 @@ bool OS::has_feature(const String &p_feature) {
 		return true;
 	}
 #endif
+
 #ifdef TOOLS_ENABLED
 	if (p_feature == "editor") {
 		return true;
@@ -735,11 +739,21 @@ bool OS::has_feature(const String &p_feature) {
 		return true;
 	}
 #else
-	if (p_feature == "standalone") {
+	if (p_feature == "standalone" || p_feature == "template") {
+		return true;
+	}
+#ifdef DEBUG_ENABLED
+	if (p_feature == "template_debug") {
+		return true;
+	}
+#else
+	if (p_feature == "template_release") {
 		return true;
 	}
 #endif
+#endif // TOOLS_ENABLED
 
+	// --- Precision ---
 #ifdef REAL_T_IS_DOUBLE
 	if (p_feature == "double") {
 		return true;
@@ -750,13 +764,21 @@ bool OS::has_feature(const String &p_feature) {
 	}
 #endif
 
+	// --- Pointer size ---
 	if (sizeof(void *) == 8 && p_feature == "64") {
 		return true;
 	}
 	if (sizeof(void *) == 4 && p_feature == "32") {
 		return true;
 	}
+
+	// --- Architecture ---
 #if defined(__x86_64) || defined(__x86_64__) || defined(__amd64__) || defined(_M_X64)
+#if defined(OSX_ENABLED)
+	if (p_feature == "universal") {
+		return true;
+	}
+#endif
 	if (p_feature == "x86_64") {
 		return true;
 	}
@@ -771,6 +793,11 @@ bool OS::has_feature(const String &p_feature) {
 		return true;
 	}
 #elif defined(__aarch64__) || defined(_M_ARM64)
+#if defined(OSX_ENABLED)
+	if (p_feature == "universal") {
+		return true;
+	}
+#endif
 	if (p_feature == "arm64") {
 		return true;
 	}
@@ -783,6 +810,11 @@ bool OS::has_feature(const String &p_feature) {
 	}
 #if defined(__ARM_ARCH_7A__)
 	if (p_feature == "armv7a" || p_feature == "armv7") {
+		return true;
+	}
+#endif
+#if defined(__ARM_ARCH_7S__)
+	if (p_feature == "armv7s" || p_feature == "armv7") {
 		return true;
 	}
 #endif
@@ -827,6 +859,136 @@ bool OS::has_feature(const String &p_feature) {
 	}
 #endif
 
+	// --- Threading ---
+	if (p_feature == "threads") {
+#ifdef NO_THREADS
+		return false;
+#else
+		return true;
+#endif
+	}
+	if (p_feature == "nothreads") {
+#ifdef NO_THREADS
+		return true;
+#else
+		return false;
+#endif
+	}
+
+	// --- Platform class ---
+#if defined(OSX_ENABLED) || defined(X11_ENABLED) || defined(WINDOWS_ENABLED) || defined(UWP_ENABLED)
+	if (p_feature == "pc") {
+		return true;
+	}
+	if (p_feature == "keyboard") {
+		return true;
+	}
+	if (p_feature == "mouse") {
+		return true;
+	}
+#endif
+#if defined(ANDROID_ENABLED) || defined(IPHONE_ENABLED)
+	if (p_feature == "mobile") {
+		return true;
+	}
+#endif
+#if defined(IOS_SIMULATOR)
+	if (p_feature == "simulator") {
+		return true;
+	}
+#endif
+
+	// --- Graphics backend (compile-time) ---
+#ifdef METAL_ENABLED
+	if (p_feature == "metal") {
+		return true;
+	}
+#endif
+#ifdef GLES_ENABLED
+	if (p_feature == "gles_supported") {
+		return true;
+	}
+#endif
+
+	// --- Graphics backend (runtime — current driver) ---
+	if (p_feature == "gles2" || p_feature == "gles3") {
+		int driver = get_current_video_driver();
+		if (p_feature == "gles2" && driver == VIDEO_DRIVER_GLES2) {
+			return true;
+		}
+		if (p_feature == "gles3" && driver == VIDEO_DRIVER_GLES3) {
+			return true;
+		}
+#ifdef METAL_ENABLED
+		if (p_feature == "metal" && driver == VIDEO_DRIVER_MGL) {
+			return true;
+		}
+#endif
+	}
+
+	// --- Runtime hardware detection ---
+	if (p_feature == "touchscreen") {
+		return has_touchscreen_ui_hint();
+	}
+	if (p_feature == "gamepad" || p_feature == "joypad") {
+		return Input::get_singleton() && Input::get_singleton()->get_connected_joypads().size() > 0;
+	}
+	if (p_feature == "multicore") {
+		return get_processor_count() > 1;
+	}
+	if (p_feature == "hidpi" || p_feature == "retina") {
+		return get_screen_dpi() > 150;
+	}
+
+	// --- Sensors / mobile hardware ---
+#if defined(ANDROID_ENABLED) || defined(IPHONE_ENABLED)
+	if (p_feature == "accelerometer" || p_feature == "gyroscope") {
+		return true;
+	}
+	if (p_feature == "vibration") {
+		return true;
+	}
+	if (p_feature == "camera") {
+		return true;
+	}
+	if (p_feature == "gps") {
+		return true;
+	}
+#endif
+
+	// --- Power ---
+	if (p_feature == "battery") {
+		return get_power_state() != POWERSTATE_UNKNOWN && get_power_state() != POWERSTATE_NO_BATTERY;
+	}
+
+	// --- Compile-time module availability ---
+#ifdef MODULE_WEBM_ENABLED
+	if (p_feature == "webm") {
+		return true;
+	}
+#endif
+#ifdef MODULE_THEORA_ENABLED
+	if (p_feature == "theora") {
+		return true;
+	}
+#endif
+#ifdef MODULE_WEBSOCKET_ENABLED
+	if (p_feature == "websocket") {
+		return true;
+	}
+#endif
+#ifdef MODULE_GDNATIVE_ENABLED
+	if (p_feature == "gdnative") {
+		return true;
+	}
+#endif
+#ifdef MODULE_MONO_ENABLED
+	if (p_feature == "mono" || p_feature == "csharp") {
+		return true;
+	}
+#endif
+
+	// --- Platform-specific (virtual) ---
 	if (_check_internal_feature_support(p_feature)) {
 		return true;
 	}
