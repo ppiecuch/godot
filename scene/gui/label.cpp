@@ -129,12 +129,17 @@ void Label::_notification(int p_what) {
 		int line_spacing = get_constant("line_spacing");
 		Color font_outline_modulate = get_color("font_outline_modulate");
 
+		// Compensate spacing for rect_scale so it stays constant in screen pixels (min 1px)
+		const Vector2 sc = get_rect_scale();
+		const real_t draw_hspacing = (sc.x > 0 && horizontal_spacing > 0) ? MAX(1.0 / sc.x, horizontal_spacing / sc.x) : horizontal_spacing;
+		const real_t draw_vspacing = (sc.y > 0 && vertical_spacing > 0) ? MAX(1.0 / sc.y, vertical_spacing / sc.y) : vertical_spacing;
+
 		style->draw(ci, Rect2(Point2(0, 0), get_size()));
 
-		const int font_h = font->get_height() + line_spacing + vertical_spacing;
+		const int font_h = font->get_height() + line_spacing + draw_vspacing;
 		const int lines_visible_rc = (size.y + line_spacing) / font_h;
 
-		const real_t space_w = font->get_char_size(' ').width + horizontal_spacing;
+		const real_t space_w = font->get_char_size(' ').width + draw_hspacing;
 		int chars_total = 0;
 
 		int vbegin = 0, vsep = 0;
@@ -321,7 +326,7 @@ void Label::_notification(int p_what) {
 							x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
 						}
 						if (i < last_char) {
-							x_ofs += horizontal_spacing;
+							x_ofs += draw_hspacing;
 						}
 						chars_total++;
 					}
