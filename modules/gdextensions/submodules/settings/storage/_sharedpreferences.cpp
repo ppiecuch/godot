@@ -145,16 +145,25 @@ public:
 		jmEdit = env->GetMethodID(jcSharedPreferences, "edit", "()Landroid/content/SharedPreferences$Editor;");
 		//create a instance of SharedPreferences and store it in @joSharedPreferences
 		jmethodID jmGetSharedPreferences = env->GetMethodID(jcContext, "getSharedPreferences", "(Ljava/lang/String;I)Landroid/content/SharedPreferences;");
-		joSharedPreferences = env->CallObjectMethod(androidContext, jmGetSharedPreferences, env->NewStringUTF(name), MODE_PRIVATE);
-		if (keepReference) {
-			joSharedPreferences = env->NewWeakGlobalRef(joSharedPreferences);
-		}
+		jobject localPrefs = env->CallObjectMethod(androidContext, jmGetSharedPreferences, env->NewStringUTF(name), MODE_PRIVATE);
+		joSharedPreferences = env->NewGlobalRef(localPrefs);
+		env->DeleteLocalRef(localPrefs);
 		//extra methods
 		jclass mapClass = env->FindClass("java/util/HashMap");
-		jmethodID jmMapGet = env->GetMethodID(mapClass, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+		jmMapGet = env->GetMethodID(mapClass, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+	}
+	~SharedPreferences() {
+		JNIEnv *e = get_jni_env();
+		if (e && joSharedPreferences) {
+			e->DeleteGlobalRef(joSharedPreferences);
+			joSharedPreferences = nullptr;
+		}
 	}
 	void replaceJNI(JNIEnv *newEnv) {
 		env = newEnv;
+	}
+	JNIEnv *current_env() const {
+		return get_jni_env();
 	}
 
 private:
@@ -172,6 +181,7 @@ private:
 public:
 	// https://gist.github.com/theeasiestway/e5f453715cecc55b5ca57d0628b9f12a
 	Variant getValue(const char *id) {
+		JNIEnv *env = current_env();
 		if (jobject map = env->CallObjectMethod(joSharedPreferences, jmGetAll)) {
 			if (jobject obj = env->CallObjectMethod(map, jmMapGet, env->NewStringUTF(id))) {
 				Variant ret = _jobject_to_variant(env, obj);
@@ -198,15 +208,19 @@ public:
 		return Variant();
 	}
 	bool getBoolean(const char *id, bool defaultValue = false) const {
+		JNIEnv *env = current_env();
 		return (bool)(env->CallObjectMethod(joSharedPreferences, jmGetBoolean, env->NewStringUTF(id), (jboolean)defaultValue));
 	}
 	int getInt(const char *id, int defaultValue = 0) const {
+		JNIEnv *env = current_env();
 		return (int)(env->CallIntMethod(joSharedPreferences, jmGetInt, env->NewStringUTF(id), (jint)defaultValue));
 	}
 	float getFloat(const char *id, float defaultValue = 0) const {
+		JNIEnv *env = current_env();
 		return (float)(env->CallFloatMethod(joSharedPreferences, jmGetFloat, env->NewStringUTF(id), (jfloat)defaultValue));
 	}
 	String getString(const char *id, const char *defaultValue = "") const {
+		JNIEnv *env = current_env();
 		auto value = (jstring)(env->CallObjectMethod(joSharedPreferences, jmGetString, env->NewStringUTF(id), env->NewStringUTF(defaultValue)));
 		const char *valueP = env->GetStringUTFChars(value, nullptr);
 		const String ret(valueP);
@@ -214,11 +228,13 @@ public:
 		return ret;
 	}
 	SharedPreferences_Editor edit() const {
+		JNIEnv *env = current_env();
 		jobject joEditor = env->CallObjectMethod(joSharedPreferences, jmEdit);
 		SharedPreferences_Editor editor(env, joEditor);
 		return editor;
 	}
 	bool contains(const char *id) {
+		JNIEnv *env = current_env();
 		if (jobject map = env->CallObjectMethod(joSharedPreferences, jmGetAll)) {
 			jclass mapClass = env->GetObjectClass(map);
 			jmethodID jmContainsKey = env->GetMethodID(mapClass, "containsKey", "(Ljava/lang/Object;)Z");
@@ -255,6 +271,9 @@ void SettingsStorage::_sync() {
 }
 
 void SettingsStorage::set(const String &key, const Variant &value) {
+#ifdef DEBUG_ENABLED
+	__android_log_print(ANDROID_LOG_DEBUG, "Settings", "set: key=%s type=%d", key.utf8().c_str(), value.get_type());
+#endif
 	switch (value.get_type()) {
 		case Variant::BOOL: {
 			prefs.edit().putBoolean(key.utf8().c_str(), bool(value));
@@ -287,6 +306,9 @@ void SettingsStorage::set(const String &key, const Variant &value) {
 }
 
 Variant SettingsStorage::get(const String &key, const Variant &default_val) {
+#ifdef DEBUG_ENABLED
+	__android_log_print(ANDROID_LOG_DEBUG, "Settings", "get: key=%s", key.utf8().c_str());
+#endif
 	if (!prefs.contains(key.utf8().c_str())) {
 		return default_val;
 	}
@@ -304,6 +326,9 @@ void SettingsStorage::remove(const String &key) {
 SettingsStorage::SettingsStorage() :
 		prefs(get_jni_env(), _get_activity(), get_app_name().utf8().c_str()) {
 	_last_sync_time = OS::get_singleton()->get_ticks_msec();
+#ifdef DEBUG_ENABLED
+	__android_log_print(ANDROID_LOG_DEBUG, "Settings", "SettingsStorage created for app: %s", get_app_name().utf8().c_str());
+#endif
 }
 
 SettingsStorage::~SettingsStorage() {
