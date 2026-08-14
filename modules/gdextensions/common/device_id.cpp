@@ -83,25 +83,16 @@ static String get_custom_name() {
 		// remove the .local or .lan from the computer name as reported by osx
 		nm = String(buffer).trim_suffix(".lan").trim_suffix(".local");
 	}
-	if (nm.length() > 5) {
-		return nm;
+	String user = getenv("LOGIN");
+	if (user.empty()) {
+		user = getenv("USER");
 	}
-	String login = getenv("LOGIN");
-	if (!login.empty()) {
-		if (nm.empty()) {
-			nm = login;
-		} else {
-			nm = nm + "-" + login;
-		}
-	} else {
-		String user = getenv("USER");
-		if (!user.empty()) {
-			if (nm.empty()) {
-				nm = user;
-			} else {
-				nm = nm + "-" + user;
-			}
-		}
+	if (!nm.empty() && !user.empty()) {
+		return nm + "-" + user;
+	} else if (!nm.empty()) {
+		return nm;
+	} else if (!user.empty()) {
+		return user;
 	}
 	return nm;
 }
@@ -134,11 +125,12 @@ static String get_custom_name() {
 String get_local_ident() {
 	static String local_name;
 
-	if (local_name.empty()) {
-		String platform = OS::get_singleton()->get_name().to_upper();
-		String device = OS::get_singleton()->get_model_name().to_upper();
+	if (local_name.empty() || local_name.find("-") < 0) {
+		local_name = "";
+		String platform = OS::get_singleton() ? OS::get_singleton()->get_name().to_upper() : "";
+		String device = OS::get_singleton() ? OS::get_singleton()->get_model_name().to_upper() : "";
 		String name = get_custom_name().to_upper();
-		const String unique_id = OS::get_singleton()->get_unique_id().to_upper();
+		const String unique_id = OS::get_singleton() ? OS::get_singleton()->get_unique_id().to_upper() : "";
 		const String rand_postfix = get_rand_id().to_upper();
 
 		if (platform == "WINDOWS") {
@@ -164,8 +156,64 @@ String get_local_ident() {
 			local_name += unique_id;
 		}
 
-		print_verbose("Local name of this instance is: " + local_name);
+		WARN_PRINT(vformat("get_local_ident: platform='%s' device='%s' name='%s' unique_id='%s' => '%s'", platform, device, name, unique_id, local_name));
 	}
 
 	return local_name;
 }
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
+
+TEST_SUITE("[[gdextensions]] device_id") {
+	TEST_CASE("[device_id] get_local_ident returns non-empty string") {
+		String ident = get_local_ident();
+		CHECK_FALSE(ident.empty());
+	}
+
+	TEST_CASE("[device_id] get_local_ident contains platform prefix") {
+		String ident = get_local_ident();
+#if OSX_ENABLED
+		CHECK(ident.begins_with("OSX-"));
+#elif WINDOWS_ENABLED
+		CHECK(ident.begins_with("WIN-"));
+#elif ANDROID_ENABLED
+		CHECK(ident.begins_with("DROID-"));
+#elif UNIX_ENABLED || FRT_ENABLED
+		CHECK(ident.begins_with("LINUX-"));
+#endif
+	}
+
+	TEST_CASE("[device_id] get_local_ident contains dashes as separators") {
+		String ident = get_local_ident();
+		// At minimum: PLATFORM-<something>
+		CHECK(ident.find("-") > 0);
+	}
+
+	TEST_CASE("[device_id] get_local_ident is stable across calls") {
+		String first = get_local_ident();
+		String second = get_local_ident();
+		CHECK(first == second);
+	}
+
+	TEST_CASE("[device_id] get_local_ident is all uppercase") {
+		String ident = get_local_ident();
+		CHECK(ident == ident.to_upper());
+	}
+
+	TEST_CASE("[device_id] get_custom_name includes username on unix") {
+#if OSX_ENABLED || UNIX_ENABLED || FRT_ENABLED
+		String user = getenv("USER");
+		if (!user.empty()) {
+			String ident = get_local_ident();
+			CHECK(ident.find(user.to_upper()) >= 0);
+		}
+#endif
+	}
+}
+#endif // DOCTEST
