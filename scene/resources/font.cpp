@@ -689,6 +689,7 @@ void BitmapFont::clear() {
 	textures.clear();
 	kerning_map.clear();
 	distance_field_hint = false;
+	spacing_char = 0;
 }
 
 Size2 Font::get_string_size(const String &p_string) const {
@@ -990,7 +991,7 @@ Size2 BitmapFont::get_char_size(CharType p_char, CharType p_next) const {
 		return Size2();
 	}
 
-	Size2 ret(c->advance, c->rect.size.y);
+	Size2 ret(c->advance + spacing_char, c->rect.size.y);
 
 	if (!skip_kerning) {
 		if (p_next) {
@@ -1025,6 +1026,9 @@ void BitmapFont::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_distance_field_hint", "enable"), &BitmapFont::set_distance_field_hint);
 
+	ClassDB::bind_method(D_METHOD("set_spacing_char", "spacing"), &BitmapFont::set_spacing_char);
+	ClassDB::bind_method(D_METHOD("get_spacing_char"), &BitmapFont::get_spacing_char);
+
 	ClassDB::bind_method(D_METHOD("clear"), &BitmapFont::clear);
 
 	ClassDB::bind_method(D_METHOD("_set_chars"), &BitmapFont::_set_chars);
@@ -1046,6 +1050,7 @@ void BitmapFont::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "height", PROPERTY_HINT_RANGE, "1,1024,1"), "set_height", "get_height");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "ascent", PROPERTY_HINT_RANGE, "0,1024,1"), "set_ascent", "get_ascent");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "distance_field"), "set_distance_field_hint", "is_distance_field_hint");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "extra_spacing_char", PROPERTY_HINT_RANGE, "-10,10,1"), "set_spacing_char", "get_spacing_char");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "fallback", PROPERTY_HINT_RESOURCE_TYPE, "BitmapFont"), "set_fallback", "get_fallback");
 }
 

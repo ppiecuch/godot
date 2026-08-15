@@ -62,7 +62,7 @@ InputHelper *InputHelper::singleton = nullptr;
 
 InputHelper::InputHelper() {
 	singleton = this;
-	device = DEVICE_GENERIC;
+	device = DEVICE_KEYBOARD;
 	device_index = -1;
 	device_last_changed_at = 0;
 	deadzone = 0.5f;

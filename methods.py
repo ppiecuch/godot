@@ -27,6 +27,11 @@ compiler_version_cache = None
 _scu_folders = set()
 
 
+def print_warning(*args):
+    """Print a warning message to stderr."""
+    print("WARNING:", *args, file=sys.stderr)
+
+
 def set_scu_folders(scu_folders):
     global _scu_folders
     _scu_folders = scu_folders

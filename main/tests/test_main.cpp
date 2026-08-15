@@ -41,6 +41,7 @@
 #include "test_font.h"
 #include "test_gdscript.h"
 #include "test_gui.h"
+#include "test_label.h"
 #include "test_math.h"
 #include "test_oa_hash_map.h"
 #include "test_ordered_hash_map.h"
@@ -67,6 +68,7 @@ const char **tests_get_names() {
 		"oa_hash_map",
 		"gui",
 		"font",
+		"label",
 		"shaderlang",
 		"gd_tokenizer",
 		"gd_parser",
@@ -127,6 +129,10 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 
 	if (p_test == "font") {
 		return TestFont::test();
+	}
+
+	if (p_test == "label") {
+		return TestLabel::test();
 	}
 
 	if (p_test == "shaderlang") {

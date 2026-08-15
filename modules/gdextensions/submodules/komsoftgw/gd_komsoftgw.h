@@ -76,6 +76,8 @@ private:
 	String service;
 	String api_key;
 	String user_id;
+	String client_version = "1.0";
+	String device_id = "komsoftgw-client";
 	bool use_ssl = true;
 	double timeout_seconds = 15.0;
 
@@ -108,6 +110,8 @@ protected:
 public:
 	static KomsoftGw *get_singleton();
 
+	Vector<String> _make_headers(bool p_json) const;
+
 	void configure(const String &p_base_url, const String &p_service, const String &p_api_key, const String &p_user_id);
 	// Clear config back to defaults and drop any queued/in-flight requests.
 	void reset();
@@ -115,6 +119,10 @@ public:
 	bool get_use_ssl() const;
 	void set_timeout(double p_seconds);
 	double get_timeout() const;
+	void set_client_version(const String &p_v);
+	String get_client_version() const;
+	void set_device_id(const String &p_v);
+	String get_device_id() const;
 
 	// Leaderboard API — each call is queued and processed on the next pump().
 	void list_leaderboards();

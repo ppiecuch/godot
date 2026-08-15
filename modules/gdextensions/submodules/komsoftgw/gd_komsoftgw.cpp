@@ -77,13 +77,13 @@ static String kgw_join_url(const String &p_base, const String &p_path) {
 
 // Build the header set every request needs. The gateway rejects any /v1 request
 // missing User-Agent + X-Client-Version; the api key authenticates the user.
-static Vector<String> kgw_default_headers(const String &p_api_key, bool p_json) {
+Vector<String> KomsoftGw::_make_headers(bool p_json) const {
 	Vector<String> h;
-	h.push_back("User-Agent: komsoftgw;Godot (1.0)");
-	h.push_back("X-Client-Version: 1.0");
-	h.push_back("X-Device-Id: komsoftgw-client");
-	if (!p_api_key.empty()) {
-		h.push_back("x-api-key: " + p_api_key);
+	h.push_back("User-Agent: " + service + ";Godot (" + client_version + ")");
+	h.push_back("X-Client-Version: " + client_version);
+	h.push_back("X-Device-Id: " + device_id);
+	if (!api_key.empty()) {
+		h.push_back("x-api-key: " + api_key);
 	}
 	if (p_json) {
 		h.push_back("Content-Type: application/json");
@@ -142,6 +142,10 @@ void KomsoftGw::set_use_ssl(bool p_v) { use_ssl = p_v; }
 bool KomsoftGw::get_use_ssl() const { return use_ssl; }
 void KomsoftGw::set_timeout(double p_seconds) { timeout_seconds = p_seconds; }
 double KomsoftGw::get_timeout() const { return timeout_seconds; }
+void KomsoftGw::set_client_version(const String &p_v) { client_version = p_v; }
+String KomsoftGw::get_client_version() const { return client_version; }
+void KomsoftGw::set_device_id(const String &p_v) { device_id = p_v; }
+String KomsoftGw::get_device_id() const { return device_id; }
 
 // ── queue + pump ────────────────────────────────────────────────────────────
 
@@ -150,7 +154,7 @@ void KomsoftGw::_enqueue(const String &p_callback, int p_method, const String &p
 	a.callback = p_callback;
 	a.method = p_method;
 	a.url = p_url;
-	a.headers = kgw_default_headers(api_key, p_json);
+	a.headers = _make_headers(p_json);
 	a.body = p_body;
 	queue.push_back(a);
 }
@@ -335,6 +339,10 @@ void KomsoftGw::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_use_ssl"), &KomsoftGw::get_use_ssl);
 	ClassDB::bind_method(D_METHOD("set_timeout", "seconds"), &KomsoftGw::set_timeout);
 	ClassDB::bind_method(D_METHOD("get_timeout"), &KomsoftGw::get_timeout);
+	ClassDB::bind_method(D_METHOD("set_client_version", "version"), &KomsoftGw::set_client_version);
+	ClassDB::bind_method(D_METHOD("get_client_version"), &KomsoftGw::get_client_version);
+	ClassDB::bind_method(D_METHOD("set_device_id", "id"), &KomsoftGw::set_device_id);
+	ClassDB::bind_method(D_METHOD("get_device_id"), &KomsoftGw::get_device_id);
 
 	ClassDB::bind_method(D_METHOD("list_leaderboards"), &KomsoftGw::list_leaderboards);
 	ClassDB::bind_method(D_METHOD("request_submit_token", "board_key"), &KomsoftGw::request_submit_token);
@@ -361,6 +369,8 @@ void KomsoftGw::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_ssl"), "set_use_ssl", "get_use_ssl");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "timeout"), "set_timeout", "get_timeout");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "client_version"), "set_client_version", "get_client_version");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "device_id"), "set_device_id", "get_device_id");
 
 	ADD_SIGNAL(MethodInfo("leaderboards_received", PropertyInfo(Variant::ARRAY, "leaderboards")));
 	ADD_SIGNAL(MethodInfo("submit_token_received",
@@ -445,17 +455,21 @@ static bool kgw_has_header(const Vector<String> &h, const String &prefix) {
 	return false;
 }
 
-TEST_CASE("[komsoftgw] kgw_default_headers always include the required client headers") {
-	Vector<String> h = kgw_default_headers("secret-key", false);
+TEST_CASE("[komsoftgw] _make_headers always include the required client headers") {
+	KomsoftGw *gw = memnew(KomsoftGw);
+	gw->configure("http://x", "testsvc", "secret-key", "uid");
+	Vector<String> h = gw->_make_headers(false);
 	CHECK(kgw_has_header(h, "User-Agent:"));
 	CHECK(kgw_has_header(h, "X-Client-Version:"));
 	CHECK(kgw_has_header(h, "X-Device-Id:"));
-	// User-Agent must match the "<service>;<platform> (<version>)" shape the gateway parses.
-	CHECK(kgw_has_header(h, "User-Agent: komsoftgw;Godot ("));
+	CHECK(kgw_has_header(h, "User-Agent: testsvc;Godot ("));
+	memdelete(gw);
 }
 
-TEST_CASE("[komsoftgw] kgw_default_headers include the api key when set") {
-	Vector<String> h = kgw_default_headers("secret-key", false);
+TEST_CASE("[komsoftgw] _make_headers include the api key when set") {
+	KomsoftGw *gw = memnew(KomsoftGw);
+	gw->configure("http://x", "svc", "secret-key", "uid");
+	Vector<String> h = gw->_make_headers(false);
 	bool found = false;
 	for (int i = 0; i < h.size(); i++) {
 		if (h[i] == "x-api-key: secret-key") {
@@ -463,16 +477,23 @@ TEST_CASE("[komsoftgw] kgw_default_headers include the api key when set") {
 		}
 	}
 	CHECK(found);
+	memdelete(gw);
 }
 
-TEST_CASE("[komsoftgw] kgw_default_headers omit the api key when empty") {
-	Vector<String> h = kgw_default_headers("", false);
+TEST_CASE("[komsoftgw] _make_headers omit the api key when empty") {
+	KomsoftGw *gw = memnew(KomsoftGw);
+	gw->configure("http://x", "svc", "", "uid");
+	Vector<String> h = gw->_make_headers(false);
 	CHECK_FALSE(kgw_has_header(h, "x-api-key:"));
+	memdelete(gw);
 }
 
-TEST_CASE("[komsoftgw] kgw_default_headers add Content-Type only for JSON bodies") {
-	CHECK_FALSE(kgw_has_header(kgw_default_headers("k", false), "Content-Type:"));
-	CHECK(kgw_has_header(kgw_default_headers("k", true), "Content-Type: application/json"));
+TEST_CASE("[komsoftgw] _make_headers add Content-Type only for JSON bodies") {
+	KomsoftGw *gw = memnew(KomsoftGw);
+	gw->configure("http://x", "svc", "k", "uid");
+	CHECK_FALSE(kgw_has_header(gw->_make_headers(false), "Content-Type:"));
+	CHECK(kgw_has_header(gw->_make_headers(true), "Content-Type: application/json"));
+	memdelete(gw);
 }
 
 // ---------------------------------------------------------------------------

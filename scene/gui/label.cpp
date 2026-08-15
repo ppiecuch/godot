@@ -130,16 +130,19 @@ void Label::_notification(int p_what) {
 		Color font_outline_modulate = get_color("font_outline_modulate");
 
 		// Compensate spacing for rect_scale so it stays constant in screen pixels (min 1px)
-		const Vector2 sc = get_rect_scale();
-		const real_t draw_hspacing = (sc.x > 0 && horizontal_spacing > 0) ? MAX(1.0 / sc.x, horizontal_spacing / sc.x) : horizontal_spacing;
-		const real_t draw_vspacing = (sc.y > 0 && vertical_spacing > 0) ? MAX(1.0 / sc.y, vertical_spacing / sc.y) : vertical_spacing;
+		const Vector2 sc = get_scale();
+		const real_t draw_hspacing = compensate_spacing(horizontal_spacing, sc.x);
+		const real_t draw_vspacing = compensate_spacing(vertical_spacing, sc.y);
+		// Compensate font's built-in character spacing for rect_scale
+		const int font_spacing_char = font->get_spacing_char();
+		const real_t draw_font_spacing = compensate_spacing(font_spacing_char, sc.x) - font_spacing_char;
 
 		style->draw(ci, Rect2(Point2(0, 0), get_size()));
 
 		const int font_h = font->get_height() + line_spacing + draw_vspacing;
 		const int lines_visible_rc = (size.y + line_spacing) / font_h;
 
-		const real_t space_w = font->get_char_size(' ').width + draw_hspacing;
+		const real_t space_w = font->get_char_size(' ').width + draw_hspacing + draw_font_spacing;
 		int chars_total = 0;
 
 		int vbegin = 0, vsep = 0;
@@ -304,6 +307,7 @@ void Label::_notification(int p_what) {
 								}
 								x_ofs_shadow += move;
 							}
+							x_ofs_shadow += draw_font_spacing;
 
 							chars_total_shadow++;
 						}
@@ -325,6 +329,7 @@ void Label::_notification(int p_what) {
 						} else {
 							x_ofs += drawer.draw_char(ci, Point2(x_ofs, y_ofs), c, n, font_color);
 						}
+						x_ofs += draw_font_spacing;
 						if (i < last_char) {
 							x_ofs += draw_hspacing;
 						}
@@ -840,6 +845,16 @@ void Label::set_vertical_spacing(float p_offset) {
 }
 float Label::get_vertical_spacing() const {
 	return vertical_spacing;
+}
+
+real_t Label::compensate_spacing(real_t p_spacing, real_t p_scale) {
+	if (p_scale > 0 && p_spacing > 0) {
+		return MAX(1.0 / p_scale, p_spacing / p_scale);
+	}
+	if (p_scale > 0 && p_spacing < 0) {
+		return p_spacing / p_scale;
+	}
+	return p_spacing;
 }
 
 void Label::set_transition_duration(float p_duration) {

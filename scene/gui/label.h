@@ -251,6 +251,11 @@ public:
 	void set_vertical_spacing(float p_offset);
 	float get_vertical_spacing() const;
 
+	// Compensate spacing for rect_scale so it stays constant in screen pixels.
+	// Returns the label-local spacing value that, after scale multiplication,
+	// yields the original spacing in screen pixels (min 1px when spacing > 0).
+	static real_t compensate_spacing(real_t p_spacing, real_t p_scale);
+
 	Label(const String &p_text = String());
 	~Label();
 

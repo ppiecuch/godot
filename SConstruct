@@ -17,6 +17,7 @@ import gles_builders
 import metal_builders
 import scu_builders
 from platform_methods import run_in_subprocess
+from methods import print_warning
 
 # scan possible build platforms
 

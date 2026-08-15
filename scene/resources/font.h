@@ -210,6 +210,7 @@ private:
 	float height;
 	float ascent;
 	bool distance_field_hint;
+	int spacing_char;
 
 	void _set_chars(const PoolVector<int> &p_chars);
 	PoolVector<int> _get_chars() const;
@@ -234,7 +235,10 @@ public:
 	float get_ascent() const;
 	float get_descent() const;
 	int get_spacing_char() const {
-		return 0;
+		return spacing_char;
+	}
+	void set_spacing_char(int p_spacing) {
+		spacing_char = p_spacing;
 	}
 
 	void add_texture(const Ref<Texture> &p_texture);
