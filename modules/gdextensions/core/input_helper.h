@@ -100,6 +100,9 @@ public:
 	// Detect device from event without changing internal state.
 	String get_device_from_event(const Ref<InputEvent> &p_event) const;
 
+	// Platform-appropriate default device (keyboard on desktop, gamepad on consoles).
+	String get_platform_default_device() const;
+
 	// Best-effort device guess at startup, before any input has arrived.
 	String guess_device_name() const;
 

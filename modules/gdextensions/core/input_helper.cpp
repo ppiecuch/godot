@@ -62,7 +62,7 @@ InputHelper *InputHelper::singleton = nullptr;
 
 InputHelper::InputHelper() {
 	singleton = this;
-	device = DEVICE_KEYBOARD;
+	device = get_platform_default_device();
 	device_index = -1;
 	device_last_changed_at = 0;
 	deadzone = 0.5f;
@@ -84,8 +84,8 @@ InputHelper::~InputHelper() {
 void InputHelper::_on_joy_connection_changed(int p_index, bool p_connected) {
 	emit_signal("joypad_changed", p_index, p_connected);
 	if (!p_connected && device_index == p_index) {
-		// Active gamepad disconnected — fall back to keyboard.
-		device = DEVICE_KEYBOARD;
+		// Active gamepad disconnected — fall back to platform default.
+		device = get_platform_default_device();
 		device_index = -1;
 		emit_signal("device_changed", device, device_index);
 	}
@@ -152,7 +152,7 @@ void InputHelper::update_from_event(const Ref<InputEvent> &p_event) {
 
 String InputHelper::get_device_from_event(const Ref<InputEvent> &p_event) const {
 	if (p_event.is_null()) {
-		return DEVICE_KEYBOARD;
+		return get_platform_default_device();
 	}
 
 	Ref<InputEventKey> ek = p_event;
@@ -170,7 +170,7 @@ String InputHelper::get_device_from_event(const Ref<InputEvent> &p_event) const 
 	if (ejm.is_valid()) {
 		return get_simplified_device_name(Input::get_singleton()->get_joy_name(ejm->get_device()));
 	}
-	return DEVICE_KEYBOARD;
+	return get_platform_default_device();
 }
 
 String InputHelper::get_simplified_device_name(const String &p_raw) const {
@@ -224,11 +224,28 @@ String InputHelper::get_granular_device_name(const String &p_raw) const {
 	return DEVICE_GENERIC;
 }
 
+String InputHelper::get_platform_default_device() const {
+	OS *os = OS::get_singleton();
+	if (os->has_feature("pc") || os->has_feature("web")) {
+		return DEVICE_KEYBOARD;
+	}
+	if (os->has_feature("switch") || os->has_feature("3ds")) {
+		return DEVICE_SWITCH;
+	}
+	if (os->has_feature("psvita") || os->has_feature("psp") || os->has_feature("playstation")) {
+		return DEVICE_PLAYSTATION;
+	}
+	if (os->has_feature("xbox")) {
+		return DEVICE_XBOX;
+	}
+	return DEVICE_GENERIC;
+}
+
 String InputHelper::guess_device_name() const {
 	Input *in = Input::get_singleton();
 	Array pads = in->get_connected_joypads();
 	if (pads.size() == 0) {
-		return DEVICE_KEYBOARD;
+		return get_platform_default_device();
 	}
 	return get_simplified_device_name(in->get_joy_name(0));
 }
