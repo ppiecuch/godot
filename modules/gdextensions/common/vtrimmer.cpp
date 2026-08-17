@@ -190,11 +190,17 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 	const int w = img->get_width();
 	const int h = img->get_height();
 
+	// Keep a local (COW) copy of the pixels: `Image::get_data()` returns a const
+	// reference, and both the dilate pass and the hull scan below need the data
+	// to stay alive (and locked) for the duration of the access.
+	PoolVector<uint8_t> img_data = img->get_data();
+
 	if (dilate_count) {
-		const int data_size = img->get_data().size();
+		const int data_size = img_data.size();
 		unsigned char *copy = (unsigned char *)memalloc(data_size);
 		while (dilate_count--) {
-			unsigned char *dst = img->get_data().write().ptr();
+			PoolVector<uint8_t>::Write wr = img_data.write();
+			unsigned char *dst = wr.ptr();
 			memcpy(copy, dst, data_size);
 			for (int y = 0; y < h; y++) {
 				for (int x = 0; x < w; x++) {
@@ -218,7 +224,8 @@ bool vertex_trimmer(Ref<Image> &image, vertex_trimmer_opt_t *opt) {
 		memfree(copy);
 	}
 
-	const unsigned char *pixels = img->get_data().read().ptr();
+	PoolVector<uint8_t>::Read rd = img_data.read();
+	const unsigned char *pixels = rd.ptr();
 	const int tile_w = w / atlas_x;
 	const int tile_h = h / atlas_y;
 

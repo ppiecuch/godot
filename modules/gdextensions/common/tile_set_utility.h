@@ -91,7 +91,7 @@ struct TileSetUtility {
 		const int w = tile.get_width();
 		const int h = tile.get_height();
 
-		print_verbose(vformat("Processing regions of %d columns and %d rows with border color 0x%08x.", cols.size(), rows.size(), tile.get_rgb<PIXEL_SIZE>(0, 0)));
+		print_verbose(vformat("(%dx%d) Processing regions of %d columns and %d rows with border color 0x%08x.", w, h, cols.size(), rows.size(), tile.get_rgb<PIXEL_SIZE>(0, 0)));
 
 		std::vector<TileCoord> tiles;
 		for (int y = 0; y < rows.size(); y++) {
