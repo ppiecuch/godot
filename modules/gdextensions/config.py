@@ -35,6 +35,7 @@ def configure(env):
         "flexbuffers",
         "openclwrapper",
         "sfxr",
+        "trackergen",
         "vgamepaddesign",
         # animation extensions
         "dragonbones",

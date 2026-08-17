@@ -337,6 +337,16 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 
 #include "sfxr/gdsfxr.h"
 
+#ifdef GDEXT_TRACKERGEN_ENABLED
+#include "trackergen/audio_stream_tracker.h"
+#include "trackergen/trackergen_chords.h"
+#include "trackergen/trackergen_instrument.h"
+#include "trackergen/trackergen_kit.h"
+#include "trackergen/trackergen_pattern.h"
+#include "trackergen/trackergen_song.h"
+#include "trackergen/trackergen_studio_plugin.h"
+#endif
+
 #include "threadpool/thread_pool.h"
 #include "threadpool/thread_pool_execute_job.h"
 #include "threadpool/thread_pool_job.h"
@@ -512,6 +522,9 @@ static void editor_init_callback() {
 
 #ifdef GDEXT_SFXR_ENABLED
 	editor->add_editor_plugin(memnew(SfxrEditorPlugin(editor)));
+#endif
+#ifdef GDEXT_TRACKERGEN_ENABLED
+	editor->add_editor_plugin(memnew(TrackerStudioEditorPlugin(editor)));
 #endif
 #ifdef GDEXT_ENVIRONMENT_PROC_ROCKS_ENABLED
 	editor->add_editor_plugin(memnew(ProcRockEditorPlugin(editor)));
@@ -738,6 +751,16 @@ void register_gdextensions_types() {
 	ResourceFormatImporter::get_singleton()->add_importer(sfx_data);
 #endif
 #endif // GDEXT_SFXR_ENABLED
+
+#ifdef GDEXT_TRACKERGEN_ENABLED
+	ClassDB::register_class<TrackerInstrument>();
+	ClassDB::register_class<TrackerKit>();
+	ClassDB::register_class<ChordProgression>();
+	ClassDB::register_class<TrackerPattern>();
+	ClassDB::register_class<TrackerSong>();
+	ClassDB::register_class<AudioStreamTracker>();
+	ClassDB::register_class<AudioStreamPlaybackTracker>();
+#endif // GDEXT_TRACKERGEN_ENABLED
 
 #ifdef GDEXT_GEOMFONTS_ENABLED
 	ClassDB::register_class<GdGeomFonts>();
