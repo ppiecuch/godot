@@ -1667,6 +1667,10 @@
 		<member name="rendering/limits/time/time_rollover_secs" type="float" setter="" getter="" default="3600">
 			Shaders have a time variable that constantly increases. At some point, it needs to be rolled back to zero to avoid precision errors on shader animations. This setting specifies when (in seconds).
 		</member>
+		<member name="rendering/misc/compatibility/driver_threaded_optimizations" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
+			If set to [code]Disable[/code], graphics driver threaded optimizations will be disabled.
+			[b]Note:[/b] This only takes effect for Nvidia drivers on Windows, where these optimizations are known to cause stuttering in OpenGL games.
+		</member>
 		<member name="rendering/misc/lossless_compression/force_png" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], the texture importer will import lossless textures using the PNG format. Otherwise, it will default to using WebP.
 		</member>
@@ -1734,6 +1738,10 @@
 			This setting determines the maximum distance from a caster that the shadow will appear.
 			This is typically used to ensure that shadows from an object only cast onto a nearby floor.
 			Blob shadows are not subject to occlusion, and can thus spread into areas that may be lit by a different light (for instance in a room below). Keeping their range low helps prevent this problem.
+		</member>
+		<member name="rendering/quality/blob_shadows/transition_duration" type="float" setter="" getter="" default="1.0">
+			Determines the duration (in seconds) for a shadow to fade in or out.
+			Fades will occur when the number of casters exceeds the maximum allowed, in order to prevent flickering.
 		</member>
 		<member name="rendering/quality/depth/hdr" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], allocates the root [Viewport]'s framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1. This must be set to [code]true[/code] for glow rendering to work if [member Environment.glow_hdr_threshold] is greater than or equal to [code]1.0[/code].

@@ -559,7 +559,7 @@ void Image::convert(Format p_new_format) {
 		return;
 	}
 
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot convert image when it is locked.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot convert image when it is locked.");
 
 	if (Ref<Image> new_img = converted(p_new_format)) {
 		bool gen_mipmaps = mipmaps;
@@ -936,7 +936,7 @@ void Image::expand_to_po2(bool p_square) {
 }
 
 void Image::expand(int p_width, int p_height, Color p_padding_color) {
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot modify image when it is locked.");
 	Ref<Image> result = expanded(p_width, p_height, p_padding_color);
 	ERR_FAIL_COND_MSG(result.is_null(), vformat("Failed to expand image from %dx%d to %dx%d (format %d).", width, height, p_width, p_height, format));
 	copy_internals_from(result);
@@ -1016,7 +1016,7 @@ void Image::resize(int p_width, int p_height, Interpolation p_interpolation) {
 Ref<Image> Image::resized(int p_width, int p_height, Interpolation p_interpolation) const {
 	ERR_FAIL_COND_V_MSG(data.size() == 0, Ref<Image>(), "Cannot resize image before creating it, use create() or create_from_data() first.");
 	ERR_FAIL_COND_V_MSG(!_can_modify(format), Ref<Image>(), "Cannot resize in compressed or custom image formats.");
-	ERR_FAIL_COND_V_MSG(write_lock.ptr(), Ref<Image>(), "Cannot resize image when it is locked.");
+	ERR_FAIL_COND_V_MSG(_is_locked(), Ref<Image>(), "Cannot resize image when it is locked.");
 
 	bool mipmap_aware = p_interpolation == INTERPOLATE_TRILINEAR /* || p_interpolation == INTERPOLATE_TRICUBIC */;
 
@@ -1319,7 +1319,7 @@ Ref<Image> Image::resized(int p_width, int p_height, Interpolation p_interpolati
 
 void Image::crop_from_point(int p_x, int p_y, int p_width, int p_height) {
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot crop in compressed or custom image formats.");
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot modify image when it is locked.");
 	ERR_FAIL_COND_MSG(p_x < 0, "Start x position cannot be smaller than 0.");
 	ERR_FAIL_COND_MSG(p_y < 0, "Start y position cannot be smaller than 0.");
 	ERR_FAIL_COND_MSG(p_width <= 0, "Width of image must be greater than 0.");
@@ -1373,6 +1373,7 @@ void Image::crop(int p_width, int p_height) {
 
 void Image::flip_y() {
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot flip_y in compressed or custom image formats.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot flip_y when Image is locked.");
 
 	bool used_mipmaps = has_mipmaps();
 	if (used_mipmaps) {
@@ -1403,6 +1404,7 @@ void Image::flip_y() {
 
 void Image::flip_x() {
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot flip_x in compressed or custom image formats.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot flip_x when Image is locked.");
 
 	bool used_mipmaps = has_mipmaps();
 	if (used_mipmaps) {
@@ -1517,7 +1519,7 @@ static void _generate_po2_mipmap(const Component *p_src, Component *p_dst, uint3
 
 void Image::expand_x2_hq2x() {
 	ERR_FAIL_COND(!_can_modify(format));
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot modify image when it is locked.");
 
 	bool used_mipmaps = has_mipmaps();
 	if (used_mipmaps) {
@@ -1559,7 +1561,7 @@ void Image::expand_x2_hq2x() {
 
 void Image::shrink_x2() {
 	ERR_FAIL_COND(!_can_modify(format));
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot modify image when it is locked.");
 	ERR_FAIL_COND(data.size() == 0);
 
 	if (mipmaps) {
@@ -1685,7 +1687,7 @@ void Image::normalize() {
 Error Image::generate_mipmaps(bool p_renormalize) {
 	ERR_FAIL_COND_V_MSG(!_can_modify(format), ERR_UNAVAILABLE, "Cannot generate mipmaps in compressed or custom image formats.");
 
-	ERR_FAIL_COND_V_MSG(write_lock.ptr(), ERR_UNAVAILABLE, "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_V_MSG(_is_locked(), ERR_UNAVAILABLE, "Cannot modify image when it is locked.");
 
 	ERR_FAIL_COND_V_MSG(format == FORMAT_RGBA4444 || format == FORMAT_RGBA5551, ERR_UNAVAILABLE, "Cannot generate mipmaps in custom image formats.");
 
@@ -1818,7 +1820,7 @@ bool Image::empty() const {
 	return (data.size() == 0);
 }
 
-PoolVector<uint8_t> Image::get_data() const {
+const PoolVector<uint8_t> &Image::get_data() const {
 	return data;
 }
 
@@ -1829,7 +1831,7 @@ void Image::create(int p_width, int p_height, bool p_use_mipmaps, Format p_forma
 			"The Image width specified (" + itos(p_width) + " pixels) cannot be greater than " + itos(MAX_WIDTH) + "pixels.");
 	ERR_FAIL_COND_MSG(p_height > MAX_HEIGHT,
 			"The Image height specified (" + itos(p_height) + " pixels) cannot be greater than " + itos(MAX_HEIGHT) + "pixels.");
-	ERR_FAIL_COND_MSG(write_lock.ptr(), "Cannot create image when it is locked.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot create image when it is locked.");
 	ERR_FAIL_INDEX_MSG(p_format, FORMAT_MAX, "The Image format specified (" + itos(p_format) + ") is out of range. See Image's Format enum.");
 
 	int mm = 0;
@@ -1882,6 +1884,7 @@ void Image::create(int p_width, int p_height, bool p_use_mipmaps, Format p_forma
 }
 
 void Image::create(const char **p_xpm) {
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot create when Image is locked.");
 	int size_width = 0;
 	int size_height = 0;
 	int pixelchars = 0;
@@ -2393,6 +2396,9 @@ void Image::blit_rect(const Ref<Image> &p_src, const Rect2 &p_src_rect, const Po
 	ERR_FAIL_COND(format != p_src->format);
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot blit_rect in compressed or custom image formats.");
 
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot blit_rect when Image is locked.");
+	ERR_FAIL_COND_MSG(p_src->_is_locked(), "Cannot blit_rect when p_src is locked.");
+
 	Rect2i src_rect;
 	Rect2i dest_rect;
 	_get_clipped_src_and_dest_rects(p_src, p_src_rect, p_dest, src_rect, dest_rect);
@@ -2438,6 +2444,10 @@ void Image::blit_rect_mask(const Ref<Image> &p_src, const Ref<Image> &p_mask, co
 	ERR_FAIL_COND_MSG(p_src->width != p_mask->width, "Source image width is different from mask width.");
 	ERR_FAIL_COND_MSG(p_src->height != p_mask->height, "Source image height is different from mask height.");
 	ERR_FAIL_COND(format != p_src->format);
+
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot blit_rect_mask when Image is locked.");
+	ERR_FAIL_COND_MSG(p_src->_is_locked(), "Cannot blit_rect_mask when p_src is locked.");
+	ERR_FAIL_COND_MSG(p_mask->_is_locked(), "Cannot blit_rect_mask when p_mask is locked.");
 
 	Rect2i src_rect;
 	Rect2i dest_rect;
@@ -2590,11 +2600,10 @@ void Image::fill(const Color &p_color) {
 		return;
 	}
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot fill in compressed or custom image formats.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot fill when Image is locked.");
 
 	lock();
-
-	PoolVector<uint8_t>::Write wp = data.write();
-	uint8_t *dst_data_ptr = wp.ptr();
+	uint8_t *dst_data_ptr = write_lock.ptr();
 
 	int pixel_size = get_format_pixel_size(format);
 
@@ -2610,6 +2619,7 @@ void Image::fill_rect(const Rect2 &p_rect, const Color &p_color) {
 		return;
 	}
 	ERR_FAIL_COND_MSG(!_can_modify(format), "Cannot fill rect in compressed or custom image formats.");
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot fill_rect when Image is locked.");
 
 	Rect2i r = Rect2i(0, 0, width, height).clip(p_rect.abs());
 	if (r.has_no_area()) {
@@ -2617,9 +2627,7 @@ void Image::fill_rect(const Rect2 &p_rect, const Color &p_color) {
 	}
 
 	lock();
-
-	PoolVector<uint8_t>::Write wp = data.write();
-	uint8_t *dst_data_ptr = wp.ptr();
+	uint8_t *dst_data_ptr = write_lock.ptr();
 
 	int pixel_size = get_format_pixel_size(format);
 
@@ -3499,6 +3507,8 @@ void Image::srgb_to_linear() {
 		return;
 	}
 
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot srgb_to_linear when Image is locked.");
+
 	static const uint8_t srgb2lin[256] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 22, 22, 23, 23, 24, 24, 25, 26, 26, 27, 27, 28, 29, 29, 30, 31, 31, 32, 33, 33, 34, 35, 36, 36, 37, 38, 38, 39, 40, 41, 42, 42, 43, 44, 45, 46, 47, 47, 48, 49, 50, 51, 52, 53, 54, 55, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 70, 71, 72, 73, 74, 75, 76, 77, 78, 80, 81, 82, 83, 84, 85, 87, 88, 89, 90, 92, 93, 94, 95, 97, 98, 99, 101, 102, 103, 105, 106, 107, 109, 110, 112, 113, 114, 116, 117, 119, 120, 122, 123, 125, 126, 128, 129, 131, 132, 134, 135, 137, 139, 140, 142, 144, 145, 147, 148, 150, 152, 153, 155, 157, 159, 160, 162, 164, 166, 167, 169, 171, 173, 175, 176, 178, 180, 182, 184, 186, 188, 190, 192, 193, 195, 197, 199, 201, 203, 205, 207, 209, 211, 213, 215, 218, 220, 222, 224, 226, 228, 230, 232, 235, 237, 239, 241, 243, 245, 248, 250, 252, 255 };
 
 	ERR_FAIL_COND(format != FORMAT_RGB8 && format != FORMAT_RGBA8);
@@ -3535,6 +3545,8 @@ void Image::premultiply_alpha() {
 	if (format != FORMAT_RGBA8) {
 		return; //not needed
 	}
+
+	ERR_FAIL_COND_MSG(_is_locked(), "Cannot premultiply_alpha when Image is locked.");
 
 	PoolVector<uint8_t>::Write wp = data.write();
 	unsigned char *data_ptr = wp.ptr();
@@ -3702,7 +3714,7 @@ Image::Image() {
 }
 
 Image::~Image() {
-	if (write_lock.ptr()) {
+	if (_is_locked()) {
 		unlock();
 	}
 }

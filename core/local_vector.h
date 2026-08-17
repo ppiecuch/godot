@@ -33,7 +33,6 @@
 
 #include "core/error_macros.h"
 #include "core/os/memory.h"
-#include "core/pool_vector.h"
 #include "core/sort_array.h"
 #include "core/span.h"
 #include "core/vector.h"
@@ -47,6 +46,64 @@ protected:
 	U count = 0;
 	U capacity = 0;
 	T *data = nullptr;
+
+	static constexpr bool RUN_CONSTRUCTORS = !std::is_trivially_constructible<T>::value && !force_trivial;
+	static constexpr bool RUN_DESTRUCTORS = !std::is_trivially_destructible<T>::value && !force_trivial;
+
+	void _realloc(U p_capacity) {
+		if (p_capacity == 0) {
+			if (data) {
+				memfree(data);
+				data = nullptr;
+			}
+			capacity = 0;
+			return;
+		}
+
+		// Guard against memrealloc for no reason.
+		// The logic should prevent this.
+		DEV_ASSERT(p_capacity != capacity);
+
+		// Strictly speaking, for modern c++, we should use std::move and destruct
+		// elements after moving to a new memalloced array.
+		// HOWEVER, Godot makes heavy use of structs that are trivially copyable,
+		// and don't contain move semantics, which would result in double deletes if
+		// we did this.
+		// So we maintain the backward compatible method here.
+		data = (T *)memrealloc(data, p_capacity * sizeof(T));
+		CRASH_COND_MSG(!data, "Out of memory");
+		capacity = p_capacity;
+	}
+
+	template <bool p_init>
+	void _resize(U p_size) {
+		if (p_size < count) {
+			if constexpr (RUN_DESTRUCTORS) {
+				for (U i = p_size; i < count; i++) {
+					data[i].~T();
+				}
+			}
+
+			// Compiler warning solve for signed U.
+			// This should be compiled out for unsigned.
+			if constexpr (std::is_signed<U>::value) {
+				CRASH_COND(p_size < 0);
+			}
+			count = p_size;
+		} else if (p_size > count) {
+			if (unlikely(p_size > capacity)) {
+				reserve(p_size);
+			}
+			if constexpr (p_init) {
+				for (U i = count; i < p_size; i++) {
+					memnew_placement(&data[i], T);
+				}
+			} else {
+				static_assert(std::is_trivially_destructible<T>::value, "T must be trivially destructible to resize uninitialized");
+			}
+			count = p_size;
+		}
+	}
 
 public:
 	// basic c++11 iterator
@@ -71,30 +128,21 @@ public:
 	ConstIterator begin() const { return ConstIterator(data, 0); }
 	ConstIterator end() const { return ConstIterator(data, size()); }
 
-	T *ptr() {
+	T *ptr() _LIFETIME_BOUND_ {
 		return data;
 	}
 
-	const T *ptr() const {
+	const T *ptr() const _LIFETIME_BOUND_ {
 		return data;
 	}
 
 	_FORCE_INLINE_ void push_back(T p_elem) {
 		if (unlikely(count == capacity)) {
-			if (capacity == 0) {
-				capacity = 1;
-			} else {
-				capacity <<= 1;
-			}
-			data = (T *)memrealloc(data, capacity * sizeof(T));
-			CRASH_COND_MSG(!data, "Out of memory");
+			U new_capacity = capacity == 0 ? 1 : capacity << 1;
+			_realloc(new_capacity);
 		}
 
-		if (!std::is_trivially_constructible<T>::value && !force_trivial) {
-			memnew_placement(&data[count++], T(std::move(p_elem)));
-		} else {
-			data[count++] = std::move(p_elem);
-		}
+		memnew_placement(&data[count++], T(std::move(p_elem)));
 	}
 
 	void remove(U p_index) {
@@ -103,7 +151,7 @@ public:
 		for (U i = p_index; i < count; i++) {
 			data[i] = std::move(data[i + 1]);
 		}
-		if (!std::is_trivially_destructible<T>::value && !force_trivial) {
+		if constexpr (RUN_DESTRUCTORS) {
 			data[count].~T();
 		}
 	}
@@ -111,12 +159,12 @@ public:
 	// Removes the item copying the last value into the position of the one to
 	// remove. It's generally faster than `remove`.
 	void remove_unordered(U p_index) {
-		ERR_FAIL_INDEX(p_index, count);
+		ERR_FAIL_UNSIGNED_INDEX(p_index, count);
 		count--;
 		if (count > p_index) {
 			data[p_index] = std::move(data[count]);
 		}
-		if (!std::is_trivially_destructible<T>::value && !force_trivial) {
+		if constexpr (RUN_DESTRUCTORS) {
 			data[count].~T();
 		}
 	}
@@ -139,7 +187,7 @@ public:
 
 	U erase_multiple_unordered(const T &p_val) {
 		U from = 0;
-		U count = 0;
+		U removed = 0;
 		while (true) {
 			int64_t idx = find(p_val, from);
 
@@ -148,9 +196,9 @@ public:
 			}
 			remove_unordered(idx);
 			from = idx;
-			count++;
+			removed++;
 		}
-		return count;
+		return removed;
 	}
 
 	void invert() {
@@ -160,7 +208,7 @@ public:
 	}
 
 	_FORCE_INLINE_ void clear() { resize(0); }
-	_FORCE_INLINE_ void reset() {
+	void reset() {
 		clear();
 		if (data) {
 			memfree(data);
@@ -171,43 +219,36 @@ public:
 	_FORCE_INLINE_ bool empty() const { return count == 0; }
 	_FORCE_INLINE_ U get_capacity() const { return capacity; }
 
-	_FORCE_INLINE_ void reserve(U p_size, bool p_allow_shrink = false) {
+	void reserve(U p_size, bool p_allow_shrink = false) {
+		if (p_size == 0) {
+			if (p_allow_shrink && empty() && capacity) {
+				reset();
+			}
+			return;
+		}
 		p_size = nearest_power_of_2_templated(p_size);
 		if (!p_allow_shrink ? p_size > capacity : ((p_size >= count) && (p_size != capacity))) {
-			capacity = p_size;
-			data = (T *)memrealloc(data, capacity * sizeof(T));
-			CRASH_COND_MSG(!data, "Out of memory");
+			_realloc(p_size);
 		}
 	}
 
 	_FORCE_INLINE_ U size() const { return count; }
-	void resize(U p_size) {
-		if (p_size < count) {
-			if (!std::is_trivially_destructible<T>::value && !force_trivial) {
-				for (U i = p_size; i < count; i++) {
-					data[i].~T();
-				}
-			}
-			count = p_size;
-		} else if (p_size > count) {
-			if (unlikely(p_size > capacity)) {
-				if (capacity == 0) {
-					capacity = 1;
-				}
-				while (capacity < p_size) {
-					capacity <<= 1;
-				}
-				data = (T *)memrealloc(data, capacity * sizeof(T));
-				CRASH_COND_MSG(!data, "Out of memory");
-			}
-			if (!std::is_trivially_constructible<T>::value && !force_trivial) {
-				for (U i = count; i < p_size; i++) {
-					memnew_placement(&data[i], T);
-				}
-			}
-			count = p_size;
-		}
+
+	// Resize the vector.
+	// Elements are initialized (or not) depending on what the default C++ behavior for T is.
+	// Note: If force_trivial is set, this will behave like resize_uninitialized instead.
+	_FORCE_INLINE_ void resize(U p_size) {
+		_resize<RUN_CONSTRUCTORS>(p_size);
 	}
+
+	// Resize and set new values to 0 / false / nullptr.
+	_FORCE_INLINE_ void resize_initialized(U p_size) { _resize<true>(p_size); }
+
+	// Resize and keep memory uninitialized.
+	// This means that any newly added elements have an unknown value, and are expected to be set after the `resize_uninitialized` call.
+	// This is only available for trivially destructible types (otherwise, trivial resize might be UB).
+	_FORCE_INLINE_ void resize_uninitialized(U p_size) { _resize<false>(p_size); }
+
 	_FORCE_INLINE_ const T &operator[](U p_index) const {
 		CRASH_BAD_UNSIGNED_INDEX(p_index, count);
 		return data[p_index];
@@ -247,9 +288,18 @@ public:
 			push_back(std::move(p_val));
 		} else {
 			resize(count + 1);
-			for (U i = count - 1; i > p_pos; i--) {
-				data[i] = std::move(data[i - 1]);
+
+			if constexpr (std::is_trivially_copyable<T>::value || force_trivial) {
+				U num_elements = count - 1 - p_pos;
+				if (num_elements) {
+					memmove(&data[p_pos + 1], &data[p_pos], num_elements * sizeof(T));
+				}
+			} else {
+				for (U i = count - 1; i > p_pos; i--) {
+					data[i] = std::move(data[i - 1]);
+				}
 			}
+
 			data[p_pos] = std::move(p_val);
 		}
 	}
@@ -288,13 +338,8 @@ public:
 	}
 
 	void ordered_insert(T p_val) {
-		U i;
-		for (i = 0; i < count; i++) {
-			if (p_val < data[i]) {
-				break;
-			}
-		}
-		insert(i, p_val);
+		U idx = span().bisect(p_val, false);
+		insert(idx, std::move(p_val));
 	}
 
 	_FORCE_INLINE_ explicit operator Vector<T>() const {
@@ -305,30 +350,23 @@ public:
 		return ret;
 	}
 
-	_FORCE_INLINE_ explicit operator PoolVector<T>() const {
-		return to_pool_array();
-	}
-
 	Vector<uint8_t> to_byte_array() const { //useful to pass stuff to gpu or variant
 		Vector<uint8_t> ret;
-		ret.resize(count * sizeof(T));
-		uint8_t *w = ret.ptrw();
-		memcpy(w, data, sizeof(T) * count);
+		if (count > 0) {
+			ret.resize(count * sizeof(T));
+			uint8_t *w = ret.ptrw();
+			memcpy(w, data, sizeof(T) * count);
+		}
 		return ret;
 	}
 
-	_FORCE_INLINE_ Span<T> span() const { return Span(data, count); }
-	_FORCE_INLINE_ operator Span<T>() const { return span(); }
-	PoolVector<T> to_pool_array() const {
-		PoolVector<T> pl;
-		if (size()) {
-			pl.resize(size());
-			typename PoolVector<T>::Write w = pl.write();
-			T *dest = w.ptr();
-			memcpy(dest, data, sizeof(T) * count);
-		}
-		return pl;
+	_FORCE_INLINE_ Span<T> span() const _LIFETIME_BOUND_ {
+		// Ensure span is unsigned.
+		// NOOP for default LocalVector, but converts any LocalVectors with signed U.
+		using UnsignedType = std::make_unsigned_t<U>;
+		return Span<T>(data, static_cast<UnsignedType>(count));
 	}
+	_FORCE_INLINE_ operator Span<T>() const _LIFETIME_BOUND_ { return span(); }
 
 	_FORCE_INLINE_ LocalVector() {}
 	_FORCE_INLINE_ LocalVector(U p_size, const T *p_src = nullptr) {
@@ -339,31 +377,17 @@ public:
 	}
 	_FORCE_INLINE_ LocalVector(const LocalVector &p_from) {
 		resize(p_from.size());
-		for (U i = 0; i < p_from.count; i++) {
-			data[i] = p_from.data[i];
-		}
+		copy_arr(ptr(), p_from.ptr(), count);
 	}
 
 	explicit LocalVector(const Span<T> &p_from) {
 		resize(p_from.size());
-		for (U i = 0; i < count; i++) {
-			data[i] = p_from[i];
-		}
+		copy_arr(ptr(), p_from.ptr(), count);
 	}
 
 	LocalVector(const Vector<T> &p_from) {
 		resize(p_from.size());
-		for (U i = 0; i < count; i++) {
-			data[i] = p_from[i];
-		}
-	}
-
-	LocalVector(const PoolVector<T> &p_from) {
-		resize(p_from.size());
-		typename PoolVector<T>::Read r = p_from.read();
-		for (U i = 0; i < count; i++) {
-			data[i] = r[i];
-		}
+		copy_arr(ptr(), p_from.ptr(), count);
 	}
 
 	LocalVector(LocalVector &&p_from) {
@@ -376,17 +400,19 @@ public:
 		p_from.capacity = 0;
 	}
 
-	inline LocalVector &operator=(const LocalVector &p_from) {
-		resize(p_from.size());
-		for (U i = 0; i < p_from.count; i++) {
-			data[i] = p_from.data[i];
+	LocalVector &operator=(const LocalVector &p_from) {
+		if (unlikely(this == &p_from)) {
+			return *this;
 		}
+
+		resize(p_from.size());
+		copy_arr(ptr(), p_from.ptr(), count);
 		return *this;
 	}
 
-	inline void operator=(LocalVector &&p_from) {
+	LocalVector &operator=(LocalVector &&p_from) {
 		if (unlikely(this == &p_from)) {
-			return;
+			return *this;
 		}
 		reset();
 
@@ -397,33 +423,35 @@ public:
 		p_from.data = nullptr;
 		p_from.count = 0;
 		p_from.capacity = 0;
-	}
-
-	inline LocalVector &operator=(const Vector<T> &p_from) {
-		resize(p_from.size());
-		for (U i = 0; i < count; i++) {
-			data[i] = p_from[i];
-		}
 		return *this;
 	}
 
-	inline void operator=(Vector<T> &&p_from) {
+	LocalVector &operator=(Vector<T> &&p_from) {
 		resize(p_from.size());
 		for (U i = 0; i < count; i++) {
 			data[i] = std::move(p_from[i]);
 		}
+		return *this;
 	}
 
-	inline LocalVector &operator=(const PoolVector<T> &p_from) {
+	LocalVector &operator=(const Vector<T> &p_from) {
 		resize(p_from.size());
-		typename PoolVector<T>::Read r = p_from.read();
-		for (U i = 0; i < count; i++) {
-			data[i] = r[i];
+		copy_arr(ptr(), p_from.ptr(), count);
+		return *this;
+	}
+
+	LocalVector &operator=(const Span<T> &p_from) {
+		if (data && p_from.ptr() >= data && p_from.ptr() < data + capacity) {
+			LocalVector temp(p_from);
+			*this = std::move(temp);
+		} else {
+			resize(p_from.size());
+			copy_arr(ptr(), p_from.ptr(), count);
 		}
 		return *this;
 	}
 
-	_FORCE_INLINE_ ~LocalVector() {
+	~LocalVector() {
 		if (data) {
 			reset();
 		}
@@ -432,7 +460,6 @@ public:
 
 // Integer default version
 template <class T, class I = int32_t, bool force_trivial = false>
-class LocalVectori : public LocalVector<T, I, force_trivial> {
-};
+using LocalVectori = LocalVector<T, I, force_trivial>;
 
 #endif // LOCAL_VECTOR_H

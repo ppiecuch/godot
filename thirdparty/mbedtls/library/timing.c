@@ -13,10 +13,8 @@
 
 #if !defined(MBEDTLS_TIMING_ALT)
 
-#if !defined(unix) && !defined(__unix__) && !defined(__unix) &&            \
-		!defined(__APPLE__) && !defined(_WIN32) && !defined(__QNXNTO__) && \
-		!defined(__HAIKU__) && !defined(__midipix__) &&                    \
-		!defined(__3DS__) && !defined(__psp__) && !defined(__psp2__)
+#if !defined(_WIN32) && !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) \
+	&& !defined(__3DS__) && !defined(__psp__) && !defined(__psp2__)
 #error "This module only works on Unix and Windows, see MBEDTLS_TIMING_C in mbedtls_config.h"
 #endif
 

@@ -155,7 +155,7 @@ Ref<Image> ImageTools::neighbor_tracing(const Image *p_src) {
 void ImageTools::fix_alpha_edges(Image *p_src) {
 	ERR_FAIL_NULL(p_src);
 	ERR_FAIL_COND(!p_src->_can_modify(p_src->format));
-	ERR_FAIL_COND_MSG(p_src->write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(p_src->_is_locked(), "Cannot modify image when it is locked.");
 
 	if (p_src->data.size() == 0) {
 		return;
@@ -179,6 +179,8 @@ void ImageTools::fix_alpha_edges(Image *p_src) {
 	const int width = p_src->width;
 	const int height = p_src->height;
 
+	uint8_t closest_color[3]{};
+
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			const uint8_t *rptr = &srcptr[(i * width + j) * 4];
@@ -189,7 +191,6 @@ void ImageTools::fix_alpha_edges(Image *p_src) {
 			}
 
 			int closest_dist = max_dist;
-			uint8_t closest_color[3];
 
 			int from_x = MAX(0, j - max_radius);
 			int to_x = MIN(width - 1, j + max_radius);
@@ -230,7 +231,7 @@ void ImageTools::fix_alpha_edges(Image *p_src) {
 void ImageTools::fix_tex_bleed(Image *p_src) {
 	ERR_FAIL_NULL(p_src);
 	ERR_FAIL_COND(!p_src->_can_modify(p_src->format));
-	ERR_FAIL_COND_MSG(p_src->write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(p_src->_is_locked(), "Cannot modify image when it is locked.");
 
 	if (p_src->data.size() == 0) {
 		return;
@@ -345,6 +346,7 @@ void ImageTools::fix_tex_bleed(Image *p_src) {
 
 void ImageTools::normalmap_to_xy(Image *p_src) {
 	ERR_FAIL_NULL(p_src);
+	ERR_FAIL_COND_MSG(p_src->_is_locked(), "Cannot normalmap_to_xy when Image is locked.");
 
 	p_src->convert(Image::FORMAT_RGBA8);
 
@@ -366,7 +368,7 @@ void ImageTools::normalmap_to_xy(Image *p_src) {
 void ImageTools::bumpmap_to_normalmap(Image *p_src, float bump_scale) {
 	ERR_FAIL_NULL(p_src);
 	ERR_FAIL_COND(!p_src->_can_modify(p_src->format));
-	ERR_FAIL_COND_MSG(p_src->write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(p_src->_is_locked(), "Cannot modify image when it is locked.");
 	p_src->clear_mipmaps();
 	p_src->convert(Image::FORMAT_RF);
 
@@ -987,7 +989,7 @@ Vector<Ref<Image>> ImageTools::extract_channels(const Image *p_src, bool p_as_gr
 Ref<Image> ImageTools::merge_channels(Image *p_dest, const Ref<Image> &p_r, const Ref<Image> &p_g, const Ref<Image> &p_b, const Ref<Image> &p_a) {
 	ERR_FAIL_NULL_V(p_dest, Ref<Image>());
 	ERR_FAIL_COND_V(!p_dest->_can_modify(p_dest->format), Ref<Image>());
-	ERR_FAIL_COND_V_MSG(p_dest->write_lock.ptr(), Ref<Image>(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_V_MSG(p_dest->_is_locked(), Ref<Image>(), "Cannot modify image when it is locked.");
 
 	const int w = p_dest->get_width();
 	const int h = p_dest->get_height();
@@ -1041,7 +1043,7 @@ void ImageTools::convolve(Image *p_src, const int *p_kernel, int p_krow, int p_k
 	ERR_FAIL_COND(p_src->empty());
 	ERR_FAIL_COND(!(p_krow & 1) || !(p_kcol & 1)); // Must be odd.
 	ERR_FAIL_COND(p_krow < 3 || p_kcol < 3);
-	ERR_FAIL_COND_MSG(p_src->write_lock.ptr(), "Cannot modify image when it is locked.");
+	ERR_FAIL_COND_MSG(p_src->_is_locked(), "Cannot modify image when it is locked.");
 
 	// Compute kernel weight (sum of all elements).
 	int weight = 0;

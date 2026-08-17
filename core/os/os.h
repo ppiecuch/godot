@@ -43,6 +43,14 @@
 #include <stdlib.h>
 
 class OS {
+public:
+	enum GraphicsDriverThreadedOptimizations {
+		GRAPHICS_DRIVER_THREADED_OPTIMIZATIONS_DISABLED,
+		GRAPHICS_DRIVER_THREADED_OPTIMIZATIONS_ENABLED,
+		GRAPHICS_DRIVER_THREADED_OPTIMIZATIONS_DEFAULT,
+	};
+
+private:
 	static OS *singleton;
 	static uint64_t target_ticks;
 	String _execpath;
@@ -65,6 +73,7 @@ class OS {
 	bool _use_vsync;
 	bool _vsync_via_compositor;
 	bool _delta_smoothing_enabled;
+	GraphicsDriverThreadedOptimizations _graphics_driver_threaded_optimizations = GRAPHICS_DRIVER_THREADED_OPTIMIZATIONS_DEFAULT;
 
 	char *last_error;
 
@@ -259,6 +268,8 @@ public:
 	virtual String get_tablet_driver_name(int p_driver) const { return ""; };
 	virtual String get_current_tablet_driver() const { return ""; };
 	virtual void set_current_tablet_driver(const String &p_driver){};
+
+	virtual Error get_entropy(uint8_t *r_buffer, int p_bytes) = 0; // Should return cryptographically-safe random bytes.
 
 	virtual PoolStringArray get_connected_midi_inputs();
 	virtual void open_midi_inputs();
@@ -685,6 +696,10 @@ public:
 	virtual void benchmark_begin_measure(const String &p_what);
 	virtual void benchmark_end_measure(const String &p_what);
 	virtual void benchmark_dump();
+
+	// Allow overrides "disable" and can be specified via the command line.
+	GraphicsDriverThreadedOptimizations _get_graphics_driver_threaded_optimizations() const { return _graphics_driver_threaded_optimizations; }
+	void _set_graphics_driver_threaded_optimizations(GraphicsDriverThreadedOptimizations p_value) { _graphics_driver_threaded_optimizations = p_value; }
 
 	virtual void process_and_drop_events() {}
 	OS();

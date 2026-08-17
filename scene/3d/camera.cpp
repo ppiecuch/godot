@@ -70,22 +70,28 @@ void Camera::fti_update_servers_property() {
 	if (camera.is_valid()) {
 		float f = Engine::get_singleton()->get_physics_interpolation_fraction();
 
+		bool res_fov = fov.interpolate(f);
+		bool res_near = near.interpolate(f);
+		bool res_far = far.interpolate(f);
+		bool res_size = size.interpolate(f);
+		bool res_frustum_offset = frustum_offset.interpolate(f);
+
+		// If there have been changes due to interpolated values, OR we are forcing an update, update the servers.
 		switch (mode) {
 			default:
 				break;
 			case PROJECTION_PERSPECTIVE: {
-				// If there have been changes due to interpolation, update the servers.
-				if (fov.interpolate(f) || near.interpolate(f) || far.interpolate(f)) {
+				if (res_fov || res_near || res_far) {
 					VisualServer::get_singleton()->camera_set_perspective(camera, fov.interpolated(), near.interpolated(), far.interpolated());
 				}
 			} break;
 			case PROJECTION_ORTHOGONAL: {
-				if (size.interpolate(f) || near.interpolate(f) || far.interpolate(f)) {
+				if (res_size || res_near || res_far) {
 					VisualServer::get_singleton()->camera_set_orthogonal(camera, size.interpolated(), near.interpolated(), far.interpolated());
 				}
 			} break;
 			case PROJECTION_FRUSTUM: {
-				if (size.interpolate(f) || frustum_offset.interpolate(f) || near.interpolate(f) || far.interpolate(f)) {
+				if (res_size || res_frustum_offset || res_near || res_far) {
 					VisualServer::get_singleton()->camera_set_frustum(camera, size.interpolated(), frustum_offset.interpolated(), near.interpolated(), far.interpolated());
 				}
 			} break;
@@ -478,8 +484,9 @@ bool Camera::safe_unproject_position(const Vector3 &p_pos, Point2 &r_result) con
 
 	// Here we return false and let the calling routine handle this error condition.
 	if (Math::absf(p.d) < CMP_EPSILON) {
-		// Bodge some kind of result at infinity from the viewport center.
-		r_result = Point2();
+		// Establish the viewport center as our baseline
+		Point2 center = viewport_size * 0.5f;
+		r_result = center;
 
 		// The viewport size here is irrelevant, we just want a high number
 		// (representing infinity) but not actually close to infinity to prevent
@@ -487,14 +494,17 @@ bool Camera::safe_unproject_position(const Vector3 &p_pos, Point2 &r_result) con
 		// Suffice is for them to be WAY off the main viewport.
 		const float SOME_HIGH_VALUE = 100000.0f;
 		if (p.normal.x > 0) {
-			r_result.x = SOME_HIGH_VALUE;
+			r_result.x += SOME_HIGH_VALUE;
 		} else if (p.normal.x < 0) {
-			r_result.x = -SOME_HIGH_VALUE;
+			r_result.x -= SOME_HIGH_VALUE;
 		}
+
+		// +y is down in 2D viewport,
+		// whereas in 3D, +y is up, so we need to flip here.
 		if (p.normal.y > 0) {
-			r_result.y = SOME_HIGH_VALUE;
+			r_result.y -= SOME_HIGH_VALUE;
 		} else if (p.normal.y < 0) {
-			r_result.y = -SOME_HIGH_VALUE;
+			r_result.y += SOME_HIGH_VALUE;
 		}
 
 		return false;

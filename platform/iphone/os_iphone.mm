@@ -95,6 +95,11 @@ OSIPhone *OSIPhone::get_singleton() {
 	return (OSIPhone *)OS::get_singleton();
 };
 
+Error OSIPhone::get_entropy(uint8_t *r_buffer, int p_bytes) {
+	int status = SecRandomCopyBytes(kSecRandomDefault, p_bytes, r_buffer);
+	return status == errSecSuccess ? OK : FAILED;
+}
+
 bool OSIPhone::tts_is_speaking() const {
 	ERR_FAIL_COND_V_MSG(!tts, false, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
 	ERR_FAIL_COND_V(!tts, false);
@@ -545,9 +550,7 @@ void OSIPhone::show_virtual_keyboard(const String &p_existing_text, const Rect2 
 		} break;
 		case KEYBOARD_TYPE_PASSWORD: {
 			AppDelegate.viewController.keyboardView.keyboardType = UIKeyboardTypeDefault;
-			if (@available(iOS 11.0, *)) {
-				AppDelegate.viewController.keyboardView.textContentType = UITextContentTypePassword;
-			}
+			AppDelegate.viewController.keyboardView.textContentType = UITextContentTypePassword;
 		} break;
 		case KEYBOARD_TYPE_URL: {
 			AppDelegate.viewController.keyboardView.keyboardType = UIKeyboardTypeWebSearch;
@@ -678,22 +681,18 @@ float OSIPhone::get_screen_refresh_rate(int p_screen) const {
 }
 
 Rect2 OSIPhone::get_window_safe_area() const {
-	if (@available(iOS 11, *)) {
-		UIEdgeInsets insets = UIEdgeInsetsZero;
-		UIView *view = AppDelegate.viewController.godotView;
+	UIEdgeInsets insets = UIEdgeInsetsZero;
+	UIView *view = AppDelegate.viewController.godotView;
 
-		if ([view respondsToSelector:@selector(safeAreaInsets)]) {
-			insets = [view safeAreaInsets];
-		}
-
-		float scale = [UIScreen mainScreen].nativeScale;
-		Size2i insets_position = Size2i(insets.left, insets.top) * scale;
-		Size2i insets_size = Size2i(insets.left + insets.right, insets.top + insets.bottom) * scale;
-
-		return Rect2i(insets_position, get_window_size() - insets_size);
-	} else {
-		return Rect2i(Size2i(0, 0), get_window_size());
+	if ([view respondsToSelector:@selector(safeAreaInsets)]) {
+		insets = [view safeAreaInsets];
 	}
+
+	float scale = [UIScreen mainScreen].nativeScale;
+	Size2i insets_position = Size2i(insets.left, insets.top) * scale;
+	Size2i insets_size = Size2i(insets.left + insets.right, insets.top + insets.bottom) * scale;
+
+	return Rect2i(insets_position, get_window_size() - insets_size);
 }
 
 bool OSIPhone::has_touchscreen_ui_hint() const {
