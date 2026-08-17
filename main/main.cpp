@@ -57,6 +57,9 @@
 #include "main/performance.h"
 #include "main/splash.gen.h"
 #include "main/tests/test_main.h"
+#ifdef GD_INAPP_CONSOLE
+#include "scene/debugconsole/console_logger.h"
+#endif
 #include "modules/modules_enabled.gen.h"
 #include "modules/register_module_types.h"
 #include "platform/register_platform_apis.h"
@@ -1254,6 +1257,12 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		int max_files = GLOBAL_GET("logging/file_logging/max_log_files");
 		OS::get_singleton()->add_logger(memnew(RotatedFileLogger(base_path, max_files)));
 	}
+
+#ifdef GD_INAPP_CONSOLE
+	// Everything the engine logs also lands on the LOG page of the in-app console. Only Main
+	// may register loggers, and the CompositeLogger takes ownership, hence no delete here.
+	OS::get_singleton()->add_logger(memnew(ConsoleLogger));
+#endif
 
 	if (main_args.size() == 0 && String(GLOBAL_DEF("application/run/main_scene", "")) == "") {
 #ifdef TOOLS_ENABLED

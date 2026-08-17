@@ -65,6 +65,12 @@ protected:
 	String fix_path(String p_path) const;
 	bool next_is_dir;
 
+	bool include_navigational = true;
+	bool include_hidden = true;
+
+	// The raw platform enumeration; get_next() applies the filtering on top of it.
+	virtual String _get_next() = 0;
+
 	template <class T>
 	static DirAccess *_create_builtin() {
 		return memnew(T);
@@ -72,7 +78,17 @@ protected:
 
 public:
 	virtual Error list_dir_begin() = 0; ///< This starts dir listing
-	virtual String get_next() = 0;
+
+	// Backported from Godot 4: the navigational ("." / "..") and hidden entries are filtered
+	// out by get_next() itself according to these flags, so every C++ caller gets the same
+	// behaviour the GDScript `Directory` has always had. Both default to "include", which is
+	// what the unfiltered platform implementations used to do.
+	void set_include_navigational(bool p_enable) { include_navigational = p_enable; }
+	bool get_include_navigational() const { return include_navigational; }
+	void set_include_hidden(bool p_enable) { include_hidden = p_enable; }
+	bool get_include_hidden() const { return include_hidden; }
+
+	String get_next(); ///< next entry honouring the two flags above, "" when the list ends
 	virtual bool current_is_dir() const = 0;
 	virtual bool current_is_hidden() const = 0;
 

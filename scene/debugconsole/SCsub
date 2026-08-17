@@ -2,7 +2,8 @@
 
 Import("env")
 
-if not env["production"]:
+# Always enabled for `debug`/`release_debug` targets, opt-in for `release`.
+# See the `inapp_console` option in SConstruct and CONSOLE.md section 13.
+if env["inapp_console"]:
     env.add_source_files(env.scene_sources, "*.cpp")
     env.add_source_files(env.scene_sources, "*.c")
-    env.Append(CPPDEFINES=["GD_INAPP_CONSOLE"])

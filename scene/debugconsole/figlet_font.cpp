@@ -54,8 +54,9 @@ Banner::Banner(
 		unsigned _FontSize,
 		PrintMode _PrintMode,
 		const char *_MappingFrom,
-		const char *_MappingTo) :
-		characters(_characters), Hardblank(_Hardblank), Height(_Height), FontMaxLen(_FontMaxLen), FontSize(_FontSize), charPosition(0), mappingFrom(_MappingFrom), mappingTo(_MappingTo), printMode(_PrintMode) {
+		const char *_MappingTo,
+		const char *_MappingBank1) :
+		characters(_characters), Hardblank(_Hardblank), Height(_Height), FontMaxLen(_FontMaxLen), FontSize(_FontSize), charPosition(0), mappingFrom(_MappingFrom), mappingTo(_MappingTo), mappingBank1(_MappingBank1), printMode(_PrintMode) {
 	std::fill(charToTable, charToTable + maxTableSize, 0); // caratteri non noti mappati in spazi
 	std::fill(rspaces, rspaces + Height, 0);
 	for (unsigned i = 0; i < FontSize; ++i) {
@@ -331,18 +332,10 @@ void Banner::fillForPrint(char const message[]) {
 		} while (*p++ != '\0');
 	}
 
-	// process character mapping
-	if (mappingFrom && mappingTo) {
-		for (unsigned i = 0; i < Height; ++i) {
-			char *p = lines[i];
-			do {
-				for (unsigned k = 0; mappingFrom[k] && mappingTo[k]; k++) {
-					if (*p == mappingFrom[k])
-						*p = mappingTo[k];
-				}
-			} while (*p++ != '\0');
-		}
-	}
+	// The placeholder mapping is deliberately *not* applied here: resolving a placeholder
+	// may switch glyph bank, which needs an escape byte in the output, and every routine
+	// above counts exactly one byte per output column. The consumer resolves it instead,
+	// see TextConsole::logf() and placeholderCodes().
 }
 
 // ---------------------------------------------------------------------------

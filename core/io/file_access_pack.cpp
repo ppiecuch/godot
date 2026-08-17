@@ -388,7 +388,7 @@ Error DirAccessPack::list_dir_begin() {
 	return OK;
 }
 
-String DirAccessPack::get_next() {
+String DirAccessPack::_get_next() {
 	if (list_dirs.size()) {
 		cdir = true;
 		String d = list_dirs.front()->get();

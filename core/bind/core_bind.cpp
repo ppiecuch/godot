@@ -2581,8 +2581,8 @@ Error _Directory::open(const String &p_path) {
 Error _Directory::list_dir_begin(bool p_skip_navigational, bool p_skip_hidden) {
 	ERR_FAIL_COND_V_MSG(!d, ERR_UNCONFIGURED, "Directory must be opened before use.");
 
-	_list_skip_navigational = p_skip_navigational;
-	_list_skip_hidden = p_skip_hidden;
+	d->set_include_navigational(!p_skip_navigational);
+	d->set_include_hidden(!p_skip_hidden);
 
 	return d->list_dir_begin();
 }
@@ -2590,11 +2590,8 @@ Error _Directory::list_dir_begin(bool p_skip_navigational, bool p_skip_hidden) {
 String _Directory::get_next() {
 	ERR_FAIL_COND_V_MSG(!d, "", "Directory must be opened before use.");
 
-	String next = d->get_next();
-	while (next != "" && ((_list_skip_navigational && (next == "." || next == "..")) || (_list_skip_hidden && d->current_is_hidden()))) {
-		next = d->get_next();
-	}
-	return next;
+	// DirAccess applies the skip flags handed to it by list_dir_begin().
+	return d->get_next();
 }
 bool _Directory::current_is_dir() const {
 	ERR_FAIL_COND_V_MSG(!d, false, "Directory must be opened before use.");

@@ -657,7 +657,11 @@ AcceptDialog *AudioStreamSfxr::load_ui() {
 }
 
 void AudioStreamSfxr::open_ui() {
-	dlg->popup_centered_ratio(0.25);
+	// load_ui() leaves dlg null when the embedded scene fails to parse or is not an
+	// AcceptDialog, and the menu item that lands here is added regardless.
+	if (dlg) {
+		dlg->popup_centered_ratio(0.25);
+	}
 }
 #endif // TOOLS_ENABLED
 
@@ -665,6 +669,7 @@ AudioStreamSfxr::AudioStreamSfxr() {
 	_dirty = true;
 	loop = false;
 	loop_offset = 0;
+	dlg = nullptr;
 	sfx_voice.ResetParams();
 }
 

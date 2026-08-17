@@ -69,7 +69,9 @@ private:
 
 	void _update_voice();
 
-	AcceptDialog *dlg;
+	// Owned by the editor base control once SfxrEditorPlugin adds it as a child, so this is
+	// only a back-reference. It must start null because load_ui() branches on it.
+	AcceptDialog *dlg = nullptr;
 
 	_FORCE_INLINE_ static double rnd(double limit) { return Math::random(0.0, limit); }
 	_FORCE_INLINE_ static float rnd(float limit) { return Math::random(0.0f, limit); }

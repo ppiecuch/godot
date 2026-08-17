@@ -339,6 +339,9 @@ public:
 	}
 
 	_FORCE_INLINE_ bool is_inside_tree() const { return data.inside_tree; }
+	// True while this node iterates its own children (ready/notification propagation), when
+	// add_child()/move_child() would be rejected and have to be deferred.
+	_FORCE_INLINE_ bool is_blocked() const { return data.blocked > 0; }
 
 	bool is_a_parent_of(const Node *p_node) const;
 	bool is_greater_than(const Node *p_node) const;

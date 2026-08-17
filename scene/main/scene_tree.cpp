@@ -36,6 +36,7 @@
 #include "core/os/dir_access.h"
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
+#include "core/os/secondary_display.h"
 #include "core/print_string.h"
 #include "core/project_settings.h"
 #include "core/variant_parser.h"
@@ -464,6 +465,17 @@ void SceneTree::input_event(const Ref<InputEvent> &p_event) {
 
 	input_handled = false;
 
+#ifdef GD_INAPP_CONSOLE
+	if (_console_toggle_input(p_event)) {
+		// Swallow the combo entirely so the running game never sees it.
+		input_handled = true;
+		_flush_ugc();
+		root_lock--;
+		_call_idle_callbacks();
+		return;
+	}
+#endif
+
 	// Don't make const ref unless you can find and fix what caused GH-34691.
 	Ref<InputEvent> ev = p_event;
 
@@ -649,6 +661,10 @@ bool SceneTree::idle(float p_time) {
 	}
 
 	root_lock++;
+
+#ifdef GD_INAPP_CONSOLE
+	_console_poll_secondary();
+#endif
 
 	if (MainLoop::idle(p_time)) {
 		_quit = true;
@@ -1538,6 +1554,7 @@ void SceneTree::_change_scene(Node *p_to) {
 	if (p_to) {
 		current_scene = p_to;
 		root->add_child(p_to);
+		_console_raise();
 	}
 }
 
@@ -1570,6 +1587,7 @@ Error SceneTree::reload_current_scene() {
 void SceneTree::add_current_scene(Node *p_current) {
 	current_scene = p_current;
 	root->add_child(p_current);
+	_console_raise();
 }
 
 #ifdef DEBUG_ENABLED
@@ -2134,6 +2152,8 @@ void SceneTree::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("console_show", "state"), &SceneTree::console_show);
 	ClassDB::bind_method(D_METHOD("console_msg", "msg"), &SceneTree::console_msg);
+	ClassDB::bind_method(D_METHOD("is_console_available"), &SceneTree::is_console_available);
+	ClassDB::bind_method(D_METHOD("is_console_visible"), &SceneTree::is_console_visible);
 
 	MethodInfo mi;
 	mi.name = "call_group_flags";
@@ -2319,40 +2339,210 @@ void SceneTree::get_argument_options(const StringName &p_function, int p_idx, Li
 	}
 }
 
+#ifdef GD_INAPP_CONSOLE
+void SceneTree::_console_poll_secondary() {
+	SecondaryDisplay *display = SecondaryDisplay::get_singleton();
+	if (!display) {
+		return; // platform has no auxiliary screen at all
+	}
+
+	const bool attached = display->is_available();
+	if (attached == console_secondary_attached) {
+		return;
+	}
+	console_secondary_attached = attached;
+
+	// Mobile has no keyboard, so the panel showing up *is* the way the console is opened
+	// there; `is_console_available()` still gates release builds behind their opt-in.
+	static int enabled = -1;
+	if (enabled == -1) {
+		enabled = GLOBAL_DEF("debug/console/auto_open_secondary", true) ? 1 : 0;
+	}
+	if (!enabled || !is_console_available()) {
+		return;
+	}
+
+	if (attached) {
+		if (!is_console_visible()) {
+			console_show(true);
+			console_auto_opened = true;
+		}
+	} else if (console_auto_opened) {
+		// The panel is gone; do not leave the overlay covering the game screen.
+		console_show(false);
+		console_auto_opened = false;
+	}
+}
+
+bool SceneTree::_console_toggle_input(const Ref<InputEvent> &p_event) {
+	Ref<InputEventKey> k = p_event;
+	if (k.is_null() || !k->is_pressed() || k->is_echo()) {
+		return false;
+	}
+
+	if (console_toggle_shortcut == -1) {
+		// "Shift+Ctrl+K" by default, empty string disables the hotkey. Ctrl is tested
+		// literally, so the combo stays Ctrl (not Cmd) on macOS as well.
+		const String def = GLOBAL_DEF("debug/console/toggle_shortcut", "Shift+Ctrl+K");
+		ProjectSettings::get_singleton()->set_custom_property_info("debug/console/toggle_shortcut", PropertyInfo(Variant::STRING, "debug/console/toggle_shortcut"));
+
+		int shortcut = 0;
+		Vector<String> parts = def.split("+", false);
+		for (int i = 0; i < parts.size(); i++) {
+			const String part = parts[i].strip_edges();
+			if (part.empty()) {
+				continue;
+			}
+			if (part.nocasecmp_to("shift") == 0) {
+				shortcut |= KEY_MASK_SHIFT;
+			} else if (part.nocasecmp_to("ctrl") == 0 || part.nocasecmp_to("control") == 0) {
+				shortcut |= KEY_MASK_CTRL;
+			} else if (part.nocasecmp_to("alt") == 0) {
+				shortcut |= KEY_MASK_ALT;
+			} else if (part.nocasecmp_to("meta") == 0 || part.nocasecmp_to("cmd") == 0 || part.nocasecmp_to("command") == 0) {
+				shortcut |= KEY_MASK_META;
+			} else {
+				const int code = find_keycode(part);
+				if (!code) {
+					WARN_PRINT(vformat("Unknown key '%s' in debug/console/toggle_shortcut, console hotkey disabled.", part));
+					shortcut = 0;
+					break;
+				}
+				shortcut |= code;
+			}
+		}
+		// A bare modifier combo is not a usable shortcut.
+		console_toggle_shortcut = (shortcut & KEY_CODE_MASK) ? shortcut : 0;
+	}
+
+	if (!console_toggle_shortcut || (int)k->get_scancode_with_modifiers() != console_toggle_shortcut) {
+		return false;
+	}
+	if (!is_console_available()) {
+		return false;
+	}
+
+	console_show(!is_console_visible());
+	return true;
+}
+#endif
+
 void SceneTree::console_show(bool p_state) {
 #ifdef GD_INAPP_CONSOLE
-	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
-		if (p_state) {
-			if (!node->has_node(text_console_name)) {
-				ConsoleInstance *con = memnew(ConsoleInstance);
-				con->set_name(text_console_name);
-				node->add_child(con);
-			}
+	if (p_state && !is_console_available()) {
+		return;
+	}
+	Node *node = _console_host();
+	if (!node) {
+		return;
+	}
+
+	ConsoleInstance *con = nullptr;
+	if (node->has_node(text_console_name)) {
+		con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name));
+	}
+	if (!con) {
+		// Created by an earlier call that is still waiting for its deferred attach.
+		con = ConsoleInstance::get_active();
+	}
+	if (!con) {
+		if (!p_state) {
+			return;
 		}
-		if (node->has_node(text_console_name)) {
-			if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
-				con->set_visible(p_state);
-				return;
-			}
+		con = memnew(ConsoleInstance);
+		con->set_name(text_console_name);
+		// The very first DebugConsole call usually comes from a node's _ready(), which runs
+		// while its ancestors iterate their children, so add_child() would be rejected. The
+		// console is bootstrapped here instead: it claims the singleton and accepts logs and
+		// watches immediately, and enters the tree on the next message-queue flush.
+		con->_bootstrap();
+		if (node->is_blocked()) {
+			node->call_deferred("add_child", con);
+		} else {
+			node->add_child(con);
 		}
 	}
+	con->set_visible(p_state);
 #else
 	print_verbose("Console not available.");
 #endif
 }
 
+// Node the console instance hangs off. It must outlive scene changes: the console owns the
+// auxiliary-display panel, and a console freed together with the outgoing scene would leave
+// the second screen frozen on its last frame with no way to switch pages. The root viewport
+// is the only node guaranteed to stay for the whole run. The editor still parents it to the
+// edited scene, where there is no root viewport of the game to speak of.
+Node *SceneTree::_console_host() const {
+#ifdef GD_INAPP_CONSOLE
+	if (Node *edited = get_edited_scene_root()) {
+		return edited;
+	}
+	return root;
+#else
+	return nullptr;
+#endif
+}
+
+// A scene added after the console becomes a later sibling and would paint over it.
+void SceneTree::_console_raise() {
+#ifdef GD_INAPP_CONSOLE
+	if (ConsoleInstance *con = ConsoleInstance::get_active()) {
+		if (con->is_inside_tree() && con->get_parent() == _console_host() && !con->get_parent()->is_blocked()) {
+			con->raise();
+		}
+	}
+#endif
+}
+
 void SceneTree::console_msg(const String &p_msg) {
 #ifdef GD_INAPP_CONSOLE
-	if (Node *node = get_edited_scene_root() ? get_edited_scene_root() : current_scene) {
-		if (node->has_node(text_console_name)) {
-			if (ConsoleInstance *con = Object::cast_to<ConsoleInstance>(node->get_node(text_console_name))) {
-				con->console_msg(p_msg);
-			}
-		}
+	// get_active() also covers a console that was bootstrapped but is still waiting for its
+	// deferred attach, so nothing logged during that window is dropped.
+	if (ConsoleInstance *con = ConsoleInstance::get_active()) {
+		con->console_msg(p_msg);
 	}
 #else
 	print_verbose(p_msg);
 #endif
+}
+
+bool SceneTree::is_console_available() const {
+#ifdef GD_INAPP_CONSOLE
+#ifdef DEBUG_ENABLED
+	// Builds that carry debugging features always expose the console, no setup required.
+	return true;
+#else
+	// The console is compiled into this release build, but must be opted into explicitly so
+	// that a shipped game cannot be made to open it by accident.
+	static int cached = -1;
+	if (cached == -1) {
+		bool enabled = GLOBAL_DEF("debug/console/enabled", false);
+		if (!enabled) {
+			List<String> args = OS::get_singleton()->get_cmdline_args();
+			for (List<String>::Element *E = args.front(); E; E = E->next()) {
+				if (E->get() == "--debug-console") {
+					enabled = true;
+					break;
+				}
+			}
+		}
+		cached = enabled ? 1 : 0;
+	}
+	return cached == 1;
+#endif
+#else
+	return false;
+#endif
+}
+
+bool SceneTree::is_console_visible() const {
+#ifdef GD_INAPP_CONSOLE
+	if (const ConsoleInstance *con = ConsoleInstance::get_active()) {
+		return con->is_visible();
+	}
+#endif
+	return false;
 }
 
 SceneTree::SceneTree() {

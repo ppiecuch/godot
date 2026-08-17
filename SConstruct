@@ -160,6 +160,13 @@ opts.Add(BoolVariable("disable_3d", "Disable 3D nodes for a smaller executable",
 opts.Add(BoolVariable("disable_advanced_gui", "Disable advanced GUI nodes and behaviors", False))
 opts.Add(
     BoolVariable(
+        "inapp_console",
+        "Enable the in-app debug console and second-screen debug panel (always on for debug targets)",
+        True,
+    )
+)
+opts.Add(
+    BoolVariable(
         "build_fluidsynth_driver", "Force building Fluidsynth audio/midi driver (default for editor only)", False
     )
 )
@@ -395,6 +402,18 @@ if env_base["target"] == "debug" or (env_base["tools"] and env_base["target"] ==
 else:
     # Disable assert() for production targets (only used in thirdparty code).
     env_base.Append(CPPDEFINES=["NDEBUG"])
+
+# The in-app debug console is always available in editor/tool builds and in any build that
+# carries debugging features; it is opt-in only for a pure `release` export template (where
+# it also costs ~96 KB of embedded font data). Keyed on `tools`/`target` rather than
+# `production`, so `production=yes target=release_debug` keeps the console.
+env_base["inapp_console"] = methods.get_cmdline_bool(
+    "inapp_console", env_base["tools"] or env_base["target"] != "release"
+)
+if env_base["inapp_console"]:
+    # Global so `main/tests` and the platform layers can guard on it too, not just
+    # `scene/debugconsole` itself.
+    env_base.Append(CPPDEFINES=["GD_INAPP_CONSOLE"])
 
 # SCons speed optimization controlled by the `fast_unsafe` option, which provide
 # more than 10 s speed up for incremental rebuilds.

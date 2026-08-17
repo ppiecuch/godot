@@ -826,6 +826,10 @@ OS_Android::OS_Android(GodotJavaWrapper *p_godot_java, GodotIOJavaWrapper *p_god
 	_set_logger(memnew(CompositeLogger(loggers)));
 
 	AudioDriverManager::add_driver(&audio_driver_android);
+
+	// Optional Presentation screen the debug console can draw on (CONSOLE.md section 11).
+	// Created unconditionally: it stays inert until Java reports a surface.
+	secondary_display = memnew(SecondaryDisplayAndroid);
 }
 
 Error OS_Android::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex, bool p_open_console) {
@@ -852,4 +856,8 @@ Error OS_Android::kill(const ProcessID &p_pid) {
 }
 
 OS_Android::~OS_Android() {
+	if (secondary_display) {
+		memdelete(secondary_display);
+		secondary_display = nullptr;
+	}
 }

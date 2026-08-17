@@ -35,6 +35,12 @@
 #include "core/os/os.h"
 #include "core/project_settings.h"
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 String DirAccess::_get_root_path() const {
 	switch (_access_type) {
 		case ACCESS_RESOURCES:
@@ -507,6 +513,16 @@ void DirAccess::_delete_temp() {
 	}
 }
 
+String DirAccess::get_next() {
+	String next = _get_next();
+	while (!next.empty() &&
+			((!include_navigational && (next == "." || next == "..")) ||
+					(!include_hidden && current_is_hidden()))) {
+		next = _get_next();
+	}
+	return next;
+}
+
 DirAccess::DirAccess() {
 	_access_type = ACCESS_FILESYSTEM;
 	next_is_dir = false;
@@ -515,3 +531,96 @@ DirAccess::DirAccess() {
 DirAccess::~DirAccess() {
 	_delete_temp();
 }
+
+#ifdef DOCTEST
+
+namespace {
+
+// Lists the directory `p_da` is currently on and returns the entries, sorted so the
+// assertions do not depend on the filesystem's iteration order.
+Vector<String> dir_access_list(DirAccess *p_da) {
+	Vector<String> out;
+	if (p_da->list_dir_begin() != OK) {
+		return out;
+	}
+	for (String n = p_da->get_next(); !n.empty(); n = p_da->get_next()) {
+		out.push_back(n);
+	}
+	p_da->list_dir_end();
+	out.sort();
+	return out;
+}
+
+bool dir_access_has(const Vector<String> &p_list, const String &p_name) {
+	return p_list.find(p_name) != -1;
+}
+
+} // namespace
+
+TEST_CASE("DirAccess listing filters") {
+	DirAccess *da = DirAccess::create_temp("dirfilters");
+	REQUIRE(da != nullptr);
+
+	const String base = da->get_current_dir();
+	{
+		FileAccess *f = FileAccess::open(base.plus_file("visible.txt"), FileAccess::WRITE);
+		REQUIRE(f != nullptr);
+		memdelete(f);
+		f = FileAccess::open(base.plus_file(".hidden.txt"), FileAccess::WRITE);
+		REQUIRE(f != nullptr);
+		memdelete(f);
+	}
+	REQUIRE(da->make_dir("subdir") == OK);
+
+	SUBCASE("defaults keep navigational and hidden entries") {
+		REQUIRE(da->get_include_navigational());
+		REQUIRE(da->get_include_hidden());
+
+		const Vector<String> list = dir_access_list(da);
+		REQUIRE(dir_access_has(list, "."));
+		REQUIRE(dir_access_has(list, ".."));
+		REQUIRE(dir_access_has(list, ".hidden.txt"));
+		REQUIRE(dir_access_has(list, "visible.txt"));
+		REQUIRE(dir_access_has(list, "subdir"));
+	}
+
+	SUBCASE("navigational entries can be skipped") {
+		da->set_include_navigational(false);
+		const Vector<String> list = dir_access_list(da);
+		REQUIRE_FALSE(dir_access_has(list, "."));
+		REQUIRE_FALSE(dir_access_has(list, ".."));
+		REQUIRE(dir_access_has(list, ".hidden.txt"));
+		REQUIRE(dir_access_has(list, "visible.txt"));
+		REQUIRE(dir_access_has(list, "subdir"));
+	}
+
+	SUBCASE("hidden entries can be skipped") {
+		da->set_include_hidden(false);
+		const Vector<String> list = dir_access_list(da);
+		REQUIRE_FALSE(dir_access_has(list, ".hidden.txt"));
+		// "." and ".." are navigational, not hidden, and stay unless opted out separately.
+		REQUIRE(dir_access_has(list, "."));
+		REQUIRE(dir_access_has(list, ".."));
+		REQUIRE(dir_access_has(list, "visible.txt"));
+	}
+
+	SUBCASE("both filters combine") {
+		da->set_include_navigational(false);
+		da->set_include_hidden(false);
+		const Vector<String> list = dir_access_list(da);
+		REQUIRE(list.size() == 2);
+		REQUIRE(dir_access_has(list, "visible.txt"));
+		REQUIRE(dir_access_has(list, "subdir"));
+	}
+
+	SUBCASE("filters are sticky across listings") {
+		da->set_include_navigational(false);
+		dir_access_list(da);
+		REQUIRE_FALSE(da->get_include_navigational());
+		REQUIRE_FALSE(dir_access_has(dir_access_list(da), ".."));
+	}
+
+	memdelete(da);
+}
+
+#endif // DOCTEST

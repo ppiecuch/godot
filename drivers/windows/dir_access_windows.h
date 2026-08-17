@@ -59,7 +59,7 @@ class DirAccessWindows : public DirAccess {
 
 public:
 	virtual Error list_dir_begin(); ///< This starts dir listing
-	virtual String get_next();
+	virtual String _get_next();
 	virtual bool current_is_dir() const;
 	virtual bool current_is_hidden() const;
 	virtual void list_dir_end(); ///<

@@ -24,6 +24,8 @@ android_files = [
     "java_activity_result_receiver.cpp",
     "jni_utils.cpp",
     "android_keys_utils.cpp",
+    "secondary_display_android.cpp",
+    "secondary_display_jni.cpp",
     "plugin/godot_plugin_jni.cpp",
 ]
 

@@ -35,6 +35,7 @@
 #include "core/os/main_loop.h"
 #include "drivers/unix/os_unix.h"
 #include "main/input_default.h"
+#include "secondary_display_android.h"
 #include "servers/audio_server.h"
 #include "servers/visual/rasterizer.h"
 
@@ -64,6 +65,7 @@ class OS_Android : public OS_Unix {
 		1003, //CURSOR_HELP
 	};
 	const int CURSOR_TYPE_NULL = 0;
+	SecondaryDisplayAndroid *secondary_display = nullptr;
 	MouseMode mouse_mode = MouseMode::MOUSE_MODE_VISIBLE;
 	CursorShape cursor_shape = CursorShape::CURSOR_ARROW;
 

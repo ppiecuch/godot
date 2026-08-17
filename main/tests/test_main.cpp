@@ -36,6 +36,7 @@
 
 #include "test_astar.h"
 #include "test_basis.h"
+#include "test_console.h"
 #include "test_crypto.h"
 #include "test_expression.h"
 #include "test_font.h"
@@ -76,6 +77,7 @@ const char **tests_get_names() {
 		"gd_bytecode",
 		"ordered_hash_map",
 		"astar",
+		"console",
 		"xml_parser",
 		"theme",
 		nullptr
@@ -126,6 +128,10 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 		return TestGUI::test();
 	}
 #endif
+
+	if (p_test == "console") {
+		return TestConsole::test();
+	}
 
 	if (p_test == "font") {
 		return TestFont::test();

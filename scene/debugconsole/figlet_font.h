@@ -119,11 +119,13 @@
   - Future
   - Calvin S
   - ANSI Regular
+  - ANSI Shadow
   - DOS Rebel
   - maxiwi
+  - miniwi
   - maxii
 
-  A simple ruby script permits to convert figlet .flf
+  The python script modules/gdextensions/_tools/make_figfonts.py converts figlet .flf
   (and some .tlf - P.P.) files to structures which can
   be embedded in the library.
 
@@ -255,8 +257,9 @@ class Banner {
 	unsigned short charWidth[maxTableSize]; //!< size width of each charater of the font
 	unsigned charPosition; //!< position of last inserted character
 
-	const char *mappingFrom; //!< map from set of these characters
-	const char *mappingTo; //!< to these characters
+	const char *mappingFrom; //!< placeholder codes appearing in the rendered output
+	const char *mappingTo; //!< console glyph code each placeholder resolves to
+	const char *mappingBank1; //!< subset of mappingFrom drawn from glyph bank 1
 
 	PrintMode printMode; //!< the type of printing mode used
 
@@ -288,7 +291,22 @@ public:
 			unsigned FontSize,
 			PrintMode PrintMode = FIGLET_PACKED,
 			const char *MappingFrom = 0,
-			const char *MappingTo = 0);
+			const char *MappingTo = 0,
+			const char *MappingBank1 = 0);
+
+	//! Shapes that CP437 has no code of its own for are rendered as placeholder codes so
+	//! that a shape and its inverse stay distinct characters through smushing, even though
+	//! they share one drawn cell of the glyph sheet. The three tables below resolve a
+	//! placeholder to the console glyph it is finally drawn with; they are parallel and
+	//! applied by the consumer of print(), not by the renderer, because switching bank
+	//! needs escape bytes and the renderer counts one byte per output column.
+	//!
+	//! placeholderCodes()  the codes to look for in the rendered output, or 0
+	//! glyphCodes()        the console glyph code at the same index
+	//! bank1Characters()   the placeholders whose glyph comes from bank 1, or 0
+	const char *placeholderCodes() const { return mappingFrom; }
+	const char *glyphCodes() const { return mappingTo; }
+	const char *bank1Characters() const { return mappingBank1; }
 
 	//! initialize Banner class
 	void init();
@@ -339,10 +357,12 @@ public:
 
 extern Banner future; //!< instance `Banner` class using figlet font `future`
 extern Banner calvins; //!< instance `Banner` class using figlet font `calvins`
-extern Banner maxii; //!< instance `Banner` class using figlet font `maxii`
 extern Banner maxiwi; //!< instance `Banner` class using figlet font `maxiwi`
+extern Banner miniwi; //!< instance `Banner` class using figlet font `miniwi`
+extern Banner maxii; //!< instance `Banner` class using figlet font `maxii`
 extern Banner dosrebel; //!< instance `Banner` class using figlet font `dosrebel`
 extern Banner ansiregular; //!< instance `Banner` class using figlet font `ansiregular`
+extern Banner ansishadow; //!< instance `Banner` class using figlet font `ansishadow`
 } // namespace Figlet
 
 #endif // FIGLET_FONT_H

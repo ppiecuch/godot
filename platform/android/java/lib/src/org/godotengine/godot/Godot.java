@@ -260,6 +260,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 	private ViewGroup containerLayout;
 	public GodotView mView;
+	private GodotSecondaryDisplay mSecondaryDisplay;
 	private boolean godot_initialized = false;
 
 	private SensorManager mSensorManager;
@@ -882,6 +883,10 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 		result_callback = null;
 
+		// Optional debug console panel on an auxiliary screen (see CONSOLE.md section 11).
+		mSecondaryDisplay = new GodotSecondaryDisplay(activity);
+		mSecondaryDisplay.onCreate();
+
 		godot_initialized = true;
 	}
 
@@ -1074,6 +1079,11 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			plugin.onMainDestroy();
 		}
 
+		if (mSecondaryDisplay != null) {
+			mSecondaryDisplay.onDestroy();
+			mSecondaryDisplay = null;
+		}
+
 		GodotLib.ondestroy();
 
 		super.onDestroy();
@@ -1093,6 +1103,10 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			return;
 		}
 		mView.onActivityPaused();
+
+		if (mSecondaryDisplay != null) {
+			mSecondaryDisplay.onPause();
+		}
 
 		mSensorManager.unregisterListener(this);
 
@@ -1163,6 +1177,10 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		}
 
 		mView.onActivityResumed();
+
+		if (mSecondaryDisplay != null) {
+			mSecondaryDisplay.onResume();
+		}
 
 		mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
 		mSensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_GAME);

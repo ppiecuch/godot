@@ -39,6 +39,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.hardware.SensorEvent;
+import android.view.Surface;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -238,4 +239,23 @@ public class GodotLib {
 	 * Forward location update from GPS/Network provider to native code.
 	 */
 	public static native void onLocationUpdate(double latitude, double longitude, double altitude, float accuracy, float speed, long timestamp, boolean isGps);
+
+	/**
+	 * Invoked on the UI thread when the surface of the secondary (presentation) display is
+	 * ready or was resized. The native side takes its own reference to the surface.
+	 * @see GodotSecondaryDisplay
+	 */
+	public static native void secondaryDisplayAttached(Surface surface, int displayId, int width, int height, int dpi);
+
+	/**
+	 * Invoked on the UI thread when the secondary display surface went away. Pass -1 as
+	 * displayId to detach whatever is currently attached.
+	 */
+	public static native void secondaryDisplayDetached(int displayId);
+
+	/**
+	 * Invoked on the UI thread for touches on the secondary display panel. Coordinates are
+	 * in secondary display pixels; the event is queued and consumed on the main thread.
+	 */
+	public static native void secondaryDisplayTouch(float x, float y, boolean pressed);
 }

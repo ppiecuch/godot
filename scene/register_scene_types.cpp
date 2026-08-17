@@ -135,6 +135,9 @@
 #include "scene/main/http_request.h"
 #include "scene/main/instance_placeholder.h"
 #include "scene/main/resource_preloader.h"
+#ifdef GD_INAPP_CONSOLE
+#include "scene/debugconsole/debug_console.h"
+#endif
 #include "scene/main/scene_tree.h"
 #include "scene/main/timer.h"
 #include "scene/main/viewport.h"
@@ -253,6 +256,10 @@ static Ref<ResourceFormatLoaderSSFNFont> resource_loader_ssfnfont;
 
 static Ref<ResourceFormatSaverShader> resource_saver_shader;
 static Ref<ResourceFormatLoaderShader> resource_loader_shader;
+
+#ifdef GD_INAPP_CONSOLE
+static DebugConsole *debug_console_singleton = nullptr;
+#endif
 
 void register_scene_types() {
 	SceneStringNames::create();
@@ -832,6 +839,14 @@ void register_scene_types() {
 		GLOBAL_DEF(vformat("%s/layer_%d", PNAME("layer_names/2d_navigation"), i + 1), "");
 		GLOBAL_DEF(vformat("%s/layer_%d", PNAME("layer_names/3d_navigation"), i + 1), "");
 	};
+
+#ifdef GD_INAPP_CONSOLE
+	// The in-app debug console singleton. It forwards to whichever ConsoleInstance is in the
+	// tree and creates one on demand, so game code never touches the node. See CONSOLE.md.
+	ClassDB::register_class<DebugConsole>();
+	debug_console_singleton = memnew(DebugConsole);
+	Engine::get_singleton()->add_singleton(Engine::Singleton("DebugConsole", debug_console_singleton));
+#endif
 }
 
 void initialize_theme() {
@@ -868,6 +883,17 @@ void initialize_theme() {
 
 void unregister_scene_types() {
 	clear_default_theme();
+
+#ifdef GD_INAPP_CONSOLE
+	if (debug_console_singleton) {
+		memdelete(debug_console_singleton);
+		debug_console_singleton = nullptr;
+	}
+	// The font atlases are cached in a file-scope array that outlives the servers otherwise;
+	// see TextConsole::cleanup_font_cache(). A SceneTree exit callback covers the usual case,
+	// but tool and test runs never build a tree, so this is the one path that always runs.
+	TextConsole::cleanup_font_cache();
+#endif
 
 #ifdef MODULE_FREETYPE_ENABLED
 	ResourceLoader::remove_resource_format_loader(resource_loader_dynamic_font);

@@ -251,6 +251,20 @@ private:
 
 	Ref<ShortCut> debugger_stop_shortcut;
 
+#ifdef GD_INAPP_CONSOLE
+	// Scancode + modifier masks of `debug/console/toggle_shortcut`; -1 = not parsed yet, 0 = disabled.
+	int console_toggle_shortcut = -1;
+	bool console_secondary_attached = false; // last seen state of the auxiliary screen
+	bool console_auto_opened = false; // the console was opened by the panel, so it may close it again
+
+	bool _console_toggle_input(const Ref<InputEvent> &p_event);
+	void _console_poll_secondary(); // open/close the console as the auxiliary screen comes and goes
+#endif
+	// Defined unconditionally: the scene-change path calls _console_raise() whether or not
+	// the console is compiled in (it is a no-op then).
+	Node *_console_host() const; // node the console node is parented to; outlives scene changes
+	void _console_raise(); // keep the console drawn above a freshly loaded scene
+
 #ifdef DEBUG_ENABLED
 
 	Map<int, NodePath> live_edit_node_path_cache;
@@ -435,6 +449,8 @@ public:
 
 	void console_show(bool p_state);
 	void console_msg(const String &p_msg);
+	bool is_console_available() const;
+	bool is_console_visible() const;
 
 	//network API
 

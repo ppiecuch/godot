@@ -60,7 +60,7 @@ class DirAccessJAndroid : public DirAccessUnix {
 
 public:
 	virtual Error list_dir_begin() override; ///< This starts dir listing
-	virtual String get_next() override;
+	virtual String _get_next() override;
 	virtual bool current_is_dir() const override;
 	virtual bool current_is_hidden() const override;
 	virtual void list_dir_end() override; ///<
