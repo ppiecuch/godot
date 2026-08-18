@@ -257,5 +257,5 @@ public class GodotLib {
 	 * Invoked on the UI thread for touches on the secondary display panel. Coordinates are
 	 * in secondary display pixels; the event is queued and consumed on the main thread.
 	 */
-	public static native void secondaryDisplayTouch(float x, float y, boolean pressed);
+	public static native void secondaryDisplayTouch(float x, float y, int type, int index);
 }

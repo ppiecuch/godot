@@ -54,10 +54,19 @@ class SecondaryDisplay {
 	static SecondaryDisplay *singleton;
 
 public:
+	enum TouchType {
+		TOUCH_DOWN,
+		TOUCH_UP,
+		TOUCH_MOVE,
+	};
+
 	struct TouchEvent {
 		Vector2 position; // pixels, in secondary display space
-		bool pressed;
+		TouchType type;
+		int index; // platform pointer id, so multi-touch streams stay separable
 		uint64_t time_msec; // monotonic, stamped when the platform reported the event
+
+		bool is_pressed() const { return type == TOUCH_DOWN; }
 	};
 
 	static SecondaryDisplay *get_singleton() { return singleton; }

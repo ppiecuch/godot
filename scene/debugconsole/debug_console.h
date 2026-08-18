@@ -259,6 +259,9 @@ private:
 	Vector<LogLine> log_lines; // ring buffer, the source of truth for PAGE_LOG
 	Vector<LogSegment> pending; // segments of the line currently being assembled
 	int log_capacity;
+	int log_scroll; // wrapped rows held back from the bottom; 0 follows the newest line
+	int _panel_rotation() const;
+	Vector<uint32_t> rotate_buffer; // upright scratch frame, only used when the panel is rotated
 	Mutex log_mutex; // ConsoleLogger pushes from arbitrary threads (step 5)
 	Vector<Watch> watches;
 
@@ -290,6 +293,11 @@ private:
 	// console again (there is no keyboard on the devices that have such a panel).
 	bool touch_down;
 	uint64_t touch_down_msec;
+	int touch_index; // pointer id of the finger that started the gesture
+	Vector2 touch_origin; // grid-space press position, for the tap/drag decision
+	Vector2 touch_last; // grid-space position the last scroll step was taken from
+	bool touch_dragged; // the gesture already scrolled, so its release is not a tap
+	Vector2 _panel_to_grid(const Vector2 &p_pos) const;
 	// Taps only mean something when the game opts in (debug/console/panel_touch): an
 	// always-live panel reacts to accidental hits and, on Android, its window would have to
 	// be focusable to receive them, stealing the gamepad from the game.
@@ -368,6 +376,11 @@ public:
 	void next_page();
 	void prev_page();
 
+	// Wrapped rows to hold back from the bottom of PAGE_LOG; 0 follows the newest line.
+	void scroll_log(int p_rows);
+	void scroll_log_to_end();
+	int get_log_scroll() const;
+
 	void set_panel_touch_enabled(bool p_enabled);
 	bool is_panel_touch_enabled() const;
 
@@ -445,6 +458,10 @@ public:
 
 	void set_panel_touch_enabled(bool p_enabled);
 	bool is_panel_touch_enabled() const;
+
+	void scroll_log(int p_rows);
+	void scroll_log_to_end();
+	int get_log_scroll() const;
 
 	void set_font(int p_font);
 	int get_font() const;

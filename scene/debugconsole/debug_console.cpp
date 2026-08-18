@@ -830,17 +830,31 @@ Transform2D ConsoleInstance::get_transform() const {
 void ConsoleInstance::_adopt_secondary_geometry(const Size2i &p_size, int p_dpi) {
 	ERR_FAIL_COND(!console.is_valid());
 
+	// Under a quarter turn the console is laid out in the panel's transposed resolution;
+	// the blit puts it back the way the surface expects.
+	Size2i logical = p_size;
+	const int rotation = _panel_rotation();
+	if (rotation == 90 || rotation == 270) {
+		SWAP(logical.width, logical.height);
+	}
+
 	if (auto_font) {
-		console_auto_font(p_dpi, p_size, font_face, pixel_scale);
+		console_auto_font(p_dpi, logical, font_face, pixel_scale);
 		console->load_font(font_face);
 		console->set_pixel_scale(pixel_scale);
 	}
 
 	const Size2i cell = console->get_cell_size();
 	ERR_FAIL_COND(cell.width <= 0 || cell.height <= 0);
-	console->resize(MAX(1, p_size.width / cell.width), MAX(1, p_size.height / cell.height));
+	console->resize(MAX(1, logical.width / cell.width), MAX(1, logical.height / cell.height));
 
 	dirty = true;
+}
+
+int ConsoleInstance::_panel_rotation() const {
+	const int rotation = ((int)GLOBAL_GET("debug/console/panel_rotation") % 360 + 360) % 360;
+	// Anything that is not a quarter turn would need resampling; treat it as upright.
+	return (rotation % 90) == 0 ? rotation : 0;
 }
 
 ConsoleInstance::SecondaryMode ConsoleInstance::_secondary_mode_setting() {
@@ -885,17 +899,49 @@ void ConsoleInstance::_poll_secondary_touch() {
 		long_press_msec = MAX(100, (int)GLOBAL_DEF("debug/console/long_press_msec", 600));
 	}
 
+	// Rows are the unit the log scrolls in, so drags are measured in them too.
+	const int rows = MAX(1, console.is_valid() ? console->get_console_size().height : 1);
+	const real_t row_px = MAX(1.0, real_t(MAX(1, display->get_size().height)) / real_t(rows));
+
 	SecondaryDisplay::TouchEvent ev;
 	while (display->pop_touch(ev)) {
-		if (ev.pressed) {
+		// Only the first finger down drives the console; the rest of a multi-touch gesture
+		// is ignored rather than being mistaken for a second tap.
+		if (ev.type == SecondaryDisplay::TOUCH_DOWN) {
+			if (touch_down) {
+				continue;
+			}
 			touch_down = true;
+			touch_index = ev.index;
 			touch_down_msec = ev.time_msec;
+			touch_origin = _panel_to_grid(ev.position);
+			touch_last = touch_origin;
+			touch_dragged = false;
 			continue;
 		}
-		if (!touch_down) {
-			continue; // release without a matching press (surface was re-attached)
+		if (!touch_down || ev.index != touch_index) {
+			continue; // stray pointer, or a release without a matching press
 		}
+
+		const Vector2 pos = _panel_to_grid(ev.position);
+		if (ev.type == SecondaryDisplay::TOUCH_MOVE) {
+			if (Math::abs(pos.y - touch_origin.y) < row_px && !touch_dragged) {
+				continue; // still within the slop that keeps a sloppy tap a tap
+			}
+			touch_dragged = true;
+			// Dragging down pulls older lines into view, like a scrollbar thumb.
+			const int moved = int((pos.y - touch_last.y) / row_px);
+			if (moved != 0) {
+				touch_last.y += moved * row_px;
+				scroll_log(moved);
+			}
+			continue;
+		}
+
 		touch_down = false;
+		if (touch_dragged) {
+			continue; // the gesture was a scroll, not a tap
+		}
 		const uint64_t held = ev.time_msec > touch_down_msec ? ev.time_msec - touch_down_msec : 0;
 		const bool long_press = (int)held >= long_press_msec;
 		if (!is_visible_in_tree()) {
@@ -910,6 +956,26 @@ void ConsoleInstance::_poll_secondary_touch() {
 		} else {
 			next_page();
 		}
+	}
+}
+
+// Panel pixels to grid-aligned pixels: the surface may be rotated relative to the console,
+// and gestures have to be read in the orientation the text is drawn in.
+Vector2 ConsoleInstance::_panel_to_grid(const Vector2 &p_pos) const {
+	SecondaryDisplay *display = SecondaryDisplay::get_singleton();
+	if (!display) {
+		return p_pos;
+	}
+	const Size2i panel = display->get_size();
+	switch (_panel_rotation()) {
+		case 90:
+			return Vector2(panel.height - p_pos.y, p_pos.x);
+		case 180:
+			return Vector2(panel.width - p_pos.x, panel.height - p_pos.y);
+		case 270:
+			return Vector2(p_pos.y, panel.width - p_pos.x);
+		default:
+			return p_pos;
 	}
 }
 
@@ -982,7 +1048,28 @@ void ConsoleInstance::_present_secondary() {
 			row[x] = 0xff000000; // opaque black, same bytes in ARGB32 and ABGR32
 		}
 	}
-	console_blit(**console, bits, stride_px, locked.width, locked.height, CONSOLE_PIXEL_ABGR32);
+
+	const int rotation = _panel_rotation();
+	if (rotation == 0) {
+		console_blit(**console, bits, stride_px, locked.width, locked.height, CONSOLE_PIXEL_ABGR32);
+	} else {
+		// Rotating cannot be done in place, so the console is rasterised upright into a
+		// scratch buffer first. It is kept across frames because the panel size is stable.
+		Size2i logical = locked;
+		if (rotation == 90 || rotation == 270) {
+			SWAP(logical.width, logical.height);
+		}
+		const int needed = logical.width * logical.height;
+		if (rotate_buffer.size() != needed) {
+			rotate_buffer.resize(needed);
+		}
+		uint32_t *scratch = rotate_buffer.ptrw();
+		for (int i = 0; i < needed; ++i) {
+			scratch[i] = 0xff000000;
+		}
+		console_blit(**console, scratch, logical.width, logical.width, logical.height, CONSOLE_PIXEL_ABGR32);
+		console_rotate_copy(scratch, logical.width, logical.height, bits, stride_px, locked.width, locked.height, rotation);
+	}
 
 	display->unlock_and_post();
 }
@@ -1506,6 +1593,10 @@ void ConsoleInstance::_render_header() {
 
 	const int cols = console->get_console_size().width;
 	String left = vformat(" [%d/%d] %s", int(page) + 1, int(PAGE_MAX), page_names[page]);
+	if (page == PAGE_LOG && log_scroll > 0) {
+		// Without this there is no way to tell a scrolled-back log from an idle one.
+		left += vformat(" ^%d", log_scroll);
+	}
 	String right = vformat("%d fps  %dx%d ", Engine::get_singleton()->get_frames_per_second(),
 			console->get_console_size().width, console->get_console_size().height);
 
@@ -1610,13 +1701,38 @@ void ConsoleInstance::_render_log() {
 	const int rows = size.height - 1; // the header takes one row
 
 	// Wrap from the newest line backwards, so a long error keeps its tail on screen instead
-	// of pushing everything else off.
+	// of pushing everything else off. `log_scroll` counts wrapped rows skipped at the
+	// bottom, so scrolling stays stable when a wide line reflows.
 	Vector<LogLine> visible;
+	int skip = log_scroll;
 	for (int i = log_lines.size() - 1; i >= 0 && visible.size() < rows; --i) {
 		Vector<LogLine> wrapped;
 		_wrap_line(log_lines[i], size.width, wrapped);
 		for (int j = wrapped.size() - 1; j >= 0 && visible.size() < rows; --j) {
+			if (skip > 0) {
+				--skip;
+				continue;
+			}
 			visible.push_back(wrapped[j]);
+		}
+	}
+
+	// Scrolled past the oldest line: pull the window back until the page is full again.
+	// The deficit is exact, so one correction pass is enough.
+	if (visible.size() < rows && log_scroll > 0) {
+		log_scroll = MAX(0, log_scroll - (rows - visible.size()));
+		skip = log_scroll;
+		visible.clear();
+		for (int i = log_lines.size() - 1; i >= 0 && visible.size() < rows; --i) {
+			Vector<LogLine> wrapped;
+			_wrap_line(log_lines[i], size.width, wrapped);
+			for (int j = wrapped.size() - 1; j >= 0 && visible.size() < rows; --j) {
+				if (skip > 0) {
+					--skip;
+					continue;
+				}
+				visible.push_back(wrapped[j]);
+			}
 		}
 	}
 
@@ -1999,6 +2115,7 @@ void ConsoleInstance::_render() {
 void ConsoleInstance::switch_page(Page p_page) {
 	ERR_FAIL_INDEX(p_page, PAGE_MAX);
 	page = p_page;
+	log_scroll = 0; // leaving and re-entering the log always lands on the newest line
 	if (page != PAGE_LOG) {
 		_poll_watches();
 	}
@@ -2011,6 +2128,31 @@ ConsoleInstance::Page ConsoleInstance::get_page() const {
 
 void ConsoleInstance::next_page() {
 	switch_page(Page((page + 1) % PAGE_MAX));
+}
+
+void ConsoleInstance::scroll_log(int p_rows) {
+	const int scroll = MAX(0, log_scroll + p_rows);
+	if (scroll == log_scroll) {
+		return;
+	}
+	log_scroll = scroll; // the clamp against the oldest line happens in _render_log()
+	if (page == PAGE_LOG) {
+		_render();
+	}
+}
+
+void ConsoleInstance::scroll_log_to_end() {
+	if (log_scroll == 0) {
+		return;
+	}
+	log_scroll = 0;
+	if (page == PAGE_LOG) {
+		_render();
+	}
+}
+
+int ConsoleInstance::get_log_scroll() const {
+	return log_scroll;
 }
 
 void ConsoleInstance::set_panel_touch_enabled(bool p_enabled) {
@@ -2084,6 +2226,7 @@ void ConsoleInstance::clear_log() {
 		MutexLock lock(log_mutex);
 		log_lines.clear();
 	}
+	log_scroll = 0;
 	dirty = true;
 	if (page == PAGE_LOG) {
 		_render();
@@ -2191,6 +2334,9 @@ void ConsoleInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_page"), &ConsoleInstance::get_page);
 	ClassDB::bind_method(D_METHOD("next_page"), &ConsoleInstance::next_page);
 	ClassDB::bind_method(D_METHOD("prev_page"), &ConsoleInstance::prev_page);
+	ClassDB::bind_method(D_METHOD("scroll_log", "rows"), &ConsoleInstance::scroll_log);
+	ClassDB::bind_method(D_METHOD("scroll_log_to_end"), &ConsoleInstance::scroll_log_to_end);
+	ClassDB::bind_method(D_METHOD("get_log_scroll"), &ConsoleInstance::get_log_scroll);
 	ClassDB::bind_method(D_METHOD("set_panel_touch_enabled", "enabled"), &ConsoleInstance::set_panel_touch_enabled);
 	ClassDB::bind_method(D_METHOD("is_panel_touch_enabled"), &ConsoleInstance::is_panel_touch_enabled);
 	ClassDB::bind_method(D_METHOD("set_refresh_rate", "hz"), &ConsoleInstance::set_refresh_rate);
@@ -2239,6 +2385,7 @@ ConsoleInstance::ConsoleInstance() {
 	auto_font = true;
 	page = PAGE_LOG;
 	log_capacity = 1024;
+	log_scroll = 0;
 	refresh_rate = 5.0;
 	refresh_accum = 0;
 	dirty = true;
@@ -2246,7 +2393,12 @@ ConsoleInstance::ConsoleInstance() {
 	secondary_mode = _secondary_mode_setting();
 	touch_down = false;
 	touch_down_msec = 0;
+	touch_index = -1;
+	touch_dragged = false;
 	panel_touch = GLOBAL_DEF("debug/console/panel_touch", false);
+	GLOBAL_DEF("debug/console/panel_rotation", 0);
+	ProjectSettings::get_singleton()->set_custom_property_info("debug/console/panel_rotation",
+			PropertyInfo(Variant::INT, "debug/console/panel_rotation", PROPERTY_HINT_ENUM, "0:0,90:90,180:180,270:270"));
 }
 
 ConsoleInstance::~ConsoleInstance() {
@@ -2306,6 +2458,18 @@ bool DebugConsole::is_visible() const {
 void DebugConsole::switch_page(int p_page) {
 	ERR_FAIL_INDEX(p_page, ConsoleInstance::PAGE_MAX);
 	_FORWARD_VOID(switch_page(ConsoleInstance::Page(p_page)));
+}
+
+void DebugConsole::scroll_log(int p_rows) {
+	_FORWARD_VOID(scroll_log(p_rows));
+}
+
+void DebugConsole::scroll_log_to_end() {
+	_FORWARD_VOID(scroll_log_to_end());
+}
+
+int DebugConsole::get_log_scroll() const {
+	_FORWARD(get_log_scroll(), 0);
 }
 
 void DebugConsole::set_panel_touch_enabled(bool p_enabled) {
@@ -2445,6 +2609,9 @@ void DebugConsole::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("switch_page", "page"), &DebugConsole::switch_page);
 	ClassDB::bind_method(D_METHOD("next_page"), &DebugConsole::next_page);
 	ClassDB::bind_method(D_METHOD("prev_page"), &DebugConsole::prev_page);
+	ClassDB::bind_method(D_METHOD("scroll_log", "rows"), &DebugConsole::scroll_log);
+	ClassDB::bind_method(D_METHOD("scroll_log_to_end"), &DebugConsole::scroll_log_to_end);
+	ClassDB::bind_method(D_METHOD("get_log_scroll"), &DebugConsole::get_log_scroll);
 	ClassDB::bind_method(D_METHOD("set_panel_touch_enabled", "enabled"), &DebugConsole::set_panel_touch_enabled);
 	ClassDB::bind_method(D_METHOD("is_panel_touch_enabled"), &DebugConsole::is_panel_touch_enabled);
 	ClassDB::bind_method(D_METHOD("get_page"), &DebugConsole::get_page);

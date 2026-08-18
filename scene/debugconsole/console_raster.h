@@ -60,6 +60,12 @@ enum ConsolePixelFormat {
  */
 void console_blit(const TextConsole &p_console, uint32_t *p_dst, int p_stride_px, int p_width, int p_height, ConsolePixelFormat p_format = CONSOLE_PIXEL_ARGB32);
 
+/* Copies a tightly packed p_src_width x p_src_height image into p_dst, turning it
+ * p_rotation degrees clockwise. p_rotation must be 0, 90, 180 or 270, and for 90/270 the
+ * destination is expected to be p_src_height x p_src_width. Used to drive panels whose
+ * native scanline direction does not match the orientation the console is drawn in. */
+void console_rotate_copy(const uint32_t *p_src, int p_src_width, int p_src_height, uint32_t *p_dst, int p_dst_stride_px, int p_dst_width, int p_dst_height, int p_rotation);
+
 /* Pixel size the console occupies at its current font and pixel_scale. */
 Size2i console_raster_size(const TextConsole &p_console);
 

@@ -143,3 +143,40 @@ void console_blit(const TextConsole &p_console, uint32_t *p_dst, int p_stride_px
 		}
 	}
 }
+
+void console_rotate_copy(const uint32_t *p_src, int p_src_width, int p_src_height, uint32_t *p_dst, int p_dst_stride_px, int p_dst_width, int p_dst_height, int p_rotation) {
+	ERR_FAIL_NULL(p_src);
+	ERR_FAIL_NULL(p_dst);
+	ERR_FAIL_COND(p_src_width <= 0 || p_src_height <= 0);
+
+	// Walk the destination rather than the source: that keeps writes to the (uncached,
+	// write-combining) surface sequential, which is where the cost of this copy lives.
+	for (int y = 0; y < p_dst_height; ++y) {
+		uint32_t *row = p_dst + y * p_dst_stride_px;
+		for (int x = 0; x < p_dst_width; ++x) {
+			int sx, sy;
+			switch (p_rotation) {
+				case 90: {
+					sx = y;
+					sy = p_src_height - 1 - x;
+				} break;
+				case 180: {
+					sx = p_src_width - 1 - x;
+					sy = p_src_height - 1 - y;
+				} break;
+				case 270: {
+					sx = p_src_width - 1 - y;
+					sy = x;
+				} break;
+				default: {
+					sx = x;
+					sy = y;
+				}
+			}
+			if (sx < 0 || sy < 0 || sx >= p_src_width || sy >= p_src_height) {
+				continue; // destination is larger than the rotated console; leave it as cleared
+			}
+			row[x] = p_src[sy * p_src_width + sx];
+		}
+	}
+}

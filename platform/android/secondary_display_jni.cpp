@@ -57,7 +57,7 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_secondaryDisplayDetac
 	secondary_display_detached(p_display_id);
 }
 
-JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_secondaryDisplayTouch(JNIEnv *env, jclass clazz, jfloat p_x, jfloat p_y, jboolean p_pressed) {
-	secondary_display_touch(p_x, p_y, p_pressed);
+JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_secondaryDisplayTouch(JNIEnv *env, jclass clazz, jfloat p_x, jfloat p_y, jint p_type, jint p_index) {
+	secondary_display_touch(p_x, p_y, p_type, p_index);
 }
 }

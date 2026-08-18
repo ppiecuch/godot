@@ -95,17 +95,26 @@ void SecondaryDisplayAndroid::_detach(int p_display_id) {
 	_release_window();
 }
 
-void SecondaryDisplayAndroid::_push_touch(float p_x, float p_y, bool p_pressed) {
+void SecondaryDisplayAndroid::_push_touch(float p_x, float p_y, int p_type, int p_index) {
 	MutexLock lock(touch_mutex);
 
 	// The console drains this once per frame; a flood of moves must not grow unbounded if
-	// the console is not running at all.
-	if (touch_queue.size() > 32) {
-		touch_queue.remove(0);
+	// the console is not running at all. Presses and releases outrank moves: dropping a
+	// move only coarsens a drag, dropping a release would strand the gesture.
+	while (touch_queue.size() > 63) {
+		int victim = 0;
+		for (int i = 0; i < touch_queue.size(); ++i) {
+			if (touch_queue[i].type == TOUCH_MOVE) {
+				victim = i;
+				break;
+			}
+		}
+		touch_queue.remove(victim);
 	}
 	TouchEvent ev;
 	ev.position = Vector2(p_x, p_y);
-	ev.pressed = p_pressed;
+	ev.type = TouchType(p_type);
+	ev.index = p_index;
 	ev.time_msec = OS::get_singleton()->get_ticks_msec();
 	touch_queue.push_back(ev);
 }
@@ -185,8 +194,8 @@ void secondary_display_detached(int p_display_id) {
 	}
 }
 
-void secondary_display_touch(float p_x, float p_y, bool p_pressed) {
+void secondary_display_touch(float p_x, float p_y, int p_type, int p_index) {
 	if (SecondaryDisplayAndroid *display = SecondaryDisplayAndroid::get_singleton()) {
-		display->_push_touch(p_x, p_y, p_pressed);
+		display->_push_touch(p_x, p_y, p_type, p_index);
 	}
 }

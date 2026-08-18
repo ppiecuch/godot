@@ -47,7 +47,7 @@
 class SecondaryDisplayAndroid : public SecondaryDisplay {
 	friend void secondary_display_attached(ANativeWindow *p_window, int p_display_id, int p_width, int p_height, int p_dpi);
 	friend void secondary_display_detached(int p_display_id);
-	friend void secondary_display_touch(float p_x, float p_y, bool p_pressed);
+	friend void secondary_display_touch(float p_x, float p_y, int p_type, int p_index);
 
 	static SecondaryDisplayAndroid *singleton;
 
@@ -65,7 +65,7 @@ class SecondaryDisplayAndroid : public SecondaryDisplay {
 
 	void _attach(ANativeWindow *p_window, int p_display_id, int p_width, int p_height, int p_dpi);
 	void _detach(int p_display_id);
-	void _push_touch(float p_x, float p_y, bool p_pressed);
+	void _push_touch(float p_x, float p_y, int p_type, int p_index);
 	void _release_window(); // mutex must be held
 
 public:
@@ -88,6 +88,6 @@ public:
  * SecondaryDisplayAndroid instance exists -- the surface is then simply dropped. */
 void secondary_display_attached(ANativeWindow *p_window, int p_display_id, int p_width, int p_height, int p_dpi);
 void secondary_display_detached(int p_display_id);
-void secondary_display_touch(float p_x, float p_y, bool p_pressed);
+void secondary_display_touch(float p_x, float p_y, int p_type, int p_index);
 
 #endif // SECONDARY_DISPLAY_ANDROID_H
