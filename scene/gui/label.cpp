@@ -151,6 +151,7 @@ void Label::_notification(int p_what) {
 
 		size_t draw_index = 0;
 	draw_loop:
+		chars_total = 0; // visible_chars limit applies to each drawn cache separately
 		const WordCache *cc = draw_set[draw_index];
 		const WordList *wc = cc->words;
 

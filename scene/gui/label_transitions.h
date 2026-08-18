@@ -389,12 +389,18 @@ struct Label::GenericDualTransformController : public Label::AnimationController
 	}
 	virtual const std::vector<WordCache *> get_draw_cache() { return std::vector<WordCache *>{ &cache_in, &cache_out }; }
 	virtual const CharTransform *get_char_xform(const WordCache *p_cache, int p_pos) {
-		if (!change_new_chars_only || !_same_char(cache_in, cache_out, p_pos)) {
-			if (p_cache == &cache_in)
-				return &xform_in;
-			if (p_cache == &cache_out)
-				return &xform_out;
+		static CharTransform _hidden(true);
+		if (change_new_chars_only && _same_char(cache_in, cache_out, p_pos)) {
+			// Static (unchanged) character: draw it only once, from the cache that
+			// survives the transition. Drawing it from both caches would stack two
+			// identical quads and darken any translucent pixels (font baked shadow,
+			// antialiased edges, translucent font color).
+			return (p_cache == &cache_out) ? &_hidden : nullptr;
 		}
+		if (p_cache == &cache_in)
+			return &xform_in;
+		if (p_cache == &cache_out)
+			return &xform_out;
 		return nullptr;
 	}
 	virtual bool is_done() const { return !active; }
