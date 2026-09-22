@@ -1058,7 +1058,11 @@ static void FixTabMenu(void)
         cp = strchr(cp, '(');
         if (cp != NULL) {
             *(cp+1) = (cfg.Tabs>1) ? (cfg.Tabs + '0') : '-';
-            if (GetClass(inFocus) == POPDOWNMENU)
+            /* Bug fix: inFocus is legitimately NULL here the first time
+            ** this runs -- FixTabMenu() is called from the application
+            ** window's own CREATE_WINDOW handler, i.e. before any
+            ** document window (which is what sets inFocus) exists yet. */
+            if (inFocus != NULL && GetClass(inFocus) == POPDOWNMENU)
                 SendMessage(inFocus, PAINT, 0, 0);
         }
     }
@@ -1612,6 +1616,16 @@ void Calendar(WINDOW pwnd)
 
 /* -------------- menus.c ------------- */
 
+/* Bug fix: FixTabMenu() (above) intentionally mutates this selection's
+** title in place (writing the current tab size into the parens) -- fine
+** on the old-school compilers this code predates, which commonly placed
+** string literals in writable memory, but a plain "~Tabs ( )" literal
+** here crashes (SIGBUS/SIGSEGV depending on platform) under any modern
+** toolchain, which places string literals in read-only memory. A
+** non-const array is writable; used here instead of the literal, in the
+** one selection that's actually mutated. */
+static char TabsMenuTitle[] = "~Tabs ( )";
+
 /* --------------------- the main menu --------------------- */
 DEFMENU(MainMenu)
     /* --------------- the File popdown menu ----------------*/
@@ -1683,7 +1697,7 @@ DEFMENU(MainMenu)
 #endif
         SELECTION( "~Insert",       ID_INSERT,     INS, TOGGLE)
         SELECTION( "~Word wrap",    ID_WRAP,        0,  TOGGLE)
-        SELECTION( "~Tabs ( )",     ID_TABS,        0,  CASCADED)
+        SELECTION( TabsMenuTitle,   ID_TABS,        0,  CASCADED)
         SEPARATOR
         SELECTION( "~Save options", ID_SAVEOPTIONS, 0,      0 )
     ENDPOPDOWN

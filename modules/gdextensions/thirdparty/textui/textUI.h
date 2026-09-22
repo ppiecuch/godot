@@ -824,7 +824,10 @@ extern ColorScheme reverse;
 /* Memory allocation */
 void *DFcalloc(size_t, size_t);
 void *DFmalloc(size_t);
-void *DFalloca(size_t);
+/* Bug fix: was declared as "DFalloca" (never defined -- see textUI.c's
+** DFmalloca() for the full story) while every call site actually meant
+** this, "DFmalloca" (heap-allocated, not real alloca). */
+void *DFmalloca(size_t);
 void *DFrealloc(void *, size_t);
 void DFfree(void *);
 
@@ -1261,8 +1264,12 @@ extern BOOL Debug_LogClockMessages; /* Log clock messages too? */
 
 
 /* --------- calendar.h ----------- */
-    
-void Calendar(WINDOW pwnd);
+
+/* Bug fix: renamed from "Calendar" -- see textUI.c's comment at this
+** function's definition for why (name collision with textUI_edit.c's
+** own, different Calendar(), when both are linked into the same
+** binary/module). */
+void TextUIGenericCalendar(WINDOW pwnd);
 
 int isLeapYear(int year);
 

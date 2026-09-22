@@ -1605,9 +1605,21 @@ void *DFrealloc(void *block, size_t size)
     return rtn;
 }
 
+/* Bug fix: this used to wrap alloca(size), but alloca's memory is scoped
+** to *this* function's own stack frame -- returning it hands the caller
+** a pointer that's already invalid the instant this function returns
+** (undefined behavior: the classic "alloca-behind-a-wrapper" bug). Its
+** two call sites (findfirst_in_directory() below and the PICTUREBOX
+** PAINT handler) actually called a *different*, never-defined name,
+** "DFalloca" -- a pre-existing typo (this function was defined but dead
+** code, and the callers failed to link until fixed to call this one, the
+** one that actually exists). Fixed both: the typo, and this function to
+** heap-allocate like DFmalloc/DFfree instead of wrapping alloca -- a
+** small, never-freed, one-call-sized leak is a far safer trade than
+** returning a dangling stack pointer. */
 void *DFmalloca(size_t size)
 {
-    void *rtn = alloca(size);
+    void *rtn = malloc(size);
     if (size && rtn == NULL)
         AllocationError();
     return rtn;
@@ -4968,7 +4980,17 @@ static int CalendarProc(WINDOW wnd,MESSAGE msg,
     return DefaultWndProc(wnd, msg, p1, p2);
 }
 
-void Calendar(WINDOW pwnd)
+/* Bug fix: renamed from "Calendar" -- textUI_edit.c defines its OWN,
+** richer "Calendar(WINDOW)" (wired to its Utilities menu's ID_CALENDAR),
+** with the exact same public signature declared in textUI.h. Both this
+** file and textUI_edit.c are compiled into the same "textui" Godot
+** module (see gdextensions/SCsub) whenever it's enabled, so linking them
+** together previously failed outright with a duplicate-symbol error.
+** Since this one (unused by anything else in this file) is superseded
+** by textUI_edit.c's when both are linked, it's kept under a new name
+** rather than deleted, for any future caller that wants textUI.c's plain
+** widget standalone, without textUI_edit.c. */
+void TextUIGenericCalendar(WINDOW pwnd)
 {
     if (CalWnd == NULL)    {
         time_t tim = time(NULL);
@@ -6219,22 +6241,28 @@ static void SelectionMsg(WINDOW wnd, PARAM p1)
     if (mnu->PrepMenu != NULL)
         (*(mnu->PrepMenu))(GetDocFocus(), mnu);
 
-    wd = MenuWidth(mnu->Selections);
-
-    if (offset > WindowWidth(wnd)-wd)
-        offset = WindowWidth(wnd)-wd;
-
-    /* Create and activate pop-down */
-    mwnd = CreateWindow(POPDOWNMENU, NULL,
-                GetLeft(wnd)+offset, GetTop(wnd)+1,
-                MenuHeight(mnu->Selections),
-                wd,
-                NULL,
-                wnd,
-                NULL,
-                SHADOW);
-
+    /* An empty menu (e.g. "Window" with no open documents) has nothing
+    ** to show, so don't create a pop-down window for it at all: doing so
+    ** would still grab keyboard/mouse capture and focus (CREATE_WINDOW ->
+    ** PopDownCreateWindowMsg) for a window whose wnd->mnu is never set
+    ** (BUILD_SELECTIONS is what assigns it), leaving inFocus pointed at a
+    ** popdown with a NULL mnu that then crashes on the next keystroke. */
     if (mnu->Selections[0].SelectionTitle != NULL)    {
+        wd = MenuWidth(mnu->Selections);
+
+        if (offset > WindowWidth(wnd)-wd)
+            offset = WindowWidth(wnd)-wd;
+
+        /* Create and activate pop-down */
+        mwnd = CreateWindow(POPDOWNMENU, NULL,
+                    GetLeft(wnd)+offset, GetTop(wnd)+1,
+                    MenuHeight(mnu->Selections),
+                    wd,
+                    NULL,
+                    wnd,
+                    NULL,
+                    SHADOW);
+
         SendMessage(mwnd, BUILD_SELECTIONS, (PARAM) mnu, 0);
         SendMessage(mwnd, SETFOCUS, TRUE, 0);
         SendMessage(mwnd, SHOW_WINDOW, 0, 0);
@@ -7248,9 +7276,13 @@ BOOL GenericMessage(WINDOW wnd,char *ttl,char *msg,int buttonct,
       char *b1, char *b2, int c1, int c2, int isModal)
 {
     BOOL rtn;
+    /* Bug fix: ttl is legitimately NULL for e.g. YesNoBox() (see its
+    ** macro definition in textUI.h) -- strlen(NULL) below would crash on
+    ** the very first use of any title-less dialog. */
+    size_t ttllen = (ttl != NULL) ? strlen(ttl) : 0;
     MsgBox.dwnd.title = ttl;
     MsgBox.ctl[0].dwnd.h = MsgHeight(msg);
-    MsgBox.ctl[0].dwnd.w = max(max(MsgWidth(msg), buttonct*8 + buttonct + 2), strlen(ttl)+2);
+    MsgBox.ctl[0].dwnd.w = max(max(MsgWidth(msg), buttonct*8 + buttonct + 2), ttllen+2);
     MsgBox.dwnd.h = MsgBox.ctl[0].dwnd.h+6;
     MsgBox.dwnd.w = MsgBox.ctl[0].dwnd.w+4;
     if (buttonct == 1)
@@ -8952,7 +8984,7 @@ static void LBChooseMsg(WINDOW wnd, PARAM p1)
 static BOOL PopDownKeyboardMsg(WINDOW wnd, PARAM p1, PARAM p2)
 {
     WINDOW pwnd = GetParent(wnd);
-    struct PopDown *ActivePopDown = wnd->mnu->Selections;
+    struct PopDown *ActivePopDown = wnd->mnu ? wnd->mnu->Selections : NULL;
 
     if (wnd->mnu != NULL)    {
         if (ActivePopDown != NULL)    {
@@ -8970,11 +9002,20 @@ static BOOL PopDownKeyboardMsg(WINDOW wnd, PARAM p1, PARAM p2)
             a = AltConvert(c);
 
             while (pd->SelectionTitle != NULL)    {
+                /* Separator entries (SEPARATOR macro, textUI.h) have a
+                ** SelectionTitle that's just the separator glyph, with
+                ** no SHORTCUTCHAR ('~') in it at all -- strchr()
+                ** correctly returns NULL for those, but unconditionally
+                ** dereferencing cp+1 right after crashed (a real,
+                ** reproducible bug: pressing Down inside any open
+                ** popdown menu that has more than one separator reached
+                ** this exact NULL+1 dereference and took the whole app
+                ** down). Only read *cp when cp is non-NULL. */
                 char *cp = strchr(pd->SelectionTitle,
                                 SHORTCUTCHAR);
-                int sc = tolower(*(cp+1));
+                int sc = cp ? tolower(*(cp+1)) : 0;
                 if ((cp && sc == c) ||
-                    (a && sc == a) ||
+                    (cp && a && sc == a) ||
                     (pd->Accelerator == c))
                 {
                     PostMessage(wnd, LB_SELECTION, sel, 0);
@@ -12504,7 +12545,7 @@ intptr_t _findfirst(const char* filespec, _finddata_t* fileinfo) {
          * forward slash.
          */
         size_t pathlen = strlen(filespec) +1;
-        char* dirpath = DFalloca(pathlen);
+        char* dirpath = DFmalloca(pathlen);
         memcpy(dirpath, filespec, pathlen);
         dirpath[rmslash - filespec] = '\0';
         return findfirst_in_directory(dirpath, spec, fileinfo);
@@ -12875,7 +12916,7 @@ int GraphBoxProc(WINDOW wnd, MESSAGE msg, PARAM p1, PARAM p2)
             if (isVisible(wnd))
             {
                 NormalProc(wnd, msg, p1, p2); // clear bg etc
-                char *line = DFalloca(RectWidth(rc)+1);
+                char *line = DFmalloca(RectWidth(rc)+1);
                 memset(line,div_top,RectWidth(rc)); line[RectWidth(rc)] = 0; PutWindowLine(wnd, line, 0, 0);
                 memset(line,div_mid,RectWidth(rc)); line[RectWidth(rc)] = 0; PutWindowLine(wnd, line, 0, RectHeight(rc)/2);
                 memset(line,div_bot,RectWidth(rc)); line[RectWidth(rc)] = 0; PutWindowLine(wnd, line, 0, RectHeight(rc)-1);
