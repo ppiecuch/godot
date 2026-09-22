@@ -257,7 +257,13 @@ thirdparty_sources = [
 if env["tools"]:
     thirdparty_sources += ["thirdparty/mypaint/libmypaint.c", "thirdparty/mypaint/json-c/libjson-c.c"]
     env_module.Append(CPPPATH=["thirdparty/gc-8.2.2/include"])
-    sources += Glob("editor/*.cpp") + Glob("editor/*.c")  # Always build editor for tools
+    editor_sources = Glob("editor/*.cpp") + Glob("editor/*.c")  # Always build editor for tools
+    if not is_enabled("environment/proc_rocks"):
+        # Depends on ProcRockMesh (submodules/environment/proc_rocks), which isn't
+        # compiled at all when that submodule is disabled — unlike the rest of this
+        # unconditional glob, this one file needs to follow that toggle.
+        editor_sources = [f for f in editor_sources if "proc_rocks_editor_plugin" not in str(f)]
+    sources += editor_sources
     if is_enabled("qrcodetexture"):
         modules += ["qrcodetexture"]
     if is_enabled("texturepacker"):

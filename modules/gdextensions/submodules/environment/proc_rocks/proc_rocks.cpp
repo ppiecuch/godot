@@ -1627,43 +1627,8 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 		mesh->set_pipeline_preset(99); // clamped to last preset (12), must not crash
 		CHECK(mesh->get_pipeline_albedo_low().a >= 0.0f);
 	}
-
-#ifdef TOOLS_ENABLED
-	TEST_CASE("[proc_rocks] rock_pipeline_load_baked_textures returns valid editor-only PBR sets") {
-		ProcRockPipelineTextures gravel = rock_pipeline_load_baked_textures(PROCROCK_BAKED_GRAVEL);
-		CHECK(gravel.albedo.is_valid());
-		CHECK(gravel.normal.is_valid());
-		CHECK(gravel.roughness.is_valid());
-		CHECK(gravel.ambient_occlusion.is_valid());
-		CHECK(gravel.metalness.is_valid());
-		CHECK(gravel.albedo->get_width() == 512);
-		CHECK(gravel.albedo->get_height() == 512);
-		// These two are single-channel (grayscale) source JPEGs — the ones that actually
-		// failed to decode (jpgd chokes on their unusual 2x2 luma sampling factor) until
-		// the embedded assets were re-encoded with standard 1x1 sampling.
-		CHECK(gravel.roughness->get_width() == 512);
-		CHECK(gravel.roughness->get_height() == 512);
-		CHECK(gravel.ambient_occlusion->get_width() == 512);
-		Ref<Image> gravel_roughness_img = gravel.roughness->get_data();
-		CHECK(gravel_roughness_img.is_valid());
-		CHECK(gravel_roughness_img->get_width() == 512);
-
-		ProcRockPipelineTextures mossy = rock_pipeline_load_baked_textures(PROCROCK_BAKED_MOSSY);
-		CHECK(mossy.albedo.is_valid());
-		CHECK(mossy.albedo->get_width() == 512);
-		CHECK(mossy.roughness->get_width() == 512);
-		CHECK(mossy.ambient_occlusion->get_width() == 512);
-
-		ProcRockPipelineTextures rock = rock_pipeline_load_baked_textures(PROCROCK_BAKED_ROCK);
-		CHECK(rock.albedo.is_valid());
-		CHECK(rock.albedo->get_width() == 512);
-		CHECK(rock.normal.is_valid()); // synthesized flat-up normal, since only albedo ships for this pack
-
-		Ref<SpatialMaterial> material = rock_pipeline_make_material(gravel);
-		CHECK(material.is_valid());
-		CHECK(material->get_texture(SpatialMaterial::TEXTURE_ALBEDO).is_valid());
-	}
-#endif // TOOLS_ENABLED
+	// Baked demo texture pack tests live in editor/proc_rocks_editor_plugin.cpp — that's
+	// the only place the loader exists now (editor-only, moved out of the generator API).
 }
 
 #endif // DOCTEST

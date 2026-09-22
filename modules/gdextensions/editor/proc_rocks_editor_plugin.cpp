@@ -33,11 +33,98 @@
 #include "proc_rocks_editor_plugin.h"
 
 #include "core/io/resource_saver.h"
-#include "generators/procrockgen/procrockgen.h"
+#include "environment/proc_rocks/generators/procrockgen/procrockgen.h"
 #include "scene/3d/light.h"
 #include "scene/gui/viewport_container.h"
 #include "scene/resources/material.h"
 #include "scene/resources/world.h"
+
+#include "proc_rocks_demo/baked_textures.h"
+
+#include <cstring>
+
+// =========================================================================
+// Baked demo texture packs (ProcRock dock "Demo Texture" picker)
+// =========================================================================
+
+namespace {
+
+enum ProcRockBakedTexturePack {
+	PROCROCK_BAKED_GRAVEL,
+	PROCROCK_BAKED_MOSSY,
+	PROCROCK_BAKED_ROCK,
+};
+
+Ref<Image> load_embedded_jpg(const uint8_t *p_data, unsigned int p_size) {
+	PoolByteArray buf;
+	buf.resize(p_size);
+	{
+		PoolByteArray::Write w = buf.write();
+		memcpy(w.ptr(), p_data, p_size);
+	}
+	Ref<Image> img;
+	img.instance();
+	img->load_jpg_from_buffer(buf);
+	return img;
+}
+
+Ref<Image> make_constant_image(int p_size, const Color &p_color) {
+	Ref<Image> img;
+	img.instance();
+	img->create(p_size, p_size, false, Image::FORMAT_RGB8);
+	img->lock();
+	for (int y = 0; y < p_size; y++) {
+		for (int x = 0; x < p_size; x++) {
+			img->set_pixel(x, y, p_color);
+		}
+	}
+	img->unlock();
+	return img;
+}
+
+Ref<ImageTexture> to_texture(const Ref<Image> &p_image) {
+	Ref<ImageTexture> tex;
+	tex.instance();
+	tex->create_from_image(p_image);
+	return tex;
+}
+
+ProcRockPipelineTextures load_baked_textures(ProcRockBakedTexturePack p_pack) {
+	ProcRockPipelineTextures textures;
+	// Baked sets have no metalness map (rock isn't metallic) — a constant black texture
+	// is equivalent to metallic=0 without needing a dedicated scalar path.
+	Ref<ImageTexture> non_metal = to_texture(make_constant_image(8, Color(0, 0, 0)));
+
+	switch (p_pack) {
+		case PROCROCK_BAKED_GRAVEL:
+			textures.albedo = to_texture(load_embedded_jpg(gravel_albedo_jpg_data, gravel_albedo_jpg_size));
+			textures.normal = to_texture(load_embedded_jpg(gravel_normals_jpg_data, gravel_normals_jpg_size));
+			textures.roughness = to_texture(load_embedded_jpg(gravel_roughness_jpg_data, gravel_roughness_jpg_size));
+			textures.ambient_occlusion = to_texture(load_embedded_jpg(gravel_ambientOcc_jpg_data, gravel_ambientOcc_jpg_size));
+			textures.metalness = non_metal;
+			break;
+		case PROCROCK_BAKED_MOSSY:
+			textures.albedo = to_texture(load_embedded_jpg(moss_albedo_jpg_data, moss_albedo_jpg_size));
+			textures.normal = to_texture(load_embedded_jpg(moss_normals_jpg_data, moss_normals_jpg_size));
+			textures.roughness = to_texture(load_embedded_jpg(moss_roughness_jpg_data, moss_roughness_jpg_size));
+			textures.ambient_occlusion = to_texture(load_embedded_jpg(moss_ambientOcc_jpg_data, moss_ambientOcc_jpg_size));
+			textures.metalness = non_metal;
+			break;
+		case PROCROCK_BAKED_ROCK:
+		default:
+			// Only a single combined albedo texture ships for this pack.
+			textures.albedo = to_texture(load_embedded_jpg(rock_jpg_data, rock_jpg_size));
+			textures.normal = to_texture(make_constant_image(8, Color(0.5, 0.5, 1.0)));
+			textures.roughness = to_texture(make_constant_image(8, Color(0.6, 0.6, 0.6)));
+			textures.ambient_occlusion = to_texture(make_constant_image(8, Color(1, 1, 1)));
+			textures.metalness = non_metal;
+			break;
+	}
+
+	return textures;
+}
+
+} // namespace
 
 // =========================================================================
 // ProcRockDialog
@@ -121,7 +208,7 @@ void ProcRockDialog::_apply_demo_texture() {
 	}
 	// Clear the override so the mesh's own (demo-textured) surface material is visible.
 	preview_mesh_instance->set_material_override(Ref<Material>());
-	ProcRockPipelineTextures textures = rock_pipeline_load_baked_textures((ProcRockBakedTexturePack)demo_texture_pack);
+	ProcRockPipelineTextures textures = load_baked_textures((ProcRockBakedTexturePack)demo_texture_pack);
 	rock_mesh->surface_set_material(0, rock_pipeline_make_material(textures));
 }
 
@@ -314,5 +401,52 @@ ProcRockEditorPlugin::ProcRockEditorPlugin(EditorNode *p_node) {
 ProcRockEditorPlugin::~ProcRockEditorPlugin() {
 	remove_tool_menu_item("Procedural Rock Generator...");
 }
+
+// =========================================================================
+// Tests
+// =========================================================================
+
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
+
+TEST_SUITE("[[proc_rocks]] Baked demo textures") {
+	TEST_CASE("[proc_rocks] load_baked_textures returns valid editor-only PBR sets") {
+		ProcRockPipelineTextures gravel = load_baked_textures(PROCROCK_BAKED_GRAVEL);
+		CHECK(gravel.albedo.is_valid());
+		CHECK(gravel.normal.is_valid());
+		CHECK(gravel.roughness.is_valid());
+		CHECK(gravel.ambient_occlusion.is_valid());
+		CHECK(gravel.metalness.is_valid());
+		CHECK(gravel.albedo->get_width() == 512);
+		CHECK(gravel.albedo->get_height() == 512);
+		// These two are single-channel (grayscale) source JPEGs — the ones that actually
+		// failed to decode (jpgd chokes on their unusual 2x2 luma sampling factor) until
+		// the embedded assets were re-encoded with standard 1x1 sampling.
+		CHECK(gravel.roughness->get_width() == 512);
+		CHECK(gravel.roughness->get_height() == 512);
+		CHECK(gravel.ambient_occlusion->get_width() == 512);
+		Ref<Image> gravel_roughness_img = gravel.roughness->get_data();
+		CHECK(gravel_roughness_img.is_valid());
+		CHECK(gravel_roughness_img->get_width() == 512);
+
+		ProcRockPipelineTextures mossy = load_baked_textures(PROCROCK_BAKED_MOSSY);
+		CHECK(mossy.albedo.is_valid());
+		CHECK(mossy.albedo->get_width() == 512);
+		CHECK(mossy.roughness->get_width() == 512);
+		CHECK(mossy.ambient_occlusion->get_width() == 512);
+
+		ProcRockPipelineTextures rock = load_baked_textures(PROCROCK_BAKED_ROCK);
+		CHECK(rock.albedo.is_valid());
+		CHECK(rock.albedo->get_width() == 512);
+		CHECK(rock.normal.is_valid()); // synthesized flat-up normal, since only albedo ships for this pack
+
+		Ref<SpatialMaterial> material = rock_pipeline_make_material(gravel);
+		CHECK(material.is_valid());
+		CHECK(material->get_texture(SpatialMaterial::TEXTURE_ALBEDO).is_valid());
+	}
+}
+
+#endif // DOCTEST
 
 #endif // TOOLS_ENABLED

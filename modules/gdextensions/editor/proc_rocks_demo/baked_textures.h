@@ -30,7 +30,7 @@
 
 // Editor-only baked PBR texture packs for the ProcRock dock's "Demo Texture"
 // picker (see ProcRockDialog). Never compiled into export templates — only
-// included from procrockgen.cpp within an #ifdef TOOLS_ENABLED block.
+// included from proc_rocks_editor_plugin.cpp within an #ifdef TOOLS_ENABLED block.
 
 #undef INCBIN_PREFIX
 #define INCBIN_PREFIX
@@ -39,16 +39,16 @@
 
 #include "misc/incbin.h"
 
-#define ROOT "submodules/environment/proc_rocks/generators/procrockgen/"
+#define ROOT "editor/proc_rocks_demo/"
 
-INCBIN(gravel_albedo_jpg, ROOT "textures/gravel/albedo.jpg");
-INCBIN(gravel_ambientOcc_jpg, ROOT "textures/gravel/ambientOcc.jpg");
-INCBIN(gravel_displacement_jpg, ROOT "textures/gravel/displacement.jpg");
-INCBIN(gravel_normals_jpg, ROOT "textures/gravel/normals.jpg");
-INCBIN(gravel_roughness_jpg, ROOT "textures/gravel/roughness.jpg");
-INCBIN(moss_albedo_jpg, ROOT "textures/mossy/albedo.jpg");
-INCBIN(moss_ambientOcc_jpg, ROOT "textures/mossy/ambientOcc.jpg");
-INCBIN(moss_displacement_jpg, ROOT "textures/mossy/displacement.jpg");
-INCBIN(moss_normals_jpg, ROOT "textures/mossy/normals.jpg");
-INCBIN(moss_roughness_jpg, ROOT "textures/mossy/roughness.jpg");
-INCBIN(rock_jpg, ROOT "textures/rock/rock.jpg");
+INCBIN(gravel_albedo_jpg, ROOT "gravel/albedo.jpg");
+INCBIN(gravel_ambientOcc_jpg, ROOT "gravel/ambientOcc.jpg");
+INCBIN(gravel_displacement_jpg, ROOT "gravel/displacement.jpg");
+INCBIN(gravel_normals_jpg, ROOT "gravel/normals.jpg");
+INCBIN(gravel_roughness_jpg, ROOT "gravel/roughness.jpg");
+INCBIN(moss_albedo_jpg, ROOT "mossy/albedo.jpg");
+INCBIN(moss_ambientOcc_jpg, ROOT "mossy/ambientOcc.jpg");
+INCBIN(moss_displacement_jpg, ROOT "mossy/displacement.jpg");
+INCBIN(moss_normals_jpg, ROOT "mossy/normals.jpg");
+INCBIN(moss_roughness_jpg, ROOT "mossy/roughness.jpg");
+INCBIN(rock_jpg, ROOT "rock/rock.jpg");

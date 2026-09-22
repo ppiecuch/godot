@@ -206,7 +206,7 @@ INCBIN(slate_ttf, "resources/slate.ttf");
 
 #include "environment/proc_rocks/proc_rocks.h"
 #ifdef TOOLS_ENABLED
-#include "environment/proc_rocks/proc_rocks_editor_plugin.h"
+#include "editor/proc_rocks_editor_plugin.h"
 #endif
 #include "environment/spherical_waves/spherical_waves.h"
 #include "environment/spider_anim/spider.h"

@@ -61,16 +61,8 @@ ProcRockPipelineTextures rock_pipeline_gen_textures(
 
 Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures);
 
-#ifdef TOOLS_ENABLED
-// Editor-only baked PBR texture packs (gravel/mossy/rock), embedded via INCBIN — see
-// baked_textures.h. Used exclusively by the ProcRock dock's "Demo Texture" picker;
-// never compiled into export templates.
-enum ProcRockBakedTexturePack {
-	PROCROCK_BAKED_GRAVEL,
-	PROCROCK_BAKED_MOSSY,
-	PROCROCK_BAKED_ROCK,
-};
-ProcRockPipelineTextures rock_pipeline_load_baked_textures(ProcRockBakedTexturePack p_pack);
-#endif // TOOLS_ENABLED
+// Editor-only baked PBR texture packs (gravel/mossy/rock) live in
+// modules/gdextensions/editor/proc_rocks_editor_plugin.{h,cpp} — the ProcRock dock's
+// "Demo Texture" picker is their only consumer, and that file is TOOLS_ENABLED-only.
 
 #endif // PROCROCKGEN_H

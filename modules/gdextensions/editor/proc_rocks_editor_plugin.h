@@ -35,7 +35,7 @@
 
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
-#include "proc_rocks.h"
+#include "environment/proc_rocks/proc_rocks.h"
 #include "scene/3d/camera.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/gui/box_container.h"
