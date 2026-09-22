@@ -38,9 +38,14 @@
 #include "core/math/geometry.h"
 #include "core/math/plane.h"
 #include "core/math/random_number_generator.h"
+#include "modules/modules_enabled.gen.h"
 #include "modules/opensimplex/open_simplex_noise.h"
 #include "scene/resources/gradient.h"
 #include "servers/visual_server.h"
+
+#ifdef MODULE_XATLAS_UNWRAP_ENABLED
+#include "thirdparty/xatlas/xatlas.h"
+#endif
 
 #include <queue>
 #include <vector>
@@ -1044,8 +1049,97 @@ Array _rock_pipeline_gen_impl(int p_subdivisions, real_t p_width, real_t p_heigh
 	return _finalize_mesh_arrays(vertices, indices, p_smoothed);
 }
 
-// Shared tail: smooth (indexed, box-UV) or flat/low-poly shading + final Array packing —
-// used by both the scalar pipeline (above) and the JSON-driven generator/modifier chain.
+#ifdef MODULE_XATLAS_UNWRAP_ENABLED
+// Real chart-based UV unwrapping, replacing the box projection below for the
+// smooth-shaded path — reuses the same thirdparty/xatlas already vendored for
+// modules/xatlas_unwrap's lightmap UV2 baking (see that module's
+// register_types.cpp for the reference usage this mirrors), now safe to call
+// directly since procrockgen.cpp only ever compiles in the same tools=yes
+// footprint xatlas_unwrap itself requires (MODULE_XATLAS_UNWRAP_ENABLED is only
+// defined when that module's own can_build() — tools=yes, not android/ios —
+// actually held for this build, so there's no risk of an unresolved symbol).
+//
+// Unlike box-UV (one UV per input vertex, no topology change), chart
+// unwrapping can duplicate vertices at chart seams, so the output vertex/
+// normal count generally differs from the input — every output array below is
+// rebuilt from xatlas's own result, remapping through each output vertex's
+// `xref` back to the original position/normal.
+bool _xatlas_unwrap(const Vector<Vector3> &p_vertices, const Vector<Vector3> &p_normals, const Vector<int> &p_indices,
+		Vector<Vector3> &r_vertices, Vector<Vector3> &r_normals, Vector<Vector2> &r_uvs, Vector<int> &r_indices) {
+	// xatlas reads raw float triples regardless of Godot's real_t precision (the
+	// engine's own lightmap UV2 path feeds it plain `float*` too) — convert explicitly
+	// rather than assuming real_t == float.
+	Vector<float> positions, normals;
+	positions.resize(p_vertices.size() * 3);
+	normals.resize(p_normals.size() * 3);
+	for (int i = 0; i < p_vertices.size(); i++) {
+		positions.write[i * 3 + 0] = float(p_vertices[i].x);
+		positions.write[i * 3 + 1] = float(p_vertices[i].y);
+		positions.write[i * 3 + 2] = float(p_vertices[i].z);
+		normals.write[i * 3 + 0] = float(p_normals[i].x);
+		normals.write[i * 3 + 1] = float(p_normals[i].y);
+		normals.write[i * 3 + 2] = float(p_normals[i].z);
+	}
+	Vector<uint32_t> indices;
+	indices.resize(p_indices.size());
+	for (int i = 0; i < p_indices.size(); i++) {
+		indices.write[i] = uint32_t(p_indices[i]);
+	}
+
+	xatlas::MeshDecl input_mesh;
+	input_mesh.vertexCount = p_vertices.size();
+	input_mesh.vertexPositionData = positions.ptr();
+	input_mesh.vertexPositionStride = sizeof(float) * 3;
+	input_mesh.vertexNormalData = normals.ptr();
+	input_mesh.vertexNormalStride = sizeof(float) * 3;
+	input_mesh.indexData = indices.ptr();
+	input_mesh.indexCount = indices.size();
+	input_mesh.indexFormat = xatlas::IndexFormat::UInt32;
+
+	xatlas::Atlas *atlas = xatlas::Create();
+	xatlas::AddMeshError add_err = xatlas::AddMesh(atlas, input_mesh, 1);
+	if (add_err != xatlas::AddMeshError::Success) {
+		xatlas::Destroy(atlas);
+		return false;
+	}
+
+	xatlas::ChartOptions chart_options;
+	chart_options.fixWinding = true;
+	xatlas::PackOptions pack_options;
+	pack_options.padding = 1;
+	xatlas::Generate(atlas, chart_options, pack_options);
+
+	if (atlas->width == 0 || atlas->height == 0 || atlas->meshCount == 0) {
+		xatlas::Destroy(atlas);
+		return false; // degenerate/zero-area mesh — let the caller fall back to box-UV
+	}
+
+	const xatlas::Mesh &output = atlas->meshes[0];
+	real_t w = real_t(atlas->width), h = real_t(atlas->height);
+
+	r_vertices.resize(output.vertexCount);
+	r_normals.resize(output.vertexCount);
+	r_uvs.resize(output.vertexCount);
+	for (uint32_t i = 0; i < output.vertexCount; i++) {
+		uint32_t xref = output.vertexArray[i].xref;
+		r_vertices.write[i] = p_vertices[xref];
+		r_normals.write[i] = p_normals[xref];
+		r_uvs.write[i] = Vector2(real_t(output.vertexArray[i].uv[0]) / w, real_t(output.vertexArray[i].uv[1]) / h);
+	}
+
+	r_indices.resize(output.indexCount);
+	for (uint32_t i = 0; i < output.indexCount; i++) {
+		r_indices.write[i] = int(output.indexArray[i]);
+	}
+
+	xatlas::Destroy(atlas);
+	return true;
+}
+#endif // MODULE_XATLAS_UNWRAP_ENABLED
+
+// Shared tail: smooth (indexed, chart-unwrapped or box-UV) or flat/low-poly
+// shading + final Array packing — used by both the scalar pipeline (above) and
+// the JSON-driven generator/modifier chain.
 Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices, bool p_smoothed) {
 	Array mesh_arrays;
 	mesh_arrays.resize(VS::ARRAY_MAX);
@@ -1056,17 +1150,35 @@ Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int>
 	if (p_smoothed) {
 		Vector<Vector3> normals = compute_smooth_normals(p_vertices, p_indices);
 
-		Vector<Vector2> uvs;
-		uvs.resize(p_vertices.size());
-		for (int i = 0; i < p_vertices.size(); i++) {
-			int box_dir = rock_studio_get_box_dir(normals[i]);
-			uvs.write[i] = rock_studio_get_box_uv(p_vertices[i], box_dir);
+		bool unwrapped = false;
+#ifdef MODULE_XATLAS_UNWRAP_ENABLED
+		Vector<Vector3> xatlas_vertices, xatlas_normals;
+		Vector<Vector2> xatlas_uvs;
+		Vector<int> xatlas_indices;
+		if (_xatlas_unwrap(p_vertices, normals, p_indices, xatlas_vertices, xatlas_normals, xatlas_uvs, xatlas_indices)) {
+			mesh_arrays[VS::ARRAY_VERTEX] = xatlas_vertices;
+			mesh_arrays[VS::ARRAY_NORMAL] = xatlas_normals;
+			mesh_arrays[VS::ARRAY_TEX_UV] = xatlas_uvs;
+			mesh_arrays[VS::ARRAY_INDEX] = xatlas_indices;
+			unwrapped = true;
 		}
+#endif
+		if (!unwrapped) {
+			// Fallback: simple box projection, one UV per input vertex, no topology
+			// change — used when xatlas isn't compiled in (see MODULE_XATLAS_UNWRAP_ENABLED
+			// above) or declined a degenerate/zero-area mesh.
+			Vector<Vector2> uvs;
+			uvs.resize(p_vertices.size());
+			for (int i = 0; i < p_vertices.size(); i++) {
+				int box_dir = rock_studio_get_box_dir(normals[i]);
+				uvs.write[i] = rock_studio_get_box_uv(p_vertices[i], box_dir);
+			}
 
-		mesh_arrays[VS::ARRAY_VERTEX] = p_vertices;
-		mesh_arrays[VS::ARRAY_NORMAL] = normals;
-		mesh_arrays[VS::ARRAY_TEX_UV] = uvs;
-		mesh_arrays[VS::ARRAY_INDEX] = p_indices;
+			mesh_arrays[VS::ARRAY_VERTEX] = p_vertices;
+			mesh_arrays[VS::ARRAY_NORMAL] = normals;
+			mesh_arrays[VS::ARRAY_TEX_UV] = uvs;
+			mesh_arrays[VS::ARRAY_INDEX] = p_indices;
+		}
 	} else {
 		// rock_studio_make_low_poly() derives its flat normal via cross(v1-v0, v2-v0),
 		// the opposite winding convention from ComputeNormal()'s cross(v2-v0, v1-v0) used
@@ -2812,5 +2924,46 @@ TEST_SUITE("[[proc_rocks]] ProcRock generators and modifiers") {
 			CHECK(result.vertices[i].x > 90.0); // enabled translate applied
 		}
 	}
+
+#ifdef MODULE_XATLAS_UNWRAP_ENABLED
+	TEST_CASE("[procrockgen] _xatlas_unwrap produces valid chart UVs for a simple mesh") {
+		RockMesh cube = generate_cuboid(2.0, 2.0, 2.0);
+		Vector<Vector3> normals = compute_smooth_normals(cube.vertices, cube.indices);
+
+		Vector<Vector3> out_vertices, out_normals;
+		Vector<Vector2> out_uvs;
+		Vector<int> out_indices;
+		REQUIRE(_xatlas_unwrap(cube.vertices, normals, cube.indices, out_vertices, out_normals, out_uvs, out_indices));
+
+		REQUIRE(out_vertices.size() > 0);
+		CHECK(out_normals.size() == out_vertices.size());
+		CHECK(out_uvs.size() == out_vertices.size());
+		CHECK(out_indices.size() % 3 == 0);
+		CHECK(out_indices.size() >= cube.indices.size()); // chart seams only ever add vertices/faces, never remove
+
+		for (int i = 0; i < out_uvs.size(); i++) {
+			CHECK(out_uvs[i].x >= real_t(0.0));
+			CHECK(out_uvs[i].x <= real_t(1.0));
+			CHECK(out_uvs[i].y >= real_t(0.0));
+			CHECK(out_uvs[i].y <= real_t(1.0));
+		}
+		for (int i = 0; i < out_indices.size(); i++) {
+			CHECK(out_indices[i] >= 0);
+			CHECK(out_indices[i] < out_vertices.size());
+		}
+		// Every output vertex must be a real copy of some original vertex (via xref) —
+		// not a computed/interpolated position.
+		for (int i = 0; i < out_vertices.size(); i++) {
+			bool matches_original = false;
+			for (int j = 0; j < cube.vertices.size(); j++) {
+				if (out_vertices[i].is_equal_approx(cube.vertices[j])) {
+					matches_original = true;
+					break;
+				}
+			}
+			CHECK(matches_original);
+		}
+	}
+#endif // MODULE_XATLAS_UNWRAP_ENABLED
 }
 #endif // DOCTEST
