@@ -42,6 +42,8 @@
 // ==========================================================================
 
 
+#include <cstddef>
+
 #include "OGLES.h"
 #include "Color.h"
 #include "fixed.h"

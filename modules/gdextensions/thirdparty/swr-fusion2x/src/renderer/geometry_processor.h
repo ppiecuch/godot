@@ -66,8 +66,8 @@ namespace swr {
 			T& back() 
 			{ return data_[size_ - 1]; }
 
-			const T& back() const 
-			{ const_cast<static_vector>(this)->back(); }
+			const T& back() const
+			{ return data_[size_ - 1]; }
 
 			void push_back(const T& a)
 			{ data_[size_++] = a;}
@@ -79,7 +79,7 @@ namespace swr {
 			{ return data_[i]; }
 
 			const T& operator[] (size_t i) const
-			{ return const_cast<static_vector>(this)[i]; }
+			{ return data_[i]; }
 		};
 	}
 
