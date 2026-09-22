@@ -30,9 +30,9 @@
 
 #include "gen_rock.h"
 
+#include "../shared/rock_header.h"
 #include "common/gd_core.h"
 #include "core/math/math_funcs.h"
-#include "rock_header.h"
 
 GenRock::GenRock(real_t width, real_t height, real_t depth, int steps) :
 		m_Width(width),

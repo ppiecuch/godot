@@ -33,6 +33,7 @@
 #include "proc_rocks_editor_plugin.h"
 
 #include "core/io/resource_saver.h"
+#include "generators/procrockgen/procrockgen.h"
 #include "scene/3d/light.h"
 #include "scene/gui/viewport_container.h"
 #include "scene/resources/material.h"
@@ -78,6 +79,7 @@ void ProcRockDialog::generate() {
 	}
 
 	rock_mesh->set_auto_refresh(true);
+	_apply_demo_texture();
 	_update_preview();
 	_update_info();
 }
@@ -98,6 +100,29 @@ void ProcRockDialog::_on_export_file_selected(const String &p_path) {
 	} else {
 		ERR_PRINT("ProcRock: Failed to export mesh to " + p_path);
 	}
+}
+
+void ProcRockDialog::_on_demo_texture_changed(int p_idx) {
+	demo_texture_pack = p_idx - 1; // item 0 is "None"
+	_apply_demo_texture();
+	_update_preview();
+}
+
+void ProcRockDialog::_apply_demo_texture() {
+	if (demo_texture_pack < 0) {
+		preview_mesh_instance->set_material_override(default_preview_material);
+		if (rock_mesh->get_surface_count() > 0) {
+			rock_mesh->surface_set_material(0, Ref<Material>());
+		}
+		return;
+	}
+	if (rock_mesh->get_surface_count() == 0) {
+		return;
+	}
+	// Clear the override so the mesh's own (demo-textured) surface material is visible.
+	preview_mesh_instance->set_material_override(Ref<Material>());
+	ProcRockPipelineTextures textures = rock_pipeline_load_baked_textures((ProcRockBakedTexturePack)demo_texture_pack);
+	rock_mesh->surface_set_material(0, rock_pipeline_make_material(textures));
 }
 
 void ProcRockDialog::_update_preview() {
@@ -122,10 +147,12 @@ void ProcRockDialog::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_randomize_pressed"), &ProcRockDialog::_on_randomize_pressed);
 	ClassDB::bind_method(D_METHOD("_on_export_pressed"), &ProcRockDialog::_on_export_pressed);
 	ClassDB::bind_method(D_METHOD("_on_export_file_selected", "path"), &ProcRockDialog::_on_export_file_selected);
+	ClassDB::bind_method(D_METHOD("_on_demo_texture_changed", "idx"), &ProcRockDialog::_on_demo_texture_changed);
 }
 
 ProcRockDialog::ProcRockDialog() {
 	camera_orbit_angle = 0;
+	demo_texture_pack = -1;
 	rock_mesh.instance();
 
 	set_title("Procedural Rock Generator");
@@ -158,11 +185,10 @@ ProcRockDialog::ProcRockDialog() {
 	preview_viewport->add_child(light);
 
 	preview_mesh_instance = memnew(MeshInstance);
-	Ref<SpatialMaterial> mat;
-	mat.instance();
-	mat->set_albedo(Color(0.7, 0.65, 0.6));
-	mat->set_roughness(0.8);
-	preview_mesh_instance->set_material_override(mat);
+	default_preview_material.instance();
+	default_preview_material->set_albedo(Color(0.7, 0.65, 0.6));
+	default_preview_material->set_roughness(0.8);
+	preview_mesh_instance->set_material_override(default_preview_material);
 	preview_viewport->add_child(preview_mesh_instance);
 
 	ViewportContainer *viewport_container = memnew(ViewportContainer);
@@ -211,6 +237,24 @@ ProcRockDialog::ProcRockDialog() {
 	action_bar->add_child(randomize_btn);
 
 	vbox->add_child(action_bar);
+
+	// Demo texture picker (editor-only baked PBR packs)
+	HBoxContainer *texture_bar = memnew(HBoxContainer);
+
+	Label *demo_texture_label = memnew(Label);
+	demo_texture_label->set_text("Demo Texture:");
+	texture_bar->add_child(demo_texture_label);
+
+	demo_texture_option = memnew(OptionButton);
+	demo_texture_option->add_item("None", 0);
+	demo_texture_option->add_item("Gravel", 1);
+	demo_texture_option->add_item("Mossy", 2);
+	demo_texture_option->add_item("Rock", 3);
+	demo_texture_option->set_h_size_flags(SIZE_EXPAND_FILL);
+	demo_texture_option->connect("item_selected", this, "_on_demo_texture_changed");
+	texture_bar->add_child(demo_texture_option);
+
+	vbox->add_child(texture_bar);
 
 	// Generate + Export
 	HBoxContainer *btn_bar = memnew(HBoxContainer);

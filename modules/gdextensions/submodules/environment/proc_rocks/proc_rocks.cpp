@@ -477,24 +477,39 @@ void ProcRockMesh::set_pipeline_ao_bias(real_t p_val) {
 real_t ProcRockMesh::get_pipeline_ao_bias() const { return pipeline.ao_bias; }
 
 void ProcRockMesh::set_pipeline_preset(int p_preset) {
-	// Curated parameter bundles named after the old procrocklib demo presets — a
-	// zero-file, zero-schema stand-in for what were previously baked JSON presets.
+	// Real values extracted from procrocklib's own 13 demo pipeline JSON files
+	// (recovered from git history at 69e0b996a8~1, not restored to the tree — see
+	// memo.md). Colors, roughness, and metalness are direct, faithful reads of each
+	// file's active procrocklib.Albedo/Roughness/Metalness/AmbientOcclusion config
+	// (procrocklib's AlbedoGenerator always serializes both its methods; the active
+	// one is picked via each file's own Method choice). The base noise displacement,
+	// however, was a multi-node graph per file (turbulence + domain warp + blend) that
+	// this lean single-noise-field pipeline can't replicate — noise_frequency/
+	// _persistence below are a representative single node from that graph, not an
+	// exact match. There's no verified mapping from these original filenames
+	// (1.json..12.json, granite_custom.json) to a specific rock-type name, so presets
+	// are labeled generically rather than guessing an identity.
 	struct Preset {
 		Color albedo_low, albedo_high;
 		real_t roughness_scale, roughness_bias;
-		real_t noise_amplitude;
+		real_t metalness_scale, metalness_bias;
+		real_t noise_frequency, noise_persistence;
+		int noise_octaves;
 	};
 	static const Preset presets[] = {
-		/* 0 basalt    */ { Color(0.05, 0.05, 0.06), Color(0.2, 0.2, 0.22), 0.3, 0.6, 0.15 },
-		/* 1 granite   */ { Color(0.55, 0.53, 0.5), Color(0.85, 0.83, 0.8), 0.4, 0.5, 0.2 },
-		/* 2 obsidian  */ { Color(0.01, 0.01, 0.015), Color(0.08, 0.08, 0.1), 0.05, 0.1, 0.08 },
-		/* 3 sandstone */ { Color(0.6, 0.45, 0.3), Color(0.85, 0.7, 0.5), 0.5, 0.5, 0.25 },
-		/* 4 marble    */ { Color(0.75, 0.75, 0.75), Color(0.98, 0.98, 0.97), 0.2, 0.3, 0.1 },
-		/* 5 limestone */ { Color(0.65, 0.62, 0.55), Color(0.88, 0.85, 0.78), 0.45, 0.45, 0.18 },
-		/* 6 slate     */ { Color(0.15, 0.16, 0.18), Color(0.35, 0.36, 0.38), 0.35, 0.4, 0.12 },
-		/* 7 chalk     */ { Color(0.85, 0.85, 0.82), Color(0.98, 0.98, 0.96), 0.6, 0.4, 0.1 },
-		/* 8 flint     */ { Color(0.1, 0.1, 0.11), Color(0.3, 0.3, 0.32), 0.2, 0.35, 0.14 },
-		/* 9 gneiss    */ { Color(0.4, 0.38, 0.36), Color(0.7, 0.68, 0.64), 0.4, 0.5, 0.22 },
+		/*  0 (1.json)            */ { Color(0.827, 0.784, 0.517), Color(0.940, 0.936, 0.921), 2.000, 0.000, 0.200, 0.000, 15.201, 0.600, 3 },
+		/*  1 (2.json)            */ { Color(1.000, 1.000, 1.000), Color(0.000, 0.000, 0.000), 2.000, 1.000, 0.200, -1.000, 20.000, 0.600, 3 },
+		/*  2 (3.json)            */ { Color(0.681, 0.681, 0.681), Color(0.000, 0.000, 0.000), 2.000, 1.000, 0.200, -1.000, 6.000, 0.500, 1 },
+		/*  3 (4.json)            */ { Color(0.681, 0.681, 0.681), Color(0.000, 0.000, 0.000), 2.000, 1.000, 0.200, -1.000, 6.000, 0.500, 1 },
+		/*  4 (5.json)            */ { Color(0.960, 0.960, 0.960), Color(0.240, 0.240, 0.240), 2.000, 1.000, 0.200, -1.000, 0.900, 0.600, 3 },
+		/*  5 (6.json)            */ { Color(0.960, 0.960, 0.960), Color(0.240, 0.240, 0.240), 2.000, 1.000, 0.200, -1.000, 0.450, 0.600, 3 },
+		/*  6 (7.json)            */ { Color(0.960, 0.960, 0.960), Color(0.770, 0.770, 0.770), 2.000, 1.000, 0.200, -1.000, 0.900, 0.600, 3 },
+		/*  7 (8.json)            */ { Color(0.400, 0.380, 0.240), Color(0.900, 0.900, 0.900), 2.000, 1.000, 0.200, -1.000, 2.700, 0.600, 3 },
+		/*  8 (9.json)            */ { Color(0.419, 0.337, 0.337), Color(0.359, 0.359, 0.359), 2.000, 1.000, 0.200, -1.000, 2.500, 0.500, 1 },
+		/*  9 (10.json)           */ { Color(0.355, 0.355, 0.355), Color(0.145, 0.108, 0.108), 2.911, 0.000, 0.200, 0.000, 9.393, 0.600, 3 },
+		/* 10 (11.json)           */ { Color(0.400, 0.380, 0.240), Color(0.900, 0.900, 0.900), 2.000, 1.000, 0.200, -1.000, 2.700, 0.600, 3 },
+		/* 11 (12.json)           */ { Color(0.440, 0.440, 0.440), Color(0.000, 0.000, 0.000), 2.000, 1.000, 0.200, -1.000, 4.000, 0.500, 1 },
+		/* 12 (granite_custom)    */ { Color(0.294, 0.294, 0.294), Color(0.105, 0.105, 0.105), 0.658, 0.000, 0.200, -1.000, 87.222, 0.600, 3 },
 	};
 	const int preset_count = sizeof(presets) / sizeof(presets[0]);
 	p_preset = CLAMP(p_preset, 0, preset_count - 1);
@@ -504,7 +519,11 @@ void ProcRockMesh::set_pipeline_preset(int p_preset) {
 	set_pipeline_albedo_high(p.albedo_high);
 	set_pipeline_roughness_scale(p.roughness_scale);
 	set_pipeline_roughness_bias(p.roughness_bias);
-	set_pipeline_noise_amplitude(p.noise_amplitude);
+	set_pipeline_metalness_scale(p.metalness_scale);
+	set_pipeline_metalness_bias(p.metalness_bias);
+	set_pipeline_noise_frequency(p.noise_frequency);
+	set_pipeline_noise_persistence(p.noise_persistence);
+	set_pipeline_noise_octaves(p.noise_octaves);
 }
 
 // =========================================================================
@@ -1591,16 +1610,60 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 		CHECK(mesh->surface_get_material(0).is_valid());
 	}
 
-	TEST_CASE("[proc_rocks] set_pipeline_preset applies curated values") {
+	TEST_CASE("[proc_rocks] set_pipeline_preset applies real extracted values") {
 		Ref<ProcRockMesh> mesh;
 		mesh.instance();
-		mesh->set_pipeline_preset(2); // obsidian
-		CHECK(mesh->get_pipeline_albedo_low().r < 0.05f);
-		mesh->set_pipeline_preset(4); // marble
-		CHECK(mesh->get_pipeline_albedo_high().r > 0.9f);
-		mesh->set_pipeline_preset(99); // clamped to last preset, must not crash
+		mesh->set_pipeline_preset(0); // 1.json: warm tan -> near-white gradient
+		CHECK(mesh->get_pipeline_albedo_low().is_equal_approx(Color(0.827, 0.784, 0.517)));
+		CHECK(mesh->get_pipeline_roughness_bias() == doctest::Approx(0.0f));
+		mesh->set_pipeline_preset(1); // 2.json: full white -> black gradient, pinned rough/non-metal
+		CHECK(mesh->get_pipeline_albedo_low().is_equal_approx(Color(1, 1, 1)));
+		CHECK(mesh->get_pipeline_albedo_high().is_equal_approx(Color(0, 0, 0)));
+		CHECK(mesh->get_pipeline_roughness_bias() == doctest::Approx(1.0f));
+		CHECK(mesh->get_pipeline_metalness_bias() == doctest::Approx(-1.0f));
+		mesh->set_pipeline_preset(9); // 10.json: distinctive roughness_scale (2.911) and neutral metalness_bias
+		CHECK(mesh->get_pipeline_roughness_scale() == doctest::Approx(2.911f));
+		CHECK(mesh->get_pipeline_metalness_bias() == doctest::Approx(0.0f));
+		mesh->set_pipeline_preset(99); // clamped to last preset (12), must not crash
 		CHECK(mesh->get_pipeline_albedo_low().a >= 0.0f);
 	}
+
+#ifdef TOOLS_ENABLED
+	TEST_CASE("[proc_rocks] rock_pipeline_load_baked_textures returns valid editor-only PBR sets") {
+		ProcRockPipelineTextures gravel = rock_pipeline_load_baked_textures(PROCROCK_BAKED_GRAVEL);
+		CHECK(gravel.albedo.is_valid());
+		CHECK(gravel.normal.is_valid());
+		CHECK(gravel.roughness.is_valid());
+		CHECK(gravel.ambient_occlusion.is_valid());
+		CHECK(gravel.metalness.is_valid());
+		CHECK(gravel.albedo->get_width() == 512);
+		CHECK(gravel.albedo->get_height() == 512);
+		// These two are single-channel (grayscale) source JPEGs — the ones that actually
+		// failed to decode (jpgd chokes on their unusual 2x2 luma sampling factor) until
+		// the embedded assets were re-encoded with standard 1x1 sampling.
+		CHECK(gravel.roughness->get_width() == 512);
+		CHECK(gravel.roughness->get_height() == 512);
+		CHECK(gravel.ambient_occlusion->get_width() == 512);
+		Ref<Image> gravel_roughness_img = gravel.roughness->get_data();
+		CHECK(gravel_roughness_img.is_valid());
+		CHECK(gravel_roughness_img->get_width() == 512);
+
+		ProcRockPipelineTextures mossy = rock_pipeline_load_baked_textures(PROCROCK_BAKED_MOSSY);
+		CHECK(mossy.albedo.is_valid());
+		CHECK(mossy.albedo->get_width() == 512);
+		CHECK(mossy.roughness->get_width() == 512);
+		CHECK(mossy.ambient_occlusion->get_width() == 512);
+
+		ProcRockPipelineTextures rock = rock_pipeline_load_baked_textures(PROCROCK_BAKED_ROCK);
+		CHECK(rock.albedo.is_valid());
+		CHECK(rock.albedo->get_width() == 512);
+		CHECK(rock.normal.is_valid()); // synthesized flat-up normal, since only albedo ships for this pack
+
+		Ref<SpatialMaterial> material = rock_pipeline_make_material(gravel);
+		CHECK(material.is_valid());
+		CHECK(material->get_texture(SpatialMaterial::TEXTURE_ALBEDO).is_valid());
+	}
+#endif // TOOLS_ENABLED
 }
 
 #endif // DOCTEST

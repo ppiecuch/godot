@@ -39,6 +39,8 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/surface_tool.h"
 
+#include "../shared/box_uv.h"
+
 // =========================================================================
 // Point generators — create random point clouds for convex hull
 // =========================================================================
@@ -48,18 +50,9 @@ Vector<Vector3> rock_studio_points_sphere(int p_count, real_t p_radius);
 Vector<Vector3> rock_studio_points_crystal(int p_count, bool p_tetragonal, bool p_one_sided, real_t p_base_width, real_t p_base_height, real_t p_tip_protrusion, real_t p_tip_flatness);
 
 // =========================================================================
-// Mesh creation — convex hull + low-poly + box UV
+// Mesh creation — convex hull (low-poly + box UV live in ../shared/box_uv.h)
 // =========================================================================
 
 Ref<ArrayMesh> rock_studio_create_mesh(const Vector<Vector3> &p_points);
-Ref<ArrayMesh> rock_studio_make_low_poly(const Ref<ArrayMesh> &p_mesh);
-void rock_studio_box_uv(Ref<ArrayMesh> p_mesh);
-
-// =========================================================================
-// UV helpers
-// =========================================================================
-
-int rock_studio_get_box_dir(const Vector3 &p_normal);
-Vector2 rock_studio_get_box_uv(const Vector3 &p_vertex, int p_box_dir);
 
 #endif // ROCK_STUDIO_H

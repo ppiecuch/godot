@@ -46,6 +46,7 @@
 #include "scene/gui/option_button.h"
 #include "scene/gui/spin_box.h"
 #include "scene/main/viewport.h"
+#include "scene/resources/material.h"
 
 class ProcRockDialog : public WindowDialog {
 	GDCLASS(ProcRockDialog, WindowDialog);
@@ -56,6 +57,7 @@ class ProcRockDialog : public WindowDialog {
 	Viewport *preview_viewport;
 	MeshInstance *preview_mesh_instance;
 	Camera *preview_camera;
+	Ref<SpatialMaterial> default_preview_material;
 	real_t camera_orbit_angle;
 
 	// Controls
@@ -67,10 +69,16 @@ class ProcRockDialog : public WindowDialog {
 	Label *info_label;
 	FileDialog *export_dialog;
 
+	// Demo texture picker (editor-only baked PBR packs — see baked_textures.h)
+	OptionButton *demo_texture_option;
+	int demo_texture_pack; // -1 = None, else ProcRockBakedTexturePack
+
 	void _on_generator_changed(int p_idx);
 	void _on_randomize_pressed();
 	void _on_export_pressed();
 	void _on_export_file_selected(const String &p_path);
+	void _on_demo_texture_changed(int p_idx);
+	void _apply_demo_texture();
 	void _update_preview();
 	void _update_info();
 

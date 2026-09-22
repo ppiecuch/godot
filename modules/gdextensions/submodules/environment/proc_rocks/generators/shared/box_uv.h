@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  procrockgen.h                                                         */
+/*  box_uv.h                                                              */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,49 +28,20 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef PROCROCKGEN_H
-#define PROCROCKGEN_H
+#ifndef PROC_ROCKS_SHARED_BOX_UV_H
+#define PROC_ROCKS_SHARED_BOX_UV_H
 
-#include "core/color.h"
-#include "core/variant.h"
-#include "scene/resources/material.h"
-#include "scene/resources/texture.h"
+#include "core/math/vector2.h"
+#include "core/math/vector3.h"
+#include "scene/resources/mesh.h"
 
-// Method 3 — ProcRock: icosphere + noise displacement + optional cut-plane, entirely
-// built from Godot core primitives (no thirdparty dependency).
-Array rock_pipeline_gen(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
-		real_t p_noise_frequency, real_t p_noise_amplitude, int p_noise_octaves, real_t p_noise_persistence,
-		int p_randseed, bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed);
+// Box (cube) UV projection — shared between RockStudio (Method 2) and the
+// noise pipeline (Method 3). Originally lived in rockstudio/rock_studio.*.
 
-struct ProcRockPipelineTextures {
-	Ref<ImageTexture> albedo;
-	Ref<ImageTexture> normal;
-	Ref<ImageTexture> roughness;
-	Ref<ImageTexture> metalness;
-	Ref<ImageTexture> ambient_occlusion;
-};
+Ref<ArrayMesh> rock_studio_make_low_poly(const Ref<ArrayMesh> &p_mesh);
+void rock_studio_box_uv(Ref<ArrayMesh> p_mesh);
 
-// PBR texture set derived from a single noise height field, correlated with the mesh
-// displacement above when called with the same seed/frequency/octaves/persistence.
-ProcRockPipelineTextures rock_pipeline_gen_textures(
-		int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed,
-		const Color &p_albedo_low, const Color &p_albedo_high, real_t p_normal_strength,
-		real_t p_roughness_scale, real_t p_roughness_bias,
-		real_t p_metalness_scale, real_t p_metalness_bias,
-		real_t p_ao_scale, real_t p_ao_bias);
+int rock_studio_get_box_dir(const Vector3 &p_normal);
+Vector2 rock_studio_get_box_uv(const Vector3 &p_vertex, int p_box_dir);
 
-Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures);
-
-#ifdef TOOLS_ENABLED
-// Editor-only baked PBR texture packs (gravel/mossy/rock), embedded via INCBIN — see
-// baked_textures.h. Used exclusively by the ProcRock dock's "Demo Texture" picker;
-// never compiled into export templates.
-enum ProcRockBakedTexturePack {
-	PROCROCK_BAKED_GRAVEL,
-	PROCROCK_BAKED_MOSSY,
-	PROCROCK_BAKED_ROCK,
-};
-ProcRockPipelineTextures rock_pipeline_load_baked_textures(ProcRockBakedTexturePack p_pack);
-#endif // TOOLS_ENABLED
-
-#endif // PROCROCKGEN_H
+#endif // PROC_ROCKS_SHARED_BOX_UV_H

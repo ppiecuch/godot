@@ -31,7 +31,7 @@
 #ifndef GEN_ROCK_H
 #define GEN_ROCK_H
 
-#include "rock_header.h"
+#include "../shared/rock_header.h"
 
 #include "core/local_vector.h"
 #include "core/set.h"
