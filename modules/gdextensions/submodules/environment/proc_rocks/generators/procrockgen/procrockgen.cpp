@@ -1323,6 +1323,280 @@ RockMesh generate_icosphere(int p_subdivisions, real_t p_width, real_t p_height,
 	return mesh;
 }
 
+// =========================================================================
+// SkinSurface generator (gen/skin_surface_generator.cpp) — the only CGAL-only
+// leaf without a straightforward pure-math port. procrocklib builds a CGAL
+// "skin surface" (a smooth implicit surface hugging a set of weighted balls,
+// controlled by a shrink factor) around either randomly-placed or noise-graph-
+// selected weighted points. CGAL stays out per explicit instruction; this is
+// the real substitute algorithm approved for it: a Blinn-style "blobby"
+// metaball scalar field (Blinn, "A Generalization of Algebraic Surface
+// Drawing", 1982 — field(p) = sum(radius_i^2 / |p-center_i|^2), iso-surface at
+// field==1) evaluated on a grid and meshed via marching tetrahedra.
+//
+// Marching tetrahedra (not marching cubes) is the deliberate choice here: each
+// grid cube is split into 6 tetrahedra sharing the cube's main diagonal, and a
+// tetrahedron has only 16 inside/outside corner combinations, always producing
+// exactly 0, 3, or 4 "cut" edges (never any other count) — small enough to
+// classify and triangulate directly in code, rather than needing marching
+// cubes' full 256-entry case table (large, easy to get subtly wrong when
+// transcribed from memory, and hard to catch with tests). This decomposition
+// is symmetric — same standard technique, just fewer/simpler cases to verify.
+// =========================================================================
+
+struct SkinSurfacePoint {
+	Vector3 center;
+	real_t radius;
+};
+
+// gen/skin_surface_generator.cpp's "RNG" distribution: p_count points uniform
+// within a unit ball, each weighted with p_point_size as its ball radius.
+Vector<SkinSurfacePoint> generate_skin_surface_points_rng(int p_count, real_t p_point_size, int p_seed) {
+	Vector<SkinSurfacePoint> points;
+	points.resize(p_count);
+	Ref<RandomNumberGenerator> rng;
+	rng.instance();
+	rng->set_seed(p_seed);
+	for (int i = 0; i < p_count; i++) {
+		Vector3 p;
+		do { // rejection sampling: uniform in the enclosing cube, reject outside the ball
+			p = Vector3(rng->randf() * 2.0 - 1.0, rng->randf() * 2.0 - 1.0, rng->randf() * 2.0 - 1.0);
+		} while (p.length_squared() > 1.0);
+		points.write[i] = { p, p_point_size };
+	}
+	return points;
+}
+
+// gen/skin_surface_generator.cpp's "Noise" distribution: scan a
+// p_resolution^3 grid over [-0.5,0.5]^3, keep points where the noise graph's
+// value is within +-p_noise_range of zero. Unverified against real preset
+// data — every real preset uses the RNG distribution instead (see memo.md).
+Vector<SkinSurfacePoint> generate_skin_surface_points_noise(const NoiseGraph &p_noise, int p_resolution, real_t p_point_size, real_t p_noise_range) {
+	Vector<SkinSurfacePoint> points;
+	Vector3 origin(-0.5, -0.5, -0.5);
+	real_t step = real_t(1.0) / MAX(1, p_resolution);
+	for (int z = 0; z < p_resolution; z++) {
+		for (int y = 0; y < p_resolution; y++) {
+			for (int x = 0; x < p_resolution; x++) {
+				Vector3 pos = origin + Vector3(real_t(x), real_t(y), real_t(z)) * step;
+				real_t value = p_noise.evaluate(pos);
+				if (value < p_noise_range && value > -p_noise_range) {
+					points.push_back({ pos, p_point_size });
+				}
+			}
+		}
+	}
+	return points;
+}
+
+// Blinn's blobby-surface field: sum of (radius/distance)^2 per point. A single
+// isolated ball's own field equals exactly 1.0 at distance==radius, which is
+// why iso_level 1.0 (used throughout below) is the natural choice.
+real_t _evaluate_metaball_field(const Vector<SkinSurfacePoint> &p_points, const Vector3 &p_pos) {
+	real_t field = 0.0;
+	for (int i = 0; i < p_points.size(); i++) {
+		real_t dist_sq = MAX(p_pos.distance_squared_to(p_points[i].center), real_t(1e-6));
+		field += (p_points[i].radius * p_points[i].radius) / dist_sq;
+	}
+	return field;
+}
+
+// Marching tetrahedra over an implicit scalar field sampled on a regular grid.
+// Vertices are deduplicated by (grid-corner-A, grid-corner-B) edge identity —
+// since the 6-tet decomposition is applied identically to every cell (always
+// the same corner-0-to-corner-6 main diagonal), every edge — including the
+// face/space diagonals, not just the grid's own axis-aligned edges — is a
+// well-defined function of its two global grid-corner indices regardless of
+// which cell references it, so this produces a properly welded, crack-free
+// mesh (not just per-cell-local dedup).
+RockMesh _marching_tetrahedra(const Vector<SkinSurfacePoint> &p_points, const Vector3 &p_bounds_min, const Vector3 &p_bounds_max, int p_resolution, real_t p_iso_level) {
+	int n = p_resolution + 1; // grid points per axis
+	Vector3 cell_size = (p_bounds_max - p_bounds_min) / real_t(MAX(1, p_resolution));
+
+	auto grid_index = [n](int x, int y, int z) -> int64_t {
+		return int64_t(x) + int64_t(y) * n + int64_t(z) * n * n;
+	};
+	auto grid_pos = [&](int x, int y, int z) -> Vector3 {
+		return p_bounds_min + Vector3(real_t(x), real_t(y), real_t(z)) * cell_size;
+	};
+
+	Vector<real_t> field_cache;
+	field_cache.resize(int64_t(n) * n * n);
+	for (int z = 0; z < n; z++) {
+		for (int y = 0; y < n; y++) {
+			for (int x = 0; x < n; x++) {
+				field_cache.write[grid_index(x, y, z)] = _evaluate_metaball_field(p_points, grid_pos(x, y, z));
+			}
+		}
+	}
+
+	// Local cube-corner offsets: 0=(0,0,0) .. 6=(1,1,1) is the main diagonal;
+	// belt[] cycles through the other 6 corners in cube-edge-adjacent order.
+	static const int corner_offset[8][3] = {
+		{ 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 },
+		{ 0, 0, 1 }, { 1, 0, 1 }, { 1, 1, 1 }, { 0, 1, 1 }
+	};
+	static const int belt[6] = { 1, 2, 3, 7, 4, 5 };
+
+	HashMap<int64_t, int> edge_to_vertex;
+	RockMesh mesh;
+
+	auto edge_key = [](int64_t p_a, int64_t p_b) -> int64_t {
+		return (MIN(p_a, p_b) << 32) | (uint32_t)MAX(p_a, p_b);
+	};
+	auto get_or_create_vertex = [&](int64_t p_ga, int64_t p_gb, real_t p_va, real_t p_vb, const Vector3 &p_pa, const Vector3 &p_pb) -> int {
+		int64_t key = edge_key(p_ga, p_gb);
+		int *existing = edge_to_vertex.getptr(key);
+		if (existing) {
+			return *existing;
+		}
+		real_t t = CLAMP((p_iso_level - p_va) / (p_vb - p_va), real_t(0.0), real_t(1.0));
+		int idx = mesh.vertices.size();
+		mesh.vertices.push_back(p_pa.linear_interpolate(p_pb, t));
+		edge_to_vertex[key] = idx;
+		return idx;
+	};
+
+	for (int z = 0; z < p_resolution; z++) {
+		for (int y = 0; y < p_resolution; y++) {
+			for (int x = 0; x < p_resolution; x++) {
+				int64_t gcorner[8];
+				Vector3 pcorner[8];
+				real_t vcorner[8];
+				for (int c = 0; c < 8; c++) {
+					int gx = x + corner_offset[c][0], gy = y + corner_offset[c][1], gz = z + corner_offset[c][2];
+					gcorner[c] = grid_index(gx, gy, gz);
+					pcorner[c] = grid_pos(gx, gy, gz);
+					vcorner[c] = field_cache[gcorner[c]];
+				}
+
+				for (int t = 0; t < 6; t++) {
+					int ti[4] = { 0, belt[t], belt[(t + 1) % 6], 6 };
+					bool inside[4];
+					int inside_count = 0;
+					for (int c = 0; c < 4; c++) {
+						inside[c] = vcorner[ti[c]] >= p_iso_level;
+						inside_count += inside[c] ? 1 : 0;
+					}
+					if (inside_count == 0 || inside_count == 4) {
+						continue;
+					}
+
+					if (inside_count == 1 || inside_count == 3) {
+						int lone = -1;
+						for (int c = 0; c < 4; c++) {
+							if (inside[c] == (inside_count == 1)) {
+								lone = c;
+							}
+						}
+						int others[3];
+						int oi = 0;
+						for (int c = 0; c < 4; c++) {
+							if (c != lone) {
+								others[oi++] = c;
+							}
+						}
+						int a = ti[lone], b0 = ti[others[0]], b1 = ti[others[1]], b2 = ti[others[2]];
+						int v0 = get_or_create_vertex(gcorner[a], gcorner[b0], vcorner[a], vcorner[b0], pcorner[a], pcorner[b0]);
+						int v1 = get_or_create_vertex(gcorner[a], gcorner[b1], vcorner[a], vcorner[b1], pcorner[a], pcorner[b1]);
+						int v2 = get_or_create_vertex(gcorner[a], gcorner[b2], vcorner[a], vcorner[b2], pcorner[a], pcorner[b2]);
+
+						Vector3 p0 = mesh.vertices[v0], p1 = mesh.vertices[v1], p2 = mesh.vertices[v2];
+						Vector3 normal = (p1 - p0).cross(p2 - p0);
+						Vector3 centroid = (p0 + p1 + p2) / real_t(3.0);
+						real_t side = normal.dot(pcorner[a] - centroid);
+						// Triangle must face away from a lone-inside vertex, toward a lone-outside one.
+						bool want_negative_side = (inside_count == 1);
+						if ((side > 0) == want_negative_side) {
+							SWAP(v1, v2);
+						}
+						mesh.indices.push_back(v0);
+						mesh.indices.push_back(v1);
+						mesh.indices.push_back(v2);
+					} else { // inside_count == 2: quad cross-section, split into 2 triangles
+						int a = -1, b = -1, c = -1, d = -1;
+						for (int idx = 0; idx < 4; idx++) {
+							if (inside[idx]) {
+								if (a == -1) {
+									a = idx;
+								} else {
+									b = idx;
+								}
+							} else {
+								if (c == -1) {
+									c = idx;
+								} else {
+									d = idx;
+								}
+							}
+						}
+						int va = ti[a], vb = ti[b], vc = ti[c], vd = ti[d];
+						int p_ac = get_or_create_vertex(gcorner[va], gcorner[vc], vcorner[va], vcorner[vc], pcorner[va], pcorner[vc]);
+						int p_ad = get_or_create_vertex(gcorner[va], gcorner[vd], vcorner[va], vcorner[vd], pcorner[va], pcorner[vd]);
+						int p_bd = get_or_create_vertex(gcorner[vb], gcorner[vd], vcorner[vb], vcorner[vd], pcorner[vb], pcorner[vd]);
+						int p_bc = get_or_create_vertex(gcorner[vb], gcorner[vc], vcorner[vb], vcorner[vc], pcorner[vb], pcorner[vc]);
+
+						Vector3 mid_inside = (pcorner[va] + pcorner[vb]) * real_t(0.5);
+						auto emit_tri = [&](int i0, int i1, int i2) {
+							Vector3 p0 = mesh.vertices[i0], p1 = mesh.vertices[i1], p2 = mesh.vertices[i2];
+							Vector3 normal = (p1 - p0).cross(p2 - p0);
+							Vector3 centroid = (p0 + p1 + p2) / real_t(3.0);
+							bool flip = normal.dot(mid_inside - centroid) > 0; // must face away from the inside pair
+							mesh.indices.push_back(i0);
+							mesh.indices.push_back(flip ? i2 : i1);
+							mesh.indices.push_back(flip ? i1 : i2);
+						};
+						emit_tri(p_ac, p_ad, p_bd);
+						emit_tri(p_ac, p_bd, p_bc);
+					}
+				}
+			}
+		}
+	}
+
+	return mesh;
+}
+
+RockMesh generate_skin_surface(int p_distribution_method, real_t p_point_size, real_t p_shrink_factor,
+		int p_point_amount, int p_seed,
+		const NoiseGraph &p_noise, int p_noise_resolution, real_t p_noise_range,
+		int p_mesh_resolution) {
+	Vector<SkinSurfacePoint> points = (p_distribution_method == 1)
+			? generate_skin_surface_points_noise(p_noise, p_noise_resolution, p_point_size, p_noise_range)
+			: generate_skin_surface_points_rng(p_point_amount, p_point_size, p_seed);
+
+	if (points.size() == 0) {
+		WARN_PRINT("ProcRock: SkinSurface generator produced no points (noise distribution found none within range) — using the icosphere generator instead.");
+		return generate_icosphere(3, 1.0, 1.0, 1.0);
+	}
+
+	// procrocklib's shrinkFactor (0.01-1.0) controls how tightly CGAL's skin surface
+	// hugs each individual ball (1.0) vs. blends everything into one smooth blob
+	// (towards 0) — there's no exact equivalent to CGAL's mixed-complex construction
+	// for a metaball field, so this substitute maps shrinkFactor onto the field's
+	// effective ball radius instead: a smaller shrink factor inflates the radius used
+	// for FIELD evaluation (not the point's own real size), making neighbouring balls
+	// merge into rounder, more connected shapes; a larger shrink factor keeps the
+	// field radius close to the real point size, hugging each ball more tightly —
+	// same qualitative "tight vs. blobby" knob, ported as a formula shape rather than
+	// exact math.
+	real_t shrink = CLAMP(p_shrink_factor, real_t(0.01), real_t(1.0));
+	real_t field_radius_scale = real_t(1.0) + (real_t(1.0) - shrink) * real_t(1.5);
+
+	Vector<SkinSurfacePoint> field_points = points;
+	real_t max_radius = 0.0;
+	Vector3 bounds_min(1e9, 1e9, 1e9), bounds_max(-1e9, -1e9, -1e9);
+	for (int i = 0; i < field_points.size(); i++) {
+		field_points.write[i].radius *= field_radius_scale;
+		max_radius = MAX(max_radius, field_points[i].radius);
+		bounds_min = bounds_min.min(points[i].center);
+		bounds_max = bounds_max.max(points[i].center);
+	}
+	Vector3 padding = Vector3(1, 1, 1) * (max_radius * 2.0);
+
+	return _marching_tetrahedra(field_points, bounds_min - padding, bounds_max + padding, p_mesh_resolution, 1.0);
+}
+
 RockMesh generate_base_mesh_from_json(const Dictionary &p_pipeline_json, int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth) {
 	if (!p_pipeline_json.has("generator") || p_pipeline_json["generator"].get_type() != Variant::DICTIONARY) {
 		return generate_icosphere(p_subdivisions, p_width, p_height, p_depth);
@@ -1349,8 +1623,43 @@ RockMesh generate_base_mesh_from_json(const Dictionary &p_pipeline_json, int p_s
 		}
 		case 1: // Icosahedron
 			return generate_icosphere(p_subdivisions, p_width, p_height, p_depth);
-		default: // 3 == SkinSurface, or anything else unrecognized
-			WARN_PRINT("ProcRock: pipeline JSON's generator (SkinSurface or unrecognized) isn't implemented yet — using the icosphere generator instead.");
+		case 3: { // SkinSurface
+			Dictionary general = _stage_group(generator, "General", 0);
+			Dictionary general_floats = general.has("floats") ? (Dictionary)general["floats"] : Dictionary();
+			int distribution_method = _dget_int(general.has("singleChoices") ? (Dictionary)general["singleChoices"] : Dictionary(), "Distribution Method", 0);
+			real_t point_size = _dget(general_floats, "Point Size", 0.1);
+			real_t shrink_factor = _dget(general_floats, "Shrink Factor", 0.5);
+
+			Dictionary rng_group = _stage_group(generator, "General", 1);
+			Dictionary rng_ints = rng_group.has("ints") ? (Dictionary)rng_group["ints"] : Dictionary();
+			int point_amount = _dget_int(rng_ints, "Points", 20);
+			int seed = _dget_int(rng_ints, "Seed", 0);
+
+			Dictionary noise_group = _stage_group(generator, "General", 2);
+			Dictionary noise_floats = noise_group.has("floats") ? (Dictionary)noise_group["floats"] : Dictionary();
+			Dictionary noise_ints = noise_group.has("ints") ? (Dictionary)noise_group["ints"] : Dictionary();
+			real_t noise_range = _dget(noise_floats, "Noise Range", 0.05);
+			int noise_resolution = _dget_int(noise_ints, "Resolution", 10);
+
+			NoiseGraph noise = NoiseGraph::make_simple_fractal(1.0, 3, 0.5, 0);
+			if (noise_group.has("noiseGraphs") && noise_group["noiseGraphs"].get_type() == Variant::DICTIONARY) {
+				Dictionary graphs = noise_group["noiseGraphs"];
+				if (graphs.has("Noise")) {
+					NoiseGraph g = NoiseGraph::from_json(graphs["Noise"]);
+					if (g.is_valid()) {
+						noise = g;
+					}
+				}
+			}
+
+			// 24 per axis is a fixed, undocumented-in-JSON choice (procrocklib's own
+			// CGAL skin surface has no equivalent user-facing mesh-resolution knob for
+			// the RNG distribution, which every real preset uses) — a balance between
+			// visual quality and generation cost for an interactive rock generator.
+			return generate_skin_surface(distribution_method, point_size, shrink_factor, point_amount, seed, noise, noise_resolution, noise_range, 24);
+		}
+		default:
+			WARN_PRINT("ProcRock: pipeline JSON's generator _id is unrecognized — using the icosphere generator instead.");
 			return generate_icosphere(p_subdivisions, p_width, p_height, p_depth);
 	}
 }
@@ -2965,5 +3274,73 @@ TEST_SUITE("[[proc_rocks]] ProcRock generators and modifiers") {
 		}
 	}
 #endif // MODULE_XATLAS_UNWRAP_ENABLED
+
+	TEST_CASE("[procrockgen] _evaluate_metaball_field matches Blinn's formula exactly") {
+		Vector<SkinSurfacePoint> points;
+		points.push_back({ Vector3(0, 0, 0), 1.0 });
+		CHECK(_evaluate_metaball_field(points, Vector3(1, 0, 0)) == doctest::Approx(1.0)); // at the ball's own radius
+		CHECK(_evaluate_metaball_field(points, Vector3(0, 0, 0)) > 1.0); // center: far inside
+		CHECK(_evaluate_metaball_field(points, Vector3(2, 0, 0)) == doctest::Approx(0.25)); // (1/2)^2
+		points.push_back({ Vector3(0, 0, 0), 1.0 }); // a second, coincident ball
+		CHECK(_evaluate_metaball_field(points, Vector3(1, 0, 0)) == doctest::Approx(2.0)); // fields sum
+	}
+
+	TEST_CASE("[procrockgen] _marching_tetrahedra reconstructs a single ball's surface") {
+		Vector<SkinSurfacePoint> points;
+		points.push_back({ Vector3(0, 0, 0), 1.0 });
+		RockMesh mesh = _marching_tetrahedra(points, Vector3(-1.5, -1.5, -1.5), Vector3(1.5, 1.5, 1.5), 16, 1.0);
+
+		REQUIRE(mesh.vertices.size() > 0);
+		REQUIRE(mesh.indices.size() % 3 == 0);
+		REQUIRE(mesh.indices.size() > 0);
+
+		// Every vertex must lie near the field's iso-surface — for one ball, that's
+		// exactly the sphere of radius 1 around the origin (field==1 <=> dist==radius).
+		for (int i = 0; i < mesh.vertices.size(); i++) {
+			CHECK(mesh.vertices[i].length() == doctest::Approx(1.0).epsilon(0.05));
+		}
+
+		// Winding must be consistently outward: each triangle's normal should point
+		// away from the origin (the "inside" of the single ball).
+		for (int i = 0; i + 2 < mesh.indices.size(); i += 3) {
+			Vector3 p0 = mesh.vertices[mesh.indices[i]];
+			Vector3 p1 = mesh.vertices[mesh.indices[i + 1]];
+			Vector3 p2 = mesh.vertices[mesh.indices[i + 2]];
+			Vector3 normal = (p1 - p0).cross(p2 - p0);
+			Vector3 centroid = (p0 + p1 + p2) / real_t(3.0);
+			CHECK(normal.dot(centroid) > 0.0); // outward, since centroid ≈ direction from origin
+		}
+	}
+
+	TEST_CASE("[procrockgen] _marching_tetrahedra welds shared vertices across cells (no cracks)") {
+		Vector<SkinSurfacePoint> points;
+		points.push_back({ Vector3(0, 0, 0), 1.0 });
+		RockMesh mesh = _marching_tetrahedra(points, Vector3(-1.5, -1.5, -1.5), Vector3(1.5, 1.5, 1.5), 12, 1.0);
+		// If cell-boundary vertices weren't deduplicated, the mesh would have roughly
+		// 3 unique vertices per triangle (fully disconnected); a welded sphere-like
+		// mesh has substantially fewer unique vertices than 3x its triangle count.
+		int triangle_count = mesh.indices.size() / 3;
+		REQUIRE(triangle_count > 0);
+		CHECK(mesh.vertices.size() < triangle_count * 3 / 2);
+	}
+
+	TEST_CASE("[procrockgen] generate_skin_surface (RNG distribution) produces a valid non-empty mesh") {
+		NoiseGraph unused_noise;
+		RockMesh mesh = generate_skin_surface(0, 0.3, 0.5, 6, 42, unused_noise, 6, 0.05, 10);
+		CHECK(mesh.vertices.size() > 0);
+		CHECK(mesh.indices.size() > 0);
+		CHECK(mesh.indices.size() % 3 == 0);
+		for (int i = 0; i < mesh.indices.size(); i++) {
+			CHECK(mesh.indices[i] >= 0);
+			CHECK(mesh.indices[i] < mesh.vertices.size());
+		}
+	}
+
+	TEST_CASE("[procrockgen] generate_base_mesh_from_json dispatches SkinSurface (_id 3) using the real preset's config") {
+		Dictionary pipeline_json = _load_pipeline_json(String(PRESETS_DIR) + "2.json"); // real SkinSurface preset
+		RockMesh mesh = generate_base_mesh_from_json(pipeline_json, 3, 1.0, 1.0, 1.0);
+		CHECK(mesh.vertices.size() > 0);
+		CHECK(mesh.indices.size() > 0);
+	}
 }
 #endif // DOCTEST
