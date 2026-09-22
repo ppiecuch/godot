@@ -575,6 +575,30 @@ Error ProcRockMesh::load_from_file(const String p_path) {
 }
 
 // =========================================================================
+// Baking — see _is_generated() in proc_rocks.h for why this flips ArrayMesh's
+// surface serialization back on, and memo.md's "Baking" section for the
+// export-time auto-compile step that calls this.
+// =========================================================================
+
+void ProcRockMesh::set_baked(bool p_baked) {
+	ERR_FAIL_COND_MSG(p_baked && get_surface_count() == 0, "ProcRockMesh: cannot mark as baked with no generated surfaces.");
+	_baked = p_baked;
+}
+
+#ifdef TOOLS_ENABLED
+Error ProcRockMesh::bake() {
+	if (_dirty) {
+		_rebuild();
+	}
+	if (get_surface_count() == 0) {
+		return ERR_INVALID_DATA;
+	}
+	set_baked(true);
+	return OK;
+}
+#endif
+
+// =========================================================================
 // Auto-refresh
 // =========================================================================
 
@@ -1248,16 +1272,24 @@ void ProcRockMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_auto_refresh", "refresh"), &ProcRockMesh::set_auto_refresh);
 	ClassDB::bind_method(D_METHOD("get_auto_refresh"), &ProcRockMesh::get_auto_refresh);
 
+	ClassDB::bind_method(D_METHOD("set_baked", "baked"), &ProcRockMesh::set_baked);
+	ClassDB::bind_method(D_METHOD("get_baked"), &ProcRockMesh::get_baked);
+#ifdef TOOLS_ENABLED
+	ClassDB::bind_method(D_METHOD("bake"), &ProcRockMesh::bake);
+#endif
+
 	ClassDB::bind_method(D_METHOD("_rebuild"), &ProcRockMesh::_rebuild);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "generator", PROPERTY_HINT_ENUM, "RockGen,IcoRock,RockStudio,ProcRock"), "set_generator", "get_generator");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_refresh"), "set_auto_refresh", "get_auto_refresh");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "baked", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "set_baked", "get_baked");
 	// Generator-specific properties are dynamic — see _get_property_list()
 }
 
 ProcRockMesh::ProcRockMesh() {
 	method = 0;
 	auto_refresh = false;
+	_baked = false;
 
 	rockgen.depth = 3;
 	rockgen.randseed = 0;
@@ -1318,6 +1350,10 @@ ProcRockMesh::ProcRockMesh() {
 // =========================================================================
 
 #ifdef DOCTEST
+#include "core/io/resource_loader.h"
+#include "core/io/resource_saver.h"
+#include "core/project_settings.h"
+
 #include "doctest/doctest.h"
 #include "doctest/doctest_godot.h"
 
@@ -1711,6 +1747,58 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 		mesh->set_generator(3);
 		CHECK(mesh->load_from_file("modules/gdextensions/editor/proc_rocks_demo/presets/does_not_exist.json") == ERR_FILE_NOT_FOUND);
 		CHECK(mesh->load_from_file("modules/gdextensions/editor/proc_rocks_demo/baked_textures.h") == ERR_PARSE_ERROR);
+	}
+
+	TEST_CASE("[proc_rocks] bake() freezes geometry and flips get_baked()") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(0); // RockGen — cheap
+		mesh->set_auto_refresh(true);
+		CHECK(mesh->get_baked() == false);
+		CHECK(mesh->get_surface_count() > 0);
+
+		Error err = mesh->bake();
+		CHECK(err == OK);
+		CHECK(mesh->get_baked() == true);
+		CHECK(mesh->get_surface_count() > 0);
+	}
+
+	TEST_CASE("[proc_rocks] set_baked(true) is rejected with no surfaces") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		CHECK(mesh->get_surface_count() == 0);
+		EXPECT_ERROR(mesh->set_baked(true));
+		CHECK(mesh->get_baked() == false); // rejected, not silently accepted
+	}
+
+	TEST_CASE("[proc_rocks] a baked resource round-trips real geometry through ResourceSaver/ResourceLoader") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(0);
+		mesh->set_auto_refresh(true);
+		REQUIRE(mesh->bake() == OK);
+		int original_surface_count = mesh->get_surface_count();
+		int original_vertex_count = mesh->surface_get_array_len(0);
+		REQUIRE(original_surface_count > 0);
+
+		String path = "user://proc_rock_bake_test.tres";
+		REQUIRE(ResourceSaver::save(path, mesh) == OK);
+
+		// Force a fresh load — ResourceLoader would otherwise hand back the same
+		// in-memory instance, which wouldn't prove anything about deserialization.
+		Ref<ProcRockMesh> reloaded = ResourceLoader::load(path, "", true);
+		REQUIRE(reloaded.is_valid());
+		REQUIRE(reloaded.ptr() != mesh.ptr());
+
+		// The load-bearing assertion: geometry must already be present purely from
+		// deserialization — no _rebuild()/set_auto_refresh()/setter call on `reloaded`
+		// above this line. This is exactly the mechanism a tools=no build depends on,
+		// since _rebuild()'s real generation switch is compiled out there.
+		CHECK(reloaded->get_baked() == true);
+		CHECK(reloaded->get_surface_count() == original_surface_count);
+		CHECK(reloaded->surface_get_array_len(0) == original_vertex_count);
+
+		DirAccess::remove_file_or_error(ProjectSettings::get_singleton()->globalize_path(path));
 	}
 	// Baked demo texture pack tests live in editor/proc_rocks_editor_plugin.cpp — that's
 	// the only place the loader exists now (editor-only, moved out of the generator API).

@@ -103,10 +103,20 @@ class ProcRockMesh : public ArrayMesh {
 	bool _dirty;
 	void _rebuild();
 
+	// When true, this resource's surface geometry is real, frozen data serialized
+	// through ArrayMesh's own inherited (de)serialization instead of being
+	// regenerated on load — see set_baked()/bake() and memo.md's "Baking" section.
+	bool _baked;
+
 protected:
 	static void _bind_methods();
 
-	bool _is_generated() const { return true; }
+	// Godot's PrimitiveMesh/CubeMesh/SphereMesh convention: a "generated" mesh never
+	// serializes its own surface arrays (ArrayMesh::_get()/_get_property_list() skip
+	// them), since they're cheap to regenerate on load. A baked ProcRockMesh is the
+	// opposite — its whole point is to be loadable without regenerating — so it opts
+	// back into ArrayMesh's normal surface serialization once frozen.
+	bool _is_generated() const { return !_baked; }
 
 	void _get_property_list(List<PropertyInfo> *p_list) const;
 	bool _set(const StringName &p_path, const Variant &p_value);
@@ -208,6 +218,16 @@ public:
 	Ref<SpatialMaterial> get_pipeline_material() const { return _pipeline_material; }
 
 	Error load_from_file(const String p_path);
+
+	// Baking freezes the current geometry into real, serializable surface data (see
+	// _is_generated() above) so it can be loaded without regenerating — the mechanism
+	// an export-time auto-bake step (or a script) relies on. Always available for
+	// introspection; only bake() itself needs generation to be compiled in.
+	void set_baked(bool p_baked);
+	bool get_baked() const { return _baked; }
+#ifdef TOOLS_ENABLED
+	Error bake();
+#endif
 
 	ProcRockMesh();
 };
