@@ -30,7 +30,7 @@
 
 #include "procrockgen.h"
 
-#include "../rockstudio/rock_studio.h"
+#include "../shared/box_uv.h"
 #include "../shared/rock_header.h"
 
 #include "core/array.h"
