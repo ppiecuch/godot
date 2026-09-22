@@ -189,6 +189,22 @@ void ProcRockDialog::_on_export_file_selected(const String &p_path) {
 	}
 }
 
+void ProcRockDialog::_on_load_json_pressed() {
+	load_json_dialog->popup_centered_ratio(0.5);
+}
+
+void ProcRockDialog::_on_load_json_file_selected(const String &p_path) {
+	Error err = rock_mesh->load_from_file(p_path);
+	if (err != OK) {
+		ERR_PRINT("ProcRock: Failed to load pipeline JSON from " + p_path);
+		return;
+	}
+	print_line("ProcRock: Loaded pipeline JSON from " + p_path);
+	_apply_demo_texture(); // a JSON-driven regenerate wipes surface 0's material too
+	_update_preview();
+	_update_info();
+}
+
 void ProcRockDialog::_on_demo_texture_changed(int p_idx) {
 	demo_texture_pack = p_idx - 1; // item 0 is "None"
 	_apply_demo_texture();
@@ -234,6 +250,8 @@ void ProcRockDialog::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_randomize_pressed"), &ProcRockDialog::_on_randomize_pressed);
 	ClassDB::bind_method(D_METHOD("_on_export_pressed"), &ProcRockDialog::_on_export_pressed);
 	ClassDB::bind_method(D_METHOD("_on_export_file_selected", "path"), &ProcRockDialog::_on_export_file_selected);
+	ClassDB::bind_method(D_METHOD("_on_load_json_pressed"), &ProcRockDialog::_on_load_json_pressed);
+	ClassDB::bind_method(D_METHOD("_on_load_json_file_selected", "path"), &ProcRockDialog::_on_load_json_file_selected);
 	ClassDB::bind_method(D_METHOD("_on_demo_texture_changed", "idx"), &ProcRockDialog::_on_demo_texture_changed);
 }
 
@@ -357,6 +375,11 @@ ProcRockDialog::ProcRockDialog() {
 	export_btn->connect("pressed", this, "_on_export_pressed");
 	btn_bar->add_child(export_btn);
 
+	load_json_btn = memnew(Button);
+	load_json_btn->set_text("Load Preset JSON...");
+	load_json_btn->connect("pressed", this, "_on_load_json_pressed");
+	btn_bar->add_child(load_json_btn);
+
 	vbox->add_child(btn_bar);
 
 	// Info
@@ -373,6 +396,19 @@ ProcRockDialog::ProcRockDialog() {
 	export_dialog->add_filter("*.res ; Binary Resource");
 	export_dialog->connect("file_selected", this, "_on_export_file_selected");
 	add_child(export_dialog);
+
+	// Load Preset JSON dialog — browses the real OS filesystem (not res://), since these
+	// pipeline JSON files (procrocklib's real preset format, see memo.md's "JSON pipeline
+	// reader" section) aren't necessarily part of the edited project. Defaults to this
+	// engine fork's own bundled demo presets as a starting point, if that path resolves.
+	load_json_dialog = memnew(FileDialog);
+	load_json_dialog->set_mode(FileDialog::MODE_OPEN_FILE);
+	load_json_dialog->set_access(FileDialog::ACCESS_FILESYSTEM);
+	load_json_dialog->set_title("Load ProcRock Pipeline JSON");
+	load_json_dialog->add_filter("*.json ; JSON Pipeline Preset");
+	load_json_dialog->set_current_dir("modules/gdextensions/editor/proc_rocks_demo/presets");
+	load_json_dialog->connect("file_selected", this, "_on_load_json_file_selected");
+	add_child(load_json_dialog);
 
 	set_process(true);
 }

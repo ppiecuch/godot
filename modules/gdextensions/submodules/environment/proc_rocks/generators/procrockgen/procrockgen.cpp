@@ -732,8 +732,577 @@ NoiseGraph NoiseGraph::make_simple_fractal(real_t p_frequency, int p_octaves, re
 	return graph;
 }
 
+// =========================================================================
+// JSON pipeline reader — reads procrocklib's full pipeline shape
+// {"generator","modifiers","parameterizer","textureAdders","textureGenerator"}
+// (see editor/proc_rocks_demo/presets/*.json) directly, so real preset files can
+// drive the mesh/texture pipeline instead of only the hand-extracted table in
+// ProcRockMesh::set_pipeline_preset(). Phase 1 scope only: reads the
+// textureGenerator stage (Displacement/Height noise graph, Albedo gradient,
+// Roughness/Metalness/Ambient Occlusion scale+bias, Normals strength) — the
+// modifier chain (Transformation/Subdivision/Decimate/DisplaceAlongNormals) and
+// non-Icosahedron generators aren't implemented yet, so a JSON file that uses
+// them still loads (approximated via the texture generator's own noise graph
+// for mesh displacement, same as the non-JSON path already does) but emits a
+// one-line warning rather than silently pretending full fidelity.
+// =========================================================================
+
+namespace {
+
+// textureGenerator.config[p_stage_name] is always an Array in procrocklib's JSON —
+// a "Method" selector dict optionally followed by one config dict per method (see
+// memo.md's "Presets: real extracted values" section for why every method is always
+// serialized). Returns an empty Array if the pipeline JSON doesn't have this shape.
+Array _texgen_stage(const Dictionary &p_pipeline_json, const String &p_stage_name) {
+	if (!p_pipeline_json.has("textureGenerator") || p_pipeline_json["textureGenerator"].get_type() != Variant::DICTIONARY) {
+		return Array();
+	}
+	Dictionary texgen = p_pipeline_json["textureGenerator"];
+	if (!texgen.has("config") || texgen["config"].get_type() != Variant::DICTIONARY) {
+		return Array();
+	}
+	Dictionary config = texgen["config"];
+	if (!config.has(p_stage_name) || config[p_stage_name].get_type() != Variant::ARRAY) {
+		return Array();
+	}
+	return config[p_stage_name];
+}
+
+int _texgen_stage_method(const Array &p_stage) {
+	if (p_stage.size() < 1 || p_stage[0].get_type() != Variant::DICTIONARY) {
+		return 0;
+	}
+	Dictionary method_dict = p_stage[0];
+	return method_dict.has("singleChoices") ? _dget_int(method_dict["singleChoices"], "Method", 0) : 0;
+}
+
+// Displacement/Height's single method's config is always at array slot 1 (no
+// Method-dependent branching — confirmed: this stage has just one method, unlike
+// Albedo below). Extracts its embedded "Noise Graph" and parses it; falls back to
+// a plain fractal if the shape doesn't match (missing stage, or a JSON authored by
+// a hypothetical future tool version that doesn't nest a noise graph here).
+NoiseGraph _extract_displacement_graph(const Dictionary &p_pipeline_json) {
+	Array stage = _texgen_stage(p_pipeline_json, "Displacement / Height");
+	if (stage.size() >= 1 && stage[0].get_type() == Variant::DICTIONARY) {
+		Dictionary entry = stage[0];
+		if (entry.has("noiseGraphs") && entry["noiseGraphs"].get_type() == Variant::DICTIONARY) {
+			Dictionary graphs = entry["noiseGraphs"];
+			if (graphs.has("Noise Graph")) {
+				NoiseGraph g = NoiseGraph::from_json(graphs["Noise Graph"]);
+				if (g.is_valid()) {
+					return g;
+				}
+			}
+		}
+	}
+	WARN_PRINT("ProcRock: pipeline JSON has no valid 'Displacement / Height' noise graph — using default fractal noise.");
+	return NoiseGraph::make_simple_fractal(1.0, 3, 0.5, 0);
+}
+
+// Albedo has two candidate gradients, always both serialized (array slots 2 and 3);
+// which is active depends on the Method choice at slot 0 — confirmed against real
+// preset data (10.json uses Method 0 / slot 2, all others use Method 1 / slot 3).
+Ref<Gradient> _extract_albedo_gradient(const Dictionary &p_pipeline_json) {
+	Ref<Gradient> gradient;
+	gradient.instance();
+
+	Array stage = _texgen_stage(p_pipeline_json, "Albedo");
+	int active_slot = _texgen_stage_method(stage) == 0 ? 2 : 3;
+	if (stage.size() > active_slot && stage[active_slot].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = stage[active_slot];
+		if (slot.has("gradientColorings") && slot["gradientColorings"].get_type() == Variant::DICTIONARY) {
+			Dictionary gc = slot["gradientColorings"];
+			Array keys = gc.keys();
+			if (keys.size() > 0 && gc[keys[0]].get_type() == Variant::ARRAY) {
+				Array stops = gc[keys[0]];
+				Vector<Gradient::Point> points;
+				for (int i = 0; i < stops.size(); i++) {
+					Array stop = stops[i];
+					if (stop.size() != 2 || stop[1].get_type() != Variant::DICTIONARY) {
+						continue;
+					}
+					Dictionary color_dict = stop[1];
+					Gradient::Point point;
+					point.offset = CLAMP(real_t(stop[0]) / real_t(100.0), real_t(0.0), real_t(1.0));
+					point.color = Color(_dget(color_dict, "x", 0.0), _dget(color_dict, "y", 0.0), _dget(color_dict, "z", 0.0));
+					points.push_back(point);
+				}
+				if (points.size() >= 2) {
+					gradient->set_points(points);
+					return gradient;
+				}
+			}
+		}
+	}
+	WARN_PRINT("ProcRock: pipeline JSON has no valid Albedo gradient — using a default gray gradient.");
+	return gradient; // Godot's default-constructed Gradient is a 2-stop black->white ramp.
+}
+
+// Roughness/Metalness/Ambient Occlusion all share this exact shape: a single method
+// (no Method-dependent branching), config always at slot 1, with an int Bias in
+// [-255,255] (procrocklib's original convention) normalized to this codebase's
+// [-1,1]-ish float convention by dividing by 255.
+void _extract_scale_bias(const Dictionary &p_pipeline_json, const String &p_stage_name, real_t p_default_scale, real_t p_default_bias, real_t &r_scale, real_t &r_bias) {
+	Array stage = _texgen_stage(p_pipeline_json, p_stage_name);
+	if (stage.size() > 1 && stage[1].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = stage[1];
+		Dictionary floats = slot.has("floats") ? (Dictionary)slot["floats"] : Dictionary();
+		Dictionary ints = slot.has("ints") ? (Dictionary)slot["ints"] : Dictionary();
+		r_scale = _dget(floats, "Scaling", p_default_scale);
+		r_bias = _dget_int(ints, "Bias", int(p_default_bias * 255.0)) / real_t(255.0);
+		return;
+	}
+	r_scale = p_default_scale;
+	r_bias = p_default_bias;
+}
+
+real_t _extract_normal_strength(const Dictionary &p_pipeline_json, real_t p_default) {
+	Array stage = _texgen_stage(p_pipeline_json, "Normals");
+	if (stage.size() > 1 && stage[1].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = stage[1];
+		Dictionary floats = slot.has("floats") ? (Dictionary)slot["floats"] : Dictionary();
+		return _dget(floats, "Normal Strength", p_default);
+	}
+	return p_default;
+}
+
+// Warns (does not fail) about pipeline stages Phase 1 doesn't implement yet, so a
+// JSON file that relies on them doesn't silently produce a misleadingly different
+// result from the original tool without any indication why.
+void _warn_unsupported_stages(const Dictionary &p_pipeline_json) {
+	if (p_pipeline_json.has("generator") && p_pipeline_json["generator"].get_type() == Variant::DICTIONARY) {
+		Dictionary generator = p_pipeline_json["generator"];
+		if (_dget_int(generator, "_id", 1) != 1) {
+			WARN_PRINT("ProcRock: pipeline JSON requests a non-Icosahedron generator, which isn't implemented yet — using the icosphere generator instead.");
+		}
+	}
+	if (p_pipeline_json.has("modifiers") && p_pipeline_json["modifiers"].get_type() == Variant::ARRAY) {
+		Array modifiers = p_pipeline_json["modifiers"];
+		if (modifiers.size() > 0) {
+			WARN_PRINT("ProcRock: pipeline JSON's modifier chain (Transformation/Subdivision/Decimate/DisplaceAlongNormals) isn't implemented yet — approximating mesh displacement from the texture generator's own noise graph instead.");
+		}
+	}
+}
+
+} // namespace
+
+bool rock_pipeline_json_is_valid(const Dictionary &p_pipeline_json) {
+	return p_pipeline_json.has("textureGenerator") && p_pipeline_json["textureGenerator"].get_type() == Variant::DICTIONARY;
+}
+
+// =========================================================================
+// Mesh pipeline: icosphere -> noise displacement -> optional cut-plane -> box UV
+// =========================================================================
+
+namespace {
+
+Vector<Vector3> compute_smooth_normals(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices) {
+	Vector<Vector3> normals;
+	normals.resize(p_vertices.size());
+	for (int i = 0; i < normals.size(); i++) {
+		normals.write[i] = Vector3();
+	}
+	for (int i = 0; i + 2 < p_indices.size(); i += 3) {
+		int i0 = p_indices[i], i1 = p_indices[i + 1], i2 = p_indices[i + 2];
+		Vector3 n = ComputeNormal(p_vertices[i0], p_vertices[i1], p_vertices[i2]);
+		normals.write[i0] += n;
+		normals.write[i1] += n;
+		normals.write[i2] += n;
+	}
+	for (int i = 0; i < normals.size(); i++) {
+		Vector3 n = normals[i];
+		normals.write[i] = n.length_squared() > CMP_EPSILON ? n.normalized() : Vector3(0, 1, 0);
+	}
+	return normals;
+}
+
+struct ClippedMesh {
+	Vector<Vector3> vertices;
+	Vector<int> indices;
+};
+
+// Clips an indexed triangle mesh against a plane (keeping the side the plane's normal
+// points away from) and caps the exposed cross-section with a triangle fan ordered by
+// angle around its centroid. This assumes a single, star-shaped cross-section, which
+// holds for cutting a lightly-displaced icosphere with one plane.
+ClippedMesh clip_and_cap(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices, const Plane &p_plane) {
+	ClippedMesh out;
+	Vector<Vector3> cap_points;
+	const real_t on_plane_epsilon = real_t(CMP_EPSILON) * 100;
+
+	for (int i = 0; i + 2 < p_indices.size(); i += 3) {
+		Vector<Vector3> tri;
+		tri.push_back(p_vertices[p_indices[i]]);
+		tri.push_back(p_vertices[p_indices[i + 1]]);
+		tri.push_back(p_vertices[p_indices[i + 2]]);
+
+		Vector<Vector3> clipped = Geometry::clip_polygon(tri, p_plane);
+		if (clipped.size() < 3) {
+			continue;
+		}
+
+		int base = out.vertices.size();
+		for (int v = 0; v < clipped.size(); v++) {
+			out.vertices.push_back(clipped[v]);
+			if (Math::abs(p_plane.distance_to(clipped[v])) <= on_plane_epsilon) {
+				cap_points.push_back(clipped[v]);
+			}
+		}
+		for (int v = 1; v + 1 < clipped.size(); v++) {
+			out.indices.push_back(base);
+			out.indices.push_back(base + v);
+			out.indices.push_back(base + v + 1);
+		}
+	}
+
+	if (cap_points.size() >= 3) {
+		Vector3 centroid;
+		for (int i = 0; i < cap_points.size(); i++) {
+			centroid += cap_points[i];
+		}
+		centroid /= cap_points.size();
+
+		Vector3 normal = p_plane.normal;
+		Vector3 up = Math::abs(normal.dot(Vector3(0, 1, 0))) < 0.99 ? Vector3(0, 1, 0) : Vector3(1, 0, 0);
+		Vector3 tangent = up.cross(normal).normalized();
+		Vector3 bitangent = normal.cross(tangent);
+
+		Vector<real_t> angles;
+		angles.resize(cap_points.size());
+		for (int i = 0; i < cap_points.size(); i++) {
+			Vector3 d = cap_points[i] - centroid;
+			angles.write[i] = Math::atan2(d.dot(bitangent), d.dot(tangent));
+		}
+
+		Vector<int> order;
+		order.resize(cap_points.size());
+		for (int i = 0; i < order.size(); i++) {
+			order.write[i] = i;
+		}
+		for (int i = 1; i < order.size(); i++) {
+			int key = order[i];
+			real_t key_angle = angles[key];
+			int j = i - 1;
+			while (j >= 0 && angles[order[j]] > key_angle) {
+				order.write[j + 1] = order[j];
+				j--;
+			}
+			order.write[j + 1] = key;
+		}
+
+		int base = out.vertices.size();
+		for (int i = 0; i < order.size(); i++) {
+			out.vertices.push_back(cap_points[order[i]]);
+		}
+		for (int i = 1; i + 1 < order.size(); i++) {
+			int a = base, b = base + i, c = base + i + 1;
+			// Orient outward (towards the removed material) regardless of the fan's
+			// natural winding, using the same cross(P2-P0,P1-P0) convention as ComputeNormal.
+			Vector3 n = ComputeNormal(out.vertices[a], out.vertices[b], out.vertices[c]);
+			if (n.dot(p_plane.normal) < 0) {
+				out.indices.push_back(a);
+				out.indices.push_back(c);
+				out.indices.push_back(b);
+			} else {
+				out.indices.push_back(a);
+				out.indices.push_back(b);
+				out.indices.push_back(c);
+			}
+		}
+	}
+
+	return out;
+}
+
+Array _rock_pipeline_gen_impl(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
+		const NoiseGraph &p_noise, real_t p_noise_amplitude, int p_randseed,
+		bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed) {
+	if (p_randseed == 0) {
+		Math::randomize();
+	} else {
+		Math::seed((uint64_t)p_randseed);
+	}
+
+	IndexedMesh ico = MakeIcosphere(CLAMP(p_subdivisions, 0, 6));
+
+	Vector<Vector3> vertices;
+	vertices.resize(ico.first.size());
+	for (size_t i = 0; i < ico.first.size(); i++) {
+		Vector3 dir = ico.first[i]; // unit-sphere direction
+		real_t displacement = p_noise.evaluate(dir) * p_noise_amplitude;
+		vertices.write[i] = dir * Vector3(p_width, p_height, p_depth) * 0.5 + dir * displacement;
+	}
+
+	Vector<int> indices;
+	indices.resize(ico.second.size() * 3);
+	for (size_t i = 0; i < ico.second.size(); i++) {
+		indices.write[i * 3 + 0] = ico.second[i].vertex[0];
+		indices.write[i * 3 + 1] = ico.second[i].vertex[1];
+		indices.write[i * 3 + 2] = ico.second[i].vertex[2];
+	}
+
+	if (p_cutplane_enabled) {
+		Vector3 plane_normal = Vector3(Math::randf() * 2 - 1, Math::randf() * 2 - 1, Math::randf() * 2 - 1);
+		if (plane_normal.length_squared() < CMP_EPSILON) {
+			plane_normal = Vector3(0, 1, 0);
+		}
+		plane_normal.normalize();
+
+		ClippedMesh clipped = clip_and_cap(vertices, indices, Plane(plane_normal, p_cutplane_offset));
+		vertices = clipped.vertices;
+		indices = clipped.indices;
+	}
+
+	Array mesh_arrays;
+	mesh_arrays.resize(VS::ARRAY_MAX);
+	if (vertices.size() == 0 || indices.size() == 0) {
+		return mesh_arrays;
+	}
+
+	if (p_smoothed) {
+		Vector<Vector3> normals = compute_smooth_normals(vertices, indices);
+
+		Vector<Vector2> uvs;
+		uvs.resize(vertices.size());
+		for (int i = 0; i < vertices.size(); i++) {
+			int box_dir = rock_studio_get_box_dir(normals[i]);
+			uvs.write[i] = rock_studio_get_box_uv(vertices[i], box_dir);
+		}
+
+		mesh_arrays[VS::ARRAY_VERTEX] = vertices;
+		mesh_arrays[VS::ARRAY_NORMAL] = normals;
+		mesh_arrays[VS::ARRAY_TEX_UV] = uvs;
+		mesh_arrays[VS::ARRAY_INDEX] = indices;
+	} else {
+		// rock_studio_make_low_poly() derives its flat normal via cross(v1-v0, v2-v0),
+		// the opposite winding convention from ComputeNormal()'s cross(v2-v0, v1-v0) used
+		// above — flip winding here so the flat-shaded result faces outward too.
+		Vector<int> flipped_indices;
+		flipped_indices.resize(indices.size());
+		for (int i = 0; i + 2 < indices.size(); i += 3) {
+			flipped_indices.write[i] = indices[i];
+			flipped_indices.write[i + 1] = indices[i + 2];
+			flipped_indices.write[i + 2] = indices[i + 1];
+		}
+
+		Array arrays;
+		arrays.resize(VS::ARRAY_MAX);
+		arrays[VS::ARRAY_VERTEX] = vertices;
+		arrays[VS::ARRAY_INDEX] = flipped_indices;
+
+		Ref<ArrayMesh> temp;
+		temp.instance();
+		temp->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+
+		Ref<ArrayMesh> low_poly = rock_studio_make_low_poly(temp);
+		if (low_poly.is_valid() && low_poly->get_surface_count() > 0) {
+			rock_studio_box_uv(low_poly);
+			mesh_arrays = low_poly->surface_get_arrays(0);
+		}
+	}
+
+	return mesh_arrays;
+}
+
+} // namespace
+
+Array rock_pipeline_gen(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
+		real_t p_noise_frequency, real_t p_noise_amplitude, int p_noise_octaves, real_t p_noise_persistence,
+		int p_randseed, bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed) {
+	// Resolve the noise seed from a freshly-randomized RNG (not whatever state happened to
+	// be left over) when p_randseed==0, matching the "0 = random" convention exactly —
+	// _rock_pipeline_gen_impl() re-seeds from p_randseed again below, which is harmless
+	// (idempotent for a fixed seed, just another random draw when p_randseed==0).
+	if (p_randseed == 0) {
+		Math::randomize();
+	} else {
+		Math::seed((uint64_t)p_randseed);
+	}
+	NoiseGraph noise = NoiseGraph::make_simple_fractal(p_noise_frequency, CLAMP(p_noise_octaves, 1, 6), p_noise_persistence, p_randseed == 0 ? (int)Math::rand() : p_randseed);
+	return _rock_pipeline_gen_impl(p_subdivisions, p_width, p_height, p_depth, noise, p_noise_amplitude, p_randseed, p_cutplane_enabled, p_cutplane_offset, p_smoothed);
+}
+
+Array rock_pipeline_gen_from_json(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
+		const Dictionary &p_pipeline_json, real_t p_noise_amplitude, int p_randseed,
+		bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed) {
+	_warn_unsupported_stages(p_pipeline_json);
+	NoiseGraph noise = _extract_displacement_graph(p_pipeline_json);
+	return _rock_pipeline_gen_impl(p_subdivisions, p_width, p_height, p_depth, noise, p_noise_amplitude, p_randseed, p_cutplane_enabled, p_cutplane_offset, p_smoothed);
+}
+
+// =========================================================================
+// Texture pipeline: noise height field -> albedo / normal / roughness / metalness / AO
+// =========================================================================
+
+namespace {
+
+Ref<Image> make_height_image_from_noise(int p_size, const NoiseGraph &p_noise) {
+	PoolVector<uint8_t> data;
+	data.resize(p_size * p_size);
+	{
+		PoolVector<uint8_t>::Write wd8 = data.write();
+		for (int y = 0; y < p_size; y++) {
+			for (int x = 0; x < p_size; x++) {
+				real_t v = p_noise.evaluate(Vector3(real_t(x), real_t(y), 0.0)) * 0.5 + 0.5; // normalize [0..1]
+				wd8[y * p_size + x] = uint8_t(CLAMP(v * 255.0, real_t(0.0), real_t(255.0)));
+			}
+		}
+	} // release the write lock before Image's constructor copies `data`
+	return Ref<Image>(memnew(Image(p_size, p_size, false, Image::FORMAT_L8, data)));
+}
+
+Ref<Image> make_height_image(int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed) {
+	NoiseGraph noise = NoiseGraph::make_simple_fractal(p_noise_frequency, CLAMP(p_noise_octaves, 1, 6), p_noise_persistence, p_randseed == 0 ? (int)Math::rand() : p_randseed);
+	return make_height_image_from_noise(p_size, noise);
+}
+
+Ref<Image> make_albedo_image_from_gradient(Ref<Image> p_height, Ref<Gradient> p_gradient) {
+	int w = p_height->get_width(), h = p_height->get_height();
+
+	Ref<Image> img;
+	img.instance();
+	img->create(w, h, false, Image::FORMAT_RGB8);
+
+	p_height->lock();
+	img->lock();
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			img->set_pixel(x, y, p_gradient->get_color_at_offset(p_height->get_pixel(x, y).r));
+		}
+	}
+	img->unlock();
+	p_height->unlock();
+	return img;
+}
+
+Ref<Image> make_albedo_image(Ref<Image> p_height, const Color &p_low, const Color &p_high) {
+	Ref<Gradient> gradient;
+	gradient.instance();
+	gradient->set_color(0, p_low);
+	gradient->set_color(1, p_high);
+	return make_albedo_image_from_gradient(p_height, gradient);
+}
+
+Ref<Image> make_normal_image(Ref<Image> p_height, real_t p_strength) {
+	int w = p_height->get_width(), h = p_height->get_height();
+	Ref<Image> img;
+	img.instance();
+	img->create(w, h, false, Image::FORMAT_RGB8);
+
+	p_height->lock();
+	img->lock();
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			real_t hl = p_height->get_pixel(CLAMP(x - 1, 0, w - 1), y).r;
+			real_t hr = p_height->get_pixel(CLAMP(x + 1, 0, w - 1), y).r;
+			real_t hd = p_height->get_pixel(x, CLAMP(y - 1, 0, h - 1)).r;
+			real_t hu = p_height->get_pixel(x, CLAMP(y + 1, 0, h - 1)).r;
+			Vector3 n = Vector3(-(hr - hl) * p_strength, -(hu - hd) * p_strength, 1.0).normalized();
+			img->set_pixel(x, y, Color(n.x * 0.5 + 0.5, n.y * 0.5 + 0.5, n.z * 0.5 + 0.5));
+		}
+	}
+	img->unlock();
+	p_height->unlock();
+	return img;
+}
+
+Ref<Image> make_scaled_grayscale_image(Ref<Image> p_height, real_t p_scale, real_t p_bias) {
+	int w = p_height->get_width(), h = p_height->get_height();
+	Ref<Image> img;
+	img.instance();
+	img->create(w, h, false, Image::FORMAT_L8);
+
+	p_height->lock();
+	img->lock();
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			real_t v = CLAMP(p_height->get_pixel(x, y).r * p_scale + p_bias, real_t(0.0), real_t(1.0));
+			img->set_pixel(x, y, Color(v, v, v));
+		}
+	}
+	img->unlock();
+	p_height->unlock();
+	return img;
+}
+
+} // namespace
+
+ProcRockPipelineTextures rock_pipeline_gen_textures(
+		int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed,
+		const Color &p_albedo_low, const Color &p_albedo_high, real_t p_normal_strength,
+		real_t p_roughness_scale, real_t p_roughness_bias,
+		real_t p_metalness_scale, real_t p_metalness_bias,
+		real_t p_ao_scale, real_t p_ao_bias) {
+	int size = CLAMP(p_size, 8, 4096);
+	Ref<Image> height = make_height_image(size, p_noise_frequency, p_noise_octaves, p_noise_persistence, p_randseed);
+
+	ProcRockPipelineTextures textures;
+	textures.albedo.instance();
+	textures.albedo->create_from_image(make_albedo_image(height, p_albedo_low, p_albedo_high));
+	textures.normal.instance();
+	textures.normal->create_from_image(make_normal_image(height, p_normal_strength));
+	textures.roughness.instance();
+	textures.roughness->create_from_image(make_scaled_grayscale_image(height, p_roughness_scale, p_roughness_bias));
+	textures.metalness.instance();
+	textures.metalness->create_from_image(make_scaled_grayscale_image(height, p_metalness_scale, p_metalness_bias));
+	textures.ambient_occlusion.instance();
+	textures.ambient_occlusion->create_from_image(make_scaled_grayscale_image(height, p_ao_scale, p_ao_bias));
+
+	return textures;
+}
+
+ProcRockPipelineTextures rock_pipeline_gen_textures_from_json(int p_size, const Dictionary &p_pipeline_json) {
+	int size = CLAMP(p_size, 8, 4096);
+	NoiseGraph noise = _extract_displacement_graph(p_pipeline_json);
+	Ref<Image> height = make_height_image_from_noise(size, noise);
+
+	real_t roughness_scale, roughness_bias, metalness_scale, metalness_bias, ao_scale, ao_bias;
+	_extract_scale_bias(p_pipeline_json, "Roughness", 0.4, 0.5, roughness_scale, roughness_bias);
+	_extract_scale_bias(p_pipeline_json, "Metalness", 0.0, 0.0, metalness_scale, metalness_bias);
+	_extract_scale_bias(p_pipeline_json, "Ambient Occlusion", 0.5, 0.5, ao_scale, ao_bias);
+	real_t normal_strength = _extract_normal_strength(p_pipeline_json, 2.0);
+
+	ProcRockPipelineTextures textures;
+	textures.albedo.instance();
+	textures.albedo->create_from_image(make_albedo_image_from_gradient(height, _extract_albedo_gradient(p_pipeline_json)));
+	textures.normal.instance();
+	textures.normal->create_from_image(make_normal_image(height, normal_strength));
+	textures.roughness.instance();
+	textures.roughness->create_from_image(make_scaled_grayscale_image(height, roughness_scale, roughness_bias));
+	textures.metalness.instance();
+	textures.metalness->create_from_image(make_scaled_grayscale_image(height, metalness_scale, metalness_bias));
+	textures.ambient_occlusion.instance();
+	textures.ambient_occlusion->create_from_image(make_scaled_grayscale_image(height, ao_scale, ao_bias));
+
+	return textures;
+}
+
+Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures) {
+	Ref<SpatialMaterial> material;
+	material.instance();
+
+	material->set_texture(SpatialMaterial::TEXTURE_ALBEDO, p_textures.albedo);
+	material->set_texture(SpatialMaterial::TEXTURE_NORMAL, p_textures.normal);
+	material->set_feature(SpatialMaterial::FEATURE_NORMAL_MAPPING, true);
+	material->set_texture(SpatialMaterial::TEXTURE_ROUGHNESS, p_textures.roughness);
+	material->set_roughness_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
+	material->set_texture(SpatialMaterial::TEXTURE_METALLIC, p_textures.metalness);
+	material->set_metallic_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
+	material->set_texture(SpatialMaterial::TEXTURE_AMBIENT_OCCLUSION, p_textures.ambient_occlusion);
+	material->set_ao_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
+	material->set_feature(SpatialMaterial::FEATURE_AMBIENT_OCCLUSION, true);
+
+	return material;
+}
+
+// Editor-only baked texture packs (ProcRock dock "Demo Texture" picker) live in
+// modules/gdextensions/editor/proc_rocks_editor_plugin.cpp — that's the only caller,
+// and it's TOOLS_ENABLED-only already, so the loader belongs there, not in the
+// generator API.
+
 #ifdef DOCTEST
 #include "core/io/json.h"
+#include "core/os/file_access.h"
 
 #include "doctest/doctest.h"
 
@@ -1152,357 +1721,132 @@ TEST_SUITE("[[proc_rocks]] NoiseGraph") {
 		}
 	}
 }
-#endif // DOCTEST
-
-// =========================================================================
-// Mesh pipeline: icosphere -> noise displacement -> optional cut-plane -> box UV
-// =========================================================================
 
 namespace {
 
-Vector<Vector3> compute_smooth_normals(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices) {
-	Vector<Vector3> normals;
-	normals.resize(p_vertices.size());
-	for (int i = 0; i < normals.size(); i++) {
-		normals.write[i] = Vector3();
-	}
-	for (int i = 0; i + 2 < p_indices.size(); i += 3) {
-		int i0 = p_indices[i], i1 = p_indices[i + 1], i2 = p_indices[i + 2];
-		Vector3 n = ComputeNormal(p_vertices[i0], p_vertices[i1], p_vertices[i2]);
-		normals.write[i0] += n;
-		normals.write[i1] += n;
-		normals.write[i2] += n;
-	}
-	for (int i = 0; i < normals.size(); i++) {
-		Vector3 n = normals[i];
-		normals.write[i] = n.length_squared() > CMP_EPSILON ? n.normalized() : Vector3(0, 1, 0);
-	}
-	return normals;
+// Real preset files live in editor/proc_rocks_demo/presets/ (see memo.md) — read from
+// disk rather than embedded, since they're 15-40KB each. Assumes doctest is invoked
+// with the repo root as the working directory, matching this session's established
+// verification pattern (`./bin/godot... --doctest-test-case=...` from repo root).
+Variant _load_pipeline_json(const String &p_path) {
+	FileAccess *f = FileAccess::open(p_path, FileAccess::READ);
+	REQUIRE_MESSAGE(f != nullptr, (String("could not open ") + p_path));
+	String text = f->get_as_utf8_string();
+	memdelete(f);
+	Variant parsed;
+	String err_str;
+	int err_line = 0;
+	REQUIRE_MESSAGE(JSON::parse(text, parsed, err_str, err_line) == OK, err_str);
+	return parsed;
 }
 
-struct ClippedMesh {
-	Vector<Vector3> vertices;
-	Vector<int> indices;
+const char *const ALL_PRESET_FILES[] = {
+	"1.json", "2.json", "3.json", "4.json", "5.json", "6.json", "7.json", "8.json",
+	"9.json", "10.json", "11.json", "12.json", "granite_custom.json"
 };
-
-// Clips an indexed triangle mesh against a plane (keeping the side the plane's normal
-// points away from) and caps the exposed cross-section with a triangle fan ordered by
-// angle around its centroid. This assumes a single, star-shaped cross-section, which
-// holds for cutting a lightly-displaced icosphere with one plane.
-ClippedMesh clip_and_cap(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices, const Plane &p_plane) {
-	ClippedMesh out;
-	Vector<Vector3> cap_points;
-	const real_t on_plane_epsilon = real_t(CMP_EPSILON) * 100;
-
-	for (int i = 0; i + 2 < p_indices.size(); i += 3) {
-		Vector<Vector3> tri;
-		tri.push_back(p_vertices[p_indices[i]]);
-		tri.push_back(p_vertices[p_indices[i + 1]]);
-		tri.push_back(p_vertices[p_indices[i + 2]]);
-
-		Vector<Vector3> clipped = Geometry::clip_polygon(tri, p_plane);
-		if (clipped.size() < 3) {
-			continue;
-		}
-
-		int base = out.vertices.size();
-		for (int v = 0; v < clipped.size(); v++) {
-			out.vertices.push_back(clipped[v]);
-			if (Math::abs(p_plane.distance_to(clipped[v])) <= on_plane_epsilon) {
-				cap_points.push_back(clipped[v]);
-			}
-		}
-		for (int v = 1; v + 1 < clipped.size(); v++) {
-			out.indices.push_back(base);
-			out.indices.push_back(base + v);
-			out.indices.push_back(base + v + 1);
-		}
-	}
-
-	if (cap_points.size() >= 3) {
-		Vector3 centroid;
-		for (int i = 0; i < cap_points.size(); i++) {
-			centroid += cap_points[i];
-		}
-		centroid /= cap_points.size();
-
-		Vector3 normal = p_plane.normal;
-		Vector3 up = Math::abs(normal.dot(Vector3(0, 1, 0))) < 0.99 ? Vector3(0, 1, 0) : Vector3(1, 0, 0);
-		Vector3 tangent = up.cross(normal).normalized();
-		Vector3 bitangent = normal.cross(tangent);
-
-		Vector<real_t> angles;
-		angles.resize(cap_points.size());
-		for (int i = 0; i < cap_points.size(); i++) {
-			Vector3 d = cap_points[i] - centroid;
-			angles.write[i] = Math::atan2(d.dot(bitangent), d.dot(tangent));
-		}
-
-		Vector<int> order;
-		order.resize(cap_points.size());
-		for (int i = 0; i < order.size(); i++) {
-			order.write[i] = i;
-		}
-		for (int i = 1; i < order.size(); i++) {
-			int key = order[i];
-			real_t key_angle = angles[key];
-			int j = i - 1;
-			while (j >= 0 && angles[order[j]] > key_angle) {
-				order.write[j + 1] = order[j];
-				j--;
-			}
-			order.write[j + 1] = key;
-		}
-
-		int base = out.vertices.size();
-		for (int i = 0; i < order.size(); i++) {
-			out.vertices.push_back(cap_points[order[i]]);
-		}
-		for (int i = 1; i + 1 < order.size(); i++) {
-			int a = base, b = base + i, c = base + i + 1;
-			// Orient outward (towards the removed material) regardless of the fan's
-			// natural winding, using the same cross(P2-P0,P1-P0) convention as ComputeNormal.
-			Vector3 n = ComputeNormal(out.vertices[a], out.vertices[b], out.vertices[c]);
-			if (n.dot(p_plane.normal) < 0) {
-				out.indices.push_back(a);
-				out.indices.push_back(c);
-				out.indices.push_back(b);
-			} else {
-				out.indices.push_back(a);
-				out.indices.push_back(b);
-				out.indices.push_back(c);
-			}
-		}
-	}
-
-	return out;
-}
+const int ALL_PRESET_FILES_COUNT = sizeof(ALL_PRESET_FILES) / sizeof(ALL_PRESET_FILES[0]);
+const char *const PRESETS_DIR = "modules/gdextensions/editor/proc_rocks_demo/presets/";
 
 } // namespace
 
-Array rock_pipeline_gen(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
-		real_t p_noise_frequency, real_t p_noise_amplitude, int p_noise_octaves, real_t p_noise_persistence,
-		int p_randseed, bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed) {
-	if (p_randseed == 0) {
-		Math::randomize();
-	} else {
-		Math::seed((uint64_t)p_randseed);
+TEST_SUITE("[[proc_rocks]] ProcRock JSON pipeline") {
+	TEST_CASE("[procrockgen] rock_pipeline_json_is_valid") {
+		Dictionary empty;
+		CHECK_FALSE(rock_pipeline_json_is_valid(empty));
+
+		Dictionary with_texgen;
+		with_texgen["textureGenerator"] = Dictionary();
+		CHECK(rock_pipeline_json_is_valid(with_texgen));
 	}
 
-	IndexedMesh ico = MakeIcosphere(CLAMP(p_subdivisions, 0, 6));
+	TEST_CASE("[procrockgen] rock_pipeline_gen_from_json produces a valid mesh for all 13 real presets") {
+		for (int i = 0; i < ALL_PRESET_FILES_COUNT; i++) {
+			Variant parsed = _load_pipeline_json(String(PRESETS_DIR) + ALL_PRESET_FILES[i]);
+			REQUIRE(parsed.get_type() == Variant::DICTIONARY);
+			Dictionary pipeline_json = parsed;
+			REQUIRE(rock_pipeline_json_is_valid(pipeline_json));
 
-	NoiseGraph noise = NoiseGraph::make_simple_fractal(p_noise_frequency, CLAMP(p_noise_octaves, 1, 6), p_noise_persistence, p_randseed == 0 ? (int)Math::rand() : p_randseed);
-
-	Vector<Vector3> vertices;
-	vertices.resize(ico.first.size());
-	for (size_t i = 0; i < ico.first.size(); i++) {
-		Vector3 dir = ico.first[i]; // unit-sphere direction
-		real_t displacement = noise.evaluate(dir) * p_noise_amplitude;
-		vertices.write[i] = dir * Vector3(p_width, p_height, p_depth) * 0.5 + dir * displacement;
-	}
-
-	Vector<int> indices;
-	indices.resize(ico.second.size() * 3);
-	for (size_t i = 0; i < ico.second.size(); i++) {
-		indices.write[i * 3 + 0] = ico.second[i].vertex[0];
-		indices.write[i * 3 + 1] = ico.second[i].vertex[1];
-		indices.write[i * 3 + 2] = ico.second[i].vertex[2];
-	}
-
-	if (p_cutplane_enabled) {
-		Vector3 plane_normal = Vector3(Math::randf() * 2 - 1, Math::randf() * 2 - 1, Math::randf() * 2 - 1);
-		if (plane_normal.length_squared() < CMP_EPSILON) {
-			plane_normal = Vector3(0, 1, 0);
-		}
-		plane_normal.normalize();
-
-		ClippedMesh clipped = clip_and_cap(vertices, indices, Plane(plane_normal, p_cutplane_offset));
-		vertices = clipped.vertices;
-		indices = clipped.indices;
-	}
-
-	Array mesh_arrays;
-	mesh_arrays.resize(VS::ARRAY_MAX);
-	if (vertices.size() == 0 || indices.size() == 0) {
-		return mesh_arrays;
-	}
-
-	if (p_smoothed) {
-		Vector<Vector3> normals = compute_smooth_normals(vertices, indices);
-
-		Vector<Vector2> uvs;
-		uvs.resize(vertices.size());
-		for (int i = 0; i < vertices.size(); i++) {
-			int box_dir = rock_studio_get_box_dir(normals[i]);
-			uvs.write[i] = rock_studio_get_box_uv(vertices[i], box_dir);
-		}
-
-		mesh_arrays[VS::ARRAY_VERTEX] = vertices;
-		mesh_arrays[VS::ARRAY_NORMAL] = normals;
-		mesh_arrays[VS::ARRAY_TEX_UV] = uvs;
-		mesh_arrays[VS::ARRAY_INDEX] = indices;
-	} else {
-		// rock_studio_make_low_poly() derives its flat normal via cross(v1-v0, v2-v0),
-		// the opposite winding convention from ComputeNormal()'s cross(v2-v0, v1-v0) used
-		// above — flip winding here so the flat-shaded result faces outward too.
-		Vector<int> flipped_indices;
-		flipped_indices.resize(indices.size());
-		for (int i = 0; i + 2 < indices.size(); i += 3) {
-			flipped_indices.write[i] = indices[i];
-			flipped_indices.write[i + 1] = indices[i + 2];
-			flipped_indices.write[i + 2] = indices[i + 1];
-		}
-
-		Array arrays;
-		arrays.resize(VS::ARRAY_MAX);
-		arrays[VS::ARRAY_VERTEX] = vertices;
-		arrays[VS::ARRAY_INDEX] = flipped_indices;
-
-		Ref<ArrayMesh> temp;
-		temp.instance();
-		temp->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
-
-		Ref<ArrayMesh> low_poly = rock_studio_make_low_poly(temp);
-		if (low_poly.is_valid() && low_poly->get_surface_count() > 0) {
-			rock_studio_box_uv(low_poly);
-			mesh_arrays = low_poly->surface_get_arrays(0);
+			Array mesh_arrays = rock_pipeline_gen_from_json(1, 1.0, 1.0, 1.0, pipeline_json, 0.2, 42, false, 0.0, true);
+			REQUIRE(mesh_arrays.size() == VS::ARRAY_MAX);
+			Vector<Vector3> vertices = mesh_arrays[VS::ARRAY_VERTEX];
+			Vector<int> indices = mesh_arrays[VS::ARRAY_INDEX];
+			CHECK(vertices.size() > 0);
+			CHECK(indices.size() > 0);
+			CHECK(indices.size() % 3 == 0);
 		}
 	}
 
-	return mesh_arrays;
+	TEST_CASE("[procrockgen] rock_pipeline_gen_textures_from_json produces valid PBR textures for all 13 real presets") {
+		for (int i = 0; i < ALL_PRESET_FILES_COUNT; i++) {
+			Variant parsed = _load_pipeline_json(String(PRESETS_DIR) + ALL_PRESET_FILES[i]);
+			Dictionary pipeline_json = parsed;
+
+			ProcRockPipelineTextures textures = rock_pipeline_gen_textures_from_json(32, pipeline_json);
+			REQUIRE(textures.albedo.is_valid());
+			REQUIRE(textures.normal.is_valid());
+			REQUIRE(textures.roughness.is_valid());
+			REQUIRE(textures.metalness.is_valid());
+			REQUIRE(textures.ambient_occlusion.is_valid());
+			CHECK(textures.albedo->get_width() == 32);
+			CHECK(textures.albedo->get_height() == 32);
+		}
+	}
+
+	TEST_CASE("[procrockgen] JSON reader Roughness/Metalness/Albedo cross-check ProcRockMesh::set_pipeline_preset()'s hand-extracted table") {
+		// Expected values copied from proc_rocks.cpp's `presets[]` table (preset 0 = 1.json,
+		// preset 9 = 10.json) — both tables read the exact same source JSON, so they must agree.
+		{
+			Dictionary pipeline_json = _load_pipeline_json(String(PRESETS_DIR) + "1.json");
+			real_t scale, bias;
+			_extract_scale_bias(pipeline_json, "Roughness", 0, 0, scale, bias);
+			CHECK(scale == doctest::Approx(2.000));
+			CHECK(bias == doctest::Approx(0.000));
+			_extract_scale_bias(pipeline_json, "Metalness", 0, 0, scale, bias);
+			CHECK(scale == doctest::Approx(0.200));
+			CHECK(bias == doctest::Approx(0.000));
+
+			Ref<Gradient> gradient = _extract_albedo_gradient(pipeline_json);
+			REQUIRE(gradient->get_points_count() >= 2);
+			Color low = gradient->get_color(0);
+			Color high = gradient->get_color(gradient->get_points_count() - 1);
+			CHECK(low.r == doctest::Approx(0.827).epsilon(0.002));
+			CHECK(low.g == doctest::Approx(0.784).epsilon(0.002));
+			CHECK(low.b == doctest::Approx(0.517).epsilon(0.002));
+			CHECK(high.r == doctest::Approx(0.940).epsilon(0.002));
+			CHECK(high.g == doctest::Approx(0.936).epsilon(0.002));
+			CHECK(high.b == doctest::Approx(0.921).epsilon(0.002));
+		}
+		{
+			Dictionary pipeline_json = _load_pipeline_json(String(PRESETS_DIR) + "10.json");
+			real_t scale, bias;
+			_extract_scale_bias(pipeline_json, "Roughness", 0, 0, scale, bias);
+			CHECK(scale == doctest::Approx(2.911));
+			CHECK(bias == doctest::Approx(0.000));
+			_extract_scale_bias(pipeline_json, "Metalness", 0, 0, scale, bias);
+			CHECK(scale == doctest::Approx(0.200));
+			CHECK(bias == doctest::Approx(0.000));
+
+			Ref<Gradient> gradient = _extract_albedo_gradient(pipeline_json);
+			REQUIRE(gradient->get_points_count() >= 2);
+			Color low = gradient->get_color(0);
+			Color high = gradient->get_color(gradient->get_points_count() - 1);
+			CHECK(low.r == doctest::Approx(0.355).epsilon(0.002));
+			CHECK(low.g == doctest::Approx(0.355).epsilon(0.002));
+			CHECK(low.b == doctest::Approx(0.355).epsilon(0.002));
+			CHECK(high.r == doctest::Approx(0.145).epsilon(0.002));
+			CHECK(high.g == doctest::Approx(0.108).epsilon(0.002));
+			CHECK(high.b == doctest::Approx(0.108).epsilon(0.002));
+		}
+	}
+
+	TEST_CASE("[procrockgen] _extract_displacement_graph decodes the real Displacement/Height graph from every preset") {
+		for (int i = 0; i < ALL_PRESET_FILES_COUNT; i++) {
+			Dictionary pipeline_json = _load_pipeline_json(String(PRESETS_DIR) + ALL_PRESET_FILES[i]);
+			NoiseGraph g = _extract_displacement_graph(pipeline_json);
+			REQUIRE(g.is_valid());
+			real_t v = g.evaluate(Vector3(1, 2, 3));
+			CHECK(v == v); // not NaN
+		}
+	}
 }
-
-// =========================================================================
-// Texture pipeline: noise height field -> albedo / normal / roughness / metalness / AO
-// =========================================================================
-
-namespace {
-
-Ref<Image> make_height_image(int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed) {
-	NoiseGraph noise = NoiseGraph::make_simple_fractal(p_noise_frequency, CLAMP(p_noise_octaves, 1, 6), p_noise_persistence, p_randseed == 0 ? (int)Math::rand() : p_randseed);
-
-	PoolVector<uint8_t> data;
-	data.resize(p_size * p_size);
-	PoolVector<uint8_t>::Write wd8 = data.write();
-	for (int y = 0; y < p_size; y++) {
-		for (int x = 0; x < p_size; x++) {
-			real_t v = noise.evaluate(Vector3(real_t(x), real_t(y), 0.0)) * 0.5 + 0.5; // normalize [0..1]
-			wd8[y * p_size + x] = uint8_t(CLAMP(v * 255.0, real_t(0.0), real_t(255.0)));
-		}
-	}
-	return Ref<Image>(memnew(Image(p_size, p_size, false, Image::FORMAT_L8, data)));
-}
-
-Ref<Image> make_albedo_image(Ref<Image> p_height, const Color &p_low, const Color &p_high) {
-	int w = p_height->get_width(), h = p_height->get_height();
-	Ref<Gradient> gradient;
-	gradient.instance();
-	gradient->set_color(0, p_low);
-	gradient->set_color(1, p_high);
-
-	Ref<Image> img;
-	img.instance();
-	img->create(w, h, false, Image::FORMAT_RGB8);
-
-	p_height->lock();
-	img->lock();
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			img->set_pixel(x, y, gradient->get_color_at_offset(p_height->get_pixel(x, y).r));
-		}
-	}
-	img->unlock();
-	p_height->unlock();
-	return img;
-}
-
-Ref<Image> make_normal_image(Ref<Image> p_height, real_t p_strength) {
-	int w = p_height->get_width(), h = p_height->get_height();
-	Ref<Image> img;
-	img.instance();
-	img->create(w, h, false, Image::FORMAT_RGB8);
-
-	p_height->lock();
-	img->lock();
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			real_t hl = p_height->get_pixel(CLAMP(x - 1, 0, w - 1), y).r;
-			real_t hr = p_height->get_pixel(CLAMP(x + 1, 0, w - 1), y).r;
-			real_t hd = p_height->get_pixel(x, CLAMP(y - 1, 0, h - 1)).r;
-			real_t hu = p_height->get_pixel(x, CLAMP(y + 1, 0, h - 1)).r;
-			Vector3 n = Vector3(-(hr - hl) * p_strength, -(hu - hd) * p_strength, 1.0).normalized();
-			img->set_pixel(x, y, Color(n.x * 0.5 + 0.5, n.y * 0.5 + 0.5, n.z * 0.5 + 0.5));
-		}
-	}
-	img->unlock();
-	p_height->unlock();
-	return img;
-}
-
-Ref<Image> make_scaled_grayscale_image(Ref<Image> p_height, real_t p_scale, real_t p_bias) {
-	int w = p_height->get_width(), h = p_height->get_height();
-	Ref<Image> img;
-	img.instance();
-	img->create(w, h, false, Image::FORMAT_L8);
-
-	p_height->lock();
-	img->lock();
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			real_t v = CLAMP(p_height->get_pixel(x, y).r * p_scale + p_bias, real_t(0.0), real_t(1.0));
-			img->set_pixel(x, y, Color(v, v, v));
-		}
-	}
-	img->unlock();
-	p_height->unlock();
-	return img;
-}
-
-} // namespace
-
-ProcRockPipelineTextures rock_pipeline_gen_textures(
-		int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed,
-		const Color &p_albedo_low, const Color &p_albedo_high, real_t p_normal_strength,
-		real_t p_roughness_scale, real_t p_roughness_bias,
-		real_t p_metalness_scale, real_t p_metalness_bias,
-		real_t p_ao_scale, real_t p_ao_bias) {
-	int size = CLAMP(p_size, 8, 4096);
-	Ref<Image> height = make_height_image(size, p_noise_frequency, p_noise_octaves, p_noise_persistence, p_randseed);
-
-	ProcRockPipelineTextures textures;
-	textures.albedo.instance();
-	textures.albedo->create_from_image(make_albedo_image(height, p_albedo_low, p_albedo_high));
-	textures.normal.instance();
-	textures.normal->create_from_image(make_normal_image(height, p_normal_strength));
-	textures.roughness.instance();
-	textures.roughness->create_from_image(make_scaled_grayscale_image(height, p_roughness_scale, p_roughness_bias));
-	textures.metalness.instance();
-	textures.metalness->create_from_image(make_scaled_grayscale_image(height, p_metalness_scale, p_metalness_bias));
-	textures.ambient_occlusion.instance();
-	textures.ambient_occlusion->create_from_image(make_scaled_grayscale_image(height, p_ao_scale, p_ao_bias));
-
-	return textures;
-}
-
-Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures) {
-	Ref<SpatialMaterial> material;
-	material.instance();
-
-	material->set_texture(SpatialMaterial::TEXTURE_ALBEDO, p_textures.albedo);
-	material->set_texture(SpatialMaterial::TEXTURE_NORMAL, p_textures.normal);
-	material->set_feature(SpatialMaterial::FEATURE_NORMAL_MAPPING, true);
-	material->set_texture(SpatialMaterial::TEXTURE_ROUGHNESS, p_textures.roughness);
-	material->set_roughness_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
-	material->set_texture(SpatialMaterial::TEXTURE_METALLIC, p_textures.metalness);
-	material->set_metallic_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
-	material->set_texture(SpatialMaterial::TEXTURE_AMBIENT_OCCLUSION, p_textures.ambient_occlusion);
-	material->set_ao_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
-	material->set_feature(SpatialMaterial::FEATURE_AMBIENT_OCCLUSION, true);
-
-	return material;
-}
-
-// Editor-only baked texture packs (ProcRock dock "Demo Texture" picker) live in
-// modules/gdextensions/editor/proc_rocks_editor_plugin.cpp — that's the only caller,
-// and it's TOOLS_ENABLED-only already, so the loader belongs there, not in the
-// generator API.
+#endif // DOCTEST

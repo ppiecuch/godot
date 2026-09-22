@@ -35,6 +35,9 @@
 #include "generators/rockgeneration/gen_rock.h"
 #include "generators/rockstudio/rock_studio.h"
 
+#include "core/io/json.h"
+#include "core/os/file_access.h"
+
 // =========================================================================
 // Generator selection
 // =========================================================================
@@ -524,6 +527,51 @@ void ProcRockMesh::set_pipeline_preset(int p_preset) {
 	set_pipeline_noise_frequency(p.noise_frequency);
 	set_pipeline_noise_persistence(p.noise_persistence);
 	set_pipeline_noise_octaves(p.noise_octaves);
+}
+
+// Loads a real procrocklib pipeline JSON preset (see editor/proc_rocks_demo/presets/*.json
+// and memo.md's "JSON pipeline reader" section) — from then on, _rebuild() drives Method 3
+// from this file's own noise graph / albedo gradient / roughness / metalness / ambient
+// occlusion config instead of the scalar pipeline_* Inspector properties (those still work
+// for pipeline_subdivisions/width/height/depth/noise_amplitude/randseed/cutplane/smoothed/
+// texture_size, which aren't part of the JSON-driven path). Pass an empty path to clear a
+// previously loaded preset and return to the scalar-only path.
+Error ProcRockMesh::load_from_file(const String p_path) {
+	if (p_path.empty()) {
+		pipeline.json_path = String();
+		pipeline.json_cache = Dictionary();
+		_dirty = true;
+		if (auto_refresh) {
+			_rebuild();
+		}
+		return OK;
+	}
+
+	FileAccess *f = FileAccess::open(p_path, FileAccess::READ);
+	if (!f) {
+		return ERR_FILE_NOT_FOUND;
+	}
+	String text = f->get_as_utf8_string();
+	memdelete(f);
+
+	Variant parsed;
+	String err_str;
+	int err_line = 0;
+	if (JSON::parse(text, parsed, err_str, err_line) != OK || parsed.get_type() != Variant::DICTIONARY) {
+		return ERR_PARSE_ERROR;
+	}
+	Dictionary pipeline_json = parsed;
+	if (!rock_pipeline_json_is_valid(pipeline_json)) {
+		return ERR_INVALID_DATA;
+	}
+
+	pipeline.json_path = p_path;
+	pipeline.json_cache = pipeline_json;
+	_dirty = true;
+	if (auto_refresh) {
+		_rebuild();
+	}
+	return OK;
 }
 
 // =========================================================================
@@ -1083,22 +1131,30 @@ void ProcRockMesh::_rebuild() {
 		} break;
 
 		case 3: {
-			// Method 3: ProcRock — icosphere + noise displacement pipeline
-			Array mesh_arrays = rock_pipeline_gen(pipeline.subdivisions, pipeline.width, pipeline.height, pipeline.depth,
-					pipeline.noise_frequency, pipeline.noise_amplitude, pipeline.noise_octaves, pipeline.noise_persistence,
-					pipeline.randseed, pipeline.cutplane_enabled, pipeline.cutplane_offset, pipeline.smoothed);
+			// Method 3: ProcRock — icosphere + noise displacement pipeline, optionally
+			// driven by a loaded JSON preset instead of the scalar pipeline_* properties.
+			bool use_json = !pipeline.json_path.empty() && rock_pipeline_json_is_valid(pipeline.json_cache);
+			Array mesh_arrays = use_json
+					? rock_pipeline_gen_from_json(pipeline.subdivisions, pipeline.width, pipeline.height, pipeline.depth,
+							  pipeline.json_cache, pipeline.noise_amplitude, pipeline.randseed,
+							  pipeline.cutplane_enabled, pipeline.cutplane_offset, pipeline.smoothed)
+					: rock_pipeline_gen(pipeline.subdivisions, pipeline.width, pipeline.height, pipeline.depth,
+							  pipeline.noise_frequency, pipeline.noise_amplitude, pipeline.noise_octaves, pipeline.noise_persistence,
+							  pipeline.randseed, pipeline.cutplane_enabled, pipeline.cutplane_offset, pipeline.smoothed);
 
 			Vector<Vector3> verts = mesh_arrays.size() == VS::ARRAY_MAX ? (Vector<Vector3>)mesh_arrays[VS::ARRAY_VERTEX] : Vector<Vector3>();
 			if (verts.size() > 0) {
 				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_arrays);
 
 				if (pipeline.generate_textures) {
-					ProcRockPipelineTextures textures = rock_pipeline_gen_textures(pipeline.texture_size,
-							pipeline.noise_frequency, pipeline.noise_octaves, pipeline.noise_persistence, pipeline.randseed,
-							pipeline.albedo_low, pipeline.albedo_high, pipeline.normal_strength,
-							pipeline.roughness_scale, pipeline.roughness_bias,
-							pipeline.metalness_scale, pipeline.metalness_bias,
-							pipeline.ao_scale, pipeline.ao_bias);
+					ProcRockPipelineTextures textures = use_json
+							? rock_pipeline_gen_textures_from_json(pipeline.texture_size, pipeline.json_cache)
+							: rock_pipeline_gen_textures(pipeline.texture_size,
+									  pipeline.noise_frequency, pipeline.noise_octaves, pipeline.noise_persistence, pipeline.randseed,
+									  pipeline.albedo_low, pipeline.albedo_high, pipeline.normal_strength,
+									  pipeline.roughness_scale, pipeline.roughness_bias,
+									  pipeline.metalness_scale, pipeline.metalness_bias,
+									  pipeline.ao_scale, pipeline.ao_bias);
 					_pipeline_material = rock_pipeline_make_material(textures);
 					surface_set_material(0, _pipeline_material);
 				} else {
@@ -1187,6 +1243,7 @@ void ProcRockMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_pipeline_ao_bias"), &ProcRockMesh::get_pipeline_ao_bias);
 	ClassDB::bind_method(D_METHOD("set_pipeline_preset", "preset"), &ProcRockMesh::set_pipeline_preset);
 	ClassDB::bind_method(D_METHOD("get_pipeline_material"), &ProcRockMesh::get_pipeline_material);
+	ClassDB::bind_method(D_METHOD("load_from_file", "path"), &ProcRockMesh::load_from_file);
 
 	ClassDB::bind_method(D_METHOD("set_auto_refresh", "refresh"), &ProcRockMesh::set_auto_refresh);
 	ClassDB::bind_method(D_METHOD("get_auto_refresh"), &ProcRockMesh::get_auto_refresh);
@@ -1626,6 +1683,34 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 		CHECK(mesh->get_pipeline_metalness_bias() == doctest::Approx(0.0f));
 		mesh->set_pipeline_preset(99); // clamped to last preset (12), must not crash
 		CHECK(mesh->get_pipeline_albedo_low().a >= 0.0f);
+	}
+
+	TEST_CASE("[proc_rocks] load_from_file drives generation from a real JSON preset") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(3);
+		mesh->set_pipeline_subdivisions(1); // keep it cheap
+		mesh->set_pipeline_generate_textures(true);
+		mesh->set_pipeline_texture_size(16);
+		mesh->set_auto_refresh(true);
+
+		Error err = mesh->load_from_file("modules/gdextensions/editor/proc_rocks_demo/presets/1.json");
+		CHECK(err == OK);
+		CHECK(mesh->get_surface_count() > 0);
+		CHECK(mesh->get_pipeline_material().is_valid());
+
+		// Clearing the path reverts to the scalar pipeline_* path without crashing.
+		err = mesh->load_from_file("");
+		CHECK(err == OK);
+		CHECK(mesh->get_surface_count() > 0);
+	}
+
+	TEST_CASE("[proc_rocks] load_from_file rejects a missing or invalid file") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(3);
+		CHECK(mesh->load_from_file("modules/gdextensions/editor/proc_rocks_demo/presets/does_not_exist.json") == ERR_FILE_NOT_FOUND);
+		CHECK(mesh->load_from_file("modules/gdextensions/editor/proc_rocks_demo/baked_textures.h") == ERR_PARSE_ERROR);
 	}
 	// Baked demo texture pack tests live in editor/proc_rocks_editor_plugin.cpp — that's
 	// the only place the loader exists now (editor-only, moved out of the generator API).

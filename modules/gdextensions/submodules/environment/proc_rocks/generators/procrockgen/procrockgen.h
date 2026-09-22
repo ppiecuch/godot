@@ -32,6 +32,7 @@
 #define PROCROCKGEN_H
 
 #include "core/color.h"
+#include "core/dictionary.h"
 #include "core/variant.h"
 #include "scene/resources/material.h"
 #include "scene/resources/texture.h"
@@ -60,6 +61,19 @@ ProcRockPipelineTextures rock_pipeline_gen_textures(
 		real_t p_ao_scale, real_t p_ao_bias);
 
 Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures);
+
+// JSON pipeline preset support — p_pipeline_json is an already-parsed Variant::DICTIONARY
+// matching procrocklib's {"generator","modifiers","parameterizer","textureAdders",
+// "textureGenerator"} pipeline shape (see editor/proc_rocks_demo/presets/*.json and
+// memo.md's "Noise graph interpreter" / "JSON pipeline reader" sections for scope and
+// limitations — the modifier chain and non-Icosahedron generators aren't implemented yet).
+bool rock_pipeline_json_is_valid(const Dictionary &p_pipeline_json);
+
+Array rock_pipeline_gen_from_json(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
+		const Dictionary &p_pipeline_json, real_t p_noise_amplitude, int p_randseed,
+		bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed);
+
+ProcRockPipelineTextures rock_pipeline_gen_textures_from_json(int p_size, const Dictionary &p_pipeline_json);
 
 // Editor-only baked PBR texture packs (gravel/mossy/rock) live in
 // modules/gdextensions/editor/proc_rocks_editor_plugin.{h,cpp} — the ProcRock dock's

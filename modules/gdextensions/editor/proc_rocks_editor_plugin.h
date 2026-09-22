@@ -66,8 +66,10 @@ class ProcRockDialog : public WindowDialog {
 	Button *generate_btn;
 	Button *randomize_btn;
 	Button *export_btn;
+	Button *load_json_btn;
 	Label *info_label;
 	FileDialog *export_dialog;
+	FileDialog *load_json_dialog;
 
 	// Demo texture picker (editor-only baked PBR packs — see baked_textures.h)
 	OptionButton *demo_texture_option;
@@ -77,6 +79,8 @@ class ProcRockDialog : public WindowDialog {
 	void _on_randomize_pressed();
 	void _on_export_pressed();
 	void _on_export_file_selected(const String &p_path);
+	void _on_load_json_pressed();
+	void _on_load_json_file_selected(const String &p_path);
 	void _on_demo_texture_changed(int p_idx);
 	void _apply_demo_texture();
 	void _update_preview();

@@ -32,6 +32,7 @@
 #define PROC_ROCK_MESH_H
 
 #include "core/color.h"
+#include "core/dictionary.h"
 #include "scene/main/timer.h"
 #include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
@@ -85,6 +86,13 @@ class ProcRockMesh : public ArrayMesh {
 		real_t roughness_scale, roughness_bias;
 		real_t metalness_scale, metalness_bias;
 		real_t ao_scale, ao_bias;
+
+		// Set by load_from_file() — when non-empty, _rebuild() drives the mesh/texture
+		// pipeline from this parsed JSON preset instead of the scalar fields above (see
+		// generators/procrockgen/procrockgen.h's rock_pipeline_*_from_json() and memo.md's
+		// "JSON pipeline reader" section for scope/limitations).
+		String json_path;
+		Dictionary json_cache;
 	} pipeline;
 
 	Ref<SpatialMaterial> _pipeline_material;
