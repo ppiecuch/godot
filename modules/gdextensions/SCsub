@@ -743,28 +743,15 @@ if not env["disable_3d"]:
     if is_enabled("environment/tree_3d"):
         modules += ["environment/tree_3d"]
         thirdparty_sources += ["submodules/environment/tree_3d/proctree.cpp"]
-    if is_enabled("environment/proc_rocks") and env["tools"]:  # it is big - keep it for editor usge only
+    if is_enabled("environment/proc_rocks"):  # lean now that procrocklib (boost/CGAL/libigl/CImg) is gone
         modules += ["environment/proc_rocks"]
         thirdparty_sources += [
             "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
             "submodules/environment/proc_rocks/generators/rockgen/rockgen.cpp",
             "submodules/environment/proc_rocks/generators/rockstudio/rock_studio.cpp",
+            "submodules/environment/proc_rocks/generators/procrockgen/procrockgen.cpp",
         ]
         env_module.Prepend(CPPPATH=["submodules/environment/proc_rocks/generators"])
-        thirdparty_sources += [
-            "thirdparty/libnoise/libnoise.cpp",
-            "submodules/environment/proc_rocks/generators/procrockgen/procrockgen.cpp",
-            "thirdparty/procrocklib/procrocklib.cpp",
-        ]
-        env_module.Prepend(
-            CPPPATH=[
-                "thirdparty/eigenmath",
-                "thirdparty/libnoise",
-                "thirdparty/procrocklib/inc",
-                "thirdparty/procrocklib/src",
-                "thirdparty/procrocklib/ext",
-            ]
-        )
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":

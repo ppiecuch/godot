@@ -31,13 +31,10 @@
 #ifndef PROC_ROCK_MESH_H
 #define PROC_ROCK_MESH_H
 
-#include "core/io/resource_importer.h"
+#include "core/color.h"
 #include "scene/main/timer.h"
+#include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
-
-namespace procrock {
-class Pipeline;
-}
 
 class ProcRockMesh : public ArrayMesh {
 	GDCLASS(ProcRockMesh, ArrayMesh)
@@ -71,8 +68,26 @@ class ProcRockMesh : public ArrayMesh {
 	} rockstudio;
 
 	struct {
-		procrock::Pipeline *pipeline;
-	} procrock;
+		int subdivisions;
+		real_t width, height, depth;
+		real_t noise_frequency, noise_amplitude;
+		int noise_octaves;
+		real_t noise_persistence;
+		int randseed;
+		bool cutplane_enabled;
+		real_t cutplane_offset;
+		bool smoothed;
+
+		bool generate_textures;
+		int texture_size;
+		Color albedo_low, albedo_high;
+		real_t normal_strength;
+		real_t roughness_scale, roughness_bias;
+		real_t metalness_scale, metalness_bias;
+		real_t ao_scale, ao_bias;
+	} pipeline;
+
+	Ref<SpatialMaterial> _pipeline_material;
 
 	bool auto_refresh;
 	int method;
@@ -133,37 +148,60 @@ public:
 	void set_rockstudio_randseed(int p_seed);
 	int get_rockstudio_randseed() const;
 
+	// Gen. method 4 — ProcRock (noise pipeline)
+	void set_pipeline_subdivisions(int p_val);
+	int get_pipeline_subdivisions() const;
+	void set_pipeline_width(real_t p_val);
+	real_t get_pipeline_width() const;
+	void set_pipeline_height(real_t p_val);
+	real_t get_pipeline_height() const;
+	void set_pipeline_depth(real_t p_val);
+	real_t get_pipeline_depth() const;
+	void set_pipeline_noise_frequency(real_t p_val);
+	real_t get_pipeline_noise_frequency() const;
+	void set_pipeline_noise_amplitude(real_t p_val);
+	real_t get_pipeline_noise_amplitude() const;
+	void set_pipeline_noise_octaves(int p_val);
+	int get_pipeline_noise_octaves() const;
+	void set_pipeline_noise_persistence(real_t p_val);
+	real_t get_pipeline_noise_persistence() const;
+	void set_pipeline_randseed(int p_val);
+	int get_pipeline_randseed() const;
+	void set_pipeline_cutplane_enabled(bool p_val);
+	bool get_pipeline_cutplane_enabled() const;
+	void set_pipeline_cutplane_offset(real_t p_val);
+	real_t get_pipeline_cutplane_offset() const;
+	void set_pipeline_smoothed(bool p_val);
+	bool get_pipeline_smoothed() const;
+	void set_pipeline_generate_textures(bool p_val);
+	bool get_pipeline_generate_textures() const;
+	void set_pipeline_texture_size(int p_val);
+	int get_pipeline_texture_size() const;
+	void set_pipeline_albedo_low(const Color &p_val);
+	Color get_pipeline_albedo_low() const;
+	void set_pipeline_albedo_high(const Color &p_val);
+	Color get_pipeline_albedo_high() const;
+	void set_pipeline_normal_strength(real_t p_val);
+	real_t get_pipeline_normal_strength() const;
+	void set_pipeline_roughness_scale(real_t p_val);
+	real_t get_pipeline_roughness_scale() const;
+	void set_pipeline_roughness_bias(real_t p_val);
+	real_t get_pipeline_roughness_bias() const;
+	void set_pipeline_metalness_scale(real_t p_val);
+	real_t get_pipeline_metalness_scale() const;
+	void set_pipeline_metalness_bias(real_t p_val);
+	real_t get_pipeline_metalness_bias() const;
+	void set_pipeline_ao_scale(real_t p_val);
+	real_t get_pipeline_ao_scale() const;
+	void set_pipeline_ao_bias(real_t p_val);
+	real_t get_pipeline_ao_bias() const;
+	void set_pipeline_preset(int p_preset);
+
+	Ref<SpatialMaterial> get_pipeline_material() const { return _pipeline_material; }
+
 	Error load_from_file(const String p_path);
 
 	ProcRockMesh();
 };
-
-#ifdef TOOLS_ENABLED
-class ResourceImporterProcRock : public ResourceImporter {
-	GDCLASS(ResourceImporterProcRock, ResourceImporter);
-	OBJ_SAVE_TYPE(Mesh);
-
-public:
-	virtual String get_importer_name() const;
-	virtual String get_visible_name() const;
-	virtual void get_recognized_extensions(List<String> *p_extensions) const;
-	virtual String get_save_extension() const;
-	virtual String get_resource_type() const;
-
-	virtual int get_preset_count() const;
-	virtual String get_preset_name(int p_idx) const;
-
-	virtual void get_import_options(List<ImportOption> *r_options, int p_preset = 0) const;
-	virtual bool get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const;
-	virtual Error import(const String &p_source_file, const String &p_save_path,
-			const Map<StringName, Variant> &p_options,
-			List<String> *r_platform_variants,
-			List<String> *r_gen_files = NULL,
-			Variant *r_metadata = NULL);
-
-	ResourceImporterProcRock() {}
-	~ResourceImporterProcRock() {}
-};
-#endif
 
 #endif // PROC_ROCK_MESH_H
