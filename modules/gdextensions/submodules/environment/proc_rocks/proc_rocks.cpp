@@ -1136,7 +1136,7 @@ void ProcRockMesh::_rebuild() {
 			bool use_json = !pipeline.json_path.empty() && rock_pipeline_json_is_valid(pipeline.json_cache);
 			Array mesh_arrays = use_json
 					? rock_pipeline_gen_from_json(pipeline.subdivisions, pipeline.width, pipeline.height, pipeline.depth,
-							  pipeline.json_cache, pipeline.noise_amplitude, pipeline.randseed,
+							  pipeline.json_cache, pipeline.randseed,
 							  pipeline.cutplane_enabled, pipeline.cutplane_offset, pipeline.smoothed)
 					: rock_pipeline_gen(pipeline.subdivisions, pipeline.width, pipeline.height, pipeline.depth,
 							  pipeline.noise_frequency, pipeline.noise_amplitude, pipeline.noise_octaves, pipeline.noise_persistence,

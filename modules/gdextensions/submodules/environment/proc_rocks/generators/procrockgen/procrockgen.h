@@ -70,7 +70,7 @@ Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures 
 bool rock_pipeline_json_is_valid(const Dictionary &p_pipeline_json);
 
 Array rock_pipeline_gen_from_json(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
-		const Dictionary &p_pipeline_json, real_t p_noise_amplitude, int p_randseed,
+		const Dictionary &p_pipeline_json, int p_randseed,
 		bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed);
 
 ProcRockPipelineTextures rock_pipeline_gen_textures_from_json(int p_size, const Dictionary &p_pipeline_json);

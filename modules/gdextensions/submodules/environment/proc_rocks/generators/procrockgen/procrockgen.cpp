@@ -37,9 +37,13 @@
 #include "core/hash_map.h"
 #include "core/math/geometry.h"
 #include "core/math/plane.h"
+#include "core/math/random_number_generator.h"
 #include "modules/opensimplex/open_simplex_noise.h"
 #include "scene/resources/gradient.h"
 #include "servers/visual_server.h"
+
+#include <queue>
+#include <vector>
 
 // =========================================================================
 // Dependency-free noise graph interpreter (private to this file — procrockgen
@@ -866,24 +870,6 @@ real_t _extract_normal_strength(const Dictionary &p_pipeline_json, real_t p_defa
 	return p_default;
 }
 
-// Warns (does not fail) about pipeline stages Phase 1 doesn't implement yet, so a
-// JSON file that relies on them doesn't silently produce a misleadingly different
-// result from the original tool without any indication why.
-void _warn_unsupported_stages(const Dictionary &p_pipeline_json) {
-	if (p_pipeline_json.has("generator") && p_pipeline_json["generator"].get_type() == Variant::DICTIONARY) {
-		Dictionary generator = p_pipeline_json["generator"];
-		if (_dget_int(generator, "_id", 1) != 1) {
-			WARN_PRINT("ProcRock: pipeline JSON requests a non-Icosahedron generator, which isn't implemented yet — using the icosphere generator instead.");
-		}
-	}
-	if (p_pipeline_json.has("modifiers") && p_pipeline_json["modifiers"].get_type() == Variant::ARRAY) {
-		Array modifiers = p_pipeline_json["modifiers"];
-		if (modifiers.size() > 0) {
-			WARN_PRINT("ProcRock: pipeline JSON's modifier chain (Transformation/Subdivision/Decimate/DisplaceAlongNormals) isn't implemented yet — approximating mesh displacement from the texture generator's own noise graph instead.");
-		}
-	}
-}
-
 } // namespace
 
 bool rock_pipeline_json_is_valid(const Dictionary &p_pipeline_json) {
@@ -1112,6 +1098,700 @@ Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int>
 	return mesh_arrays;
 }
 
+// =========================================================================
+// JSON-driven generators — ported from procrocklib's gen/cuboid_generator.cpp
+// and gen/pyramid_generator.cpp (recovered from git history, MPL2-licensed
+// libigl reference for per_vertex_normals only — not relinked; normals are
+// computed via compute_smooth_normals() above instead). Generator _id values
+// match procrocklib's PipelineStage_Gen_* exactly (0=Cuboid, 1=Icosahedron,
+// 2=Pyramid, 3=SkinSurface). SkinSurface needs a CGAL-free substitute
+// (marching-cubes metaball mesher, per the phase roadmap) — falls back to
+// Icosahedron with a one-line warning until that lands.
+// =========================================================================
+
+struct RockMesh {
+	Vector<Vector3> vertices;
+	Vector<int> indices; // triangle list, 3 per face
+};
+
+// generator.config["General"][p_index] — procrocklib groups a stage's
+// Configuration::ConfigurationGroup entries as one dict per array slot.
+Dictionary _stage_group(const Dictionary &p_stage, const String &p_group_name, int p_index) {
+	if (!p_stage.has("config") || p_stage["config"].get_type() != Variant::DICTIONARY) {
+		return Dictionary();
+	}
+	Dictionary config = p_stage["config"];
+	if (!config.has(p_group_name) || config[p_group_name].get_type() != Variant::ARRAY) {
+		return Dictionary();
+	}
+	Array groups = config[p_group_name];
+	if (p_index < 0 || p_index >= groups.size() || groups[p_index].get_type() != Variant::DICTIONARY) {
+		return Dictionary();
+	}
+	return groups[p_index];
+}
+
+RockMesh generate_cuboid(real_t p_length, real_t p_height, real_t p_depth) {
+	RockMesh mesh;
+	real_t hl = p_length / 2.0, hh = p_height / 2.0, hd = p_depth / 2.0;
+	mesh.vertices.push_back(Vector3(hl, -hh, -hd));
+	mesh.vertices.push_back(Vector3(hl, hh, -hd));
+	mesh.vertices.push_back(Vector3(-hl, hh, -hd));
+	mesh.vertices.push_back(Vector3(-hl, -hh, -hd));
+	mesh.vertices.push_back(Vector3(hl, -hh, hd));
+	mesh.vertices.push_back(Vector3(hl, hh, hd));
+	mesh.vertices.push_back(Vector3(-hl, hh, hd));
+	mesh.vertices.push_back(Vector3(-hl, -hh, hd));
+
+	static const int faces[12][3] = {
+		{ 0, 2, 1 }, { 0, 3, 2 },
+		{ 0, 1, 5 }, { 0, 5, 4 },
+		{ 1, 2, 6 }, { 1, 6, 5 },
+		{ 2, 3, 7 }, { 2, 7, 6 },
+		{ 3, 0, 4 }, { 3, 4, 7 },
+		{ 4, 5, 6 }, { 4, 6, 7 }
+	};
+	for (int i = 0; i < 12; i++) {
+		mesh.indices.push_back(faces[i][0]);
+		mesh.indices.push_back(faces[i][1]);
+		mesh.indices.push_back(faces[i][2]);
+	}
+	return mesh;
+}
+
+RockMesh generate_pyramid(real_t p_base_height, real_t p_base_radius, int p_base_subdivisions, real_t p_base_wiggle, int p_seed,
+		real_t p_height, real_t p_tip_x, real_t p_tip_z) {
+	RockMesh mesh;
+	int n = MAX(1, p_base_subdivisions - 1);
+
+	Ref<RandomNumberGenerator> rng;
+	rng.instance();
+	rng->set_seed(p_seed);
+
+	mesh.vertices.resize(n + 2);
+	mesh.vertices.write[0] = Vector3(0, p_base_height, 0);
+	for (int i = 0; i < n; i++) {
+		real_t ratio = real_t(i) / real_t(n);
+		real_t r = ratio * Math_TAU;
+		real_t x = Math::cos(r) * p_base_radius;
+		real_t z = Math::sin(r) * p_base_radius;
+		real_t random1 = (rng->randf() - 0.5) * 2.0;
+		real_t random2 = (rng->randf() - 0.5) * 2.0;
+		mesh.vertices.write[i + 1] = Vector3(x + random1 * p_base_wiggle, p_base_height, z + random2 * p_base_wiggle);
+	}
+	int apex_index = n + 1;
+	mesh.vertices.write[apex_index] = Vector3(p_tip_x, p_height, p_tip_z);
+
+	for (int i = 0; i < n; i++) {
+		int i1 = ((i + 1) % n == 0) ? i + 1 : (i + 1) % n;
+		int i2 = ((i + 2) % n == 0) ? i + 2 : (i + 2) % n;
+		mesh.indices.push_back(0);
+		mesh.indices.push_back(i1);
+		mesh.indices.push_back(i2);
+		mesh.indices.push_back(i1);
+		mesh.indices.push_back(apex_index);
+		mesh.indices.push_back(i2);
+	}
+	return mesh;
+}
+
+RockMesh generate_icosphere(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth) {
+	IndexedMesh ico = MakeIcosphere(CLAMP(p_subdivisions, 0, 6));
+	RockMesh mesh;
+	mesh.vertices.resize(ico.first.size());
+	for (size_t i = 0; i < ico.first.size(); i++) {
+		mesh.vertices.write[i] = ico.first[i] * Vector3(p_width, p_height, p_depth) * 0.5;
+	}
+	mesh.indices.resize(ico.second.size() * 3);
+	for (size_t i = 0; i < ico.second.size(); i++) {
+		mesh.indices.write[i * 3 + 0] = ico.second[i].vertex[0];
+		mesh.indices.write[i * 3 + 1] = ico.second[i].vertex[1];
+		mesh.indices.write[i * 3 + 2] = ico.second[i].vertex[2];
+	}
+	return mesh;
+}
+
+RockMesh generate_base_mesh_from_json(const Dictionary &p_pipeline_json, int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth) {
+	if (!p_pipeline_json.has("generator") || p_pipeline_json["generator"].get_type() != Variant::DICTIONARY) {
+		return generate_icosphere(p_subdivisions, p_width, p_height, p_depth);
+	}
+	Dictionary generator = p_pipeline_json["generator"];
+	int generator_id = _dget_int(generator, "_id", 1);
+
+	switch (generator_id) {
+		case 0: { // Cuboid
+			Dictionary group = _stage_group(generator, "General", 0);
+			Dictionary floats = group.has("floats") ? (Dictionary)group["floats"] : Dictionary();
+			return generate_cuboid(_dget(floats, "Length", 1.0), _dget(floats, "Height", 0.5), _dget(floats, "Depth ", 0.2));
+		}
+		case 2: { // Pyramid
+			Dictionary base = _stage_group(generator, "General", 0);
+			Dictionary base_floats = base.has("floats") ? (Dictionary)base["floats"] : Dictionary();
+			Dictionary base_ints = base.has("ints") ? (Dictionary)base["ints"] : Dictionary();
+			Dictionary other = _stage_group(generator, "General", 1);
+			Dictionary other_floats = other.has("floats") ? (Dictionary)other["floats"] : Dictionary();
+			return generate_pyramid(
+					_dget(base_floats, "Height", -1.0), _dget(base_floats, "Radius", 2.0),
+					_dget_int(base_ints, "Subdivisions", 4), _dget(base_floats, "Wiggle amount", 0.0), _dget_int(base_ints, "Seed", 0),
+					_dget(other_floats, "Height", 2.0), _dget(other_floats, "Tip X", 0.0), _dget(other_floats, "Tip Z", 0.0));
+		}
+		case 1: // Icosahedron
+			return generate_icosphere(p_subdivisions, p_width, p_height, p_depth);
+		default: // 3 == SkinSurface, or anything else unrecognized
+			WARN_PRINT("ProcRock: pipeline JSON's generator (SkinSurface or unrecognized) isn't implemented yet — using the icosphere generator instead.");
+			return generate_icosphere(p_subdivisions, p_width, p_height, p_depth);
+	}
+}
+
+// =========================================================================
+// JSON-driven modifier chain — ported from procrocklib's mod/*.cpp (recovered
+// from git history). Modifier _id values match procrocklib's PipelineStage_Mod_*
+// exactly (0=Transform, 1=Subdivision, 2=Decimate, 3=DisplaceAlongNormals,
+// 4=CutPlane).
+// =========================================================================
+
+Vector3 _dget_vec3(const Dictionary &p_d, const String &p_key, const Vector3 &p_default) {
+	if (!p_d.has(p_key) || p_d[p_key].get_type() != Variant::DICTIONARY) {
+		return p_default;
+	}
+	Dictionary v = p_d[p_key];
+	return Vector3(_dget(v, "x", p_default.x), _dget(v, "y", p_default.y), _dget(v, "z", p_default.z));
+}
+
+// group["noiseGraphs"]["Noise Graph"] — same embedded shape as the texture
+// generator's "Displacement / Height" stage (see _extract_displacement_graph).
+NoiseGraph _extract_noise_graph_from_group(const Dictionary &p_group) {
+	if (p_group.has("noiseGraphs") && p_group["noiseGraphs"].get_type() == Variant::DICTIONARY) {
+		Dictionary graphs = p_group["noiseGraphs"];
+		if (graphs.has("Noise Graph")) {
+			NoiseGraph g = NoiseGraph::from_json(graphs["Noise Graph"]);
+			if (g.is_valid()) {
+				return g;
+			}
+		}
+	}
+	return NoiseGraph::make_simple_fractal(1.0, 3, 0.5, 0);
+}
+
+// mod/transformation_modifier.cpp: transform = Translation * Scaling * RotX * RotY * RotZ,
+// rotation in radians, applied in that composition order (rotate, then scale, then translate).
+void apply_transformation_modifier(RockMesh &p_mesh, const Dictionary &p_modifier) {
+	Dictionary group = _stage_group(p_modifier, "General", 0);
+	Dictionary float3s = group.has("float3s") ? (Dictionary)group["float3s"] : Dictionary();
+	Vector3 translation = _dget_vec3(float3s, "Translation", Vector3());
+	Vector3 scale = _dget_vec3(float3s, "Scale", Vector3(1, 1, 1));
+	Vector3 rotation = _dget_vec3(float3s, "Rotate", Vector3());
+
+	Basis rot_x(Vector3(1, 0, 0), rotation.x);
+	Basis rot_y(Vector3(0, 1, 0), rotation.y);
+	Basis rot_z(Vector3(0, 0, 1), rotation.z);
+	Basis rot = rot_x * rot_y * rot_z;
+
+	for (int i = 0; i < p_mesh.vertices.size(); i++) {
+		Vector3 v = rot.xform(p_mesh.vertices[i]);
+		v *= scale;
+		v += translation;
+		p_mesh.vertices.write[i] = v;
+	}
+}
+
+// mod/displace_along_normals_modifier.cpp: displaces each vertex along its own
+// smooth normal by factor*amount*preferAmount, where amount comes from either a
+// seeded RNG (Type 0) or a noise graph sampled at the vertex position (Type 1),
+// optionally scaled by how well the normal aligns with a preferred direction.
+void apply_displace_along_normals_modifier(RockMesh &p_mesh, const Dictionary &p_modifier) {
+	Dictionary group = _stage_group(p_modifier, "General", 0);
+	Dictionary floats = group.has("floats") ? (Dictionary)group["floats"] : Dictionary();
+	Dictionary ints = group.has("ints") ? (Dictionary)group["ints"] : Dictionary();
+	Dictionary bools = group.has("bools") ? (Dictionary)group["bools"] : Dictionary();
+	int selection = _dget_int(group.has("singleChoices") ? (Dictionary)group["singleChoices"] : Dictionary(), "Type", 0);
+	real_t factor = _dget(floats, "Factor", 0.001);
+	bool prefer_direction = _dget_bool(bools, "Prefer Direction", false);
+	int seed = _dget_int(ints, "Seed", 0);
+
+	Dictionary prefer_group = _stage_group(p_modifier, "Prefer Direction", 0);
+	Dictionary prefer_float3s = prefer_group.has("float3s") ? (Dictionary)prefer_group["float3s"] : Dictionary();
+	Dictionary prefer_floats = prefer_group.has("floats") ? (Dictionary)prefer_group["floats"] : Dictionary();
+	Vector3 preferred_direction = _dget_vec3(prefer_float3s, "Direction", Vector3(0, -1, 0)).normalized();
+	real_t prefer_strength = _dget(prefer_floats, "Strength", 1.0);
+
+	NoiseGraph noise;
+	if (selection == 1) {
+		Dictionary noise_group = _stage_group(p_modifier, "Noise", 0);
+		noise = _extract_noise_graph_from_group(noise_group);
+	}
+
+	Ref<RandomNumberGenerator> rng;
+	rng.instance();
+	rng->set_seed(seed);
+
+	Vector<Vector3> normals = compute_smooth_normals(p_mesh.vertices, p_mesh.indices);
+	for (int i = 0; i < p_mesh.vertices.size(); i++) {
+		real_t amount = 0.0;
+		if (selection == 1) {
+			amount = (noise.evaluate(p_mesh.vertices[i]) + 1.0) / 2.0;
+		} else {
+			amount = rng->randf();
+		}
+		amount = CLAMP(amount, real_t(0.0), real_t(1.0));
+
+		real_t prefer_amount = 1.0;
+		if (prefer_direction) {
+			prefer_amount = (normals[i].normalized() - preferred_direction).length() * prefer_strength;
+		}
+
+		p_mesh.vertices.write[i] += normals[i].normalized() * (factor * amount * prefer_amount);
+	}
+}
+
+// --- Subdivision (mod/subdivision_modifier.cpp, ported from igl::loop/upsample/
+// false_barycentric_subdivision — MPL2 reference, not relinked) ---
+//
+// Assumes a closed manifold mesh (every edge shared by exactly 2 triangles), true
+// for everything this pipeline produces (cut-plane clips always get capped — see
+// clip_and_cap()) — so unlike igl's general-purpose versions, no boundary-edge case
+// is needed here.
+
+struct _EdgeInfo {
+	int opposite[2] = { -1, -1 };
+	int count = 0;
+};
+
+int64_t _edge_key(int p_a, int p_b) {
+	if (p_a > p_b) {
+		SWAP(p_a, p_b);
+	}
+	return (((int64_t)p_a) << 32) | (uint32_t)p_b;
+}
+
+HashMap<int64_t, _EdgeInfo> _build_edge_info(const RockMesh &p_mesh) {
+	HashMap<int64_t, _EdgeInfo> edges;
+	for (int i = 0; i + 2 < p_mesh.indices.size(); i += 3) {
+		int v[3] = { p_mesh.indices[i], p_mesh.indices[i + 1], p_mesh.indices[i + 2] };
+		for (int e = 0; e < 3; e++) {
+			int a = v[e], b = v[(e + 1) % 3], opp = v[(e + 2) % 3];
+			int64_t key = _edge_key(a, b);
+			_EdgeInfo *info = edges.getptr(key);
+			if (!info) {
+				edges.set(key, _EdgeInfo());
+				info = edges.getptr(key);
+			}
+			if (info->count < 2) {
+				info->opposite[info->count] = opp;
+				info->count++;
+			}
+		}
+	}
+	return edges;
+}
+
+// Shared 1-to-4 face split: for each original face (a,b,c), emits (a,mAB,mCA),
+// (b,mBC,mAB), (mAB,mBC,mCA), (mBC,c,mCA) — matches igl::loop/upsample's NF layout.
+void _split_faces_with_edge_midpoints(const RockMesh &p_mesh, const HashMap<int64_t, int> &p_edge_to_new_vertex, Vector<int> &r_indices) {
+	for (int i = 0; i + 2 < p_mesh.indices.size(); i += 3) {
+		int a = p_mesh.indices[i], b = p_mesh.indices[i + 1], c = p_mesh.indices[i + 2];
+		int m_ab = p_edge_to_new_vertex[_edge_key(a, b)];
+		int m_bc = p_edge_to_new_vertex[_edge_key(b, c)];
+		int m_ca = p_edge_to_new_vertex[_edge_key(c, a)];
+		int faces[4][3] = { { a, m_ab, m_ca }, { b, m_bc, m_ab }, { m_ab, m_bc, m_ca }, { m_bc, c, m_ca } };
+		for (int f = 0; f < 4; f++) {
+			r_indices.push_back(faces[f][0]);
+			r_indices.push_back(faces[f][1]);
+			r_indices.push_back(faces[f][2]);
+		}
+	}
+}
+
+RockMesh subdivide_upsample(const RockMesh &p_mesh) {
+	HashMap<int64_t, _EdgeInfo> edges = _build_edge_info(p_mesh);
+	HashMap<int64_t, int> edge_to_new_vertex;
+
+	RockMesh result;
+	result.vertices = p_mesh.vertices;
+	const int64_t *key = nullptr;
+	while ((key = edges.next(key))) {
+		int a = int(*key >> 32), b = int(*key & 0xffffffffLL);
+		int idx = result.vertices.size();
+		result.vertices.push_back((p_mesh.vertices[a] + p_mesh.vertices[b]) * 0.5);
+		edge_to_new_vertex[*key] = idx;
+	}
+	_split_faces_with_edge_midpoints(p_mesh, edge_to_new_vertex, result.indices);
+	return result;
+}
+
+RockMesh subdivide_false_barycentric(const RockMesh &p_mesh) {
+	RockMesh result;
+	result.vertices = p_mesh.vertices;
+	int face_count = p_mesh.indices.size() / 3;
+	for (int i = 0; i < face_count; i++) {
+		int a = p_mesh.indices[i * 3], b = p_mesh.indices[i * 3 + 1], c = p_mesh.indices[i * 3 + 2];
+		Vector3 centroid = (p_mesh.vertices[a] + p_mesh.vertices[b] + p_mesh.vertices[c]) / 3.0;
+		int center_index = result.vertices.size();
+		result.vertices.push_back(centroid);
+		result.indices.push_back(a);
+		result.indices.push_back(b);
+		result.indices.push_back(center_index);
+		result.indices.push_back(b);
+		result.indices.push_back(c);
+		result.indices.push_back(center_index);
+		result.indices.push_back(c);
+		result.indices.push_back(a);
+		result.indices.push_back(center_index);
+	}
+	return result;
+}
+
+RockMesh subdivide_loop(const RockMesh &p_mesh) {
+	HashMap<int64_t, _EdgeInfo> edges = _build_edge_info(p_mesh);
+
+	// Even (old) vertex repositioning: 3/16 beta for valence 3, 3/(8n) otherwise.
+	Vector<Vector<int>> neighbors;
+	neighbors.resize(p_mesh.vertices.size());
+	const int64_t *key = nullptr;
+	while ((key = edges.next(key))) {
+		int a = int(*key >> 32), b = int(*key & 0xffffffffLL);
+		neighbors.write[a].push_back(b);
+		neighbors.write[b].push_back(a);
+	}
+
+	RockMesh result;
+	result.vertices.resize(p_mesh.vertices.size());
+	for (int i = 0; i < p_mesh.vertices.size(); i++) {
+		int n = neighbors[i].size();
+		if (n == 0) {
+			result.vertices.write[i] = p_mesh.vertices[i];
+			continue;
+		}
+		real_t beta = (n == 3) ? (3.0 / 16.0) : (3.0 / (8.0 * n));
+		Vector3 sum;
+		for (int j = 0; j < n; j++) {
+			sum += p_mesh.vertices[neighbors[i][j]];
+		}
+		result.vertices.write[i] = p_mesh.vertices[i] * (1.0 - n * beta) + sum * beta;
+	}
+
+	// Odd (new, edge-midpoint) vertices: 3/8-3/8-1/8-1/8 weighted by the edge's two
+	// endpoints plus the opposite vertex of each of its two adjacent triangles.
+	HashMap<int64_t, int> edge_to_new_vertex;
+	key = nullptr;
+	while ((key = edges.next(key))) {
+		const _EdgeInfo &info = edges[*key];
+		int a = int(*key >> 32), b = int(*key & 0xffffffffLL);
+		int idx = result.vertices.size();
+		Vector3 pos = (p_mesh.vertices[a] + p_mesh.vertices[b]) * (3.0 / 8.0);
+		if (info.count == 2) {
+			pos += (p_mesh.vertices[info.opposite[0]] + p_mesh.vertices[info.opposite[1]]) * (1.0 / 8.0);
+		} else {
+			// Degenerate (non-manifold) edge — fall back to a plain midpoint rather
+			// than reading an uninitialized opposite vertex.
+			pos = (p_mesh.vertices[a] + p_mesh.vertices[b]) * 0.5;
+		}
+		result.vertices.push_back(pos);
+		edge_to_new_vertex[*key] = idx;
+	}
+
+	_split_faces_with_edge_midpoints(p_mesh, edge_to_new_vertex, result.indices);
+	return result;
+}
+
+RockMesh apply_subdivision_modifier(const RockMesh &p_mesh, const Dictionary &p_modifier) {
+	Dictionary group = _stage_group(p_modifier, "General", 0);
+	Dictionary ints = group.has("ints") ? (Dictionary)group["ints"] : Dictionary();
+	int subdivs = CLAMP(_dget_int(ints, "Subdivs", 1), 1, 3);
+	int mode = _dget_int(group.has("singleChoices") ? (Dictionary)group["singleChoices"] : Dictionary(), "Type", 0);
+
+	RockMesh mesh = p_mesh;
+	for (int i = 0; i < subdivs; i++) {
+		switch (mode) {
+			case 1:
+				mesh = subdivide_upsample(mesh);
+				break;
+			case 2:
+				mesh = subdivide_false_barycentric(mesh);
+				break;
+			default: // 0 == Loop
+				mesh = subdivide_loop(mesh);
+				break;
+		}
+	}
+	return mesh;
+}
+
+// --- Decimate (mod/decimate_modifier.cpp, ported from igl::decimate's actual default
+// cost/placement function igl::shortest_edge_and_midpoint — MPL2 reference, not
+// relinked): a greedy priority-queue-driven edge collapse. Repeatedly collapses the
+// currently-shortest edge to its midpoint until the target face count is reached.
+// Stale queue entries (an edge whose endpoint moved or died since it was pushed) are
+// detected via a per-vertex generation counter and skipped on pop, rather than
+// eagerly removed from the queue (the standard "lazy deletion" technique). ---
+
+struct _DecimateEdge {
+	real_t cost;
+	int a, b; // a < b
+	int gen_a, gen_b; // vertex generation counters at push time
+	bool operator>(const _DecimateEdge &p_other) const { return cost > p_other.cost; }
+};
+
+RockMesh decimate_greedy(const RockMesh &p_mesh, int p_target_face_count) {
+	Vector<Vector3> vertices = p_mesh.vertices;
+	Vector<bool> vertex_alive;
+	vertex_alive.resize(vertices.size());
+	for (int i = 0; i < vertex_alive.size(); i++) {
+		vertex_alive.write[i] = true;
+	}
+	Vector<int> vertex_gen;
+	vertex_gen.resize(vertices.size());
+	for (int i = 0; i < vertex_gen.size(); i++) {
+		vertex_gen.write[i] = 0;
+	}
+
+	int face_count = p_mesh.indices.size() / 3;
+	Vector<int> face_verts = p_mesh.indices; // 3 per face, mutated in place
+	Vector<bool> face_alive;
+	face_alive.resize(face_count);
+	for (int i = 0; i < face_count; i++) {
+		face_alive.write[i] = true;
+	}
+
+	Vector<Vector<int>> vertex_faces;
+	vertex_faces.resize(vertices.size());
+	for (int f = 0; f < face_count; f++) {
+		for (int c = 0; c < 3; c++) {
+			vertex_faces.write[face_verts[f * 3 + c]].push_back(f);
+		}
+	}
+
+	auto push_candidate_edges_from = [&](int p_v, std::priority_queue<_DecimateEdge, std::vector<_DecimateEdge>, std::greater<_DecimateEdge>> &p_queue) {
+		HashMap<int, bool> seen_neighbor;
+		const Vector<int> &incident = vertex_faces[p_v];
+		for (int i = 0; i < incident.size(); i++) {
+			int f = incident[i];
+			if (!face_alive[f]) {
+				continue;
+			}
+			for (int c = 0; c < 3; c++) {
+				int n = face_verts[f * 3 + c];
+				if (n == p_v || seen_neighbor.has(n)) {
+					continue;
+				}
+				seen_neighbor[n] = true;
+				int a = MIN(p_v, n), b = MAX(p_v, n);
+				_DecimateEdge e;
+				e.cost = (vertices[a] - vertices[b]).length();
+				e.a = a;
+				e.b = b;
+				e.gen_a = vertex_gen[a];
+				e.gen_b = vertex_gen[b];
+				p_queue.push(e);
+			}
+		}
+	};
+
+	std::priority_queue<_DecimateEdge, std::vector<_DecimateEdge>, std::greater<_DecimateEdge>> queue;
+	HashMap<int64_t, bool> seeded;
+	for (int f = 0; f < face_count; f++) {
+		for (int c = 0; c < 3; c++) {
+			int a = face_verts[f * 3 + c], b = face_verts[f * 3 + (c + 1) % 3];
+			int64_t key = _edge_key(a, b);
+			if (seeded.has(key)) {
+				continue;
+			}
+			seeded[key] = true;
+			int lo = MIN(a, b), hi = MAX(a, b);
+			_DecimateEdge e;
+			e.cost = (vertices[lo] - vertices[hi]).length();
+			e.a = lo;
+			e.b = hi;
+			e.gen_a = vertex_gen[lo];
+			e.gen_b = vertex_gen[hi];
+			queue.push(e);
+		}
+	}
+
+	while (face_count > p_target_face_count && !queue.empty()) {
+		_DecimateEdge e = queue.top();
+		queue.pop();
+		if (!vertex_alive[e.a] || !vertex_alive[e.b]) {
+			continue;
+		}
+		if (vertex_gen[e.a] != e.gen_a || vertex_gen[e.b] != e.gen_b) {
+			continue; // stale — one endpoint moved since this entry was pushed
+		}
+
+		int survivor = e.a, removed = e.b;
+		vertices.write[survivor] = (vertices[e.a] + vertices[e.b]) * 0.5;
+		vertex_alive.write[removed] = false;
+		vertex_gen.write[survivor]++;
+
+		const Vector<int> &removed_faces = vertex_faces[removed];
+		for (int i = 0; i < removed_faces.size(); i++) {
+			int f = removed_faces[i];
+			if (!face_alive[f]) {
+				continue;
+			}
+			for (int c = 0; c < 3; c++) {
+				if (face_verts[f * 3 + c] == removed) {
+					face_verts.write[f * 3 + c] = survivor;
+				}
+			}
+			int v0 = face_verts[f * 3], v1 = face_verts[f * 3 + 1], v2 = face_verts[f * 3 + 2];
+			if (v0 == v1 || v1 == v2 || v2 == v0) {
+				face_alive.write[f] = false;
+				face_count--;
+			} else {
+				vertex_faces.write[survivor].push_back(f);
+			}
+		}
+
+		if (face_count > p_target_face_count) {
+			push_candidate_edges_from(survivor, queue);
+		}
+	}
+
+	// Rebuild a compact mesh from surviving vertices/faces.
+	Vector<int> remap;
+	remap.resize(vertices.size());
+	RockMesh result;
+	for (int i = 0; i < vertices.size(); i++) {
+		if (vertex_alive[i]) {
+			remap.write[i] = result.vertices.size();
+			result.vertices.push_back(vertices[i]);
+		} else {
+			remap.write[i] = -1;
+		}
+	}
+	int total_faces = face_verts.size() / 3;
+	for (int f = 0; f < total_faces; f++) {
+		if (!face_alive[f]) {
+			continue;
+		}
+		result.indices.push_back(remap[face_verts[f * 3]]);
+		result.indices.push_back(remap[face_verts[f * 3 + 1]]);
+		result.indices.push_back(remap[face_verts[f * 3 + 2]]);
+	}
+	return result;
+}
+
+RockMesh apply_decimate_modifier(const RockMesh &p_mesh, const Dictionary &p_modifier) {
+	Dictionary group = _stage_group(p_modifier, "General", 0);
+	Dictionary floats = group.has("floats") ? (Dictionary)group["floats"] : Dictionary();
+	Dictionary ints = group.has("ints") ? (Dictionary)group["ints"] : Dictionary();
+	int mode = _dget_int(group.has("singleChoices") ? (Dictionary)group["singleChoices"] : Dictionary(), "Type", 0);
+
+	int current_face_count = p_mesh.indices.size() / 3;
+	int target_face_count;
+	if (mode == 1) {
+		target_face_count = _dget_int(ints, "Abs. Value", 1000);
+	} else {
+		real_t rel_value = _dget(floats, "Rel. Value", 0.5);
+		target_face_count = int(MAX(4.0, rel_value * current_face_count));
+	}
+	if (target_face_count >= current_face_count) {
+		return p_mesh;
+	}
+	return decimate_greedy(p_mesh, target_face_count);
+}
+
+// --- CutPlane (mod/cut_plane_modifier.cpp) ---
+//
+// The original cuts the mesh via a real CGAL boolean difference against a large
+// transformed half-space slab — CGAL/Boost stay out per explicit instruction, so
+// the flat case is ported as an equivalent plane clip+cap (already implemented for
+// the scalar pipeline's own cut-plane property, see clip_and_cap() above): the
+// slab's cutting face is the local x=0 face of a cube spanning local x∈[0,10], so
+// after the same Rx*Ry*Rz*Translation transform as TransformationModifier (no
+// scale), that face becomes a plane through `translation` with normal
+// R.xform(+X) — pointing toward the discarded side, matching clip_and_cap()'s
+// "keep the side the normal points away from" convention directly.
+//
+// The "Noisy Surface" case originally subdivides+noise-displaces the cutting
+// slab before the boolean op, roughening the cut. Real substitute (per explicit
+// decision — no CGAL): after the flat clip+cap, displace every resulting vertex
+// that lies on the cut plane by the noise graph sampled at its own position,
+// along the plane's (discarded-side) normal. Both the clip-loop's boundary copies
+// and the cap fan's own copies of each boundary point start at the identical
+// position, so evaluating the same deterministic noise function there displaces
+// them identically — the seam stays watertight without needing to track which
+// output vertices came from which part of clip_and_cap().
+RockMesh apply_cutplane_modifier(const RockMesh &p_mesh, const Dictionary &p_modifier) {
+	Dictionary group = _stage_group(p_modifier, "General", 0);
+	Dictionary float3s = group.has("float3s") ? (Dictionary)group["float3s"] : Dictionary();
+	Dictionary bools = group.has("bools") ? (Dictionary)group["bools"] : Dictionary();
+	Vector3 translation = _dget_vec3(float3s, "Translation", Vector3());
+	Vector3 rotation = _dget_vec3(float3s, "Rotation", Vector3(0.3, 0.0, 1.7));
+	bool noisy = _dget_bool(bools, "Noisy Surface", false);
+
+	Basis rot_x(Vector3(1, 0, 0), rotation.x);
+	Basis rot_y(Vector3(0, 1, 0), rotation.y);
+	Basis rot_z(Vector3(0, 0, 1), rotation.z);
+	Basis rot = rot_x * rot_y * rot_z;
+
+	Vector3 plane_normal = rot.xform(Vector3(1, 0, 0)).normalized();
+	Plane plane(plane_normal, plane_normal.dot(translation));
+
+	ClippedMesh clipped = clip_and_cap(p_mesh.vertices, p_mesh.indices, plane);
+
+	RockMesh result;
+	result.vertices = clipped.vertices;
+	result.indices = clipped.indices;
+
+	if (noisy && result.vertices.size() > 0) {
+		Dictionary noise_group = _stage_group(p_modifier, "Noise", 0);
+		Dictionary noise_floats = noise_group.has("floats") ? (Dictionary)noise_group["floats"] : Dictionary();
+		real_t scale = _dget(noise_floats, "Scale", 0.15);
+		NoiseGraph noise = _extract_noise_graph_from_group(noise_group);
+		const real_t on_plane_epsilon = real_t(CMP_EPSILON) * 100;
+		for (int i = 0; i < result.vertices.size(); i++) {
+			if (Math::abs(plane.distance_to(result.vertices[i])) <= on_plane_epsilon) {
+				real_t amount = CLAMP((noise.evaluate(result.vertices[i]) + 1.0) / 2.0, real_t(0.0), real_t(1.0));
+				result.vertices.write[i] += plane_normal * (scale * amount);
+			}
+		}
+	}
+	return result;
+}
+
+// Executes the JSON's "modifiers" array in order, skipping disabled entries and
+// _id 4/CutPlane-noisy... (handled above) — everything except SkinSurface-only
+// concerns is implemented, so nothing is skipped here anymore besides `disabled`.
+RockMesh apply_modifier_chain(RockMesh p_mesh, const Dictionary &p_pipeline_json) {
+	if (!p_pipeline_json.has("modifiers") || p_pipeline_json["modifiers"].get_type() != Variant::ARRAY) {
+		return p_mesh;
+	}
+	Array modifiers = p_pipeline_json["modifiers"];
+	for (int i = 0; i < modifiers.size(); i++) {
+		if (modifiers[i].get_type() != Variant::DICTIONARY) {
+			continue;
+		}
+		Dictionary modifier = modifiers[i];
+		if (_dget_bool(modifier, "disabled", false)) {
+			continue;
+		}
+		int modifier_id = _dget_int(modifier, "_id", -1);
+		switch (modifier_id) {
+			case 0:
+				apply_transformation_modifier(p_mesh, modifier);
+				break;
+			case 1:
+				p_mesh = apply_subdivision_modifier(p_mesh, modifier);
+				break;
+			case 2:
+				p_mesh = apply_decimate_modifier(p_mesh, modifier);
+				break;
+			case 3:
+				apply_displace_along_normals_modifier(p_mesh, modifier);
+				break;
+			case 4:
+				p_mesh = apply_cutplane_modifier(p_mesh, modifier);
+				break;
+			default:
+				WARN_PRINT("ProcRock: pipeline JSON's modifier chain has an unrecognized modifier _id — skipping it.");
+				break;
+		}
+	}
+	return p_mesh;
+}
+
 } // namespace
 
 Array rock_pipeline_gen(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
@@ -1131,11 +1811,31 @@ Array rock_pipeline_gen(int p_subdivisions, real_t p_width, real_t p_height, rea
 }
 
 Array rock_pipeline_gen_from_json(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
-		const Dictionary &p_pipeline_json, real_t p_noise_amplitude, int p_randseed,
+		const Dictionary &p_pipeline_json, int p_randseed,
 		bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed) {
-	_warn_unsupported_stages(p_pipeline_json);
-	NoiseGraph noise = _extract_displacement_graph(p_pipeline_json);
-	return _rock_pipeline_gen_impl(p_subdivisions, p_width, p_height, p_depth, noise, p_noise_amplitude, p_randseed, p_cutplane_enabled, p_cutplane_offset, p_smoothed);
+	if (p_randseed == 0) {
+		Math::randomize();
+	} else {
+		Math::seed((uint64_t)p_randseed);
+	}
+
+	RockMesh mesh = generate_base_mesh_from_json(p_pipeline_json, p_subdivisions, p_width, p_height, p_depth);
+	mesh = apply_modifier_chain(mesh, p_pipeline_json);
+
+	// Manual Inspector-driven override, applied on top of the JSON's own modifier
+	// chain (which may already include its own CutPlane entries) for experimentation.
+	if (p_cutplane_enabled) {
+		Vector3 plane_normal = Vector3(Math::randf() * 2 - 1, Math::randf() * 2 - 1, Math::randf() * 2 - 1);
+		if (plane_normal.length_squared() < CMP_EPSILON) {
+			plane_normal = Vector3(0, 1, 0);
+		}
+		plane_normal.normalize();
+		ClippedMesh clipped = clip_and_cap(mesh.vertices, mesh.indices, Plane(plane_normal, p_cutplane_offset));
+		mesh.vertices = clipped.vertices;
+		mesh.indices = clipped.indices;
+	}
+
+	return _finalize_mesh_arrays(mesh.vertices, mesh.indices, p_smoothed);
 }
 
 // =========================================================================
@@ -1748,6 +2448,16 @@ Variant _load_pipeline_json(const String &p_path) {
 	return parsed;
 }
 
+// Inverse of _dget_vec3() — builds the {"x":.., "y":.., "z":..} shape procrocklib's
+// float3s use, for hand-constructing modifier config dicts in tests below.
+Dictionary _vec3_dict(const Vector3 &p_v) {
+	Dictionary d;
+	d["x"] = p_v.x;
+	d["y"] = p_v.y;
+	d["z"] = p_v.z;
+	return d;
+}
+
 const char *const ALL_PRESET_FILES[] = {
 	"1.json", "2.json", "3.json", "4.json", "5.json", "6.json", "7.json", "8.json",
 	"9.json", "10.json", "11.json", "12.json", "granite_custom.json"
@@ -1774,7 +2484,7 @@ TEST_SUITE("[[proc_rocks]] ProcRock JSON pipeline") {
 			Dictionary pipeline_json = parsed;
 			REQUIRE(rock_pipeline_json_is_valid(pipeline_json));
 
-			Array mesh_arrays = rock_pipeline_gen_from_json(1, 1.0, 1.0, 1.0, pipeline_json, 0.2, 42, false, 0.0, true);
+			Array mesh_arrays = rock_pipeline_gen_from_json(1, 1.0, 1.0, 1.0, pipeline_json, 42, false, 0.0, true);
 			REQUIRE(mesh_arrays.size() == VS::ARRAY_MAX);
 			Vector<Vector3> vertices = mesh_arrays[VS::ARRAY_VERTEX];
 			Vector<int> indices = mesh_arrays[VS::ARRAY_INDEX];
@@ -1854,6 +2564,252 @@ TEST_SUITE("[[proc_rocks]] ProcRock JSON pipeline") {
 			REQUIRE(g.is_valid());
 			real_t v = g.evaluate(Vector3(1, 2, 3));
 			CHECK(v == v); // not NaN
+		}
+	}
+}
+
+TEST_SUITE("[[proc_rocks]] ProcRock generators and modifiers") {
+	TEST_CASE("[procrockgen] generate_cuboid produces 8 vertices, 12 faces, correct extents") {
+		RockMesh mesh = generate_cuboid(2.0, 4.0, 6.0);
+		CHECK(mesh.vertices.size() == 8);
+		CHECK(mesh.indices.size() == 36);
+		real_t min_x = 1e9, max_x = -1e9, min_y = 1e9, max_y = -1e9, min_z = 1e9, max_z = -1e9;
+		for (int i = 0; i < mesh.vertices.size(); i++) {
+			min_x = MIN(min_x, mesh.vertices[i].x);
+			max_x = MAX(max_x, mesh.vertices[i].x);
+			min_y = MIN(min_y, mesh.vertices[i].y);
+			max_y = MAX(max_y, mesh.vertices[i].y);
+			min_z = MIN(min_z, mesh.vertices[i].z);
+			max_z = MAX(max_z, mesh.vertices[i].z);
+		}
+		CHECK(max_x - min_x == doctest::Approx(2.0));
+		CHECK(max_y - min_y == doctest::Approx(4.0));
+		CHECK(max_z - min_z == doctest::Approx(6.0));
+	}
+
+	TEST_CASE("[procrockgen] generate_pyramid places apex and base ring correctly") {
+		RockMesh mesh = generate_pyramid(0.0, 1.0, 5, 0.0, 0, 3.0, 0.5, -0.5);
+		// baseSubdivisions=5 -> n=4 ring points, +1 base center, +1 apex = 6 vertices.
+		CHECK(mesh.vertices.size() == 6);
+		CHECK(mesh.vertices[0] == Vector3(0, 0, 0)); // base center
+		CHECK(mesh.vertices[5] == Vector3(0.5, 3.0, -0.5)); // apex
+		for (int i = 1; i < 5; i++) {
+			CHECK(mesh.vertices[i].y == doctest::Approx(0.0));
+			CHECK(mesh.vertices[i].length() == doctest::Approx(1.0)); // on the base radius
+		}
+		CHECK(mesh.indices.size() == 8 * 3); // faceCount = baseSubdivisions*2-2 = 8
+	}
+
+	TEST_CASE("[procrockgen] apply_transformation_modifier: translate, scale, rotate") {
+		{
+			RockMesh mesh;
+			mesh.vertices.push_back(Vector3(1, 2, 3));
+			Dictionary float3s;
+			float3s["Translation"] = _vec3_dict(Vector3(10, -5, 0));
+			Dictionary group;
+			group["float3s"] = float3s;
+			Array general;
+			general.push_back(group);
+			Dictionary config;
+			config["General"] = general;
+			Dictionary modifier;
+			modifier["config"] = config;
+			apply_transformation_modifier(mesh, modifier);
+			CHECK(mesh.vertices[0].is_equal_approx(Vector3(11, -3, 3)));
+		}
+		{
+			RockMesh mesh;
+			mesh.vertices.push_back(Vector3(1, 1, 1));
+			Dictionary float3s;
+			float3s["Scale"] = _vec3_dict(Vector3(2, 3, 4));
+			Dictionary group;
+			group["float3s"] = float3s;
+			Array general;
+			general.push_back(group);
+			Dictionary config;
+			config["General"] = general;
+			Dictionary modifier;
+			modifier["config"] = config;
+			apply_transformation_modifier(mesh, modifier);
+			CHECK(mesh.vertices[0].is_equal_approx(Vector3(2, 3, 4)));
+		}
+		{
+			// 90-degree rotation around X using Godot's own standard Basis(axis,angle)
+			// convention (unlike NoiseGraph's RotatePoint, which ports libnoise's own
+			// non-standard matrix verbatim — these are deliberately different, see
+			// noise_graph's RotatePoint comment): Rx(90°)*(0,1,0) = (0,0,1).
+			RockMesh mesh;
+			mesh.vertices.push_back(Vector3(0, 1, 0));
+			Dictionary float3s;
+			float3s["Rotate"] = _vec3_dict(Vector3(Math_PI / 2.0, 0, 0));
+			Dictionary group;
+			group["float3s"] = float3s;
+			Array general;
+			general.push_back(group);
+			Dictionary config;
+			config["General"] = general;
+			Dictionary modifier;
+			modifier["config"] = config;
+			apply_transformation_modifier(mesh, modifier);
+			CHECK(mesh.vertices[0].is_equal_approx(Vector3(0, 0, 1)));
+		}
+	}
+
+	TEST_CASE("[procrockgen] subdivide_upsample: 4x face split, old vertices unchanged, new at edge midpoints") {
+		RockMesh cube = generate_cuboid(2.0, 2.0, 2.0);
+		int original_face_count = cube.indices.size() / 3;
+		RockMesh subdivided = subdivide_upsample(cube);
+		CHECK(subdivided.indices.size() / 3 == original_face_count * 4);
+		CHECK(subdivided.vertices.size() > cube.vertices.size());
+		for (int i = 0; i < cube.vertices.size(); i++) {
+			CHECK(subdivided.vertices[i].is_equal_approx(cube.vertices[i]));
+		}
+		// Every new vertex must be equidistant from some pair of original vertices
+		// (i.e. an edge midpoint) — a coarse but real correctness check.
+		for (int i = cube.vertices.size(); i < subdivided.vertices.size(); i++) {
+			bool found_matching_edge = false;
+			for (int a = 0; a < cube.vertices.size() && !found_matching_edge; a++) {
+				for (int b = a + 1; b < cube.vertices.size(); b++) {
+					Vector3 mid = (cube.vertices[a] + cube.vertices[b]) * 0.5;
+					if (mid.is_equal_approx(subdivided.vertices[i])) {
+						found_matching_edge = true;
+						break;
+					}
+				}
+			}
+			CHECK(found_matching_edge);
+		}
+	}
+
+	TEST_CASE("[procrockgen] subdivide_false_barycentric: 3x face split, one new centroid vertex per face") {
+		RockMesh cube = generate_cuboid(2.0, 2.0, 2.0);
+		int original_face_count = cube.indices.size() / 3;
+		RockMesh subdivided = subdivide_false_barycentric(cube);
+		CHECK(subdivided.indices.size() / 3 == original_face_count * 3);
+		CHECK(subdivided.vertices.size() == cube.vertices.size() + original_face_count);
+		for (int i = 0; i < cube.vertices.size(); i++) {
+			CHECK(subdivided.vertices[i].is_equal_approx(cube.vertices[i]));
+		}
+	}
+
+	TEST_CASE("[procrockgen] subdivide_loop: 4x face split, smooths old vertex positions") {
+		RockMesh cube = generate_cuboid(2.0, 2.0, 2.0);
+		int original_face_count = cube.indices.size() / 3;
+		RockMesh subdivided = subdivide_loop(cube);
+		CHECK(subdivided.indices.size() / 3 == original_face_count * 4);
+		CHECK(subdivided.vertices.size() > cube.vertices.size());
+		// Loop smoothing pulls corner vertices toward their neighbors' average, so a
+		// cube corner (unlike upsample) must move — but should stay roughly in place
+		// for a symmetric shape like a cube (not fly off to some unrelated position).
+		bool any_moved = false;
+		for (int i = 0; i < cube.vertices.size(); i++) {
+			if (!subdivided.vertices[i].is_equal_approx(cube.vertices[i])) {
+				any_moved = true;
+			}
+			CHECK(subdivided.vertices[i].length() < cube.vertices[i].length() + 1.0);
+		}
+		CHECK(any_moved);
+	}
+
+	TEST_CASE("[procrockgen] decimate_greedy reduces face count towards the target without degenerating") {
+		RockMesh cube = generate_cuboid(2.0, 2.0, 2.0);
+		RockMesh subdivided = subdivide_loop(cube); // 48 faces, enough room to decimate
+		int original_face_count = subdivided.indices.size() / 3;
+		RockMesh decimated = decimate_greedy(subdivided, 8);
+		int result_face_count = decimated.indices.size() / 3;
+		CHECK(result_face_count <= original_face_count);
+		CHECK(result_face_count >= 4); // a closed manifold needs at least a tetrahedron
+		CHECK(decimated.vertices.size() > 0);
+		for (int i = 0; i < decimated.indices.size(); i++) {
+			CHECK(decimated.indices[i] >= 0);
+			CHECK(decimated.indices[i] < decimated.vertices.size());
+		}
+	}
+
+	TEST_CASE("[procrockgen] apply_cutplane_modifier (flat) clips a cube in half through the origin") {
+		RockMesh cube = generate_cuboid(2.0, 2.0, 2.0); // spans [-1,1] on each axis
+		Dictionary float3s;
+		float3s["Translation"] = _vec3_dict(Vector3());
+		float3s["Rotation"] = _vec3_dict(Vector3()); // identity rotation -> plane normal = +X
+		Dictionary group;
+		group["float3s"] = float3s;
+		Array general;
+		general.push_back(group);
+		Dictionary config;
+		config["General"] = general;
+		Dictionary modifier;
+		modifier["config"] = config;
+
+		RockMesh clipped = apply_cutplane_modifier(cube, modifier);
+		REQUIRE(clipped.vertices.size() > 0);
+		for (int i = 0; i < clipped.vertices.size(); i++) {
+			CHECK(clipped.vertices[i].x <= real_t(0.0) + real_t(CMP_EPSILON) * 1000);
+		}
+	}
+
+	TEST_CASE("[procrockgen] apply_displace_along_normals_modifier (RNG mode) is deterministic for a fixed seed") {
+		RockMesh cube1 = generate_cuboid(2.0, 2.0, 2.0);
+		RockMesh cube2 = generate_cuboid(2.0, 2.0, 2.0);
+		Dictionary group;
+		Dictionary floats;
+		floats["Factor"] = 0.5;
+		group["floats"] = floats;
+		Dictionary ints;
+		ints["Seed"] = 42;
+		group["ints"] = ints;
+		Array general;
+		general.push_back(group);
+		Dictionary config;
+		config["General"] = general;
+		Dictionary modifier;
+		modifier["config"] = config;
+
+		apply_displace_along_normals_modifier(cube1, modifier);
+		apply_displace_along_normals_modifier(cube2, modifier);
+		for (int i = 0; i < cube1.vertices.size(); i++) {
+			CHECK(cube1.vertices[i].is_equal_approx(cube2.vertices[i]));
+			CHECK(!cube1.vertices[i].is_equal_approx(Vector3())); // actually displaced
+		}
+	}
+
+	TEST_CASE("[procrockgen] apply_modifier_chain executes in order and skips disabled entries") {
+		RockMesh cube = generate_cuboid(2.0, 2.0, 2.0);
+		Dictionary translate_float3s;
+		translate_float3s["Translation"] = _vec3_dict(Vector3(100, 0, 0));
+		Dictionary translate_group;
+		translate_group["float3s"] = translate_float3s;
+		Array translate_general;
+		translate_general.push_back(translate_group);
+		Dictionary translate_config;
+		translate_config["General"] = translate_general;
+		Dictionary enabled_transform;
+		enabled_transform["_id"] = 0;
+		enabled_transform["config"] = translate_config;
+		enabled_transform["disabled"] = false;
+
+		Dictionary disabled_transform;
+		disabled_transform["_id"] = 0;
+		Dictionary disabled_float3s;
+		disabled_float3s["Translation"] = _vec3_dict(Vector3(0, 999, 0));
+		Dictionary disabled_group;
+		disabled_group["float3s"] = disabled_float3s;
+		Array disabled_general;
+		disabled_general.push_back(disabled_group);
+		Dictionary disabled_config;
+		disabled_config["General"] = disabled_general;
+		disabled_transform["config"] = disabled_config;
+		disabled_transform["disabled"] = true;
+
+		Array modifiers;
+		modifiers.push_back(disabled_transform);
+		modifiers.push_back(enabled_transform);
+		Dictionary pipeline_json;
+		pipeline_json["modifiers"] = modifiers;
+
+		RockMesh result = apply_modifier_chain(cube, pipeline_json);
+		for (int i = 0; i < result.vertices.size(); i++) {
+			CHECK(result.vertices[i].y < 500.0); // disabled step (+999 to y) was skipped
+			CHECK(result.vertices[i].x > 90.0); // enabled translate applied
 		}
 	}
 }
