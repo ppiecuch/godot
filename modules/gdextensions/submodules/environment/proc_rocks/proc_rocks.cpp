@@ -537,6 +537,7 @@ void ProcRockMesh::set_pipeline_preset(int p_preset) {
 // texture_size, which aren't part of the JSON-driven path). Pass an empty path to clear a
 // previously loaded preset and return to the scalar-only path.
 Error ProcRockMesh::load_from_file(const String p_path) {
+#ifdef TOOLS_ENABLED
 	if (p_path.empty()) {
 		pipeline.json_path = String();
 		pipeline.json_cache = Dictionary();
@@ -572,6 +573,12 @@ Error ProcRockMesh::load_from_file(const String p_path) {
 		_rebuild();
 	}
 	return OK;
+#else
+	// Loading a JSON preset is a generation-configuration action (it feeds
+	// _rebuild(), which is itself unavailable here) — not a "read a baked resource"
+	// action, so it's editor-only alongside the four generators.
+	return ERR_UNAVAILABLE;
+#endif
 }
 
 // =========================================================================
@@ -1091,6 +1098,7 @@ void ProcRockMesh::_rebuild() {
 		return;
 	}
 
+#ifdef TOOLS_ENABLED
 	clear_surfaces();
 
 	switch (method) {
@@ -1187,6 +1195,18 @@ void ProcRockMesh::_rebuild() {
 			}
 		} break;
 	}
+#else
+	// Generation is editor-only (see memo.md's "Baking" section) — in a tools=no
+	// build this ProcRockMesh is purely a reader of whatever surfaces were already
+	// deserialized via ArrayMesh::_set() (baked geometry, see _is_generated() in
+	// proc_rocks.h). There is nothing to regenerate here, and clearing existing
+	// surfaces would destroy the very data this build exists to display — so unlike
+	// the tools=yes branch above, this one must never touch clear_surfaces().
+	if (get_surface_count() == 0) {
+		WARN_PRINT_ONCE("ProcRockMesh: no baked geometry and generation is unavailable "
+						"in this build (TOOLS_ENABLED off) — bake and re-export in the editor.");
+	}
+#endif
 
 	_dirty = false;
 }
