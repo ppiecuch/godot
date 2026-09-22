@@ -617,7 +617,7 @@ namespace Tess
 		meshToMerge->fHead.next = nullptr;
 		meshToMerge->fHead.prev = nullptr;
 		meshToMerge->eHead.setNext(nullptr);
-		meshToMerge->eHeadSym.setNext(nullptr);
+		meshToMerge->eHead.eSym.setNext(nullptr);
 
 		delete meshToMerge;
 	}
