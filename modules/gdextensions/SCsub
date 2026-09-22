@@ -751,13 +751,22 @@ if not env["disable_3d"]:
         thirdparty_sources += ["submodules/environment/tree_3d/proctree.cpp"]
     if is_enabled("environment/proc_rocks"):  # lean now that procrocklib (boost/CGAL/libigl/CImg) is gone
         modules += ["environment/proc_rocks"]
-        thirdparty_sources += [
-            "submodules/environment/proc_rocks/generators/shared/box_uv.cpp",
-            "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
-            "submodules/environment/proc_rocks/generators/rockgen/rockgen.cpp",
-            "submodules/environment/proc_rocks/generators/rockstudio/rock_studio.cpp",
-            "submodules/environment/proc_rocks/generators/procrockgen/procrockgen.cpp",
-        ]
+        # Generation itself is editor-only (see memo.md's "Baking" section) — these
+        # files are only ever called from ProcRockMesh::_rebuild()'s TOOLS_ENABLED
+        # branch, so they're excluded from tools=no builds entirely. ProcRockMesh
+        # itself (via the "environment/proc_rocks" modules entry above) always
+        # compiles, since it must still be able to load previously-baked resources.
+        if env["tools"]:
+            thirdparty_sources += [
+                "submodules/environment/proc_rocks/generators/shared/box_uv.cpp",
+                "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
+                "submodules/environment/proc_rocks/generators/rockgen/rockgen.cpp",
+                "submodules/environment/proc_rocks/generators/rockstudio/rock_studio.cpp",
+                "submodules/environment/proc_rocks/generators/procrockgen/procrockgen.cpp",
+            ]
+        # Kept unconditional: proc_rocks.cpp includes these generator headers
+        # (declaration-only, no thirdparty deps) even when the .cpp's above aren't
+        # linked in, since the switch that calls into them is compiled out too.
         env_module.Prepend(CPPPATH=["submodules/environment/proc_rocks/generators"])
 
 ignore = []
