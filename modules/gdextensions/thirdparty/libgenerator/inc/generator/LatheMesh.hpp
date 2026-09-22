@@ -23,6 +23,13 @@ namespace generator {
 /// the axis counterclockwise.
 template <typename Shape>
 class LatheMesh {
+private:
+	// Declared before the nested Triangles/Vertices classes below: their
+	// `decltype(mesh_->shape_.edges())`-style member declarations need shape_'s
+	// type to already be visible (unlike function bodies, member-type decltype
+	// is not deferred to the enclosing class's "complete-class" context).
+	Shape shape_;
+
 public:
 	class Triangles {
 	public:
@@ -134,8 +141,8 @@ public:
 			int slices = 32,
 			double start = 0.0,
 			double sweep = gml::radians(360.0)) :
-			axis_{ axis, 0.0 },
 			shape_{ std::move(shape) },
+			axis_{ axis, 0.0 },
 			slices_{ slices },
 			start_{ start },
 			sweep_{ sweep } {}
@@ -146,8 +153,6 @@ public:
 
 private:
 	gml::dvec3 axis_;
-
-	Shape shape_;
 
 	int slices_;
 

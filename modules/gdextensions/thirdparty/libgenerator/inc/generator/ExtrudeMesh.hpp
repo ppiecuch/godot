@@ -22,6 +22,14 @@ namespace generator {
 /// u-texture coordinate is taken from the shape and v from the path.
 template <typename Shape, typename Path>
 class ExtrudeMesh {
+private:
+	// Declared before the nested Triangles/Vertices classes below: their
+	// `decltype(mesh_->shape_.edges())`-style member declarations need shape_'s/path_'s
+	// types to already be visible (unlike function bodies, member-type decltype is not
+	// deferred to the enclosing class's "complete-class" context).
+	Shape shape_;
+	Path path_;
+
 public:
 	class Triangles {
 	public:
@@ -140,8 +148,6 @@ public:
 		shapeVertexCount_{ count(shape_.vertices()) } {}
 
 private:
-	Shape shape_;
-	Path path_;
 	int shapeVertexCount_;
 };
 
