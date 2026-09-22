@@ -33,6 +33,7 @@
 
 #ifdef TOOLS_ENABLED
 
+#include "editor/editor_export.h"
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
 #include "environment/proc_rocks/proc_rocks.h"
@@ -95,10 +96,24 @@ public:
 	ProcRockDialog();
 };
 
+// Compiles every ProcRockMesh resource referenced by the project into a static,
+// baked mesh at export time (see proc_rocks.h's set_baked()/bake() and memo.md's
+// "Baking" section) — the exported game never needs the (tools=no-excluded)
+// generation code. Modeled directly on the engine's own
+// EditorExportTextSceneToBinaryPlugin (editor/editor_export.cpp), which uses the
+// exact same _export_file()+add_file(remap=true) pattern for a different purpose.
+class ProcRockExportPlugin : public EditorExportPlugin {
+	GDCLASS(ProcRockExportPlugin, EditorExportPlugin);
+
+public:
+	virtual void _export_file(const String &p_path, const String &p_type, const Set<String> &p_features);
+};
+
 class ProcRockEditorPlugin : public EditorPlugin {
 	GDCLASS(ProcRockEditorPlugin, EditorPlugin);
 
 	ProcRockDialog *dialog;
+	Ref<ProcRockExportPlugin> export_plugin;
 
 	void _open_dialog();
 

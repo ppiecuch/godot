@@ -32,7 +32,11 @@
 
 #include "proc_rocks_editor_plugin.h"
 
+#include "core/io/resource_loader.h"
 #include "core/io/resource_saver.h"
+#include "core/os/dir_access.h"
+#include "core/os/file_access.h"
+#include "editor/editor_settings.h"
 #include "environment/proc_rocks/generators/procrockgen/procrockgen.h"
 #include "scene/3d/light.h"
 #include "scene/gui/viewport_container.h"
@@ -414,6 +418,32 @@ ProcRockDialog::ProcRockDialog() {
 }
 
 // =========================================================================
+// ProcRockExportPlugin
+// =========================================================================
+
+void ProcRockExportPlugin::_export_file(const String &p_path, const String &p_type, const Set<String> &p_features) {
+	if (p_type != "ProcRockMesh") {
+		return;
+	}
+	Ref<ProcRockMesh> mesh = ResourceLoader::load(p_path);
+	if (mesh.is_null() || mesh->get_baked()) {
+		return; // not ours to touch, or already frozen — nothing to do
+	}
+	Error err = mesh->bake();
+	if (err != OK) {
+		return; // e.g. nothing generated yet — export the original untouched
+	}
+
+	String tmp_path = EditorSettings::get_singleton()->get_cache_dir().plus_file("procrock_bake_tmp.res");
+	ResourceSaver::save(tmp_path, mesh);
+	Vector<uint8_t> data = FileAccess::get_file_as_array(tmp_path);
+	DirAccess::remove_file_or_error(tmp_path);
+	if (data.size() > 0) {
+		add_file(p_path + ".baked.res", data, true); // remap=true swaps every reference transparently
+	}
+}
+
+// =========================================================================
 // ProcRockEditorPlugin
 // =========================================================================
 
@@ -432,10 +462,14 @@ ProcRockEditorPlugin::ProcRockEditorPlugin(EditorNode *p_node) {
 	p_node->get_gui_base()->add_child(dialog);
 
 	add_tool_menu_item("Procedural Rock Generator...", this, "_open_dialog");
+
+	export_plugin.instance();
+	add_export_plugin(export_plugin);
 }
 
 ProcRockEditorPlugin::~ProcRockEditorPlugin() {
 	remove_tool_menu_item("Procedural Rock Generator...");
+	remove_export_plugin(export_plugin);
 }
 
 // =========================================================================
