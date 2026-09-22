@@ -758,10 +758,20 @@ NoiseGraph NoiseGraph::make_simple_fractal(real_t p_frequency, int p_octaves, re
 
 namespace {
 
-// textureGenerator.config[p_stage_name] is always an Array in procrocklib's JSON —
-// a "Method" selector dict optionally followed by one config dict per method (see
-// memo.md's "Presets: real extracted values" section for why every method is always
-// serialized). Returns an empty Array if the pipeline JSON doesn't have this shape.
+// A stage config Dictionary's [p_stage_name] is always an Array in procrocklib's
+// JSON — a "Method" selector dict optionally followed by one config dict per
+// method (see memo.md's "Presets: real extracted values" section for why every
+// method is always serialized). Returns an empty Array if the shape doesn't match.
+// Shared by the primary textureGenerator stage (_texgen_stage below) and each
+// textureAdders[i]["config"] entry (_apply_noise_texture_adder) — confirmed
+// against real preset data that both use byte-for-byte the same per-stage shape.
+Array _texgen_stage_from_config(const Dictionary &p_config, const String &p_stage_name) {
+	if (!p_config.has(p_stage_name) || p_config[p_stage_name].get_type() != Variant::ARRAY) {
+		return Array();
+	}
+	return p_config[p_stage_name];
+}
+
 Array _texgen_stage(const Dictionary &p_pipeline_json, const String &p_stage_name) {
 	if (!p_pipeline_json.has("textureGenerator") || p_pipeline_json["textureGenerator"].get_type() != Variant::DICTIONARY) {
 		return Array();
@@ -770,11 +780,7 @@ Array _texgen_stage(const Dictionary &p_pipeline_json, const String &p_stage_nam
 	if (!texgen.has("config") || texgen["config"].get_type() != Variant::DICTIONARY) {
 		return Array();
 	}
-	Dictionary config = texgen["config"];
-	if (!config.has(p_stage_name) || config[p_stage_name].get_type() != Variant::ARRAY) {
-		return Array();
-	}
-	return config[p_stage_name];
+	return _texgen_stage_from_config(texgen["config"], p_stage_name);
 }
 
 int _texgen_stage_method(const Array &p_stage) {
@@ -789,11 +795,12 @@ int _texgen_stage_method(const Array &p_stage) {
 // Method-dependent branching — confirmed: this stage has just one method, unlike
 // Albedo below). Extracts its embedded "Noise Graph" and parses it; falls back to
 // a plain fractal if the shape doesn't match (missing stage, or a JSON authored by
-// a hypothetical future tool version that doesn't nest a noise graph here).
-NoiseGraph _extract_displacement_graph(const Dictionary &p_pipeline_json) {
-	Array stage = _texgen_stage(p_pipeline_json, "Displacement / Height");
-	if (stage.size() >= 1 && stage[0].get_type() == Variant::DICTIONARY) {
-		Dictionary entry = stage[0];
+// a hypothetical future tool version that doesn't nest a noise graph here). Shared
+// by the primary textureGenerator's "Displacement / Height" stage and each
+// NoiseTextureAdder's own "Displacement / Height" stage (identical shape).
+NoiseGraph _noise_graph_from_stage(const Array &p_stage) {
+	if (p_stage.size() >= 1 && p_stage[0].get_type() == Variant::DICTIONARY) {
+		Dictionary entry = p_stage[0];
 		if (entry.has("noiseGraphs") && entry["noiseGraphs"].get_type() == Variant::DICTIONARY) {
 			Dictionary graphs = entry["noiseGraphs"];
 			if (graphs.has("Noise Graph")) {
@@ -804,57 +811,96 @@ NoiseGraph _extract_displacement_graph(const Dictionary &p_pipeline_json) {
 			}
 		}
 	}
-	WARN_PRINT("ProcRock: pipeline JSON has no valid 'Displacement / Height' noise graph — using default fractal noise.");
 	return NoiseGraph::make_simple_fractal(1.0, 3, 0.5, 0);
+}
+
+NoiseGraph _extract_displacement_graph(const Dictionary &p_pipeline_json) {
+	Array stage = _texgen_stage(p_pipeline_json, "Displacement / Height");
+	if (stage.size() < 1) {
+		WARN_PRINT("ProcRock: pipeline JSON has no valid 'Displacement / Height' noise graph — using default fractal noise.");
+	}
+	return _noise_graph_from_stage(stage);
+}
+
+// Parses a single {"<key>": [[offset, {"x","y","z"[,"w"]}], ...]} gradient-coloring
+// dict shared by the primary texture generator's Albedo ("gradientColorings", no
+// alpha) and each NoiseTextureAdder's Albedo ("gradientAlphaColorings", alpha in
+// "w" — used as blend strength, not transparency). Returns a null Ref if the shape
+// doesn't parse to at least 2 stops, leaving the "use a sensible default" decision
+// to the caller (a 2-stop gray ramp for the primary generator; "nothing to paint"
+// for an adder).
+Ref<Gradient> _gradient_from_coloring_dict(const Dictionary &p_coloring_dict, bool p_with_alpha) {
+	Array keys = p_coloring_dict.keys();
+	if (keys.size() == 0 || p_coloring_dict[keys[0]].get_type() != Variant::ARRAY) {
+		return Ref<Gradient>();
+	}
+	Array stops = p_coloring_dict[keys[0]];
+	Vector<Gradient::Point> points;
+	for (int i = 0; i < stops.size(); i++) {
+		Array stop = stops[i];
+		if (stop.size() != 2 || stop[1].get_type() != Variant::DICTIONARY) {
+			continue;
+		}
+		Dictionary color_dict = stop[1];
+		Gradient::Point point;
+		point.offset = CLAMP(real_t(stop[0]) / real_t(100.0), real_t(0.0), real_t(1.0));
+		real_t a = p_with_alpha ? _dget(color_dict, "w", 1.0) : 1.0;
+		point.color = Color(_dget(color_dict, "x", 0.0), _dget(color_dict, "y", 0.0), _dget(color_dict, "z", 0.0), a);
+		points.push_back(point);
+	}
+	if (points.size() < 2) {
+		return Ref<Gradient>();
+	}
+	Ref<Gradient> gradient;
+	gradient.instance();
+	gradient->set_points(points);
+	return gradient;
 }
 
 // Albedo has two candidate gradients, always both serialized (array slots 2 and 3);
 // which is active depends on the Method choice at slot 0 — confirmed against real
 // preset data (10.json uses Method 0 / slot 2, all others use Method 1 / slot 3).
 Ref<Gradient> _extract_albedo_gradient(const Dictionary &p_pipeline_json) {
-	Ref<Gradient> gradient;
-	gradient.instance();
-
 	Array stage = _texgen_stage(p_pipeline_json, "Albedo");
 	int active_slot = _texgen_stage_method(stage) == 0 ? 2 : 3;
 	if (stage.size() > active_slot && stage[active_slot].get_type() == Variant::DICTIONARY) {
 		Dictionary slot = stage[active_slot];
 		if (slot.has("gradientColorings") && slot["gradientColorings"].get_type() == Variant::DICTIONARY) {
-			Dictionary gc = slot["gradientColorings"];
-			Array keys = gc.keys();
-			if (keys.size() > 0 && gc[keys[0]].get_type() == Variant::ARRAY) {
-				Array stops = gc[keys[0]];
-				Vector<Gradient::Point> points;
-				for (int i = 0; i < stops.size(); i++) {
-					Array stop = stops[i];
-					if (stop.size() != 2 || stop[1].get_type() != Variant::DICTIONARY) {
-						continue;
-					}
-					Dictionary color_dict = stop[1];
-					Gradient::Point point;
-					point.offset = CLAMP(real_t(stop[0]) / real_t(100.0), real_t(0.0), real_t(1.0));
-					point.color = Color(_dget(color_dict, "x", 0.0), _dget(color_dict, "y", 0.0), _dget(color_dict, "z", 0.0));
-					points.push_back(point);
-				}
-				if (points.size() >= 2) {
-					gradient->set_points(points);
-					return gradient;
-				}
+			Ref<Gradient> g = _gradient_from_coloring_dict(slot["gradientColorings"], false);
+			if (g.is_valid()) {
+				return g;
 			}
 		}
 	}
 	WARN_PRINT("ProcRock: pipeline JSON has no valid Albedo gradient — using a default gray gradient.");
-	return gradient; // Godot's default-constructed Gradient is a 2-stop black->white ramp.
+	Ref<Gradient> gradient;
+	gradient.instance(); // Godot's default-constructed Gradient is a 2-stop black->white ramp.
+	return gradient;
+}
+
+// A NoiseTextureAdder's Albedo stage is only 2 slots (Method selector +
+// gradientAlphaColorings config), unlike the primary generator's 4-slot Albedo
+// stage above — confirmed against real preset data. Null if missing/malformed,
+// meaning this adder paints nothing.
+Ref<Gradient> _extract_adder_albedo_alpha_gradient(const Dictionary &p_adder_config) {
+	Array stage = _texgen_stage_from_config(p_adder_config, "Albedo");
+	if (stage.size() > 1 && stage[1].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = stage[1];
+		if (slot.has("gradientAlphaColorings") && slot["gradientAlphaColorings"].get_type() == Variant::DICTIONARY) {
+			return _gradient_from_coloring_dict(slot["gradientAlphaColorings"], true);
+		}
+	}
+	return Ref<Gradient>();
 }
 
 // Roughness/Metalness/Ambient Occlusion all share this exact shape: a single method
 // (no Method-dependent branching), config always at slot 1, with an int Bias in
 // [-255,255] (procrocklib's original convention) normalized to this codebase's
-// [-1,1]-ish float convention by dividing by 255.
-void _extract_scale_bias(const Dictionary &p_pipeline_json, const String &p_stage_name, real_t p_default_scale, real_t p_default_bias, real_t &r_scale, real_t &r_bias) {
-	Array stage = _texgen_stage(p_pipeline_json, p_stage_name);
-	if (stage.size() > 1 && stage[1].get_type() == Variant::DICTIONARY) {
-		Dictionary slot = stage[1];
+// [-1,1]-ish float convention by dividing by 255. Shared by the primary texture
+// generator's stages and each NoiseTextureAdder's own identically-shaped stages.
+void _scale_bias_from_stage(const Array &p_stage, real_t p_default_scale, real_t p_default_bias, real_t &r_scale, real_t &r_bias) {
+	if (p_stage.size() > 1 && p_stage[1].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = p_stage[1];
 		Dictionary floats = slot.has("floats") ? (Dictionary)slot["floats"] : Dictionary();
 		Dictionary ints = slot.has("ints") ? (Dictionary)slot["ints"] : Dictionary();
 		r_scale = _dget(floats, "Scaling", p_default_scale);
@@ -865,14 +911,21 @@ void _extract_scale_bias(const Dictionary &p_pipeline_json, const String &p_stag
 	r_bias = p_default_bias;
 }
 
-real_t _extract_normal_strength(const Dictionary &p_pipeline_json, real_t p_default) {
-	Array stage = _texgen_stage(p_pipeline_json, "Normals");
-	if (stage.size() > 1 && stage[1].get_type() == Variant::DICTIONARY) {
-		Dictionary slot = stage[1];
+void _extract_scale_bias(const Dictionary &p_pipeline_json, const String &p_stage_name, real_t p_default_scale, real_t p_default_bias, real_t &r_scale, real_t &r_bias) {
+	_scale_bias_from_stage(_texgen_stage(p_pipeline_json, p_stage_name), p_default_scale, p_default_bias, r_scale, r_bias);
+}
+
+real_t _normal_strength_from_stage(const Array &p_stage, real_t p_default) {
+	if (p_stage.size() > 1 && p_stage[1].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = p_stage[1];
 		Dictionary floats = slot.has("floats") ? (Dictionary)slot["floats"] : Dictionary();
 		return _dget(floats, "Normal Strength", p_default);
 	}
 	return p_default;
+}
+
+real_t _extract_normal_strength(const Dictionary &p_pipeline_json, real_t p_default) {
+	return _normal_strength_from_stage(_texgen_stage(p_pipeline_json, "Normals"), p_default);
 }
 
 } // namespace
@@ -2354,6 +2407,171 @@ Ref<Image> make_scaled_grayscale_image(Ref<Image> p_height, real_t p_scale, real
 	return img;
 }
 
+// NoiseTextureAdder (procrocklib _id 0, the only texture-adder type any real
+// preset uses — see memo.md's "Texture adders" section) — an independently
+// noise-driven second height field whose own gradient (RGB = paint color, alpha
+// = blend strength) is alpha-composited over the primary texture generator's PBR
+// set. RGB always blends by pure alpha (procrocklib's own convention); the other
+// channels additionally scale that alpha by their own "Proportions" weight.
+//
+// Two things procrocklib's NoiseTextureAdder supports have no equivalent here,
+// and are honestly skipped rather than faked:
+//  - The "Displacement" proportion: this pipeline's ProcRockPipelineTextures has
+//    no height/displacement output channel — only mesh geometry carries
+//    displacement, and that's already fixed by the time any texture adder runs.
+//  - "Preferred Normal Direction": procrocklib masks by each mesh face's
+//    *world-space* normal via a per-face worldMap this pipeline doesn't have
+//    (texture generation here is a flat 2D height field with no notion of mesh
+//    position/orientation). As an approximation, blend strength is instead
+//    modulated by the *local* tangent-space bump normal already computed for
+//    the same texel — a texture-space, not mesh-space, stand-in that produces a
+//    plausible "favor texels whose bump faces this way" effect without claiming
+//    per-face mesh accuracy.
+void _apply_noise_texture_adder(const Dictionary &p_adder_config, int p_size, ProcRockPipelineTextures &r_textures) {
+	Ref<Gradient> gradient = _extract_adder_albedo_alpha_gradient(p_adder_config);
+	if (!gradient.is_valid()) {
+		return; // nothing to paint (missing/malformed Albedo gradient)
+	}
+
+	NoiseGraph noise = _noise_graph_from_stage(_texgen_stage_from_config(p_adder_config, "Displacement / Height"));
+	Ref<Image> height = make_height_image_from_noise(p_size, noise);
+
+	real_t roughness_scale, roughness_bias, metalness_scale, metalness_bias, ao_scale, ao_bias;
+	_scale_bias_from_stage(_texgen_stage_from_config(p_adder_config, "Roughness"), 0.0, 0.0, roughness_scale, roughness_bias);
+	_scale_bias_from_stage(_texgen_stage_from_config(p_adder_config, "Metalness"), 0.0, 0.0, metalness_scale, metalness_bias);
+	_scale_bias_from_stage(_texgen_stage_from_config(p_adder_config, "Ambient Occlusion"), 0.0, 0.0, ao_scale, ao_bias);
+	real_t normal_strength = _normal_strength_from_stage(_texgen_stage_from_config(p_adder_config, "Normals"), 2.0);
+
+	Ref<Image> adder_normal = make_normal_image(height, normal_strength);
+	Ref<Image> adder_roughness = make_scaled_grayscale_image(height, roughness_scale, roughness_bias);
+	Ref<Image> adder_metalness = make_scaled_grayscale_image(height, metalness_scale, metalness_bias);
+	Ref<Image> adder_ao = make_scaled_grayscale_image(height, ao_scale, ao_bias);
+
+	Dictionary proportions;
+	Array prop_stage = _texgen_stage_from_config(p_adder_config, "Proportions");
+	if (prop_stage.size() > 0 && prop_stage[0].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = prop_stage[0];
+		proportions = slot.has("floats") ? (Dictionary)slot["floats"] : Dictionary();
+	}
+	real_t normals_proportion = _dget(proportions, "Normals", 1.0);
+	real_t roughness_proportion = _dget(proportions, "Roughness", 1.0);
+	real_t metal_proportion = _dget(proportions, "Metal", 1.0);
+	real_t ao_proportion = _dget(proportions, "Ambient Occ.", 1.0);
+
+	bool use_prefer_direction = false;
+	Vector3 prefer_direction(0, 1, 0);
+	real_t prefer_strength = 1.0;
+	Array pref_stage = _texgen_stage_from_config(p_adder_config, "Preferred Normal Direction");
+	if (pref_stage.size() > 0 && pref_stage[0].get_type() == Variant::DICTIONARY) {
+		Dictionary slot = pref_stage[0];
+		Dictionary bools = slot.has("bools") ? (Dictionary)slot["bools"] : Dictionary();
+		Dictionary floats = slot.has("floats") ? (Dictionary)slot["floats"] : Dictionary();
+		use_prefer_direction = _dget_bool(bools, "Use preferred normal directions.", false);
+		prefer_strength = CLAMP(_dget(floats, "Strength", 1.0), real_t(0.0), real_t(1.0));
+		if (slot.has("float3s") && slot["float3s"].get_type() == Variant::DICTIONARY) {
+			Dictionary float3s = slot["float3s"];
+			prefer_direction = _dget_vec3(float3s, "Preferred Normal Direction", prefer_direction);
+		}
+		if (use_prefer_direction && prefer_direction.length_squared() > 0.0) {
+			prefer_direction.normalize();
+		}
+	}
+
+	int w = r_textures.albedo->get_width(), h = r_textures.albedo->get_height();
+	Ref<Image> base_albedo = r_textures.albedo->get_data();
+	Ref<Image> base_normal = r_textures.normal->get_data();
+	Ref<Image> base_roughness = r_textures.roughness->get_data();
+	Ref<Image> base_metalness = r_textures.metalness->get_data();
+	Ref<Image> base_ao = r_textures.ambient_occlusion->get_data();
+
+	height->lock();
+	base_albedo->lock();
+	base_normal->lock();
+	adder_normal->lock();
+	base_roughness->lock();
+	adder_roughness->lock();
+	base_metalness->lock();
+	adder_metalness->lock();
+	base_ao->lock();
+	adder_ao->lock();
+
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			Color paint = gradient->get_color_at_offset(height->get_pixel(x, y).r);
+			real_t alpha = paint.a;
+			if (use_prefer_direction && alpha > 0.0) {
+				Color n8 = base_normal->get_pixel(x, y);
+				Vector3 local_normal(n8.r * 2.0 - 1.0, n8.g * 2.0 - 1.0, n8.b * 2.0 - 1.0);
+				real_t facing = CLAMP(local_normal.normalized().dot(prefer_direction) * 0.5 + 0.5, real_t(0.0), real_t(1.0));
+				alpha *= Math::lerp(real_t(1.0), facing, prefer_strength);
+			}
+			if (alpha <= 0.0) {
+				continue;
+			}
+
+			base_albedo->set_pixel(x, y, base_albedo->get_pixel(x, y).linear_interpolate(Color(paint.r, paint.g, paint.b), alpha));
+			if (normals_proportion > 0.0) {
+				base_normal->set_pixel(x, y, base_normal->get_pixel(x, y).linear_interpolate(adder_normal->get_pixel(x, y), alpha * normals_proportion));
+			}
+			if (roughness_proportion > 0.0) {
+				base_roughness->set_pixel(x, y, base_roughness->get_pixel(x, y).linear_interpolate(adder_roughness->get_pixel(x, y), alpha * roughness_proportion));
+			}
+			if (metal_proportion > 0.0) {
+				base_metalness->set_pixel(x, y, base_metalness->get_pixel(x, y).linear_interpolate(adder_metalness->get_pixel(x, y), alpha * metal_proportion));
+			}
+			if (ao_proportion > 0.0) {
+				base_ao->set_pixel(x, y, base_ao->get_pixel(x, y).linear_interpolate(adder_ao->get_pixel(x, y), alpha * ao_proportion));
+			}
+		}
+	}
+
+	base_ao->unlock();
+	adder_ao->unlock();
+	base_metalness->unlock();
+	adder_metalness->unlock();
+	base_roughness->unlock();
+	adder_roughness->unlock();
+	adder_normal->unlock();
+	base_normal->unlock();
+	base_albedo->unlock();
+	height->unlock();
+
+	r_textures.albedo->create_from_image(base_albedo);
+	r_textures.normal->create_from_image(base_normal);
+	r_textures.roughness->create_from_image(base_roughness);
+	r_textures.metalness->create_from_image(base_metalness);
+	r_textures.ambient_occlusion->create_from_image(base_ao);
+}
+
+// Applies every enabled entry of pipeline_json["textureAdders"], in order, over
+// an already-built texture set (see _apply_noise_texture_adder). Unsupported
+// adder types (only CracksTextureAdder, _id 1, exists in procrocklib and no real
+// preset uses it) are skipped with a warning rather than silently ignored.
+void _apply_texture_adders(const Dictionary &p_pipeline_json, int p_size, ProcRockPipelineTextures &r_textures) {
+	if (!p_pipeline_json.has("textureAdders") || p_pipeline_json["textureAdders"].get_type() != Variant::ARRAY) {
+		return;
+	}
+	Array adders = p_pipeline_json["textureAdders"];
+	for (int i = 0; i < adders.size(); i++) {
+		if (adders[i].get_type() != Variant::DICTIONARY) {
+			continue;
+		}
+		Dictionary adder = adders[i];
+		if (_dget_bool(adder, "disabled", false)) {
+			continue;
+		}
+		if (!adder.has("config") || adder["config"].get_type() != Variant::DICTIONARY) {
+			continue;
+		}
+		int id = _dget_int(adder, "_id", 0);
+		if (id != 0) {
+			WARN_PRINT("ProcRock: pipeline JSON has a texture adder of unsupported type (_id=" + itos(id) + ") — only NoiseTextureAdder is ported; skipping.");
+			continue;
+		}
+		_apply_noise_texture_adder(adder["config"], p_size, r_textures);
+	}
+}
+
 } // namespace
 
 ProcRockPipelineTextures rock_pipeline_gen_textures(
@@ -2403,6 +2621,8 @@ ProcRockPipelineTextures rock_pipeline_gen_textures_from_json(int p_size, const 
 	textures.ambient_occlusion.instance();
 	textures.ambient_occlusion->create_from_image(make_scaled_grayscale_image(height, ao_scale, ao_bias));
 
+	_apply_texture_adders(p_pipeline_json, size, textures);
+
 	return textures;
 }
 
@@ -2434,6 +2654,7 @@ Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures 
 #include "core/os/file_access.h"
 
 #include "doctest/doctest.h"
+#include "doctest/doctest_godot.h"
 
 namespace {
 
@@ -2986,6 +3207,128 @@ TEST_SUITE("[[proc_rocks]] ProcRock JSON pipeline") {
 			real_t v = g.evaluate(Vector3(1, 2, 3));
 			CHECK(v == v); // not NaN
 		}
+	}
+
+	TEST_CASE("[procrockgen] _gradient_from_coloring_dict parses alpha for NoiseTextureAdder, omits it for the primary generator's shape") {
+		Variant parsed;
+		String err_str;
+		int err_line = 0;
+		REQUIRE(JSON::parse("{\"Gradient\":[[0,{\"w\":0.25,\"x\":1.0,\"y\":0.5,\"z\":0.0}],[100,{\"w\":0.75,\"x\":0.0,\"y\":0.0,\"z\":1.0}]]}", parsed, err_str, err_line) == OK);
+		Dictionary coloring = parsed;
+
+		Ref<Gradient> with_alpha = _gradient_from_coloring_dict(coloring, true);
+		REQUIRE(with_alpha.is_valid());
+		REQUIRE(with_alpha->get_points_count() == 2);
+		CHECK(with_alpha->get_color(0).a == doctest::Approx(0.25));
+		CHECK(with_alpha->get_color(1).a == doctest::Approx(0.75));
+		CHECK(with_alpha->get_color(0).r == doctest::Approx(1.0));
+
+		Ref<Gradient> without_alpha = _gradient_from_coloring_dict(coloring, false);
+		REQUIRE(without_alpha.is_valid());
+		CHECK(without_alpha->get_color(0).a == doctest::Approx(1.0));
+		CHECK(without_alpha->get_color(1).a == doctest::Approx(1.0));
+	}
+
+	TEST_CASE("[procrockgen] _extract_adder_albedo_alpha_gradient reads every real preset's enabled NoiseTextureAdder entries") {
+		bool found_at_least_one = false;
+		for (int i = 0; i < ALL_PRESET_FILES_COUNT; i++) {
+			Dictionary pipeline_json = _load_pipeline_json(String(PRESETS_DIR) + ALL_PRESET_FILES[i]);
+			if (!pipeline_json.has("textureAdders") || pipeline_json["textureAdders"].get_type() != Variant::ARRAY) {
+				continue;
+			}
+			Array adders = pipeline_json["textureAdders"];
+			for (int j = 0; j < adders.size(); j++) {
+				Dictionary adder = adders[j];
+				if (_dget_bool(adder, "disabled", false) || _dget_int(adder, "_id", 0) != 0) {
+					continue;
+				}
+				Ref<Gradient> gradient = _extract_adder_albedo_alpha_gradient(adder["config"]);
+				REQUIRE(gradient.is_valid());
+				CHECK(gradient->get_points_count() >= 2);
+				found_at_least_one = true;
+			}
+		}
+		CHECK(found_at_least_one); // sanity: presets do contain enabled NoiseTextureAdder entries
+	}
+
+	TEST_CASE("[procrockgen] _apply_texture_adders skips disabled entries and unsupported _id, no-ops with an empty array") {
+		int size = 16;
+		ProcRockPipelineTextures baseline = rock_pipeline_gen_textures(size, 4.0, 3, 0.5, 42, Color(0, 0, 0), Color(1, 1, 1), 2.0, 0.4, 0.5, 0.0, 0.0, 0.5, 0.5);
+
+		Dictionary pipeline_json;
+		Array adders;
+
+		Dictionary disabled_adder;
+		disabled_adder["_id"] = 0;
+		disabled_adder["disabled"] = true;
+		disabled_adder["config"] = Dictionary();
+		adders.push_back(disabled_adder);
+
+		Dictionary unsupported_adder;
+		unsupported_adder["_id"] = 1; // CracksTextureAdder — not ported
+		unsupported_adder["disabled"] = false;
+		unsupported_adder["config"] = Dictionary();
+		adders.push_back(unsupported_adder);
+
+		pipeline_json["textureAdders"] = adders;
+
+		ProcRockPipelineTextures textures = rock_pipeline_gen_textures(size, 4.0, 3, 0.5, 42, Color(0, 0, 0), Color(1, 1, 1), 2.0, 0.4, 0.5, 0.0, 0.0, 0.5, 0.5);
+		SUPPRESS_OUTPUT(_apply_texture_adders(pipeline_json, size, textures));
+
+		Ref<Image> a = baseline.albedo->get_data();
+		Ref<Image> b = textures.albedo->get_data();
+		a->lock();
+		b->lock();
+		bool identical = true;
+		for (int y = 0; y < size && identical; y++) {
+			for (int x = 0; x < size && identical; x++) {
+				identical = a->get_pixel(x, y).is_equal_approx(b->get_pixel(x, y));
+			}
+		}
+		a->unlock();
+		b->unlock();
+		CHECK(identical); // disabled + unsupported entries must leave textures untouched
+	}
+
+	TEST_CASE("[procrockgen] _apply_noise_texture_adder paints albedo where its gradient's alpha is nonzero, respects per-channel Proportions") {
+		int size = 16;
+		ProcRockPipelineTextures textures = rock_pipeline_gen_textures(size, 4.0, 3, 0.5, 42, Color(0, 0, 0), Color(0, 0, 0), 2.0, 0.4, 0.5, 0.0, 0.0, 0.5, 0.5);
+		Ref<Image> base_roughness_before = textures.roughness->get_data()->duplicate();
+
+		Variant parsed;
+		String err_str;
+		int err_line = 0;
+		// Fully-opaque white gradient (alpha 1.0 everywhere) so every texel is painted;
+		// Roughness proportion is 0 (must stay untouched), Metal proportion is 1 (must change).
+		String json_text =
+				"{"
+				"\"Albedo\":[{\"singleChoices\":{\"Method\":0}},{\"gradientAlphaColorings\":{\"Gradient\":"
+				"[[0,{\"w\":1.0,\"x\":1.0,\"y\":1.0,\"z\":1.0}],[100,{\"w\":1.0,\"x\":1.0,\"y\":1.0,\"z\":1.0}]]}}],"
+				"\"Displacement / Height\":[{\"noiseGraphs\":{\"Noise Graph\":{\"edges\":[],\"nodes\":["
+				"{\"_id\":401,\"config\":{\"floats\":{\"Frequency\":1.0}},\"general\":{\"internal_id\":0,\"position\":{\"x\":0,\"y\":0}}}"
+				"]}}}],"
+				"\"Metalness\":[{\"singleChoices\":{\"Method\":0}},{\"floats\":{\"Scaling\":1.0},\"ints\":{\"Bias\":255}}],"
+				"\"Proportions\":[{\"floats\":{\"Ambient Occ.\":1.0,\"Metal\":1.0,\"Normals\":1.0,\"Roughness\":0.0}}]"
+				"}";
+		REQUIRE(JSON::parse(json_text, parsed, err_str, err_line) == OK);
+		Dictionary adder_config = parsed;
+
+		_apply_noise_texture_adder(adder_config, size, textures);
+
+		Ref<Image> albedo = textures.albedo->get_data();
+		Ref<Image> roughness_after = textures.roughness->get_data();
+		Ref<Image> metalness_after = textures.metalness->get_data();
+		albedo->lock();
+		roughness_after->lock();
+		metalness_after->lock();
+		base_roughness_before->lock();
+		CHECK(albedo->get_pixel(size / 2, size / 2).r > 0.9); // painted white over black base
+		CHECK(roughness_after->get_pixel(size / 2, size / 2).r == doctest::Approx(base_roughness_before->get_pixel(size / 2, size / 2).r).epsilon(0.01)); // 0 proportion -> untouched
+		CHECK(metalness_after->get_pixel(size / 2, size / 2).r > 0.9); // 1.0 proportion, fully opaque alpha -> fully blended to Bias 255/255
+		base_roughness_before->unlock();
+		metalness_after->unlock();
+		roughness_after->unlock();
+		albedo->unlock();
 	}
 }
 
