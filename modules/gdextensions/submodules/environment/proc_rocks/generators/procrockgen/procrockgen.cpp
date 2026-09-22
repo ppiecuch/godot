@@ -1014,6 +1014,8 @@ ClippedMesh clip_and_cap(const Vector<Vector3> &p_vertices, const Vector<int> &p
 	return out;
 }
 
+Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices, bool p_smoothed);
+
 Array _rock_pipeline_gen_impl(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
 		const NoiseGraph &p_noise, real_t p_noise_amplitude, int p_randseed,
 		bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed) {
@@ -1053,41 +1055,47 @@ Array _rock_pipeline_gen_impl(int p_subdivisions, real_t p_width, real_t p_heigh
 		indices = clipped.indices;
 	}
 
+	return _finalize_mesh_arrays(vertices, indices, p_smoothed);
+}
+
+// Shared tail: smooth (indexed, box-UV) or flat/low-poly shading + final Array packing —
+// used by both the scalar pipeline (above) and the JSON-driven generator/modifier chain.
+Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices, bool p_smoothed) {
 	Array mesh_arrays;
 	mesh_arrays.resize(VS::ARRAY_MAX);
-	if (vertices.size() == 0 || indices.size() == 0) {
+	if (p_vertices.size() == 0 || p_indices.size() == 0) {
 		return mesh_arrays;
 	}
 
 	if (p_smoothed) {
-		Vector<Vector3> normals = compute_smooth_normals(vertices, indices);
+		Vector<Vector3> normals = compute_smooth_normals(p_vertices, p_indices);
 
 		Vector<Vector2> uvs;
-		uvs.resize(vertices.size());
-		for (int i = 0; i < vertices.size(); i++) {
+		uvs.resize(p_vertices.size());
+		for (int i = 0; i < p_vertices.size(); i++) {
 			int box_dir = rock_studio_get_box_dir(normals[i]);
-			uvs.write[i] = rock_studio_get_box_uv(vertices[i], box_dir);
+			uvs.write[i] = rock_studio_get_box_uv(p_vertices[i], box_dir);
 		}
 
-		mesh_arrays[VS::ARRAY_VERTEX] = vertices;
+		mesh_arrays[VS::ARRAY_VERTEX] = p_vertices;
 		mesh_arrays[VS::ARRAY_NORMAL] = normals;
 		mesh_arrays[VS::ARRAY_TEX_UV] = uvs;
-		mesh_arrays[VS::ARRAY_INDEX] = indices;
+		mesh_arrays[VS::ARRAY_INDEX] = p_indices;
 	} else {
 		// rock_studio_make_low_poly() derives its flat normal via cross(v1-v0, v2-v0),
 		// the opposite winding convention from ComputeNormal()'s cross(v2-v0, v1-v0) used
 		// above — flip winding here so the flat-shaded result faces outward too.
 		Vector<int> flipped_indices;
-		flipped_indices.resize(indices.size());
-		for (int i = 0; i + 2 < indices.size(); i += 3) {
-			flipped_indices.write[i] = indices[i];
-			flipped_indices.write[i + 1] = indices[i + 2];
-			flipped_indices.write[i + 2] = indices[i + 1];
+		flipped_indices.resize(p_indices.size());
+		for (int i = 0; i + 2 < p_indices.size(); i += 3) {
+			flipped_indices.write[i] = p_indices[i];
+			flipped_indices.write[i + 1] = p_indices[i + 2];
+			flipped_indices.write[i + 2] = p_indices[i + 1];
 		}
 
 		Array arrays;
 		arrays.resize(VS::ARRAY_MAX);
-		arrays[VS::ARRAY_VERTEX] = vertices;
+		arrays[VS::ARRAY_VERTEX] = p_vertices;
 		arrays[VS::ARRAY_INDEX] = flipped_indices;
 
 		Ref<ArrayMesh> temp;
