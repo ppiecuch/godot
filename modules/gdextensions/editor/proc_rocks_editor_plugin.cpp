@@ -531,7 +531,7 @@ void ProcRockEditorPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_open_dialog"), &ProcRockEditorPlugin::_open_dialog);
 }
 
-void ProcRockEditorPlugin::_open_dialog() {
+void ProcRockEditorPlugin::_open_dialog(Variant p_ud) {
 	dialog->popup_centered(Size2(550, 450));
 	// Generate initial rock on first open
 	dialog->generate();

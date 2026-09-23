@@ -124,7 +124,12 @@ class ProcRockEditorPlugin : public EditorPlugin {
 	ProcRockDialog *dialog;
 	Ref<ProcRockExportPlugin> export_plugin;
 
-	void _open_dialog();
+	// add_tool_menu_item()'s dispatcher (EditorNode::_tool_menu_option) always calls
+	// the handler with exactly 1 argument (the p_ud passed to add_tool_menu_item,
+	// Variant() here) — this must take a parameter even though it's unused, or the
+	// call fails with "Method expected 0 arguments, but called with 1" and the menu
+	// item silently does nothing.
+	void _open_dialog(Variant p_ud);
 
 protected:
 	static void _bind_methods();
