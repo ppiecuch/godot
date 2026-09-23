@@ -59,6 +59,55 @@ enum ProcRockBakedTexturePack {
 	PROCROCK_BAKED_ROCK,
 };
 
+// Same relative path as procrockgen.cpp's doctest-only PRESETS_DIR (kept as a
+// separate copy since that one is DOCTEST+anonymous-namespace-local, not linkable
+// from here) and as load_json_dialog's default directory below.
+const char *const PRESETS_DIR = "modules/gdextensions/editor/proc_rocks_demo/presets";
+
+// Presets have no verified rock-type identity (memo.md's "Presets: real extracted
+// values") — just numbered filenames (plus one hand-named one) — so this only
+// orders "1..12" numerically before any non-numeric name, alphabetically.
+bool _preset_name_less(const String &p_a, const String &p_b) {
+	String a = p_a.get_basename(), b = p_b.get_basename();
+	bool a_num = a.is_valid_integer(), b_num = b.is_valid_integer();
+	if (a_num && b_num) {
+		return a.to_int() < b.to_int();
+	}
+	if (a_num != b_num) {
+		return a_num;
+	}
+	return a < b;
+}
+
+// Scans PRESETS_DIR for *.json files, sorted per _preset_name_less. Returns an
+// empty Vector if the directory can't be opened (e.g. running from an install
+// without the bundled demo presets) — callers treat that as "no presets found".
+Vector<String> _scan_bundled_presets() {
+	Vector<String> names;
+	DirAccessRef dir = DirAccess::open(PRESETS_DIR);
+	if (!dir) {
+		return names;
+	}
+	dir->list_dir_begin();
+	for (String entry = dir->get_next(); !entry.empty(); entry = dir->get_next()) {
+		if (!dir->current_is_dir() && entry.get_extension().to_lower() == "json") {
+			names.push_back(entry);
+		}
+	}
+	dir->list_dir_end();
+
+	for (int i = 1; i < names.size(); i++) {
+		String key = names[i];
+		int j = i - 1;
+		while (j >= 0 && _preset_name_less(key, names[j])) {
+			names.write[j + 1] = names[j];
+			j--;
+		}
+		names.write[j + 1] = key;
+	}
+	return names;
+}
+
 Ref<Image> load_embedded_jpg(const uint8_t *p_data, unsigned int p_size) {
 	PoolByteArray buf;
 	buf.resize(p_size);
@@ -209,6 +258,13 @@ void ProcRockDialog::_on_load_json_file_selected(const String &p_path) {
 	_update_info();
 }
 
+void ProcRockDialog::_on_preset_selected(int p_idx) {
+	if (p_idx <= 0 || p_idx - 1 >= preset_paths.size()) {
+		return; // "None"
+	}
+	_on_load_json_file_selected(preset_paths[p_idx - 1]);
+}
+
 void ProcRockDialog::_on_demo_texture_changed(int p_idx) {
 	demo_texture_pack = p_idx - 1; // item 0 is "None"
 	_apply_demo_texture();
@@ -256,6 +312,7 @@ void ProcRockDialog::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_export_file_selected", "path"), &ProcRockDialog::_on_export_file_selected);
 	ClassDB::bind_method(D_METHOD("_on_load_json_pressed"), &ProcRockDialog::_on_load_json_pressed);
 	ClassDB::bind_method(D_METHOD("_on_load_json_file_selected", "path"), &ProcRockDialog::_on_load_json_file_selected);
+	ClassDB::bind_method(D_METHOD("_on_preset_selected", "idx"), &ProcRockDialog::_on_preset_selected);
 	ClassDB::bind_method(D_METHOD("_on_demo_texture_changed", "idx"), &ProcRockDialog::_on_demo_texture_changed);
 }
 
@@ -364,6 +421,29 @@ ProcRockDialog::ProcRockDialog() {
 	texture_bar->add_child(demo_texture_option);
 
 	vbox->add_child(texture_bar);
+
+	// Bundled pipeline preset browser (memo.md's "Full JSON round-trip UX" item) —
+	// quick-select for the presets shipped with this fork; "Load Preset JSON..."
+	// below still covers arbitrary external files.
+	HBoxContainer *preset_bar = memnew(HBoxContainer);
+
+	Label *preset_label = memnew(Label);
+	preset_label->set_text("Bundled Preset:");
+	preset_bar->add_child(preset_label);
+
+	preset_option = memnew(OptionButton);
+	preset_option->add_item("None", 0);
+	preset_paths.clear();
+	Vector<String> preset_names = _scan_bundled_presets();
+	for (int i = 0; i < preset_names.size(); i++) {
+		preset_option->add_item(preset_names[i].get_basename(), i + 1);
+		preset_paths.push_back(String(PRESETS_DIR).plus_file(preset_names[i]));
+	}
+	preset_option->set_h_size_flags(SIZE_EXPAND_FILL);
+	preset_option->connect("item_selected", this, "_on_preset_selected");
+	preset_bar->add_child(preset_option);
+
+	vbox->add_child(preset_bar);
 
 	// Generate + Export
 	HBoxContainer *btn_bar = memnew(HBoxContainer);
@@ -514,6 +594,17 @@ TEST_SUITE("[[proc_rocks]] Baked demo textures") {
 		Ref<SpatialMaterial> material = rock_pipeline_make_material(gravel);
 		CHECK(material.is_valid());
 		CHECK(material->get_texture(SpatialMaterial::TEXTURE_ALBEDO).is_valid());
+	}
+
+	TEST_CASE("[proc_rocks] _scan_bundled_presets finds and numerically sorts the real preset files") {
+		Vector<String> names = _scan_bundled_presets();
+		REQUIRE(names.size() == 13);
+		CHECK(names[0] == "1.json");
+		CHECK(names[1] == "2.json");
+		CHECK(names[9] == "10.json");
+		CHECK(names[10] == "11.json");
+		CHECK(names[11] == "12.json");
+		CHECK(names[12] == "granite_custom.json"); // only non-numeric name, sorts last
 	}
 }
 

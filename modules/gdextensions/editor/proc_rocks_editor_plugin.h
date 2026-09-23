@@ -76,12 +76,21 @@ class ProcRockDialog : public WindowDialog {
 	OptionButton *demo_texture_option;
 	int demo_texture_pack; // -1 = None, else ProcRockBakedTexturePack
 
+	// Bundled pipeline preset browser (memo.md's "Full JSON round-trip UX" item) —
+	// lists every *.json found in proc_rocks_demo/presets/ at dock-construction time,
+	// selecting one immediately loads+previews it via the same path as the
+	// "Load Preset JSON..." FileDialog. Presets have no verified rock-type identity
+	// (see memo.md's "Presets: real extracted values"), so entries are just filenames.
+	OptionButton *preset_option;
+	Vector<String> preset_paths; // preset_option item (idx-1) -> full path; index 0 is "None"
+
 	void _on_generator_changed(int p_idx);
 	void _on_randomize_pressed();
 	void _on_export_pressed();
 	void _on_export_file_selected(const String &p_path);
 	void _on_load_json_pressed();
 	void _on_load_json_file_selected(const String &p_path);
+	void _on_preset_selected(int p_idx);
 	void _on_demo_texture_changed(int p_idx);
 	void _apply_demo_texture();
 	void _update_preview();
