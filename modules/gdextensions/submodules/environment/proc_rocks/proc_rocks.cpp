@@ -34,8 +34,11 @@
 #include "generators/rockgen/rockgen.h"
 #include "generators/rockgeneration/gen_rock.h"
 #include "generators/rockstudio/rock_studio.h"
+#include "generators/shared/baked_textures_gen.h"
+#include "generators/shared/texture_gen.h"
 
 #include "core/io/json.h"
+#include "core/io/resource_loader.h"
 #include "core/os/file_access.h"
 
 // =========================================================================
@@ -479,6 +482,170 @@ void ProcRockMesh::set_pipeline_ao_bias(real_t p_val) {
 }
 real_t ProcRockMesh::get_pipeline_ao_bias() const { return pipeline.ao_bias; }
 
+void ProcRockMesh::set_texture_source(int p_val) {
+	texture.source = CLAMP(p_val, (int)TEXTURE_SOURCE_NONE, (int)TEXTURE_SOURCE_FILE);
+	_dirty = true;
+	_change_notify(); // dependent fields (gen_*/file_*) show/hide by source
+	if (auto_refresh)
+		_rebuild();
+}
+int ProcRockMesh::get_texture_source() const { return texture.source; }
+
+void ProcRockMesh::set_texture_gen_size(int p_val) {
+	texture.gen_size = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+int ProcRockMesh::get_texture_gen_size() const { return texture.gen_size; }
+
+void ProcRockMesh::set_texture_gen_seed(int p_val) {
+	texture.gen_seed = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+int ProcRockMesh::get_texture_gen_seed() const { return texture.gen_seed; }
+
+void ProcRockMesh::set_texture_gen_noise_frequency(real_t p_val) {
+	texture.gen_noise_frequency = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_noise_frequency() const { return texture.gen_noise_frequency; }
+
+void ProcRockMesh::set_texture_gen_noise_octaves(int p_val) {
+	texture.gen_noise_octaves = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+int ProcRockMesh::get_texture_gen_noise_octaves() const { return texture.gen_noise_octaves; }
+
+void ProcRockMesh::set_texture_gen_noise_persistence(real_t p_val) {
+	texture.gen_noise_persistence = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_noise_persistence() const { return texture.gen_noise_persistence; }
+
+void ProcRockMesh::set_texture_gen_albedo_low(const Color &p_val) {
+	texture.gen_albedo_low = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+Color ProcRockMesh::get_texture_gen_albedo_low() const { return texture.gen_albedo_low; }
+
+void ProcRockMesh::set_texture_gen_albedo_high(const Color &p_val) {
+	texture.gen_albedo_high = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+Color ProcRockMesh::get_texture_gen_albedo_high() const { return texture.gen_albedo_high; }
+
+void ProcRockMesh::set_texture_gen_normal_strength(real_t p_val) {
+	texture.gen_normal_strength = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_normal_strength() const { return texture.gen_normal_strength; }
+
+void ProcRockMesh::set_texture_gen_roughness_scale(real_t p_val) {
+	texture.gen_roughness_scale = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_roughness_scale() const { return texture.gen_roughness_scale; }
+
+void ProcRockMesh::set_texture_gen_roughness_bias(real_t p_val) {
+	texture.gen_roughness_bias = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_roughness_bias() const { return texture.gen_roughness_bias; }
+
+void ProcRockMesh::set_texture_gen_metalness_scale(real_t p_val) {
+	texture.gen_metalness_scale = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_metalness_scale() const { return texture.gen_metalness_scale; }
+
+void ProcRockMesh::set_texture_gen_metalness_bias(real_t p_val) {
+	texture.gen_metalness_bias = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_metalness_bias() const { return texture.gen_metalness_bias; }
+
+void ProcRockMesh::set_texture_gen_ao_scale(real_t p_val) {
+	texture.gen_ao_scale = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_ao_scale() const { return texture.gen_ao_scale; }
+
+void ProcRockMesh::set_texture_gen_ao_bias(real_t p_val) {
+	texture.gen_ao_bias = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+real_t ProcRockMesh::get_texture_gen_ao_bias() const { return texture.gen_ao_bias; }
+
+void ProcRockMesh::set_texture_file_albedo(const String &p_val) {
+	texture.file_albedo = p_val;
+#ifdef TOOLS_ENABLED
+	_auto_detect_companion_textures();
+#endif
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+String ProcRockMesh::get_texture_file_albedo() const { return texture.file_albedo; }
+
+void ProcRockMesh::set_texture_file_normal(const String &p_val) {
+	texture.file_normal = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+String ProcRockMesh::get_texture_file_normal() const { return texture.file_normal; }
+
+void ProcRockMesh::set_texture_file_roughness(const String &p_val) {
+	texture.file_roughness = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+String ProcRockMesh::get_texture_file_roughness() const { return texture.file_roughness; }
+
+void ProcRockMesh::set_texture_file_metalness(const String &p_val) {
+	texture.file_metalness = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+String ProcRockMesh::get_texture_file_metalness() const { return texture.file_metalness; }
+
+void ProcRockMesh::set_texture_file_ambient_occlusion(const String &p_val) {
+	texture.file_ambient_occlusion = p_val;
+	_dirty = true;
+	if (auto_refresh)
+		_rebuild();
+}
+String ProcRockMesh::get_texture_file_ambient_occlusion() const { return texture.file_ambient_occlusion; }
+
 void ProcRockMesh::set_pipeline_preset(int p_preset) {
 	// Real values extracted from procrocklib's own 13 demo pipeline JSON files
 	// (recovered from git history at 69e0b996a8~1, not restored to the tree — see
@@ -580,6 +747,206 @@ Error ProcRockMesh::load_from_file(const String p_path) {
 	return ERR_UNAVAILABLE;
 #endif
 }
+
+// =========================================================================
+// Generic texture source — applies to every generator, see proc_rocks.h's
+// `texture` struct / TextureSource enum and memo.md's "Texture generation" section.
+// =========================================================================
+
+#ifdef TOOLS_ENABLED
+
+void ProcRockMesh::_apply_texture_source() {
+	if (get_surface_count() == 0) {
+		return;
+	}
+	switch (texture.source) {
+		case TEXTURE_SOURCE_NONE:
+			surface_set_material(0, Ref<Material>());
+			break;
+
+		case TEXTURE_SOURCE_GENERATED: {
+			ProcRockPipelineTextures textures = rock_pipeline_gen_textures(
+					texture.gen_size, texture.gen_noise_frequency, texture.gen_noise_octaves, texture.gen_noise_persistence, texture.gen_seed,
+					texture.gen_albedo_low, texture.gen_albedo_high, texture.gen_normal_strength,
+					texture.gen_roughness_scale, texture.gen_roughness_bias,
+					texture.gen_metalness_scale, texture.gen_metalness_bias,
+					texture.gen_ao_scale, texture.gen_ao_bias);
+			surface_set_material(0, rock_pipeline_make_material(textures));
+		} break;
+
+		case TEXTURE_SOURCE_GRAVEL:
+		case TEXTURE_SOURCE_MOSSY:
+		case TEXTURE_SOURCE_ROCK: {
+			ProcRockBakedTexturePack pack = texture.source == TEXTURE_SOURCE_GRAVEL ? PROCROCK_BAKED_GRAVEL : texture.source == TEXTURE_SOURCE_MOSSY ? PROCROCK_BAKED_MOSSY
+																																					 : PROCROCK_BAKED_ROCK;
+			surface_set_material(0, rock_pipeline_make_material(load_baked_textures(pack)));
+		} break;
+
+		case TEXTURE_SOURCE_FILE: {
+			if (texture.file_albedo.empty()) {
+				surface_set_material(0, Ref<Material>());
+				break;
+			}
+			ProcRockPipelineTextures textures;
+			textures.albedo = ResourceLoader::load(texture.file_albedo);
+			if (textures.albedo.is_null()) {
+				surface_set_material(0, Ref<Material>());
+				break;
+			}
+			if (!texture.file_normal.empty()) {
+				textures.normal = ResourceLoader::load(texture.file_normal);
+			}
+			if (!texture.file_roughness.empty()) {
+				textures.roughness = ResourceLoader::load(texture.file_roughness);
+			}
+			if (!texture.file_metalness.empty()) {
+				textures.metalness = ResourceLoader::load(texture.file_metalness);
+			}
+			if (!texture.file_ambient_occlusion.empty()) {
+				textures.ambient_occlusion = ResourceLoader::load(texture.file_ambient_occlusion);
+			}
+			// Missing companion maps default to flat/neutral values — same fallback
+			// the baked Rock pack uses for its own single-texture case.
+			if (textures.normal.is_null()) {
+				textures.normal = to_texture(make_constant_image(8, Color(0.5, 0.5, 1.0)));
+			}
+			if (textures.roughness.is_null()) {
+				textures.roughness = to_texture(make_constant_image(8, Color(0.5, 0.5, 0.5)));
+			}
+			if (textures.metalness.is_null()) {
+				textures.metalness = to_texture(make_constant_image(8, Color(0, 0, 0)));
+			}
+			if (textures.ambient_occlusion.is_null()) {
+				textures.ambient_occlusion = to_texture(make_constant_image(8, Color(1, 1, 1)));
+			}
+			surface_set_material(0, rock_pipeline_make_material(textures));
+		} break;
+	}
+}
+
+namespace {
+
+Vector<String> _albedo_aliases() {
+	Vector<String> v;
+	v.push_back("albedo");
+	v.push_back("diffuse");
+	v.push_back("basecolor");
+	v.push_back("base_color");
+	v.push_back("col");
+	v.push_back("color");
+	return v;
+}
+
+Vector<String> _normal_aliases() {
+	Vector<String> v;
+	v.push_back("normal");
+	v.push_back("normals");
+	v.push_back("nrm");
+	v.push_back("nm");
+	v.push_back("norm");
+	return v;
+}
+
+Vector<String> _roughness_aliases() {
+	Vector<String> v;
+	v.push_back("roughness");
+	v.push_back("rough");
+	v.push_back("rgh");
+	return v;
+}
+
+Vector<String> _metalness_aliases() {
+	Vector<String> v;
+	v.push_back("metalness");
+	v.push_back("metallic");
+	v.push_back("metal");
+	return v;
+}
+
+Vector<String> _ambient_occlusion_aliases() {
+	Vector<String> v;
+	v.push_back("ambientOcc"); // proc_rocks_demo's own exact convention (case-sensitive filesystems)
+	v.push_back("ambientocc");
+	v.push_back("ambient_occ");
+	v.push_back("ao");
+	v.push_back("occlusion");
+	v.push_back("occ");
+	return v;
+}
+
+// Tries "<p_dir>/<p_prefix><alias><p_suffix>.<ext>" for every alias in p_aliases,
+// preferring p_preferred_ext, then a short list of other common image extensions —
+// returns the first path that exists on disk, or "" if none do.
+String _find_companion_texture(const String &p_dir, const String &p_prefix, const String &p_suffix,
+		const Vector<String> &p_aliases, const String &p_preferred_ext) {
+	static const char *const kExtensions[] = { "png", "jpg", "jpeg", "tga", "webp", "bmp" };
+	for (int a = 0; a < p_aliases.size(); a++) {
+		String stem = p_prefix + p_aliases[a] + p_suffix;
+		if (!p_preferred_ext.empty()) {
+			String candidate = p_dir.plus_file(stem + "." + p_preferred_ext);
+			if (FileAccess::exists(candidate)) {
+				return candidate;
+			}
+		}
+		for (int e = 0; e < 6; e++) {
+			if (String(kExtensions[e]) == p_preferred_ext) {
+				continue; // already tried above
+			}
+			String candidate = p_dir.plus_file(stem + "." + kExtensions[e]);
+			if (FileAccess::exists(candidate)) {
+				return candidate;
+			}
+		}
+	}
+	return String();
+}
+
+} // namespace
+
+void ProcRockMesh::_auto_detect_companion_textures() {
+	texture.file_normal = String();
+	texture.file_roughness = String();
+	texture.file_metalness = String();
+	texture.file_ambient_occlusion = String();
+
+	if (texture.file_albedo.empty()) {
+		return;
+	}
+
+	String dir = texture.file_albedo.get_base_dir();
+	String ext = texture.file_albedo.get_extension();
+	String stem = texture.file_albedo.get_file().get_basename();
+	String stem_lower = stem.to_lower();
+
+	// Matches proc_rocks_demo's own convention (exact "albedo.jpg" -> empty prefix/
+	// suffix) and common external conventions ("myrock_albedo.png" -> suffix match,
+	// prefix "myrock_"; "albedo_myrock.png" -> prefix match, suffix "_myrock").
+	String prefix, suffix;
+	bool matched = false;
+	Vector<String> albedo_aliases = _albedo_aliases();
+	for (int i = 0; i < albedo_aliases.size() && !matched; i++) {
+		const String &alias = albedo_aliases[i];
+		if (stem_lower == alias) {
+			matched = true;
+		} else if (stem_lower.ends_with("_" + alias) || stem_lower.ends_with("-" + alias)) {
+			prefix = stem.substr(0, stem.length() - alias.length());
+			matched = true;
+		} else if (stem_lower.begins_with(alias + "_") || stem_lower.begins_with(alias + "-")) {
+			suffix = stem.substr(alias.length());
+			matched = true;
+		}
+	}
+	if (!matched) {
+		return; // filename shape doesn't look like an albedo/diffuse map at all
+	}
+
+	texture.file_normal = _find_companion_texture(dir, prefix, suffix, _normal_aliases(), ext);
+	texture.file_roughness = _find_companion_texture(dir, prefix, suffix, _roughness_aliases(), ext);
+	texture.file_metalness = _find_companion_texture(dir, prefix, suffix, _metalness_aliases(), ext);
+	texture.file_ambient_occlusion = _find_companion_texture(dir, prefix, suffix, _ambient_occlusion_aliases(), ext);
+}
+
+#endif // TOOLS_ENABLED
 
 // =========================================================================
 // Baking — see _is_generated() in proc_rocks.h for why this flips ArrayMesh's
@@ -687,6 +1054,42 @@ void ProcRockMesh::_get_property_list(List<PropertyInfo> *p_list) const {
 				p_list->push_back(PropertyInfo(Variant::REAL, "pipeline_ao_bias", PROPERTY_HINT_RANGE, "-2,2,0.01"));
 			}
 		} break;
+	}
+
+	// Generic texture source — applies to every generator (unlike pipeline_* above,
+	// which is Method-3-only). Hidden for Method 3 while its own richer
+	// pipeline_generate_textures path is on, to avoid showing two competing texture
+	// controls at once — see memo.md's "Texture generation" section.
+	if (method != 3 || !pipeline.generate_textures) {
+		p_list->push_back(PropertyInfo(Variant::INT, "texture_source", PROPERTY_HINT_ENUM, "None,Generated,Gravel,Mossy,Rock,From File"));
+		switch (texture.source) {
+			case TEXTURE_SOURCE_GENERATED: {
+				p_list->push_back(PropertyInfo(Variant::INT, "texture_gen_size", PROPERTY_HINT_RANGE, "8,4096"));
+				p_list->push_back(PropertyInfo(Variant::INT, "texture_gen_seed"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_noise_frequency", PROPERTY_HINT_RANGE, "0.01,10,0.01"));
+				p_list->push_back(PropertyInfo(Variant::INT, "texture_gen_noise_octaves", PROPERTY_HINT_RANGE, "1,6"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_noise_persistence", PROPERTY_HINT_RANGE, "0,1,0.01"));
+				p_list->push_back(PropertyInfo(Variant::COLOR, "texture_gen_albedo_low"));
+				p_list->push_back(PropertyInfo(Variant::COLOR, "texture_gen_albedo_high"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_normal_strength", PROPERTY_HINT_RANGE, "0,10,0.1"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_roughness_scale", PROPERTY_HINT_RANGE, "-2,2,0.01"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_roughness_bias", PROPERTY_HINT_RANGE, "-2,2,0.01"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_metalness_scale", PROPERTY_HINT_RANGE, "-2,2,0.01"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_metalness_bias", PROPERTY_HINT_RANGE, "-2,2,0.01"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_ao_scale", PROPERTY_HINT_RANGE, "-2,2,0.01"));
+				p_list->push_back(PropertyInfo(Variant::REAL, "texture_gen_ao_bias", PROPERTY_HINT_RANGE, "-2,2,0.01"));
+			} break;
+			case TEXTURE_SOURCE_FILE: {
+				static const char *const kImageFilter = "*.png,*.jpg,*.jpeg,*.tga,*.bmp,*.webp";
+				p_list->push_back(PropertyInfo(Variant::STRING, "texture_file_albedo", PROPERTY_HINT_FILE, kImageFilter));
+				p_list->push_back(PropertyInfo(Variant::STRING, "texture_file_normal", PROPERTY_HINT_FILE, kImageFilter));
+				p_list->push_back(PropertyInfo(Variant::STRING, "texture_file_roughness", PROPERTY_HINT_FILE, kImageFilter));
+				p_list->push_back(PropertyInfo(Variant::STRING, "texture_file_metalness", PROPERTY_HINT_FILE, kImageFilter));
+				p_list->push_back(PropertyInfo(Variant::STRING, "texture_file_ambient_occlusion", PROPERTY_HINT_FILE, kImageFilter));
+			} break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -897,6 +1300,87 @@ bool ProcRockMesh::_set(const StringName &p_path, const Variant &p_value) {
 		set_pipeline_ao_bias(p_value);
 		return true;
 	}
+	// Generic texture source (every generator)
+	if (prop == "texture_source") {
+		set_texture_source(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_size") {
+		set_texture_gen_size(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_seed") {
+		set_texture_gen_seed(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_noise_frequency") {
+		set_texture_gen_noise_frequency(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_noise_octaves") {
+		set_texture_gen_noise_octaves(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_noise_persistence") {
+		set_texture_gen_noise_persistence(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_albedo_low") {
+		set_texture_gen_albedo_low(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_albedo_high") {
+		set_texture_gen_albedo_high(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_normal_strength") {
+		set_texture_gen_normal_strength(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_roughness_scale") {
+		set_texture_gen_roughness_scale(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_roughness_bias") {
+		set_texture_gen_roughness_bias(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_metalness_scale") {
+		set_texture_gen_metalness_scale(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_metalness_bias") {
+		set_texture_gen_metalness_bias(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_ao_scale") {
+		set_texture_gen_ao_scale(p_value);
+		return true;
+	}
+	if (prop == "texture_gen_ao_bias") {
+		set_texture_gen_ao_bias(p_value);
+		return true;
+	}
+	if (prop == "texture_file_albedo") {
+		set_texture_file_albedo(p_value);
+		return true;
+	}
+	if (prop == "texture_file_normal") {
+		set_texture_file_normal(p_value);
+		return true;
+	}
+	if (prop == "texture_file_roughness") {
+		set_texture_file_roughness(p_value);
+		return true;
+	}
+	if (prop == "texture_file_metalness") {
+		set_texture_file_metalness(p_value);
+		return true;
+	}
+	if (prop == "texture_file_ambient_occlusion") {
+		set_texture_file_ambient_occlusion(p_value);
+		return true;
+	}
 	return false;
 }
 
@@ -1086,6 +1570,87 @@ bool ProcRockMesh::_get(const StringName &p_path, Variant &r_ret) const {
 		r_ret = pipeline.ao_bias;
 		return true;
 	}
+	// Generic texture source (every generator)
+	if (prop == "texture_source") {
+		r_ret = texture.source;
+		return true;
+	}
+	if (prop == "texture_gen_size") {
+		r_ret = texture.gen_size;
+		return true;
+	}
+	if (prop == "texture_gen_seed") {
+		r_ret = texture.gen_seed;
+		return true;
+	}
+	if (prop == "texture_gen_noise_frequency") {
+		r_ret = texture.gen_noise_frequency;
+		return true;
+	}
+	if (prop == "texture_gen_noise_octaves") {
+		r_ret = texture.gen_noise_octaves;
+		return true;
+	}
+	if (prop == "texture_gen_noise_persistence") {
+		r_ret = texture.gen_noise_persistence;
+		return true;
+	}
+	if (prop == "texture_gen_albedo_low") {
+		r_ret = texture.gen_albedo_low;
+		return true;
+	}
+	if (prop == "texture_gen_albedo_high") {
+		r_ret = texture.gen_albedo_high;
+		return true;
+	}
+	if (prop == "texture_gen_normal_strength") {
+		r_ret = texture.gen_normal_strength;
+		return true;
+	}
+	if (prop == "texture_gen_roughness_scale") {
+		r_ret = texture.gen_roughness_scale;
+		return true;
+	}
+	if (prop == "texture_gen_roughness_bias") {
+		r_ret = texture.gen_roughness_bias;
+		return true;
+	}
+	if (prop == "texture_gen_metalness_scale") {
+		r_ret = texture.gen_metalness_scale;
+		return true;
+	}
+	if (prop == "texture_gen_metalness_bias") {
+		r_ret = texture.gen_metalness_bias;
+		return true;
+	}
+	if (prop == "texture_gen_ao_scale") {
+		r_ret = texture.gen_ao_scale;
+		return true;
+	}
+	if (prop == "texture_gen_ao_bias") {
+		r_ret = texture.gen_ao_bias;
+		return true;
+	}
+	if (prop == "texture_file_albedo") {
+		r_ret = texture.file_albedo;
+		return true;
+	}
+	if (prop == "texture_file_normal") {
+		r_ret = texture.file_normal;
+		return true;
+	}
+	if (prop == "texture_file_roughness") {
+		r_ret = texture.file_roughness;
+		return true;
+	}
+	if (prop == "texture_file_metalness") {
+		r_ret = texture.file_metalness;
+		return true;
+	}
+	if (prop == "texture_file_ambient_occlusion") {
+		r_ret = texture.file_ambient_occlusion;
+		return true;
+	}
 	return false;
 }
 
@@ -1107,6 +1672,7 @@ void ProcRockMesh::_rebuild() {
 			Array mesh_arrays = rock_gen(rockgen.depth, rockgen.randseed, rockgen.smoothness, rockgen.smoothed);
 			if (mesh_arrays.size() == VS::ARRAY_MAX) {
 				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_arrays);
+				_apply_texture_source();
 			}
 		} break;
 
@@ -1128,6 +1694,7 @@ void ProcRockMesh::_rebuild() {
 			if (rock_mesh.is_valid() && rock_mesh->get_surface_count() > 0) {
 				Array surface = rock_mesh->surface_get_arrays(0);
 				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, surface);
+				_apply_texture_source();
 			}
 		} break;
 
@@ -1157,6 +1724,7 @@ void ProcRockMesh::_rebuild() {
 					if (hull->get_surface_count() > 0) {
 						Array surface = hull->surface_get_arrays(0);
 						add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, surface);
+						_apply_texture_source();
 					}
 				}
 			}
@@ -1191,6 +1759,7 @@ void ProcRockMesh::_rebuild() {
 					surface_set_material(0, _pipeline_material);
 				} else {
 					_pipeline_material = Ref<SpatialMaterial>();
+					_apply_texture_source();
 				}
 			}
 		} break;
@@ -1289,6 +1858,47 @@ void ProcRockMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_pipeline_material"), &ProcRockMesh::get_pipeline_material);
 	ClassDB::bind_method(D_METHOD("load_from_file", "path"), &ProcRockMesh::load_from_file);
 
+	ClassDB::bind_method(D_METHOD("set_texture_source", "source"), &ProcRockMesh::set_texture_source);
+	ClassDB::bind_method(D_METHOD("get_texture_source"), &ProcRockMesh::get_texture_source);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_size", "size"), &ProcRockMesh::set_texture_gen_size);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_size"), &ProcRockMesh::get_texture_gen_size);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_seed", "seed"), &ProcRockMesh::set_texture_gen_seed);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_seed"), &ProcRockMesh::get_texture_gen_seed);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_noise_frequency", "frequency"), &ProcRockMesh::set_texture_gen_noise_frequency);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_noise_frequency"), &ProcRockMesh::get_texture_gen_noise_frequency);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_noise_octaves", "octaves"), &ProcRockMesh::set_texture_gen_noise_octaves);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_noise_octaves"), &ProcRockMesh::get_texture_gen_noise_octaves);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_noise_persistence", "persistence"), &ProcRockMesh::set_texture_gen_noise_persistence);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_noise_persistence"), &ProcRockMesh::get_texture_gen_noise_persistence);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_albedo_low", "color"), &ProcRockMesh::set_texture_gen_albedo_low);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_albedo_low"), &ProcRockMesh::get_texture_gen_albedo_low);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_albedo_high", "color"), &ProcRockMesh::set_texture_gen_albedo_high);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_albedo_high"), &ProcRockMesh::get_texture_gen_albedo_high);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_normal_strength", "strength"), &ProcRockMesh::set_texture_gen_normal_strength);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_normal_strength"), &ProcRockMesh::get_texture_gen_normal_strength);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_roughness_scale", "scale"), &ProcRockMesh::set_texture_gen_roughness_scale);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_roughness_scale"), &ProcRockMesh::get_texture_gen_roughness_scale);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_roughness_bias", "bias"), &ProcRockMesh::set_texture_gen_roughness_bias);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_roughness_bias"), &ProcRockMesh::get_texture_gen_roughness_bias);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_metalness_scale", "scale"), &ProcRockMesh::set_texture_gen_metalness_scale);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_metalness_scale"), &ProcRockMesh::get_texture_gen_metalness_scale);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_metalness_bias", "bias"), &ProcRockMesh::set_texture_gen_metalness_bias);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_metalness_bias"), &ProcRockMesh::get_texture_gen_metalness_bias);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_ao_scale", "scale"), &ProcRockMesh::set_texture_gen_ao_scale);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_ao_scale"), &ProcRockMesh::get_texture_gen_ao_scale);
+	ClassDB::bind_method(D_METHOD("set_texture_gen_ao_bias", "bias"), &ProcRockMesh::set_texture_gen_ao_bias);
+	ClassDB::bind_method(D_METHOD("get_texture_gen_ao_bias"), &ProcRockMesh::get_texture_gen_ao_bias);
+	ClassDB::bind_method(D_METHOD("set_texture_file_albedo", "path"), &ProcRockMesh::set_texture_file_albedo);
+	ClassDB::bind_method(D_METHOD("get_texture_file_albedo"), &ProcRockMesh::get_texture_file_albedo);
+	ClassDB::bind_method(D_METHOD("set_texture_file_normal", "path"), &ProcRockMesh::set_texture_file_normal);
+	ClassDB::bind_method(D_METHOD("get_texture_file_normal"), &ProcRockMesh::get_texture_file_normal);
+	ClassDB::bind_method(D_METHOD("set_texture_file_roughness", "path"), &ProcRockMesh::set_texture_file_roughness);
+	ClassDB::bind_method(D_METHOD("get_texture_file_roughness"), &ProcRockMesh::get_texture_file_roughness);
+	ClassDB::bind_method(D_METHOD("set_texture_file_metalness", "path"), &ProcRockMesh::set_texture_file_metalness);
+	ClassDB::bind_method(D_METHOD("get_texture_file_metalness"), &ProcRockMesh::get_texture_file_metalness);
+	ClassDB::bind_method(D_METHOD("set_texture_file_ambient_occlusion", "path"), &ProcRockMesh::set_texture_file_ambient_occlusion);
+	ClassDB::bind_method(D_METHOD("get_texture_file_ambient_occlusion"), &ProcRockMesh::get_texture_file_ambient_occlusion);
+
 	ClassDB::bind_method(D_METHOD("set_auto_refresh", "refresh"), &ProcRockMesh::set_auto_refresh);
 	ClassDB::bind_method(D_METHOD("get_auto_refresh"), &ProcRockMesh::get_auto_refresh);
 
@@ -1361,6 +1971,22 @@ ProcRockMesh::ProcRockMesh() {
 	pipeline.metalness_bias = 0;
 	pipeline.ao_scale = 0.5;
 	pipeline.ao_bias = 0.5;
+
+	texture.source = TEXTURE_SOURCE_NONE;
+	texture.gen_size = 256;
+	texture.gen_seed = 0;
+	texture.gen_noise_frequency = 1;
+	texture.gen_noise_octaves = 3;
+	texture.gen_noise_persistence = 0.5;
+	texture.gen_albedo_low = Color(0.3, 0.28, 0.26);
+	texture.gen_albedo_high = Color(0.6, 0.58, 0.55);
+	texture.gen_normal_strength = 2.0;
+	texture.gen_roughness_scale = 0.4;
+	texture.gen_roughness_bias = 0.5;
+	texture.gen_metalness_scale = 0;
+	texture.gen_metalness_bias = 0;
+	texture.gen_ao_scale = 0.5;
+	texture.gen_ao_bias = 0.5;
 
 	_dirty = true;
 }
@@ -1820,8 +2446,105 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 
 		DirAccess::remove_file_or_error(ProjectSettings::get_singleton()->globalize_path(path));
 	}
-	// Baked demo texture pack tests live in editor/proc_rocks_editor_plugin.cpp — that's
-	// the only place the loader exists now (editor-only, moved out of the generator API).
+	// Baked demo texture pack round-trip tests (load_baked_textures() itself) live in
+	// editor/proc_rocks_editor_plugin.cpp, near load_baked_textures()'s doctest include
+	// setup — these below only cover texture_source's generic, cross-generator wiring.
+
+	TEST_CASE("[proc_rocks] texture_source applies a generated PBR material on a non-ProcRock generator") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(0); // RockGen — never had any texture support before this
+		mesh->set_texture_gen_size(16);
+		mesh->set_texture_source(1); // Generated
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
+		CHECK(mesh->get_surface_count() > 0);
+		CHECK(mesh->surface_get_material(0).is_valid());
+	}
+
+	TEST_CASE("[proc_rocks] texture_source applies an embedded baked pack on a non-ProcRock generator") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(2); // RockStudio
+		mesh->set_texture_source(2); // Gravel
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
+		CHECK(mesh->get_surface_count() > 0);
+		CHECK(mesh->surface_get_material(0).is_valid());
+	}
+
+	TEST_CASE("[proc_rocks] texture_source None clears any previously-applied material") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(0);
+		mesh->set_texture_source(2); // Gravel
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
+		REQUIRE(mesh->surface_get_material(0).is_valid());
+
+		mesh->set_texture_source(0); // None
+		CHECK(mesh->surface_get_material(0).is_null());
+	}
+
+	TEST_CASE("[proc_rocks] texture_source File falls back to no material when the referenced asset can't be loaded") {
+		// A doctest run has no Godot *project* context, so res:// paths to raw,
+		// never-imported source images (like this repo's own demo JPEGs) can't
+		// resolve through ResourceLoader — exactly the same as a stale/deleted
+		// path a real user could end up with. _apply_texture_source() must handle
+		// that without crashing, leaving no material rather than a broken one.
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(0);
+		mesh->set_texture_source(5); // From File
+		mesh->set_texture_file_albedo("res://modules/gdextensions/editor/proc_rocks_demo/rock/rock.jpg");
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
+		CHECK(mesh->get_surface_count() > 0);
+		CHECK(mesh->surface_get_material(0).is_null());
+	}
+
+	TEST_CASE("[proc_rocks] set_texture_file_albedo auto-detects companion maps by the proc_rocks_demo folder convention") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_texture_source(5); // From File
+		mesh->set_texture_file_albedo("modules/gdextensions/editor/proc_rocks_demo/gravel/albedo.jpg");
+		CHECK(mesh->get_texture_file_normal() == "modules/gdextensions/editor/proc_rocks_demo/gravel/normals.jpg");
+		CHECK(mesh->get_texture_file_roughness() == "modules/gdextensions/editor/proc_rocks_demo/gravel/roughness.jpg");
+		CHECK(mesh->get_texture_file_ambient_occlusion() == "modules/gdextensions/editor/proc_rocks_demo/gravel/ambientOcc.jpg");
+		CHECK(mesh->get_texture_file_metalness() == ""); // no metalness.jpg ships for this pack
+	}
+
+	TEST_CASE("[proc_rocks] set_texture_file_albedo auto-detects companion maps by a suffixed external convention") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_texture_source(5);
+		// No such files exist on disk, but the filename SHAPE (prefix + "_albedo") is
+		// what's under test — detection must still only match files that actually exist,
+		// so real presets' gravel pack (same prefix, different suffix) must NOT be found.
+		mesh->set_texture_file_albedo("modules/gdextensions/editor/proc_rocks_demo/gravel/rockwall_albedo.jpg");
+		CHECK(mesh->get_texture_file_normal() == "");
+		CHECK(mesh->get_texture_file_roughness() == "");
+	}
+
+	TEST_CASE("[proc_rocks] set_texture_file_albedo leaves companions empty for an unrecognized filename shape") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_texture_source(5);
+		mesh->set_texture_file_albedo("modules/gdextensions/editor/proc_rocks_demo/gravel/mytexture.jpg");
+		CHECK(mesh->get_texture_file_normal() == "");
+		CHECK(mesh->get_texture_file_roughness() == "");
+		CHECK(mesh->get_texture_file_metalness() == "");
+		CHECK(mesh->get_texture_file_ambient_occlusion() == "");
+	}
+
+	TEST_CASE("[proc_rocks] Method 3's pipeline_generate_textures takes precedence over texture_source") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_generator(3);
+		mesh->set_pipeline_subdivisions(1);
+		mesh->set_pipeline_texture_size(16);
+		mesh->set_pipeline_generate_textures(true);
+		mesh->set_texture_source(2); // Gravel — must be ignored while generate_textures is on
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
+		CHECK(mesh->get_pipeline_material().is_valid());
+		CHECK(mesh->surface_get_material(0) == mesh->get_pipeline_material());
+	}
 }
 
 #endif // DOCTEST

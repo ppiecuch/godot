@@ -37,30 +37,20 @@
 #include "scene/resources/material.h"
 #include "scene/resources/texture.h"
 
+#include "../shared/texture_gen.h"
+
 // Method 3 — ProcRock: icosphere + noise displacement + optional cut-plane, entirely
 // built from Godot core primitives (no thirdparty dependency).
 Array rock_pipeline_gen(int p_subdivisions, real_t p_width, real_t p_height, real_t p_depth,
 		real_t p_noise_frequency, real_t p_noise_amplitude, int p_noise_octaves, real_t p_noise_persistence,
 		int p_randseed, bool p_cutplane_enabled, real_t p_cutplane_offset, bool p_smoothed);
 
-struct ProcRockPipelineTextures {
-	Ref<ImageTexture> albedo;
-	Ref<ImageTexture> normal;
-	Ref<ImageTexture> roughness;
-	Ref<ImageTexture> metalness;
-	Ref<ImageTexture> ambient_occlusion;
-};
-
-// PBR texture set derived from a single noise height field, correlated with the mesh
-// displacement above when called with the same seed/frequency/octaves/persistence.
-ProcRockPipelineTextures rock_pipeline_gen_textures(
-		int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed,
-		const Color &p_albedo_low, const Color &p_albedo_high, real_t p_normal_strength,
-		real_t p_roughness_scale, real_t p_roughness_bias,
-		real_t p_metalness_scale, real_t p_metalness_bias,
-		real_t p_ao_scale, real_t p_ao_bias);
-
-Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures);
+// ProcRockPipelineTextures / rock_pipeline_gen_textures() / rock_pipeline_make_material()
+// now live in generators/shared/texture_gen.h — they were always pure 2D image/material
+// code with no ProcRock-specific coupling, so any generator can use them (see memo.md's
+// "Texture generation" section). Only the JSON-driven variant and texture adders below
+// are inherently ProcRock-specific (they consume procrocklib's JSON pipeline format,
+// which only Method 3 ever produces).
 
 // JSON pipeline preset support — p_pipeline_json is an already-parsed Variant::DICTIONARY
 // matching procrocklib's {"generator","modifiers","parameterizer","textureAdders",

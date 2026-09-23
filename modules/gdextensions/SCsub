@@ -759,6 +759,8 @@ if not env["disable_3d"]:
         if env["tools"]:
             thirdparty_sources += [
                 "submodules/environment/proc_rocks/generators/shared/box_uv.cpp",
+                "submodules/environment/proc_rocks/generators/shared/texture_gen.cpp",
+                "submodules/environment/proc_rocks/generators/shared/baked_textures_gen.cpp",
                 "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
                 "submodules/environment/proc_rocks/generators/rockgen/rockgen.cpp",
                 "submodules/environment/proc_rocks/generators/rockstudio/rock_studio.cpp",

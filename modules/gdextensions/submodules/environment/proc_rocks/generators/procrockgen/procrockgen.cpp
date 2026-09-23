@@ -32,6 +32,7 @@
 
 #include "../shared/box_uv.h"
 #include "../shared/rock_header.h"
+#include "../shared/texture_gen.h"
 
 #include "core/array.h"
 #include "core/hash_map.h"
@@ -2333,80 +2334,6 @@ Ref<Image> make_height_image_from_noise(int p_size, const NoiseGraph &p_noise) {
 	return Ref<Image>(memnew(Image(p_size, p_size, false, Image::FORMAT_L8, data)));
 }
 
-Ref<Image> make_height_image(int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed) {
-	NoiseGraph noise = NoiseGraph::make_simple_fractal(p_noise_frequency, CLAMP(p_noise_octaves, 1, 6), p_noise_persistence, p_randseed == 0 ? (int)Math::rand() : p_randseed);
-	return make_height_image_from_noise(p_size, noise);
-}
-
-Ref<Image> make_albedo_image_from_gradient(Ref<Image> p_height, Ref<Gradient> p_gradient) {
-	int w = p_height->get_width(), h = p_height->get_height();
-
-	Ref<Image> img;
-	img.instance();
-	img->create(w, h, false, Image::FORMAT_RGB8);
-
-	p_height->lock();
-	img->lock();
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			img->set_pixel(x, y, p_gradient->get_color_at_offset(p_height->get_pixel(x, y).r));
-		}
-	}
-	img->unlock();
-	p_height->unlock();
-	return img;
-}
-
-Ref<Image> make_albedo_image(Ref<Image> p_height, const Color &p_low, const Color &p_high) {
-	Ref<Gradient> gradient;
-	gradient.instance();
-	gradient->set_color(0, p_low);
-	gradient->set_color(1, p_high);
-	return make_albedo_image_from_gradient(p_height, gradient);
-}
-
-Ref<Image> make_normal_image(Ref<Image> p_height, real_t p_strength) {
-	int w = p_height->get_width(), h = p_height->get_height();
-	Ref<Image> img;
-	img.instance();
-	img->create(w, h, false, Image::FORMAT_RGB8);
-
-	p_height->lock();
-	img->lock();
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			real_t hl = p_height->get_pixel(CLAMP(x - 1, 0, w - 1), y).r;
-			real_t hr = p_height->get_pixel(CLAMP(x + 1, 0, w - 1), y).r;
-			real_t hd = p_height->get_pixel(x, CLAMP(y - 1, 0, h - 1)).r;
-			real_t hu = p_height->get_pixel(x, CLAMP(y + 1, 0, h - 1)).r;
-			Vector3 n = Vector3(-(hr - hl) * p_strength, -(hu - hd) * p_strength, 1.0).normalized();
-			img->set_pixel(x, y, Color(n.x * 0.5 + 0.5, n.y * 0.5 + 0.5, n.z * 0.5 + 0.5));
-		}
-	}
-	img->unlock();
-	p_height->unlock();
-	return img;
-}
-
-Ref<Image> make_scaled_grayscale_image(Ref<Image> p_height, real_t p_scale, real_t p_bias) {
-	int w = p_height->get_width(), h = p_height->get_height();
-	Ref<Image> img;
-	img.instance();
-	img->create(w, h, false, Image::FORMAT_L8);
-
-	p_height->lock();
-	img->lock();
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			real_t v = CLAMP(p_height->get_pixel(x, y).r * p_scale + p_bias, real_t(0.0), real_t(1.0));
-			img->set_pixel(x, y, Color(v, v, v));
-		}
-	}
-	img->unlock();
-	p_height->unlock();
-	return img;
-}
-
 // NoiseTextureAdder (procrocklib _id 0, the only texture-adder type any real
 // preset uses — see memo.md's "Texture adders" section) — an independently
 // noise-driven second height field whose own gradient (RGB = paint color, alpha
@@ -2536,11 +2463,11 @@ void _apply_noise_texture_adder(const Dictionary &p_adder_config, int p_size, Pr
 	base_albedo->unlock();
 	height->unlock();
 
-	r_textures.albedo->create_from_image(base_albedo);
-	r_textures.normal->create_from_image(base_normal);
-	r_textures.roughness->create_from_image(base_roughness);
-	r_textures.metalness->create_from_image(base_metalness);
-	r_textures.ambient_occlusion->create_from_image(base_ao);
+	r_textures.albedo = to_texture(base_albedo);
+	r_textures.normal = to_texture(base_normal);
+	r_textures.roughness = to_texture(base_roughness);
+	r_textures.metalness = to_texture(base_metalness);
+	r_textures.ambient_occlusion = to_texture(base_ao);
 }
 
 // Applies every enabled entry of pipeline_json["textureAdders"], in order, over
@@ -2574,30 +2501,6 @@ void _apply_texture_adders(const Dictionary &p_pipeline_json, int p_size, ProcRo
 
 } // namespace
 
-ProcRockPipelineTextures rock_pipeline_gen_textures(
-		int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed,
-		const Color &p_albedo_low, const Color &p_albedo_high, real_t p_normal_strength,
-		real_t p_roughness_scale, real_t p_roughness_bias,
-		real_t p_metalness_scale, real_t p_metalness_bias,
-		real_t p_ao_scale, real_t p_ao_bias) {
-	int size = CLAMP(p_size, 8, 4096);
-	Ref<Image> height = make_height_image(size, p_noise_frequency, p_noise_octaves, p_noise_persistence, p_randseed);
-
-	ProcRockPipelineTextures textures;
-	textures.albedo.instance();
-	textures.albedo->create_from_image(make_albedo_image(height, p_albedo_low, p_albedo_high));
-	textures.normal.instance();
-	textures.normal->create_from_image(make_normal_image(height, p_normal_strength));
-	textures.roughness.instance();
-	textures.roughness->create_from_image(make_scaled_grayscale_image(height, p_roughness_scale, p_roughness_bias));
-	textures.metalness.instance();
-	textures.metalness->create_from_image(make_scaled_grayscale_image(height, p_metalness_scale, p_metalness_bias));
-	textures.ambient_occlusion.instance();
-	textures.ambient_occlusion->create_from_image(make_scaled_grayscale_image(height, p_ao_scale, p_ao_bias));
-
-	return textures;
-}
-
 ProcRockPipelineTextures rock_pipeline_gen_textures_from_json(int p_size, const Dictionary &p_pipeline_json) {
 	int size = CLAMP(p_size, 8, 4096);
 	NoiseGraph noise = _extract_displacement_graph(p_pipeline_json);
@@ -2610,44 +2513,20 @@ ProcRockPipelineTextures rock_pipeline_gen_textures_from_json(int p_size, const 
 	real_t normal_strength = _extract_normal_strength(p_pipeline_json, 2.0);
 
 	ProcRockPipelineTextures textures;
-	textures.albedo.instance();
-	textures.albedo->create_from_image(make_albedo_image_from_gradient(height, _extract_albedo_gradient(p_pipeline_json)));
-	textures.normal.instance();
-	textures.normal->create_from_image(make_normal_image(height, normal_strength));
-	textures.roughness.instance();
-	textures.roughness->create_from_image(make_scaled_grayscale_image(height, roughness_scale, roughness_bias));
-	textures.metalness.instance();
-	textures.metalness->create_from_image(make_scaled_grayscale_image(height, metalness_scale, metalness_bias));
-	textures.ambient_occlusion.instance();
-	textures.ambient_occlusion->create_from_image(make_scaled_grayscale_image(height, ao_scale, ao_bias));
+	textures.albedo = to_texture(make_albedo_image_from_gradient(height, _extract_albedo_gradient(p_pipeline_json)));
+	textures.normal = to_texture(make_normal_image(height, normal_strength));
+	textures.roughness = to_texture(make_scaled_grayscale_image(height, roughness_scale, roughness_bias));
+	textures.metalness = to_texture(make_scaled_grayscale_image(height, metalness_scale, metalness_bias));
+	textures.ambient_occlusion = to_texture(make_scaled_grayscale_image(height, ao_scale, ao_bias));
 
 	_apply_texture_adders(p_pipeline_json, size, textures);
 
 	return textures;
 }
 
-Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures) {
-	Ref<SpatialMaterial> material;
-	material.instance();
-
-	material->set_texture(SpatialMaterial::TEXTURE_ALBEDO, p_textures.albedo);
-	material->set_texture(SpatialMaterial::TEXTURE_NORMAL, p_textures.normal);
-	material->set_feature(SpatialMaterial::FEATURE_NORMAL_MAPPING, true);
-	material->set_texture(SpatialMaterial::TEXTURE_ROUGHNESS, p_textures.roughness);
-	material->set_roughness_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
-	material->set_texture(SpatialMaterial::TEXTURE_METALLIC, p_textures.metalness);
-	material->set_metallic_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
-	material->set_texture(SpatialMaterial::TEXTURE_AMBIENT_OCCLUSION, p_textures.ambient_occlusion);
-	material->set_ao_texture_channel(SpatialMaterial::TEXTURE_CHANNEL_GRAYSCALE);
-	material->set_feature(SpatialMaterial::FEATURE_AMBIENT_OCCLUSION, true);
-
-	return material;
-}
-
-// Editor-only baked texture packs (ProcRock dock "Demo Texture" picker) live in
-// modules/gdextensions/editor/proc_rocks_editor_plugin.cpp — that's the only caller,
-// and it's TOOLS_ENABLED-only already, so the loader belongs there, not in the
-// generator API.
+// Editor-only baked texture packs (gravel/mossy/rock) live in
+// generators/shared/baked_textures_gen.h/.cpp — see that file and proc_rocks.h's
+// texture_source property for how any generator's mesh can wear one.
 
 #ifdef DOCTEST
 #include "core/io/json.h"

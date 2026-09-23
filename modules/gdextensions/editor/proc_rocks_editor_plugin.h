@@ -73,10 +73,6 @@ class ProcRockDialog : public WindowDialog {
 	FileDialog *export_dialog;
 	FileDialog *load_json_dialog;
 
-	// Demo texture picker (editor-only baked PBR packs — see baked_textures.h)
-	OptionButton *demo_texture_option;
-	int demo_texture_pack; // -1 = None, else ProcRockBakedTexturePack
-
 	// Bundled pipeline preset browser (memo.md's "Full JSON round-trip UX" item) —
 	// lists every *.json found in proc_rocks_demo/presets/ at dock-construction time,
 	// selecting one immediately loads+previews it via the same path as the
@@ -99,9 +95,8 @@ class ProcRockDialog : public WindowDialog {
 	void _on_load_json_pressed();
 	void _on_load_json_file_selected(const String &p_path);
 	void _on_preset_selected(int p_idx);
-	void _on_demo_texture_changed(int p_idx);
 	void _on_property_edited(const StringName &p_prop);
-	void _apply_demo_texture();
+	void _update_preview_material();
 	void _update_preview();
 	void _update_info();
 

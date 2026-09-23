@@ -97,11 +97,60 @@ class ProcRockMesh : public ArrayMesh {
 
 	Ref<SpatialMaterial> _pipeline_material;
 
+	// Generic texture-source selection, applying to every generator (0-3) — unlike
+	// `pipeline` above, which is Method-3 (ProcRock)-only. See memo.md's "Texture
+	// generation" section: Method 3 keeps `pipeline.generate_textures` as its own
+	// richer, JSON-capable path, taking precedence over this when enabled.
+	struct {
+		int source; // 0=None,1=Generated,2=Gravel,3=Mossy,4=Rock,5=File — see TextureSource
+
+		// Generated
+		int gen_size;
+		int gen_seed;
+		real_t gen_noise_frequency;
+		int gen_noise_octaves;
+		real_t gen_noise_persistence;
+		Color gen_albedo_low, gen_albedo_high;
+		real_t gen_normal_strength;
+		real_t gen_roughness_scale, gen_roughness_bias;
+		real_t gen_metalness_scale, gen_metalness_bias;
+		real_t gen_ao_scale, gen_ao_bias;
+
+		// From File — res://-relative paths; the 4 companion fields are
+		// auto-populated when file_albedo is set (see _auto_detect_companion_textures()),
+		// but remain individually editable afterward.
+		String file_albedo, file_normal, file_roughness, file_metalness, file_ambient_occlusion;
+	} texture;
+
+	enum TextureSource {
+		TEXTURE_SOURCE_NONE,
+		TEXTURE_SOURCE_GENERATED,
+		TEXTURE_SOURCE_GRAVEL,
+		TEXTURE_SOURCE_MOSSY,
+		TEXTURE_SOURCE_ROCK,
+		TEXTURE_SOURCE_FILE,
+	};
+
 	bool auto_refresh;
 	int method;
 
 	bool _dirty;
 	void _rebuild();
+
+#ifdef TOOLS_ENABLED
+	// Applies `texture.source` to surface 0 — called from _rebuild() for every
+	// generator (Method 3 only when its own pipeline.generate_textures is off, to
+	// preserve that legacy path's exact existing behavior). See generators/shared/
+	// texture_gen.h / baked_textures_gen.h for the underlying per-source logic.
+	void _apply_texture_source();
+
+	// For the given texture.file_albedo path, searches its directory for
+	// companion PBR maps by filename convention (see proc_rocks.cpp for the exact
+	// token/extension lists) and overwrites all 4 texture.file_* companion fields
+	// with whatever is found (empty if nothing matches) — called from
+	// set_texture_file_albedo().
+	void _auto_detect_companion_textures();
+#endif
 
 	// When true, this resource's surface geometry is real, frozen data serialized
 	// through ArrayMesh's own inherited (de)serialization instead of being
@@ -216,6 +265,49 @@ public:
 	void set_pipeline_preset(int p_preset);
 
 	Ref<SpatialMaterial> get_pipeline_material() const { return _pipeline_material; }
+
+	// Generic texture source — applies to every generator (0-3), see the `texture`
+	// struct/TextureSource enum above.
+	void set_texture_source(int p_val);
+	int get_texture_source() const;
+	void set_texture_gen_size(int p_val);
+	int get_texture_gen_size() const;
+	void set_texture_gen_seed(int p_val);
+	int get_texture_gen_seed() const;
+	void set_texture_gen_noise_frequency(real_t p_val);
+	real_t get_texture_gen_noise_frequency() const;
+	void set_texture_gen_noise_octaves(int p_val);
+	int get_texture_gen_noise_octaves() const;
+	void set_texture_gen_noise_persistence(real_t p_val);
+	real_t get_texture_gen_noise_persistence() const;
+	void set_texture_gen_albedo_low(const Color &p_val);
+	Color get_texture_gen_albedo_low() const;
+	void set_texture_gen_albedo_high(const Color &p_val);
+	Color get_texture_gen_albedo_high() const;
+	void set_texture_gen_normal_strength(real_t p_val);
+	real_t get_texture_gen_normal_strength() const;
+	void set_texture_gen_roughness_scale(real_t p_val);
+	real_t get_texture_gen_roughness_scale() const;
+	void set_texture_gen_roughness_bias(real_t p_val);
+	real_t get_texture_gen_roughness_bias() const;
+	void set_texture_gen_metalness_scale(real_t p_val);
+	real_t get_texture_gen_metalness_scale() const;
+	void set_texture_gen_metalness_bias(real_t p_val);
+	real_t get_texture_gen_metalness_bias() const;
+	void set_texture_gen_ao_scale(real_t p_val);
+	real_t get_texture_gen_ao_scale() const;
+	void set_texture_gen_ao_bias(real_t p_val);
+	real_t get_texture_gen_ao_bias() const;
+	void set_texture_file_albedo(const String &p_val);
+	String get_texture_file_albedo() const;
+	void set_texture_file_normal(const String &p_val);
+	String get_texture_file_normal() const;
+	void set_texture_file_roughness(const String &p_val);
+	String get_texture_file_roughness() const;
+	void set_texture_file_metalness(const String &p_val);
+	String get_texture_file_metalness() const;
+	void set_texture_file_ambient_occlusion(const String &p_val);
+	String get_texture_file_ambient_occlusion() const;
 
 	Error load_from_file(const String p_path);
 
