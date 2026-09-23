@@ -184,7 +184,7 @@ enum {
 #define DEFPROGRAM  MODULE ProgramModule = {
 #define DEFDFLATP   MODULE DFlatpModule = {
 #define MOD_DESCRIPTION(s)   s,
-#define MOD_VERSION(m1,m2,r,p)  m1,m2,r,p,
+#define MOD_VERSION(m1,m2,b)  m1,m2,b,
 #define MOD_COPYRIGHT(s)     s
 #define MOD_LICENSE(s)      ,s
 #define MOD_ABOUT(s)        ,s
@@ -485,8 +485,7 @@ typedef struct ModuleDesc {
     char *Description;
     int   Ver_maj;
     int   Ver_min;
-    int   Ver_rel;
-    int   Ver_patch;
+    int   Build;          /* bumped by hand on each release, see DEFDFLATP/DEFPROGRAM */
     char *Copyright;
     char *License;
     char *AboutComment;
@@ -495,8 +494,11 @@ typedef struct ModuleDesc {
 
 extern  char  VerStr [64];
 
-#define MK_VER(a,b,c,d)   ((sprintf(VerStr,"%i.%i.%i.%i",a,b,c,d),VerStr))
-#define ModuleVersion(m)  (MK_VER(m.Ver_maj,m.Ver_min,m.Ver_rel,m.Ver_patch))
+/* "x.y (build z)", e.g. "1.0 (build 3)" -- not a 4-part dotted version,
+** since Build isn't a per-field release/patch counter, just a plain
+** manually-incremented build number. */
+#define MK_VER(a,b,c)   ((sprintf(VerStr,"%i.%i (build %i)",a,b,c),VerStr))
+#define ModuleVersion(m)  (MK_VER(m.Ver_maj,m.Ver_min,m.Build))
 
 /* /////// CLASS ////////////////////////////////////////// */
 
@@ -1469,6 +1471,12 @@ void scroll_window(WINDOW, RECT, int);
 /* /////// VARIABLES //////////////////////////////////// */
 
 extern WINDOW ApplicationWindow;
+/* Godot integration: see this variable's own comment in textUI.c. */
+extern void (*ConuiRenderHook)(void);
+/* See this variable's own comment in textUI.c. */
+extern void (*ConuiCursorHook)(int x, int y, int visible, int shape);
+/* Godot integration: see this function's own comment in textUI.c. */
+int ConuiDefaultWndProc(WINDOW, MESSAGE, PARAM, PARAM);
 
 extern WINDOW inFocus;
 extern WINDOW oldFocus;
@@ -1493,8 +1501,8 @@ void SetScreenHeight(int);
 
 /* --------- modules  --------------------- */
 extern  char  VerStr [64];
-#define MK_VER(a,b,c,d)   ((sprintf(VerStr,"%i.%i.%i.%i",a,b,c,d),VerStr))
-#define ModuleVersion(m)  (MK_VER(m.Ver_maj,m.Ver_min,m.Ver_rel,m.Ver_patch))
+#define MK_VER(a,b,c)   ((sprintf(VerStr,"%i.%i (build %i)",a,b,c),VerStr))
+#define ModuleVersion(m)  (MK_VER(m.Ver_maj,m.Ver_min,m.Build))
 
 
 /* --------- windows  --------------------- */

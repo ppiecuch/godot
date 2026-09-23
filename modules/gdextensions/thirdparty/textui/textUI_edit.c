@@ -1728,7 +1728,7 @@ DEFMENU(MainMenu)
         SELECTION(  "~Keys help...",      ID_KEYSHELP,  0, 0 )
         SELECTION(  "Help ~index...",     ID_HELPINDEX, 0, 0 )
         SEPARATOR
-        SELECTION(  "~About Edit...",          ID_ABOUT,     0, 0 )
+        SELECTION(  "~About IDE...",          ID_ABOUT,     0, 0 )
         SELECTION(  "~About DFlat+...",          ID_ABOUTDFP,     0, 0 )
     ENDPOPDOWN
 

@@ -37,6 +37,28 @@
 # define DEV_ASSERT(C)
 #endif
 
+/* Fallback console geometry used only if init_console() was never
+** called (or was called with a bogus value) before something needs the
+** console size -- the traditional default terminal geometry.
+** get_console_size()'s own DEV_ASSERT catches this loudly in debug
+** builds, but DEV_ASSERT compiles to nothing outside DEBUG_ENABLED, so
+** release builds need a real fallback too: every SCREENWIDTH/
+** SCREENHEIGHT user in this file assumes a positive value, and at least
+** one (TBPaintMsg's blankline buffer) turns a negative width into a
+** huge unsigned length via memset()'s size_t parameter -- confirmed
+** directly: an uninitialized _width (-1) reliably crashes there. */
+#define DEFAULT_CONSOLE_WIDTH  80
+#define DEFAULT_CONSOLE_HEIGHT 25
+
+/* Upper bound for the same set of console-width-sized stack buffers
+** (VLAs): real terminal geometry (ioctl TIOCGWINSZ's ws_col/ws_row) is
+** an unsigned short, so a corrupted or spoofed result could in theory
+** report up to 65535 -- clamping to a still-generous max keeps the
+** worst-case stack allocation bounded instead of trusting that value
+** outright. No real terminal is anywhere close to this wide. */
+#define MAX_CONSOLE_WIDTH  1024
+#define MAX_CONSOLE_HEIGHT 512
+
 SysConfigType SysConfig = {
     {FALSE,255,{0}},             /* Current Color Scheme */
     {80,25,"No set"},        /* Resolution */
@@ -47,15 +69,20 @@ SysConfigType SysConfig = {
 
 DEFDFLATP
     MOD_DESCRIPTION("DFlat+")
-    MOD_VERSION(1,0,0,0)
+    MOD_VERSION(1,0,1)  /* bump the build number by hand on each DFlat+ release */
     MOD_COPYRIGHT("KomSoft/Santamaria/Auer/Cosentino/Dr.DobbJ")
     MOD_LICENSE("GNU GPL 2.0")
     MOD_ABOUT("TextUI DFlat+ application|framework for the text console")
 END_DEFMODULE
 
 DEFPROGRAM
-    MOD_DESCRIPTION("TextUI Interface 1.0")
-    MOD_VERSION(1,0,0,0)
+    MOD_DESCRIPTION("TextUI IDE")
+    /* The IDE is integral to DFlat+ now, not a separately-versioned
+    ** product -- AboutBox() always shows DFlatpModule's version instead
+    ** of this one (see textUI.c's AboutBox()), so these numbers are
+    ** unused; kept only because MOD_VERSION is a required slot in the
+    ** module-descriptor macro chain. */
+    MOD_VERSION(1,0,1)
     MOD_COPYRIGHT("   Pawel Piecuch")
     MOD_LICENSE("GNU GPL 2.0")
     MOD_ABOUT("Portable General Purpose TextUI Interface")
@@ -102,6 +129,43 @@ int match_spec(const char* spec, const char* text);
 int ScreenHeight;
 WINDOW ApplicationWindow = NULL;
 extern DBOX Display;
+
+/* Godot integration: a host-settable render callback, invoked at the end
+** of every dispatch_message() call (see below) -- not just from a
+** top-level "while (dispatch_message(...)) render()" loop, but from
+** *every* call anywhere, including DialogBox()'s own nested modal loop
+** and Cooperate(). Without this, any code path that shows a dialog (e.g.
+** YesNoBox()) only pumps messages through its own internal loop, which a
+** host's top-level render-after-dispatch loop never sees -- the dialog
+** would process input and change state correctly, but never visibly
+** render, making the whole app appear to hang. NULL (a no-op) by
+** default; a Godot-side bridge (see textUI_support.cpp/scene/debugconsole)
+** sets this once it starts pumping messages. Kept as a plain function
+** pointer rather than a hard #include of any renderer, so this core
+** engine file stays host-backend-agnostic. */
+void (*ConuiRenderHook)(void) = NULL;
+
+/* A host-settable callback for the *real* cursor (position, visibility,
+** and shape -- 0 = block/normal, 1 = bar/insert), invoked from
+** cursor()/hidecursor()/unhidecursor()/normalcursor()/set_cursor_type()
+** below every time DFlat+ moves, shows/hides, or reshapes its own
+** cursor. Those functions are otherwise complete no-ops in this codebase
+** -- ported from a real-mode DOS build that made actual BIOS calls -- so
+** without this hook, nothing ever indicates where the caret is on a real
+** display. NULL (a no-op) by default, same rationale as ConuiRenderHook
+** just above: keeps this core engine file host-backend-agnostic. */
+void (*ConuiCursorHook)(int x, int y, int visible, int shape) = NULL;
+
+/* DefaultWndProc/BaseWndProc (textUI.h) are macros reading the
+** file-static "classdefs[]" table directly, so they can only be used
+** from within textUI.c itself -- there is no real, linkable
+** "DefaultWndProc" symbol an external caller (a host-written wndproc)
+** can call. This is a trivial wrapper exposing the exact same macro as a
+** real function. */
+int ConuiDefaultWndProc(WINDOW wnd, MESSAGE msg, PARAM p1, PARAM p2)
+{
+    return DefaultWndProc(wnd, msg, p1, p2);
+}
 
 static void DoWindowColors(WINDOW);
 
@@ -793,20 +857,29 @@ int ComboProc(WINDOW wnd, MESSAGE msg, PARAM p1, PARAM p2)
 
 int ListProc(WINDOW wnd, MESSAGE msg, PARAM p1, PARAM p2)
 {
-    WINDOW pwnd = GetParent(GetParent(wnd));
-    DBOX *db = pwnd->extension;
-    WINDOW cwnd = ControlWindow(db, wnd->ct->command);
     char text[130];
     int rtn;
     WINDOW currFocus;
+    /* Bug fix: this is ComboProc()'s internal dropdown Listbox -- unlike a
+    ** real top-level DBOX control (whose ->ct is set by
+    ** CtlCreateWindowMsg() before CREATE_WINDOW is ever dispatched), this
+    ** window's ->ct is allocated by *this function's own* CREATE_WINDOW
+    ** case below. pwnd/db/cwnd (just below) unconditionally computed
+    ** wnd->ct->command *before* that allocation ran on this window's very
+    ** first message (CREATE_WINDOW itself), NULL-dereferencing wnd->ct on
+    ** every COMBOBOX creation. Handle CREATE_WINDOW first and compute the
+    ** rest afterward, once ->ct is guaranteed to exist. */
+    if (msg == CREATE_WINDOW) {
+        wnd->ct = DFmalloc(sizeof(CTLWINDOW));
+        wnd->ct->setting = OFF;
+        wnd->WindowColors[FRAME_COLOR][FG] = wnd->WindowColors[STD_COLOR][FG];
+        wnd->WindowColors[FRAME_COLOR][BG] = wnd->WindowColors[STD_COLOR][BG];
+        return DefaultWndProc(wnd, msg, p1, p2);
+    }
+    WINDOW pwnd = GetParent(GetParent(wnd));
+    DBOX *db = pwnd->extension;
+    WINDOW cwnd = ControlWindow(db, wnd->ct->command);
     switch (msg)    {
-        case CREATE_WINDOW:
-            wnd->ct = DFmalloc(sizeof(CTLWINDOW));
-            wnd->ct->setting = OFF;
-            wnd->WindowColors[FRAME_COLOR][FG] = wnd->WindowColors[STD_COLOR][FG];
-            wnd->WindowColors[FRAME_COLOR][BG] = wnd->WindowColors[STD_COLOR][BG];
-            rtn = DefaultWndProc(wnd, msg, p1, p2);
-            return rtn;
         case SETFOCUS:
             if ((int)p1 == FALSE) {
                 if (!wnd->isHelping) {
@@ -1102,54 +1175,87 @@ static BOOL IncompleteFilename(char *s)
 }
 
 
+/* Field widths for AboutBox()'s message template below -- each '@'
+** placeholder has this many characters of fixed room after it before
+** the line's trailing '\n' (or end of string, for the last line), so a
+** field's substituted value must never be widened without widening its
+** template line to match (a mismatch here previously truncated the
+** Copyright/About/"Based on..." lines mid-word). */
+enum {
+    ABOUT_SHORT_FIELD   = 22, /* Description, License */
+    ABOUT_VERSION_FIELD = 14, /* Version */
+    ABOUT_LONG_FIELD    = 44  /* Copyright, About1/About2, "Based on..." */
+};
+
+/* Fills the next remaining '@' placeholder in `aboutMsg` with up to
+** `fieldwidth` characters of `value` (silently truncating anything
+** longer, never overflowing the template), or does nothing if no
+** placeholder is left -- e.g. if a future edit adds a call here without
+** also adding a matching '@' to the template below. */
+static void AboutFillField(char *aboutMsg, const char *value, size_t fieldwidth)
+{
+    char *field = strchr(aboutMsg, '@');
+    if (field == NULL)
+        return;
+    size_t len = strlen(value);
+    if (len > fieldwidth)
+        len = fieldwidth;
+    if (len > 0)
+        memcpy(field, value, len);
+    else
+        /* Nothing to substitute (e.g. About2 is "" whenever AboutComment
+        ** has no second, "|"-separated half) -- blank the placeholder
+        ** rather than leaving a literal '@' visible on screen. */
+        *field = ' ';
+}
+
 void AboutBox ( MODULE m, BOOL BasedOnDFlat )
 {
-    char maxAbout[]= "                                      ";
     char aboutMsg [] =
              "          @                        \n"
              "          Version @                \n"
              "          @                        \n"
-             "@                                  \n"
-             "                                   \n"
-             "@                                  \n"
-             "@                                  \n"
-             "@                                   ";
+             "@                                            \n"
+             "                                             \n"
+             "@                                            \n"
+             "@                                            \n"
+             "@                                             ";
 
     char AboutStr[255];
     char *About1, *About2;
 
-    strncpy (AboutStr, m.AboutComment, 255);
+    strncpy (AboutStr, m.AboutComment, sizeof(AboutStr) - 1);
+    AboutStr[sizeof(AboutStr) - 1] = '\0';
     About1 = strtok (AboutStr, "|");
     About2 = strtok (NULL, "@");
+    /* AboutComment isn't guaranteed to contain a "|" separator (e.g.
+    ** ProgramModule's is a single line) -- strtok() then returns NULL
+    ** for whichever half has nothing left to tokenize, which crashed a
+    ** few lines down where it's fed straight into strncpy() as the
+    ** source pointer. */
+    if (About1 == NULL)
+        About1 = "";
+    if (About2 == NULL)
+        About2 = "";
 
-    strncpy (maxAbout, m.Description, 22); maxAbout[23] = 0;
-    strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
+    AboutFillField(aboutMsg, m.Description, ABOUT_SHORT_FIELD);
 
-    strncpy (maxAbout, ModuleVersion(m), 14); maxAbout[15] = 0;
-    strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
+    /* Only DFlat+ itself carries a version number -- the IDE built on
+    ** top of it is integral to DFlat+ now, not a separately-versioned
+    ** product, so its own About box shows DFlat+'s version rather than
+    ** tracking a second, redundant one. */
+    AboutFillField(aboutMsg, ModuleVersion(DFlatpModule), ABOUT_VERSION_FIELD);
 
-    strncpy (maxAbout, m.License, 22); maxAbout[23] = 0;
-    strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
-
-    strncpy (maxAbout, m.Copyright, 34); maxAbout[35] = 0;
-    strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
-
-    strncpy (maxAbout, About1, 34); maxAbout[35] = 0;
-    strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
-
-    strncpy (maxAbout, About2, 34); maxAbout[35] = 0;
-    strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
-
-    // strncpy (maxAbout, SysConfig.DFlatpVersion, 4); maxAbout[5] = 0;
-    // strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
+    AboutFillField(aboutMsg, m.License, ABOUT_SHORT_FIELD);
+    AboutFillField(aboutMsg, m.Copyright, ABOUT_LONG_FIELD);
+    AboutFillField(aboutMsg, About1, ABOUT_LONG_FIELD);
+    AboutFillField(aboutMsg, About2, ABOUT_LONG_FIELD);
 
     if (BasedOnDFlat)
-        sprintf (AboutStr, "Based on FreeDOS-DFlat+ %i.%i",DFlatpModule.Ver_maj,DFlatpModule.Ver_min);
+        sprintf (AboutStr, "Based on FreeDOS-DFlat+ %i.%i (build %i)",DFlatpModule.Ver_maj,DFlatpModule.Ver_min,DFlatpModule.Build);
     else
         strcpy (AboutStr, " ");
-
-    strncpy (maxAbout, AboutStr, 33); maxAbout[34] = 0;
-    strncpy(strchr(aboutMsg,'@'), maxAbout,  strlen(maxAbout));
+    AboutFillField(aboutMsg, AboutStr, ABOUT_LONG_FIELD);
 
     sprintf (AboutStr, "About %s", m.Description);
 
@@ -1308,8 +1414,22 @@ static int altconvert[] = {
 
 unsigned video_mode;
 
-static int cursorpos[MAXSAVES];
-static int cursorshape[MAXSAVES];
+/* Real, host-visible cursor state. There's no hardware to query it back
+** from (unlike the original DOS/BIOS int10h calls these functions are
+** ported from) -- cursor()/hidecursor()/unhidecursor()/normalcursor()/
+** set_cursor_type() below are themselves the only source of truth for
+** it, and getcursor() (also below) just hands back whatever they last
+** set. curs_shape distinguishes the two shapes SHOW_CURSOR's callers
+** actually ask for (see EBKeyboardMsg/KEYBOARD_CURSOR's InsertMode
+** check): 0 = normal (block), 1 = insert (bar). */
+static int curs_x, curs_y;
+static int curs_visible = TRUE;
+static int curs_shape;
+
+static int savedcursor_x[MAXSAVES];
+static int savedcursor_y[MAXSAVES];
+static int savedcursor_visible[MAXSAVES];
+static int savedcursor_shape[MAXSAVES];
 static int cs;
 
 /* ------------- clear the screen -------------- */
@@ -1321,8 +1441,10 @@ void clearscreen(void)
 void SwapCursorStack(void)
 {
     if (cs > 1) {
-        swapi(cursorpos[cs-2], cursorpos[cs-1]);
-        swapi(cursorshape[cs-2], cursorshape[cs-1]);
+        swapi(savedcursor_x[cs-2], savedcursor_x[cs-1]);
+        swapi(savedcursor_y[cs-2], savedcursor_y[cs-1]);
+        swapi(savedcursor_visible[cs-2], savedcursor_visible[cs-1]);
+        swapi(savedcursor_shape[cs-2], savedcursor_shape[cs-1]);
     }
 }
 
@@ -1361,29 +1483,33 @@ void videomode(void)
 /* ------ position the cursor ------ */
 void cursor(int x, int y)
 {
-    videomode();
     if (y >= SCREENHEIGHT) y = SCREENHEIGHT - 1; /* 0.7c */
+    curs_x = x;
+    curs_y = y;
+    if (ConuiCursorHook) ConuiCursorHook(curs_x, curs_y, curs_visible, curs_shape);
 }
 
 /* ------ get cursor shape and position ------ */
-static void getcursor(void)
+static void getcursor(int *x, int *y, int *visible, int *shape)
 {
-    videomode();
+    if (x) *x = curs_x;
+    if (y) *y = curs_y;
+    if (visible) *visible = curs_visible;
+    if (shape) *shape = curs_shape;
 }
 
 /* ------- get the current cursor position ------- */
 void curr_cursor(int *x, int *y)
 {
-    getcursor();
+    getcursor(x, y, NULL, NULL);
 }
 
 /* ------ save the current cursor configuration ------ */
 void savecursor(void)
 {
     if (cs < MAXSAVES)    {
-        getcursor();
-        cursorshape[cs] = 0;
-        cursorpos[cs] = 0;
+        getcursor(&savedcursor_x[cs], &savedcursor_y[cs],
+                  &savedcursor_visible[cs], &savedcursor_shape[cs]);
         cs++;
     }
 }
@@ -1393,8 +1519,11 @@ void restorecursor(void)
 {
     if (cs) {
         --cs;
-        videomode();
-        set_cursor_type(cursorshape[cs]);
+        curs_x = savedcursor_x[cs];
+        curs_y = savedcursor_y[cs];
+        curs_visible = savedcursor_visible[cs];
+        curs_shape = savedcursor_shape[cs];
+        if (ConuiCursorHook) ConuiCursorHook(curs_x, curs_y, curs_visible, curs_shape);
     }
 }
 
@@ -1407,19 +1536,21 @@ void normalcursor(void)
 /* ------ hide the cursor ------ */
 void hidecursor(void)
 {
-    getcursor();
+    curs_visible = FALSE;
+    if (ConuiCursorHook) ConuiCursorHook(curs_x, curs_y, curs_visible, curs_shape);
 }
 
 /* ------ unhide the cursor ------ */
 void unhidecursor(void)
 {
-    getcursor();
+    curs_visible = TRUE;
+    if (ConuiCursorHook) ConuiCursorHook(curs_x, curs_y, curs_visible, curs_shape);
 }
 
-/* ---- use BIOS to set the cursor type ---- */
+/* ---- set the cursor shape: block (normal) or bar (insert) ---- */
 void set_cursor_type(unsigned t)
 {
-    videomode();
+    curs_shape = (t == 0x0607) ? 1 : 0;
 }
 
 /* ------ convert an Alt+ key to its letter equivalent ----- */
@@ -7075,13 +7206,17 @@ BOOL dispatch_message(int *msgs_cnt)
             MsgQueueOffCtr = 0;
         --MsgQueueCtr;
         SendMessage(mq.wnd, mq.msg, mq.p1, mq.p2);
-        if (mq.msg == ENDDIALOG)
+        if (mq.msg == ENDDIALOG) {
+            if (ConuiRenderHook) ConuiRenderHook();
             return FALSE;
+        }
         if (mq.msg == STOP)	{
             PostMessage(NULL, STOP, 0, 0);
+            if (ConuiRenderHook) ConuiRenderHook();
             return FALSE;
         }
     }
+    if (ConuiRenderHook) ConuiRenderHook();
     return TRUE;
 }
 
@@ -7094,9 +7229,14 @@ void ProcessMessages (void)
 /* ---------- reset the mouse ---------- */
 void resetmouse(void)
 {
+    system_resetmouse();
 }
 
-/* ----- test to see if the mouse driver is installed ----- */
+/* ----- test to see if the mouse driver is installed -----
+** Always TRUE: a Godot host has no real "is a mouse physically present"
+** signal the way a BIOS driver-installed check did -- the host backend
+** (textUI_support.cpp) reports button/position state as it actually
+** receives it, which is a no-op if the host never feeds any. */
 BOOL mouse_installed(void)
 {
     return TRUE;
@@ -7105,25 +7245,19 @@ BOOL mouse_installed(void)
 /* ------ return true if mouse buttons are pressed ------- */
 int mousebuttons(void)
 {
-    if (mouse_installed())	{
-        return 0;
-    }
-    return 0;
+    return system_mousebuttons();
 }
 
 /* ---------- return mouse coordinates ---------- */
 void get_mouseposition(int *x, int *y)
 {
-    *x = *y = 0;
+    system_get_mouseposition(x, y);
 }
 
 /* --- return true if a mouse button has been released --- */
 int button_releases(void)
 {
-    if (mouse_installed())	{
-        return 0;
-    }
-    return 0;
+    return system_button_releases();
 }
 
 /* ------------------ msgbox.c ------------------ */
@@ -11068,7 +11202,21 @@ static void TBPaintMsg(WINDOW wnd, PARAM p1, PARAM p2)
     /* ------ paint the client area ----- */
     RECT rc, rcc;
     int y;
-    char blankline[201];
+    /* Sized to the actual terminal width, not a guessed fixed cap: a
+    ** 201-byte buffer here overflowed (stack-smashing, caught live by
+    ** the OS's fortify-source check) on any terminal wider than 200
+    ** columns -- routine on a modern maximized window -- corrupting
+    ** whatever locals happened to sit next to it on the stack and
+    ** producing exactly the garbled/truncated dialog text and
+    ** never-rendered dialogs this was reported as. */
+    int scrwidth = SCREENWIDTH;
+    /* Belt-and-suspenders on top of get_console_size()'s own fallback:
+    ** a non-positive width here would make memset() below treat its
+    ** size_t length argument as a huge unsigned value instead of doing
+    ** nothing, so clamp defensively at the actual point of use too. */
+    if (scrwidth < 1)
+        scrwidth = DEFAULT_CONSOLE_WIDTH;
+    char blankline[scrwidth+1];
 
     /* ----- build the rectangle to paint ----- */
     if ((RECT *)p1 == NULL)
@@ -11087,7 +11235,7 @@ static void TBPaintMsg(WINDOW wnd, PARAM p1, PARAM p2)
         ClipString++;
 
     /* ----- blank line for padding ----- */
-    memset(blankline, ' ', SCREENWIDTH);
+    memset(blankline, ' ', scrwidth);
     blankline[RectRight(rcc)+1] = '\0';
 
     /* ------- each line within rectangle ------ */
@@ -11695,8 +11843,21 @@ void _wputs(WINDOW wnd, const char *s, const char *end, int x, int y)
 
     if (x1 < SCREENWIDTH && y1 < SCREENHEIGHT && isVisible(wnd))
     {
-        con_char_t ln[200];
+        /* Sized to the actual terminal width, not a fixed guess: nothing
+        ** past SCREENWIDTH characters could ever be visible in one row
+        ** anyway, but a fixed 200-cell cap here still let the loop below
+        ** write past the end of `ln` (stack-smashing, caught live by the
+        ** OS's stack-protector) for any window wider than ~200 columns
+        ** -- the same bug class already fixed in TBPaintMsg's blankline
+        ** buffer and writeline()'s wline buffer. The `cp1 < lnend` check
+        ** in the loop is the actual fix; the VLA just avoids needlessly
+        ** truncating on an ordinary-width screen. */
+        int scrwidth = SCREENWIDTH;
+        if (scrwidth < 1)
+            scrwidth = DEFAULT_CONSOLE_WIDTH;
+        con_char_t ln[scrwidth];
         con_char_t *cp1=ln;
+        con_char_t *lnend = ln + scrwidth;
         int fg=foreground;
         int bg=background;
         int len;
@@ -11730,6 +11891,9 @@ void _wputs(WINDOW wnd, const char *s, const char *end, int x, int y)
                 str++;
                 continue;
             }
+
+            if (cp1 >= lnend)
+                break; /* nothing past SCREENWIDTH is visible anyway */
 
 #ifdef TAB_TOGGLING /* made consistent with editor.c - 0.7c */
             if (*str == ('\t' | 0x80) || *str == ('\f' | 0x80))
@@ -12046,16 +12210,35 @@ void writeline(WINDOW wnd, const char *str, int x, int y, BOOL pad)
     char *cp;
     int len;
     int dif;
-    char wline[200];
+    int width = ClientWidth(wnd);
+    /* Defensive clamp on top of get_console_size()'s own bounds: a
+    ** window's width isn't itself read from SCREENWIDTH, so a negative
+    ** or pathologically large value here would still feed straight into
+    ** wlinelen/wline below otherwise. */
+    if (width < 0)
+        width = 0;
+    else if (width > MAX_CONSOLE_WIDTH)
+        width = MAX_CONSOLE_WIDTH;
 
-    memset(wline, 0, 200);
     len = LineLength(str);
     dif = strlen(str) - len;
-    strncpy(wline, str, ClientWidth(wnd) + dif);
+    /* wline needs room for the copied slice (width+dif bytes) plus, when
+    ** padding, up to another `width` spaces appended after it, plus the
+    ** terminating NUL -- sized to the actual window/terminal width
+    ** rather than a fixed guess: a 200-byte cap here overflowed for any
+    ** window wider than ~200 columns (routine on a modern maximized
+    ** terminal), the same bug class already fixed in TBPaintMsg's
+    ** blankline buffer. */
+    int wlinelen = width + (dif > 0 ? dif : 0) + width + 1;
+    char wline[wlinelen];
+
+    memset(wline, 0, wlinelen);
+    strncpy(wline, str, width + dif);
     if (pad)    {
         cp = wline+strlen(wline);
-        while (len++ < ClientWidth(wnd)-x)
+        while (len++ < width-x)
             *cp++ = ' ';
+        *cp = '\0';
     }
     wputs(wnd, wline, x, y);
 }
@@ -12466,6 +12649,18 @@ static int _width = -1, _height = -1;
 BOOL init_console(int console_width, int console_height) {
     _width = console_width;
     _height = console_height;
+    /* SysConfig.VideoCurrentColorScheme starts out zero-initialized (see
+    ** its {FALSE,255,{0}} initializer above) -- a real DOS/curses port
+    ** would call SelectColorScheme() from its own main() before creating
+    ** any window, but a Godot host has no such call site, so every
+    ** WindowColors[][] entry (populated from this all-zero table by
+    ** InitWindowColors(), called from CreateWindow()) ended up 0 -- i.e.
+    ** every window painted in black-on-black, appearing as a
+    ** blank/unresponsive screen even though input handling and rendering
+    ** were both working correctly. Call this here, before any window can
+    ** be created, so it's a true default regardless of which caller/
+    ** backend entry point is used. */
+    SelectColorScheme(color);
     return TRUE;
 }
 
@@ -12474,8 +12669,8 @@ void get_console_size(int *w, int *h)
   DEV_ASSERT(_width>0);
   DEV_ASSERT(_height>0);
 
-  if (w) *w = _width;
-  if (h) *h = _height;
+  if (w) *w = (_width  > 0) ? min(_width,  MAX_CONSOLE_WIDTH)  : DEFAULT_CONSOLE_WIDTH;
+  if (h) *h = (_height > 0) ? min(_height, MAX_CONSOLE_HEIGHT) : DEFAULT_CONSOLE_HEIGHT;
 }
 
 #ifdef __linux__
