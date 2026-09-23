@@ -206,6 +206,10 @@ void ProcRockDialog::_on_generator_changed(int p_idx) {
 }
 
 void ProcRockDialog::generate() {
+	if (!properties_inspector->get_edited_object()) {
+		properties_inspector->edit(rock_mesh.ptr());
+	}
+
 	rock_mesh->set_auto_refresh(false);
 
 	int seed = (int)seed_spin->get_value();
@@ -292,6 +296,14 @@ void ProcRockDialog::_update_preview() {
 	preview_mesh_instance->set_mesh(rock_mesh);
 }
 
+void ProcRockDialog::_on_property_edited(const StringName &p_prop) {
+	// The 3D preview updates on its own — preview_mesh_instance holds the same
+	// rock_mesh Ref, and _rebuild() (triggered by the inspector's own _set() call,
+	// via ProcRockMesh's existing auto_refresh handling) mutates it in place. Only
+	// the vertex/surface count label can go stale after a direct property edit.
+	_update_info();
+}
+
 void ProcRockDialog::_update_info() {
 	int surface_count = rock_mesh->get_surface_count();
 	int vertex_count = 0;
@@ -314,6 +326,7 @@ void ProcRockDialog::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_on_load_json_file_selected", "path"), &ProcRockDialog::_on_load_json_file_selected);
 	ClassDB::bind_method(D_METHOD("_on_preset_selected", "idx"), &ProcRockDialog::_on_preset_selected);
 	ClassDB::bind_method(D_METHOD("_on_demo_texture_changed", "idx"), &ProcRockDialog::_on_demo_texture_changed);
+	ClassDB::bind_method(D_METHOD("_on_property_edited", "prop"), &ProcRockDialog::_on_property_edited);
 }
 
 ProcRockDialog::ProcRockDialog() {
@@ -327,6 +340,14 @@ ProcRockDialog::ProcRockDialog() {
 	VBoxContainer *vbox = memnew(VBoxContainer);
 	vbox->set_anchors_and_margins_preset(PRESET_WIDE, PRESET_MODE_MINSIZE, 8);
 	add_child(vbox);
+
+	HBoxContainer *main_hbox = memnew(HBoxContainer);
+	main_hbox->set_v_size_flags(SIZE_EXPAND_FILL);
+	vbox->add_child(main_hbox);
+
+	VBoxContainer *left_col = memnew(VBoxContainer);
+	left_col->set_h_size_flags(SIZE_EXPAND_FILL);
+	main_hbox->add_child(left_col);
 
 	// --- 3D Preview viewport ---
 	preview_viewport = memnew(Viewport);
@@ -362,7 +383,7 @@ ProcRockDialog::ProcRockDialog() {
 	viewport_container->set_custom_minimum_size(Size2(500, 300));
 	viewport_container->set_v_size_flags(SIZE_EXPAND_FILL);
 	viewport_container->add_child(preview_viewport);
-	vbox->add_child(viewport_container);
+	left_col->add_child(viewport_container);
 
 	// --- Controls ---
 	HBoxContainer *top_bar = memnew(HBoxContainer);
@@ -380,7 +401,7 @@ ProcRockDialog::ProcRockDialog() {
 	generator_option->connect("item_selected", this, "_on_generator_changed");
 	top_bar->add_child(generator_option);
 
-	vbox->add_child(top_bar);
+	left_col->add_child(top_bar);
 
 	// Seed + buttons
 	HBoxContainer *action_bar = memnew(HBoxContainer);
@@ -402,7 +423,7 @@ ProcRockDialog::ProcRockDialog() {
 	randomize_btn->connect("pressed", this, "_on_randomize_pressed");
 	action_bar->add_child(randomize_btn);
 
-	vbox->add_child(action_bar);
+	left_col->add_child(action_bar);
 
 	// Demo texture picker (editor-only baked PBR packs)
 	HBoxContainer *texture_bar = memnew(HBoxContainer);
@@ -420,7 +441,7 @@ ProcRockDialog::ProcRockDialog() {
 	demo_texture_option->connect("item_selected", this, "_on_demo_texture_changed");
 	texture_bar->add_child(demo_texture_option);
 
-	vbox->add_child(texture_bar);
+	left_col->add_child(texture_bar);
 
 	// Bundled pipeline preset browser (memo.md's "Full JSON round-trip UX" item) —
 	// quick-select for the presets shipped with this fork; "Load Preset JSON..."
@@ -443,7 +464,7 @@ ProcRockDialog::ProcRockDialog() {
 	preset_option->connect("item_selected", this, "_on_preset_selected");
 	preset_bar->add_child(preset_option);
 
-	vbox->add_child(preset_bar);
+	left_col->add_child(preset_bar);
 
 	// Generate + Export
 	HBoxContainer *btn_bar = memnew(HBoxContainer);
@@ -464,13 +485,36 @@ ProcRockDialog::ProcRockDialog() {
 	load_json_btn->connect("pressed", this, "_on_load_json_pressed");
 	btn_bar->add_child(load_json_btn);
 
-	vbox->add_child(btn_bar);
+	left_col->add_child(btn_bar);
 
 	// Info
 	info_label = memnew(Label);
 	info_label->set_text("Ready");
 	info_label->set_align(Label::ALIGN_CENTER);
-	vbox->add_child(info_label);
+	left_col->add_child(info_label);
+
+	// --- Live per-generator property panel ---
+	VBoxContainer *right_col = memnew(VBoxContainer);
+	right_col->set_h_size_flags(SIZE_EXPAND_FILL);
+	main_hbox->add_child(right_col);
+
+	Label *properties_label = memnew(Label);
+	properties_label->set_text("Properties:");
+	right_col->add_child(properties_label);
+
+	properties_inspector = memnew(EditorInspector);
+	properties_inspector->set_h_size_flags(SIZE_EXPAND_FILL);
+	properties_inspector->set_v_size_flags(SIZE_EXPAND_FILL);
+	properties_inspector->connect("property_edited", this, "_on_property_edited");
+	right_col->add_child(properties_inspector);
+	// edit() is deferred to generate() (first real call happens from
+	// ProcRockEditorPlugin::_open_dialog(), never at construction time) rather than
+	// called here: this class, like any GDCLASS-registered type, also gets
+	// instantiated by Godot's own doc-generation pass (DocData::generate(), called
+	// from EditorNode::EditorNode() itself) purely to read default property values.
+	// EditorInspector::edit()'s update_tree() reaches into EditorNode::get_singleton()
+	// for some property hints, which crashes when called from inside that
+	// still-under-construction, throwaway instance.
 
 	// Export dialog
 	export_dialog = memnew(FileDialog);
@@ -532,7 +576,7 @@ void ProcRockEditorPlugin::_bind_methods() {
 }
 
 void ProcRockEditorPlugin::_open_dialog(Variant p_ud) {
-	dialog->popup_centered(Size2(550, 450));
+	dialog->popup_centered(Size2(950, 600));
 	// Generate initial rock on first open
 	dialog->generate();
 }

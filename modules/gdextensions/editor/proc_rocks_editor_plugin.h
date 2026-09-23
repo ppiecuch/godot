@@ -34,6 +34,7 @@
 #ifdef TOOLS_ENABLED
 
 #include "editor/editor_export.h"
+#include "editor/editor_inspector.h"
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
 #include "environment/proc_rocks/proc_rocks.h"
@@ -84,6 +85,13 @@ class ProcRockDialog : public WindowDialog {
 	OptionButton *preset_option;
 	Vector<String> preset_paths; // preset_option item (idx-1) -> full path; index 0 is "None"
 
+	// Live per-generator property panel (memo.md's "per-generator parameter sliders"
+	// item) — a real EditorInspector edit()ing rock_mesh directly, so every dynamic
+	// property ProcRockMesh::_get_property_list() exposes for the current generator
+	// shows up automatically (sliders, color pickers, enum dropdowns, dependent-field
+	// show/hide), without duplicating that logic in hand-rolled dock controls.
+	EditorInspector *properties_inspector;
+
 	void _on_generator_changed(int p_idx);
 	void _on_randomize_pressed();
 	void _on_export_pressed();
@@ -92,6 +100,7 @@ class ProcRockDialog : public WindowDialog {
 	void _on_load_json_file_selected(const String &p_path);
 	void _on_preset_selected(int p_idx);
 	void _on_demo_texture_changed(int p_idx);
+	void _on_property_edited(const StringName &p_prop);
 	void _apply_demo_texture();
 	void _update_preview();
 	void _update_info();
