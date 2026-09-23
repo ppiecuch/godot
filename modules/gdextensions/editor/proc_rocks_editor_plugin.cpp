@@ -38,7 +38,7 @@
 #include "core/os/file_access.h"
 #include "editor/editor_settings.h"
 #include "environment/proc_rocks/generators/procrockgen/procrockgen.h"
-#include "environment/proc_rocks/generators/shared/baked_textures_gen.h"
+#include "proc_rocks_baked_textures.h"
 #include "scene/3d/light.h"
 #include "scene/gui/viewport_container.h"
 #include "scene/resources/material.h"

@@ -259,10 +259,15 @@ if env["tools"]:
     env_module.Append(CPPPATH=["thirdparty/gc-8.2.2/include"])
     editor_sources = Glob("editor/*.cpp") + Glob("editor/*.c")  # Always build editor for tools
     if not is_enabled("environment/proc_rocks"):
-        # Depends on ProcRockMesh (submodules/environment/proc_rocks), which isn't
-        # compiled at all when that submodule is disabled — unlike the rest of this
-        # unconditional glob, this one file needs to follow that toggle.
-        editor_sources = [f for f in editor_sources if "proc_rocks_editor_plugin" not in str(f)]
+        # Both depend on ProcRockMesh/ProcRockPipelineTextures (submodules/environment/
+        # proc_rocks), which aren't compiled at all when that submodule is disabled —
+        # unlike the rest of this unconditional glob, these two files need to follow
+        # that toggle.
+        editor_sources = [
+            f
+            for f in editor_sources
+            if "proc_rocks_editor_plugin" not in str(f) and "proc_rocks_baked_textures" not in str(f)
+        ]
     sources += editor_sources
     if is_enabled("qrcodetexture"):
         modules += ["qrcodetexture"]
@@ -760,7 +765,6 @@ if not env["disable_3d"]:
             thirdparty_sources += [
                 "submodules/environment/proc_rocks/generators/shared/box_uv.cpp",
                 "submodules/environment/proc_rocks/generators/shared/texture_gen.cpp",
-                "submodules/environment/proc_rocks/generators/shared/baked_textures_gen.cpp",
                 "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
                 "submodules/environment/proc_rocks/generators/rockgen/rockgen.cpp",
                 "submodules/environment/proc_rocks/generators/rockstudio/rock_studio.cpp",

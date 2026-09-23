@@ -34,8 +34,14 @@
 #include "generators/rockgen/rockgen.h"
 #include "generators/rockgeneration/gen_rock.h"
 #include "generators/rockstudio/rock_studio.h"
-#include "generators/shared/baked_textures_gen.h"
 #include "generators/shared/texture_gen.h"
+
+// Editor-only baked demo texture packs — a genuine editor resource, not generator
+// code, so it lives under modules/gdextensions/editor/ rather than here (see that
+// file's own comment). Declaration-only header, safe to include unconditionally;
+// only used inside _apply_texture_source()'s TOOLS_ENABLED-gated Gravel/Mossy/Rock
+// cases below.
+#include "editor/proc_rocks_baked_textures.h"
 
 #include "core/io/json.h"
 #include "core/io/resource_loader.h"

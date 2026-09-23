@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  baked_textures_gen.cpp                                                */
+/*  proc_rocks_baked_textures.cpp                                         */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,11 +28,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "baked_textures_gen.h"
+#include "proc_rocks_baked_textures.h"
 
 #include <cstring>
 
-#include "editor/proc_rocks_demo/baked_textures.h"
+#include "proc_rocks_demo/baked_textures.h"
 
 namespace {
 

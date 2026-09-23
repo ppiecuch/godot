@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  baked_textures_gen.h                                                  */
+/*  proc_rocks_baked_textures.h                                           */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,18 +28,21 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef PROC_ROCKS_SHARED_BAKED_TEXTURES_GEN_H
-#define PROC_ROCKS_SHARED_BAKED_TEXTURES_GEN_H
+#ifndef PROC_ROCKS_BAKED_TEXTURES_H
+#define PROC_ROCKS_BAKED_TEXTURES_H
 
-#include "texture_gen.h"
+#include "environment/proc_rocks/generators/shared/texture_gen.h"
 
-// Editor-only baked PBR texture packs (gravel/mossy/rock), embedded via INCBIN from
-// editor/proc_rocks_demo/baked_textures.h. Originally lived only in
-// proc_rocks_editor_plugin.cpp (the ProcRock dock's "Demo Texture" picker was their
-// only consumer) — moved here so ProcRockMesh's generic texture_source property
-// (any generator, see proc_rocks.h) and the editor dock can share one loader instead
-// of duplicating it. Only baked_textures_gen.cpp includes the actual INCBIN header,
-// so this declaration-only header is safe to include unconditionally.
+// Editor-only baked PBR texture packs (gravel/mossy/rock) — real, hand-authored
+// demo assets (not procedurally generated), embedded via INCBIN from
+// proc_rocks_demo/baked_textures.h in this same directory. These are editor
+// resources, not generator code, so they live here rather than under
+// submodules/environment/proc_rocks/generators/ — ProcRockMesh's generic
+// texture_source property (proc_rocks.h, any generator) reaches in from the
+// submodule side purely for this (TOOLS_ENABLED-only, see _apply_texture_source()),
+// the same way ProcRockExportPlugin (proc_rocks_editor_plugin.h) already reaches
+// the other way for bake(). Only proc_rocks_baked_textures.cpp includes the actual
+// INCBIN header, so this declaration-only header is safe to include unconditionally.
 
 enum ProcRockBakedTexturePack {
 	PROCROCK_BAKED_GRAVEL,
@@ -49,4 +52,4 @@ enum ProcRockBakedTexturePack {
 
 ProcRockPipelineTextures load_baked_textures(ProcRockBakedTexturePack p_pack);
 
-#endif // PROC_ROCKS_SHARED_BAKED_TEXTURES_GEN_H
+#endif // PROC_ROCKS_BAKED_TEXTURES_H
