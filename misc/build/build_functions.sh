@@ -149,9 +149,21 @@ sync_extra () {
 			REMOTE_MTIME=$(ssh "$host" "stat -f %m '${REMOTE_FILE}' 2>/dev/null || stat -c %Y '${REMOTE_FILE}' 2>/dev/null || echo 0") || REMOTE_MTIME=0
 
 			if [[ "$LOCAL_MTIME" -gt "$REMOTE_MTIME" ]]; then
+				local REMOTE_DIR
+				REMOTE_DIR="$(dirname "$REMOTE_FILE")"
+				if ! ssh "$host" "[[ -d '${REMOTE_DIR}' ]]" 2>/dev/null; then
+					echo "  ${f}: skipping, remote folder missing (${host}:${REMOTE_DIR})"
+					continue
+				fi
 				echo "  ${f}: pushing to ${host} (local is newer)"
 				rsync -pt "$LOCAL_FILE" "${host}:${REMOTE_FILE}"
 			elif [[ "$REMOTE_MTIME" -gt "$LOCAL_MTIME" ]]; then
+				local LOCAL_DIR
+				LOCAL_DIR="$(dirname "$LOCAL_FILE")"
+				if [[ ! -d "$LOCAL_DIR" ]]; then
+					echo "  ${f}: skipping, local folder missing (${LOCAL_DIR})"
+					continue
+				fi
 				echo "  ${f}: pulling from ${host} (remote is newer)"
 				rsync -pt "${host}:${REMOTE_FILE}" "$LOCAL_FILE"
 			else
