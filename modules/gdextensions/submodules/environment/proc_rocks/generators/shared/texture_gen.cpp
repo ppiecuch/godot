@@ -32,6 +32,8 @@
 
 #include "core/math/vector3.h"
 #include "modules/opensimplex/open_simplex_noise.h"
+#include "scene/resources/surface_tool.h"
+#include "servers/visual_server.h"
 
 Ref<Image> make_height_image(int p_size, real_t p_noise_frequency, int p_noise_octaves, real_t p_noise_persistence, int p_randseed) {
 	int octaves = CLAMP(p_noise_octaves, 1, 6);
@@ -199,4 +201,16 @@ Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures 
 	material->set_feature(SpatialMaterial::FEATURE_AMBIENT_OCCLUSION, true);
 
 	return material;
+}
+
+Array ensure_tangents(const Array &p_arrays) {
+	if (p_arrays.size() <= VS::ARRAY_TEX_UV || p_arrays[VS::ARRAY_TEX_UV].get_type() != Variant::POOL_VECTOR2_ARRAY || ((PoolVector<Vector2>)p_arrays[VS::ARRAY_TEX_UV]).size() == 0) {
+		WARN_PRINT_ONCE("ProcRock: ensure_tangents() called on UV-less arrays — normal mapping on this mesh will be skipped rather than risk NaN-corrupted lighting (see memo.md's 'Bugs Fixed').");
+		return p_arrays;
+	}
+	Ref<SurfaceTool> st;
+	st.instance();
+	st->create_from_triangle_arrays(p_arrays);
+	st->generate_tangents();
+	return st->commit_to_arrays();
 }

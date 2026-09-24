@@ -37,6 +37,8 @@
 #include "imath.h"
 #include "utils.h"
 
+#include "../shared/box_uv.h"
+
 #include "core/print_string.h"
 #include "core/variant.h"
 #include "servers/visual_server.h"
@@ -351,8 +353,19 @@ Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoo
 			normals.write[i + 1] = n;
 			normals.write[i + 2] = n;
 		}
+		// Box-projected UVs (per-vertex, using the flat per-triangle normal just computed
+		// above) — needed so a texture_source material actually varies across the surface
+		// instead of sampling a single texel everywhere, and so ensure_tangents() (proc_rocks.cpp)
+		// has UV data to generate real tangents from.
+		Vector<Vector2> uvs;
+		uvs.resize(vertices.size());
+		for (int i = 0; i < vertices.size(); i++) {
+			int box_dir = rock_studio_get_box_dir(normals[i]);
+			uvs.write[i] = rock_studio_get_box_uv(vertices[i], box_dir);
+		}
 		mesh_arrays[VS::ARRAY_VERTEX] = vertices;
 		mesh_arrays[VS::ARRAY_NORMAL] = normals;
+		mesh_arrays[VS::ARRAY_TEX_UV] = uvs;
 	} else {
 		// Smoothed mode: result contains interleaved (vertex, normal) pairs × 3 per triangle
 		int tri_count = result.size() / 6;
@@ -366,8 +379,16 @@ Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoo
 			vertices.write[i] = r[i * 2];
 			normals.write[i] = r[i * 2 + 1];
 		}
+		// Box-projected UVs, per-vertex (see comment in the "sharp" branch above).
+		Vector<Vector2> uvs;
+		uvs.resize(vertices.size());
+		for (int i = 0; i < vertices.size(); i++) {
+			int box_dir = rock_studio_get_box_dir(normals[i]);
+			uvs.write[i] = rock_studio_get_box_uv(vertices[i], box_dir);
+		}
 		mesh_arrays[VS::ARRAY_VERTEX] = vertices;
 		mesh_arrays[VS::ARRAY_NORMAL] = normals;
+		mesh_arrays[VS::ARRAY_TEX_UV] = uvs;
 	}
 
 	return mesh_arrays;

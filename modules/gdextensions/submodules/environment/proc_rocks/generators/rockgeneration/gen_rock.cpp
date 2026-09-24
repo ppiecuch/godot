@@ -30,6 +30,7 @@
 
 #include "gen_rock.h"
 
+#include "../shared/box_uv.h"
 #include "../shared/rock_header.h"
 #include "common/gd_core.h"
 #include "core/math/math_funcs.h"
@@ -329,6 +330,13 @@ void GenRock::_update() {
 		a.resize(VS::ARRAY_MAX);
 		a[VS::ARRAY_VERTEX] = (Vector<Vector3>)m_VecGeom.Position;
 		a[VS::ARRAY_NORMAL] = (Vector<Vector3>)m_VecGeom.Normal;
+		// CorrectUV() above already computes a real per-vertex UV unwrap — it was just
+		// never copied into the output array, so texture_source materials on this
+		// generator always sampled UV (0,0) everywhere. (m_VecGeom.Tangent from
+		// BuildTangents() is a plain Vector3, not Godot's 4-component tangent+handedness
+		// format, so it's not usable here directly — proc_rocks.cpp's ensure_tangents()
+		// generates a correctly-formatted tangent from this UV instead.)
+		a[VS::ARRAY_TEX_UV] = (Vector<Vector2>)m_VecGeom.TexCoord;
 		a[VS::ARRAY_INDEX] = (Vector<int>)m_VecIndices;
 
 		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);

@@ -1677,7 +1677,7 @@ void ProcRockMesh::_rebuild() {
 			// Method 0: rockgen — fractal icosahedron subdivision
 			Array mesh_arrays = rock_gen(rockgen.depth, rockgen.randseed, rockgen.smoothness, rockgen.smoothed);
 			if (mesh_arrays.size() == VS::ARRAY_MAX) {
-				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_arrays);
+				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, ensure_tangents(mesh_arrays));
 				_apply_texture_source();
 			}
 		} break;
@@ -1699,7 +1699,7 @@ void ProcRockMesh::_rebuild() {
 			Ref<ArrayMesh> rock_mesh = gen.GenerateMesh();
 			if (rock_mesh.is_valid() && rock_mesh->get_surface_count() > 0) {
 				Array surface = rock_mesh->surface_get_arrays(0);
-				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, surface);
+				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, ensure_tangents(surface));
 				_apply_texture_source();
 			}
 		} break;
@@ -1729,7 +1729,7 @@ void ProcRockMesh::_rebuild() {
 					rock_studio_box_uv(hull);
 					if (hull->get_surface_count() > 0) {
 						Array surface = hull->surface_get_arrays(0);
-						add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, surface);
+						add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, ensure_tangents(surface));
 						_apply_texture_source();
 					}
 				}
@@ -1750,7 +1750,7 @@ void ProcRockMesh::_rebuild() {
 
 			Vector<Vector3> verts = mesh_arrays.size() == VS::ARRAY_MAX ? (Vector<Vector3>)mesh_arrays[VS::ARRAY_VERTEX] : Vector<Vector3>();
 			if (verts.size() > 0) {
-				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, mesh_arrays);
+				add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, ensure_tangents(mesh_arrays));
 
 				if (pipeline.generate_textures) {
 					ProcRockPipelineTextures textures = use_json
@@ -2550,6 +2550,99 @@ TEST_SUITE("[[proc_rocks]] ProcRockMesh") {
 		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
 		CHECK(mesh->get_pipeline_material().is_valid());
 		CHECK(mesh->surface_get_material(0) == mesh->get_pipeline_material());
+	}
+
+	// Regression tests for the "scattered dark/missing triangles" bug: a normal-mapped
+	// material (rock_pipeline_make_material(), FEATURE_NORMAL_MAPPING always on when a
+	// normal texture is present) was reachable on every generator via texture_source,
+	// but none of them ever populated ARRAY_TANGENT — Godot then reads the disabled GPU
+	// tangent attribute as (0,0,0,1) and normalize()s it to NaN, corrupting lighting on
+	// scattered triangles. Fixed by ensure_tangents() (generators/shared/texture_gen.cpp)
+	// plus real UVs on RockGen (new box-UV) and IcoRock (its own CorrectUV() output was
+	// simply never copied into the output array) — see memo.md's "Bugs Fixed".
+
+	TEST_CASE("[proc_rocks] ensure_tangents adds non-degenerate tangents to a UV'd triangle array") {
+		Array arrays;
+		arrays.resize(VS::ARRAY_MAX);
+		Vector<Vector3> verts;
+		verts.push_back(Vector3(0, 0, 0));
+		verts.push_back(Vector3(1, 0, 0));
+		verts.push_back(Vector3(0, 1, 0));
+		Vector<Vector3> normals;
+		normals.push_back(Vector3(0, 0, 1));
+		normals.push_back(Vector3(0, 0, 1));
+		normals.push_back(Vector3(0, 0, 1));
+		Vector<Vector2> uvs;
+		uvs.push_back(Vector2(0, 0));
+		uvs.push_back(Vector2(1, 0));
+		uvs.push_back(Vector2(0, 1));
+		arrays[VS::ARRAY_VERTEX] = verts;
+		arrays[VS::ARRAY_NORMAL] = normals;
+		arrays[VS::ARRAY_TEX_UV] = uvs;
+
+		Array out = ensure_tangents(arrays);
+		REQUIRE(out.size() == VS::ARRAY_MAX);
+		PoolVector<real_t> tangents = out[VS::ARRAY_TANGENT];
+		REQUIRE(tangents.size() == 3 * 4); // 4 floats (xyz + handedness) per vertex
+		for (int i = 0; i < tangents.size(); i++) {
+			CHECK_FALSE(Math::is_nan(tangents[i]));
+		}
+		// Not the degenerate (0,0,0) that a disabled GL attribute would fall back to.
+		Vector3 t0(tangents[0], tangents[1], tangents[2]);
+		CHECK(t0.length() > 0.5);
+	}
+
+	TEST_CASE("[proc_rocks] ensure_tangents leaves UV-less arrays unchanged rather than risk NaN tangents") {
+		Array arrays;
+		arrays.resize(VS::ARRAY_MAX);
+		Vector<Vector3> verts;
+		verts.push_back(Vector3(0, 0, 0));
+		arrays[VS::ARRAY_VERTEX] = verts;
+
+		Array out;
+		SUPPRESS_OUTPUT(out = ensure_tangents(arrays));
+		CHECK(out[VS::ARRAY_TEX_UV].get_type() == Variant::NIL);
+		CHECK(out[VS::ARRAY_TANGENT].get_type() == Variant::NIL);
+	}
+
+	TEST_CASE("[proc_rocks] RockGen (method 0) produces real UVs and non-NaN tangents after texture_source is set") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_rockgen_depth(1); // keep it cheap
+		mesh->set_texture_gen_size(16);
+		mesh->set_texture_source(1); // Generated — the exact repro of the reported bug
+		SUPPRESS_OUTPUT(mesh->set_generator(0));
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
+		REQUIRE(mesh->get_surface_count() > 0);
+
+		Array surface = mesh->surface_get_arrays(0);
+		PoolVector<Vector2> uvs = surface[VS::ARRAY_TEX_UV];
+		CHECK(uvs.size() > 0);
+		PoolVector<real_t> tangents = surface[VS::ARRAY_TANGENT];
+		REQUIRE(tangents.size() > 0);
+		for (int i = 0; i < tangents.size(); i += 40) { // sample — a subdivided mesh can have many thousands of floats
+			CHECK_FALSE(Math::is_nan(tangents[i]));
+		}
+	}
+
+	TEST_CASE("[proc_rocks] IcoRock (method 1) produces real UVs and non-NaN tangents after texture_source is set") {
+		Ref<ProcRockMesh> mesh;
+		mesh.instance();
+		mesh->set_rockgeneration_steps(1); // keep it cheap
+		mesh->set_texture_gen_size(16);
+		mesh->set_texture_source(1); // Generated
+		SUPPRESS_OUTPUT(mesh->set_generator(1));
+		SUPPRESS_OUTPUT(mesh->set_auto_refresh(true));
+		REQUIRE(mesh->get_surface_count() > 0);
+
+		Array surface = mesh->surface_get_arrays(0);
+		PoolVector<Vector2> uvs = surface[VS::ARRAY_TEX_UV];
+		CHECK(uvs.size() > 0);
+		PoolVector<real_t> tangents = surface[VS::ARRAY_TANGENT];
+		REQUIRE(tangents.size() > 0);
+		for (int i = 0; i < tangents.size(); i += 40) { // sample — see RockGen test above
+			CHECK_FALSE(Math::is_nan(tangents[i]));
+		}
 	}
 }
 

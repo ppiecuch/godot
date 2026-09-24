@@ -31,6 +31,7 @@
 #ifndef PROC_ROCKS_SHARED_TEXTURE_GEN_H
 #define PROC_ROCKS_SHARED_TEXTURE_GEN_H
 
+#include "core/array.h"
 #include "core/color.h"
 #include "scene/resources/gradient.h"
 #include "scene/resources/material.h"
@@ -77,5 +78,16 @@ ProcRockPipelineTextures rock_pipeline_gen_textures(
 		real_t p_ao_scale, real_t p_ao_bias);
 
 Ref<SpatialMaterial> rock_pipeline_make_material(const ProcRockPipelineTextures &p_textures);
+
+// Adds real (MikkTSpace) tangents to p_arrays, needed for rock_pipeline_make_material()'s
+// FEATURE_NORMAL_MAPPING to render correctly: without ARRAY_TANGENT, Godot leaves that
+// vertex attribute disabled, which the GLES3 shader reads as the GL-spec default
+// (0,0,0,1) and immediately normalize()s to NaN, corrupting lighting on scattered
+// triangles (see memo.md's "Bugs Fixed" — this was the "missing/dark triangles" bug).
+// Requires p_arrays to already have ARRAY_VERTEX/ARRAY_NORMAL/ARRAY_TEX_UV — returns
+// p_arrays unchanged (with a WARN_PRINT_ONCE) if UV data is missing, since
+// SurfaceTool::generate_tangents() itself hard-requires it. Correctly round-trips both
+// indexed and non-indexed (ARRAY_INDEX absent) triangle arrays.
+Array ensure_tangents(const Array &p_arrays);
 
 #endif // PROC_ROCKS_SHARED_TEXTURE_GEN_H
