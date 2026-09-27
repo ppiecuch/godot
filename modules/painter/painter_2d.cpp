@@ -13,6 +13,7 @@ static Vector<Vector2> _to_vector(const PoolVector2Array &p_points) {
 }
 
 Painter2D::Painter2D() {
+	batch_flush_scheduled = false;
 }
 
 void Painter2D::set_pen(const Ref<PainterPen> &p_pen) {
@@ -58,39 +59,63 @@ void Painter2D::paint_reset_transform() {
 	current_transform = Transform2D();
 }
 
+void Painter2D::_queue(const PainterMesh &p_mesh, const Vector<Color> &p_colors) {
+	if (p_mesh.indices.size() == 0) {
+		return;
+	}
+	int base = batch_points.size();
+	batch_points.resize(base + p_mesh.vertices.size());
+	batch_colors.resize(base + p_mesh.vertices.size());
+	for (int i = 0; i < p_mesh.vertices.size(); i++) {
+		batch_points.write[base + i] = current_transform.xform(p_mesh.vertices[i]);
+		batch_colors.write[base + i] = p_colors[i];
+	}
+	int index_base = batch_indices.size();
+	batch_indices.resize(index_base + p_mesh.indices.size());
+	for (int i = 0; i < p_mesh.indices.size(); i++) {
+		batch_indices.write[index_base + i] = base + p_mesh.indices[i];
+	}
+
+	if (!batch_flush_scheduled) {
+		batch_flush_scheduled = true;
+		call_deferred("_flush_batch");
+	}
+}
+
+void Painter2D::_flush_batch() {
+	batch_flush_scheduled = false;
+	if (batch_indices.size() == 0) {
+		return;
+	}
+	VisualServer::get_singleton()->canvas_item_add_triangle_array(
+			get_canvas_item(), batch_indices, batch_points, batch_colors, Vector<Point2>(), Vector<int>(), Vector<float>(),
+			RID(), -1, RID(), RID(), false, false);
+	batch_points.clear();
+	batch_colors.clear();
+	batch_indices.clear();
+}
+
 void Painter2D::_submit_fill(const PainterMesh &p_mesh) {
 	if (p_mesh.indices.size() == 0 || current_brush.is_null() || !current_brush->is_visible()) {
 		return;
 	}
-	Vector<Point2> points;
+	// Gradient colors are resolved per vertex in local, pre-transform space, since that's the
+	// coordinate space a gradient brush's start/end points are defined against.
 	Vector<Color> colors;
-	points.resize(p_mesh.vertices.size());
 	colors.resize(p_mesh.vertices.size());
 	for (int i = 0; i < p_mesh.vertices.size(); i++) {
-		const Vector2 &local = p_mesh.vertices[i];
-		points.write[i] = current_transform.xform(local);
-		colors.write[i] = current_brush->color_at(local);
+		colors.write[i] = current_brush->color_at(p_mesh.vertices[i]);
 	}
-	VisualServer::get_singleton()->canvas_item_add_triangle_array(
-			get_canvas_item(), p_mesh.indices, points, colors, Vector<Point2>(), Vector<int>(), Vector<float>(),
-			RID(), -1, RID(), RID(), false, false);
+	_queue(p_mesh, colors);
 }
 
 void Painter2D::_submit_stroke(const PainterMesh &p_mesh, const Color &p_color) {
-	if (p_mesh.indices.size() == 0) {
-		return;
-	}
-	Vector<Point2> points;
 	Vector<Color> colors;
-	points.resize(p_mesh.vertices.size());
 	colors.resize(p_mesh.vertices.size());
 	for (int i = 0; i < p_mesh.vertices.size(); i++) {
-		points.write[i] = current_transform.xform(p_mesh.vertices[i]);
 		colors.write[i] = p_color;
 	}
-	VisualServer::get_singleton()->canvas_item_add_triangle_array(
-			get_canvas_item(), p_mesh.indices, points, colors, Vector<Point2>(), Vector<int>(), Vector<float>(),
-			RID(), -1, RID(), RID(), false, false);
+	_queue(p_mesh, colors);
 }
 
 void Painter2D::_stroke_points(const Vector<Vector2> &p_points, bool p_closed) {
@@ -212,6 +237,8 @@ void Painter2D::fill_path(const Ref<PainterPath> &p_path) {
 }
 
 void Painter2D::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("_flush_batch"), &Painter2D::_flush_batch);
+
 	ClassDB::bind_method(D_METHOD("set_pen", "pen"), &Painter2D::set_pen);
 	ClassDB::bind_method(D_METHOD("get_pen"), &Painter2D::get_pen);
 	ClassDB::bind_method(D_METHOD("set_brush", "brush"), &Painter2D::set_brush);

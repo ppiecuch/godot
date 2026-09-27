@@ -1,11 +1,20 @@
 #include "painter_path.h"
 
-// Approximation of sdl-painter's Path::SegmentsForCurve curvature-bound formula: pick a
-// segment count from the control polygon length, clamped to a sane range.
-static int _segments_for_length(real_t p_length) {
-	const real_t flatness = 0.25; // px, matches sdl-painter's kDefaultFlatness
-	int segments = int(Math::ceil(Math::sqrt(double(p_length) / double(flatness))));
-	return CLAMP(segments, 4, 64);
+// Max deviation (px) a curve may have from its own chord before it's subdivided further —
+// matches sdl-painter's kDefaultFlatness.
+static const real_t FLATNESS_TOLERANCE = 0.25;
+// Bounds worst-case recursion (2^20 segments) for degenerate/huge control polygons.
+static const int MAX_BEZIER_DEPTH = 20;
+
+// Perpendicular distance from p to the line through a-b (0 if a == b).
+static real_t _point_line_distance(const Vector2 &p_point, const Vector2 &p_a, const Vector2 &p_b) {
+	Vector2 ab = p_b - p_a;
+	real_t len = ab.length();
+	if (len <= CMP_EPSILON) {
+		return p_point.distance_to(p_a);
+	}
+	Vector2 ap = p_point - p_a;
+	return Math::abs(ab.x * ap.y - ab.y * ap.x) / len;
 }
 
 PainterPath::PainterPath() {
@@ -37,33 +46,45 @@ void PainterPath::line_to(const Vector2 &p_point) {
 	current_point = p_point;
 }
 
+void PainterPath::_flatten_quad(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, int p_depth, PoolVector2Array &r_out) {
+	if (p_depth >= MAX_BEZIER_DEPTH || _point_line_distance(p1, p0, p2) <= FLATNESS_TOLERANCE) {
+		r_out.append(p2);
+		return;
+	}
+	Vector2 p01 = p0.linear_interpolate(p1, 0.5);
+	Vector2 p12 = p1.linear_interpolate(p2, 0.5);
+	Vector2 p012 = p01.linear_interpolate(p12, 0.5);
+	_flatten_quad(p0, p01, p012, p_depth + 1, r_out);
+	_flatten_quad(p012, p12, p2, p_depth + 1, r_out);
+}
+
+void PainterPath::_flatten_cubic(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, const Vector2 &p3, int p_depth, PoolVector2Array &r_out) {
+	real_t deviation = _point_line_distance(p1, p0, p3) + _point_line_distance(p2, p0, p3);
+	if (p_depth >= MAX_BEZIER_DEPTH || deviation <= FLATNESS_TOLERANCE) {
+		r_out.append(p3);
+		return;
+	}
+	Vector2 p01 = p0.linear_interpolate(p1, 0.5);
+	Vector2 p12 = p1.linear_interpolate(p2, 0.5);
+	Vector2 p23 = p2.linear_interpolate(p3, 0.5);
+	Vector2 p012 = p01.linear_interpolate(p12, 0.5);
+	Vector2 p123 = p12.linear_interpolate(p23, 0.5);
+	Vector2 p0123 = p012.linear_interpolate(p123, 0.5);
+	_flatten_cubic(p0, p01, p012, p0123, p_depth + 1, r_out);
+	_flatten_cubic(p0123, p123, p23, p3, p_depth + 1, r_out);
+}
+
 void PainterPath::quad_to(const Vector2 &p_control, const Vector2 &p_end) {
 	_ensure_subpath();
-	Vector2 p0 = current_point;
-	real_t poly_len = p0.distance_to(p_control) + p_control.distance_to(p_end);
-	int segments = _segments_for_length(poly_len);
 	PoolVector2Array &points = subpaths.write[subpaths.size() - 1].points;
-	for (int i = 1; i <= segments; i++) {
-		real_t t = real_t(i) / real_t(segments);
-		real_t mt = 1.0 - t;
-		Vector2 point = p0 * (mt * mt) + p_control * (2.0 * mt * t) + p_end * (t * t);
-		points.append(point);
-	}
+	_flatten_quad(current_point, p_control, p_end, 0, points);
 	current_point = p_end;
 }
 
 void PainterPath::cubic_to(const Vector2 &p_control1, const Vector2 &p_control2, const Vector2 &p_end) {
 	_ensure_subpath();
-	Vector2 p0 = current_point;
-	real_t poly_len = p0.distance_to(p_control1) + p_control1.distance_to(p_control2) + p_control2.distance_to(p_end);
-	int segments = _segments_for_length(poly_len);
 	PoolVector2Array &points = subpaths.write[subpaths.size() - 1].points;
-	for (int i = 1; i <= segments; i++) {
-		real_t t = real_t(i) / real_t(segments);
-		real_t mt = 1.0 - t;
-		Vector2 point = p0 * (mt * mt * mt) + p_control1 * (3.0 * mt * mt * t) + p_control2 * (3.0 * mt * t * t) + p_end * (t * t * t);
-		points.append(point);
-	}
+	_flatten_cubic(current_point, p_control1, p_control2, p_end, 0, points);
 	current_point = p_end;
 }
 

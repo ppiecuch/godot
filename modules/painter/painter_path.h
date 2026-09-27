@@ -3,8 +3,11 @@
 // for the origin commit and what was changed during the port.
 //
 // Like upstream, quadratic/cubic Bezier segments are flattened to line segments immediately
-// on insertion (no control points are retained). The adaptive segment-count heuristic here is
-// a simplified approximation of upstream's curvature-bound formula — see memo.md.
+// on insertion (no control points are retained). Unlike upstream's curvature-bound segment
+// COUNT formula, flattening here is recursive de Casteljau subdivision with a flatness test
+// (subdivide until the control points are within tolerance of the chord) — the standard
+// technique used by Skia/Cairo/FreeType, adaptive to how curved each individual curve
+// actually is rather than a single per-curve segment count. See memo.md.
 
 #ifndef PAINTER_PATH_H
 #define PAINTER_PATH_H
@@ -47,6 +50,8 @@ private:
 	bool has_open_subpath;
 
 	void _ensure_subpath();
+	void _flatten_quad(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, int p_depth, PoolVector2Array &r_out);
+	void _flatten_cubic(const Vector2 &p0, const Vector2 &p1, const Vector2 &p2, const Vector2 &p3, int p_depth, PoolVector2Array &r_out);
 };
 
 #endif // PAINTER_PATH_H

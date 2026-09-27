@@ -7,6 +7,80 @@ int PainterTessellator::_circle_segments(real_t p_radius) {
 	return CLAMP(segments, 12, 128);
 }
 
+static real_t _polygon_signed_area(const Vector<Point2> &p_points) {
+	real_t area = 0.0;
+	int n = p_points.size();
+	for (int i = 0; i < n; i++) {
+		const Point2 &a = p_points[i];
+		const Point2 &b = p_points[(i + 1) % n];
+		area += a.x * b.y - b.x * a.y;
+	}
+	return area * 0.5;
+}
+
+// Geometry::offset_polyline_2d(..., END_JOINED) strokes a closed loop by returning the outer
+// boundary and the inner-hole boundary of the resulting ring as two separate contours (Clipper
+// gives holes opposite winding from their containing outer contour). Godot's ear-clipping
+// triangulator, like sdl-painter's own, has no native hole support, so triangulating each
+// contour independently and filling both would double-fill the ring solid instead of leaving
+// it hollow. This bridges every non-largest contour into the largest one at its closest vertex
+// pair with a zero-width double-back edge — the standard "keyhole" technique — producing one
+// simple polygon boundary that a plain ear-clipper triangulates as "outer minus holes".
+// Only correct when the smaller contours are actually holes nested in the largest one (true for
+// any single-loop offset_polyline_2d result); a self-intersecting stroke wide enough to split
+// into disjoint (non-nested) pieces could bridge two unrelated islands together instead.
+static Vector<Point2> _bridge_contours(const Vector<Vector<Point2>> &p_contours) {
+	if (p_contours.size() == 0) {
+		return Vector<Point2>();
+	}
+
+	int outer_index = 0;
+	real_t outer_area = Math::abs(_polygon_signed_area(p_contours[0]));
+	for (int i = 1; i < p_contours.size(); i++) {
+		real_t area = Math::abs(_polygon_signed_area(p_contours[i]));
+		if (area > outer_area) {
+			outer_area = area;
+			outer_index = i;
+		}
+	}
+
+	Vector<Point2> outline = p_contours[outer_index];
+	for (int c = 0; c < p_contours.size(); c++) {
+		if (c == outer_index || p_contours[c].size() == 0) {
+			continue;
+		}
+		const Vector<Point2> &hole = p_contours[c];
+
+		int best_outline_i = 0;
+		int best_hole_i = 0;
+		real_t best_dist = -1.0;
+		for (int i = 0; i < outline.size(); i++) {
+			for (int j = 0; j < hole.size(); j++) {
+				real_t d = outline[i].distance_squared_to(hole[j]);
+				if (best_dist < 0.0 || d < best_dist) {
+					best_dist = d;
+					best_outline_i = i;
+					best_hole_i = j;
+				}
+			}
+		}
+
+		Vector<Point2> merged;
+		for (int i = 0; i <= best_outline_i; i++) {
+			merged.push_back(outline[i]);
+		}
+		for (int j = 0; j < hole.size(); j++) {
+			merged.push_back(hole[(best_hole_i + j) % hole.size()]);
+		}
+		merged.push_back(hole[best_hole_i]);
+		for (int i = best_outline_i; i < outline.size(); i++) {
+			merged.push_back(outline[i]);
+		}
+		outline = merged;
+	}
+	return outline;
+}
+
 Vector<Vector2> PainterTessellator::arc_points(const Point2 &p_center, real_t p_rx, real_t p_ry, real_t p_start_deg, real_t p_sweep_deg) {
 	Vector<Vector2> points;
 	int full_segments = _circle_segments(MAX(p_rx, p_ry));
@@ -94,11 +168,27 @@ PainterMesh PainterTessellator::filled_ellipse(const Point2 &p_center, real_t p_
 
 PainterMesh PainterTessellator::filled_polygon(const Vector<Vector2> &p_points) {
 	PainterMesh mesh;
-	if (p_points.size() < 3) {
+
+	// Matches sdl-painter's RemoveDuplicatePoints pre-pass: drop consecutive duplicates and,
+	// for a closed contour, a trailing point that coincides with the first. Godot's own
+	// Triangulate::triangulate has no such pre-pass, so a caller-supplied closed-loop point
+	// list (e.g. a PainterPath subpath, which repeats the start point) would otherwise feed
+	// the ear-clipper a zero-area "ear" and force its relaxed-mode fallback.
+	Vector<Vector2> points;
+	for (int i = 0; i < p_points.size(); i++) {
+		if (points.size() == 0 || points[points.size() - 1].distance_squared_to(p_points[i]) > CMP_EPSILON) {
+			points.push_back(p_points[i]);
+		}
+	}
+	if (points.size() > 1 && points[0].distance_squared_to(points[points.size() - 1]) <= CMP_EPSILON) {
+		points.remove(points.size() - 1);
+	}
+
+	if (points.size() < 3) {
 		return mesh;
 	}
-	mesh.vertices = p_points;
-	mesh.indices = Geometry::triangulate_polygon(Span<Vector2>(p_points.ptr(), p_points.size()));
+	mesh.vertices = points;
+	mesh.indices = Geometry::triangulate_polygon(Span<Vector2>(points.ptr(), points.size()));
 	return mesh;
 }
 
@@ -128,105 +218,40 @@ PainterMesh PainterTessellator::filled_rounded_rect(const Rect2 &p_rect, real_t 
 	return filled_polygon(rounded_rect_points(p_rect, p_radius));
 }
 
-void PainterTessellator::_append_round_disc(PainterMesh &p_mesh, const Vector2 &p_center, real_t p_radius) {
-	p_mesh.append(filled_circle(p_center, p_radius));
+static Geometry::PolyJoinType _to_poly_join_type(PainterPen::LineJoin p_join) {
+	switch (p_join) {
+		case PainterPen::JOIN_MITER:
+			return Geometry::JOIN_MITER;
+		case PainterPen::JOIN_BEVEL:
+			// Clipper's "square" join is the flat-cut corner other libraries call "bevel" —
+			// there's no separate bevel join type in Geometry::PolyJoinType.
+			return Geometry::JOIN_SQUARE;
+		case PainterPen::JOIN_ROUND:
+		default:
+			return Geometry::JOIN_ROUND;
+	}
 }
 
-void PainterTessellator::_append_segment_quad(PainterMesh &p_mesh, const Vector2 &p_a, const Vector2 &p_b, const Vector2 &p_normal) {
-	int base = p_mesh.vertices.size();
-	p_mesh.vertices.push_back(p_a + p_normal);
-	p_mesh.vertices.push_back(p_b + p_normal);
-	p_mesh.vertices.push_back(p_b - p_normal);
-	p_mesh.vertices.push_back(p_a - p_normal);
-	p_mesh.indices.push_back(base + 0);
-	p_mesh.indices.push_back(base + 1);
-	p_mesh.indices.push_back(base + 2);
-	p_mesh.indices.push_back(base + 0);
-	p_mesh.indices.push_back(base + 2);
-	p_mesh.indices.push_back(base + 3);
+static Geometry::PolyEndType _to_poly_end_type(PainterPen::LineCap p_cap) {
+	switch (p_cap) {
+		case PainterPen::CAP_SQUARE:
+			return Geometry::END_SQUARE;
+		case PainterPen::CAP_ROUND:
+			return Geometry::END_ROUND;
+		case PainterPen::CAP_BUTT:
+		default:
+			return Geometry::END_BUTT;
+	}
 }
 
-// Picks the outer (convex) side of a joint between two travel directions and, for round joins,
-// simply drops a filled disc over the joint — cheap, and equivalent to an exact round join once
-// filled with an opaque color. Miter falls back to bevel past the miter limit, same as upstream.
-void PainterTessellator::_append_join(PainterMesh &p_mesh, const Vector2 &p_joint, const Vector2 &p_dir_in, const Vector2 &p_dir_out, real_t p_half_width, PainterPen::LineJoin p_join) {
-	if (p_join == PainterPen::JOIN_ROUND) {
-		_append_round_disc(p_mesh, p_joint, p_half_width);
-		return;
-	}
-
-	Vector2 n_in(-p_dir_in.y, p_dir_in.x);
-	Vector2 n_out(-p_dir_out.y, p_dir_out.x);
-	real_t turn = p_dir_in.cross(p_dir_out);
-	Vector2 m_in = (turn < 0) ? n_in : -n_in;
-	Vector2 m_out = (turn < 0) ? n_out : -n_out;
-
-	Vector2 outer_in = p_joint + m_in * p_half_width;
-	Vector2 outer_out = p_joint + m_out * p_half_width;
-
-	if (p_join == PainterPen::JOIN_MITER) {
-		Vector2 bisector = m_in + m_out;
-		real_t bisector_len = bisector.length();
-		if (bisector_len > CMP_EPSILON) {
-			bisector /= bisector_len;
-			real_t cos_half_angle = bisector.dot(m_in);
-			const real_t miter_limit = 4.0;
-			if (cos_half_angle > 0.05) {
-				real_t miter_len = p_half_width / cos_half_angle;
-				if (miter_len <= p_half_width * miter_limit) {
-					Vector2 miter_point = p_joint + bisector * miter_len;
-					int base = p_mesh.vertices.size();
-					p_mesh.vertices.push_back(p_joint);
-					p_mesh.vertices.push_back(outer_in);
-					p_mesh.vertices.push_back(miter_point);
-					p_mesh.vertices.push_back(outer_out);
-					p_mesh.indices.push_back(base + 0);
-					p_mesh.indices.push_back(base + 1);
-					p_mesh.indices.push_back(base + 2);
-					p_mesh.indices.push_back(base + 0);
-					p_mesh.indices.push_back(base + 2);
-					p_mesh.indices.push_back(base + 3);
-					return;
-				}
-			}
-		}
-		// Falls through to bevel when the miter would be too long or the turn is degenerate.
-	}
-
-	int base = p_mesh.vertices.size();
-	p_mesh.vertices.push_back(p_joint);
-	p_mesh.vertices.push_back(outer_in);
-	p_mesh.vertices.push_back(outer_out);
-	p_mesh.indices.push_back(base + 0);
-	p_mesh.indices.push_back(base + 1);
-	p_mesh.indices.push_back(base + 2);
-}
-
-void PainterTessellator::_append_cap(PainterMesh &p_mesh, const Vector2 &p_end, const Vector2 &p_dir_outward, real_t p_half_width, PainterPen::LineCap p_cap) {
-	if (p_cap == PainterPen::CAP_BUTT) {
-		return;
-	}
-	if (p_cap == PainterPen::CAP_ROUND) {
-		_append_round_disc(p_mesh, p_end, p_half_width);
-		return;
-	}
-
-	// CAP_SQUARE: extend a half-width rectangle beyond the endpoint.
-	Vector2 normal(-p_dir_outward.y, p_dir_outward.x);
-	Vector2 extended = p_end + p_dir_outward * p_half_width;
-	int base = p_mesh.vertices.size();
-	p_mesh.vertices.push_back(p_end + normal * p_half_width);
-	p_mesh.vertices.push_back(extended + normal * p_half_width);
-	p_mesh.vertices.push_back(extended - normal * p_half_width);
-	p_mesh.vertices.push_back(p_end - normal * p_half_width);
-	p_mesh.indices.push_back(base + 0);
-	p_mesh.indices.push_back(base + 1);
-	p_mesh.indices.push_back(base + 2);
-	p_mesh.indices.push_back(base + 0);
-	p_mesh.indices.push_back(base + 2);
-	p_mesh.indices.push_back(base + 3);
-}
-
+// Strokes a polyline by computing a single continuous offset-outline polygon via Godot's own
+// Clipper-backed Geometry::offset_polyline_2d, then triangulating that outline — rather than
+// building one independent quad per segment plus separate join/cap patches. The quad-per-
+// segment approach always leaves a small overlap on the inner (concave) side of every joint,
+// regardless of join style, which double-blends visibly for semi-transparent pens; a single
+// offset outline has no such overlap since it's one simple polygon. Note: Clipper's default
+// miter limit is 2.0 (ClipperOffset's own default, not configurable through this wrapper),
+// vs. upstream sdl-painter's 4.0 — miters fall back to the join type a little sooner here.
 PainterMesh PainterTessellator::thick_polyline(const Vector<Vector2> &p_points, real_t p_width, PainterPen::LineCap p_cap, PainterPen::LineJoin p_join, bool p_closed) {
 	PainterMesh mesh;
 
@@ -239,40 +264,17 @@ PainterMesh PainterTessellator::thick_polyline(const Vector<Vector2> &p_points, 
 	if (p_closed && pts.size() > 1 && pts[0].distance_squared_to(pts[pts.size() - 1]) <= CMP_EPSILON) {
 		pts.remove(pts.size() - 1);
 	}
-
-	int n = pts.size();
-	if (n < 2 || p_width <= 0.0) {
+	if (pts.size() < 2 || p_width <= 0.0) {
 		return mesh;
 	}
+	// A 2-point "closed" line has no interior to join; treat it as open so it gets caps.
+	bool closed = p_closed && pts.size() > 2;
 
-	real_t half_width = p_width * 0.5;
-	int segment_count = p_closed ? n : n - 1;
+	Geometry::PolyJoinType join_type = _to_poly_join_type(p_join);
+	Geometry::PolyEndType end_type = closed ? Geometry::END_JOINED : _to_poly_end_type(p_cap);
 
-	Vector<Vector2> dirs;
-	dirs.resize(segment_count);
-	for (int i = 0; i < segment_count; i++) {
-		dirs.write[i] = (pts[(i + 1) % n] - pts[i]).normalized();
-	}
-
-	for (int i = 0; i < segment_count; i++) {
-		Vector2 normal(-dirs[i].y, dirs[i].x);
-		_append_segment_quad(mesh, pts[i], pts[(i + 1) % n], normal * half_width);
-	}
-
-	if (p_closed) {
-		for (int j = 0; j < n; j++) {
-			int seg_in = (j - 1 + n) % n;
-			_append_join(mesh, pts[j], dirs[seg_in], dirs[j], half_width, p_join);
-		}
-	} else {
-		for (int j = 1; j < n - 1; j++) {
-			_append_join(mesh, pts[j], dirs[j - 1], dirs[j], half_width, p_join);
-		}
-		_append_cap(mesh, pts[0], -dirs[0], half_width, p_cap);
-		_append_cap(mesh, pts[n - 1], dirs[segment_count - 1], half_width, p_cap);
-	}
-
-	return mesh;
+	Vector<Vector<Point2>> contours = Geometry::offset_polyline_2d(Span<Vector2>(pts.ptr(), pts.size()), p_width * 0.5, join_type, end_type);
+	return filled_polygon(_bridge_contours(contours));
 }
 
 PainterMesh PainterTessellator::dashed_polyline(const Vector<Vector2> &p_points, real_t p_width, const PoolRealArray &p_dash, PainterPen::LineCap p_cap, PainterPen::LineJoin p_join, bool p_closed) {

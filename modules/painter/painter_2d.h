@@ -13,6 +13,16 @@
 // silently keeps the first (inherited) binding on a name clash, which would make the Painter2D
 // overloads unreachable from GDScript. The local paint transform stack is prefixed paint_* for
 // the same reason, and to make clear it's separate from the node's own transform.
+//
+// Batching (replaces upstream's RenderBatcher): every stroke_*/fill_* call appends into a
+// per-node accumulation buffer instead of calling VisualServer directly, and the buffer is
+// flushed as a single canvas_item_add_triangle_array call via call_deferred(), so a whole
+// _draw() worth of shapes becomes one VisualServer call instead of one per shape. This is safe
+// because CanvasItem::_update_callback() calls notification(NOTIFICATION_DRAW), emit_signal
+// ("draw"), and the script's _draw() override all synchronously before returning — a
+// call_deferred() queued from _notification(NOTIFICATION_DRAW) cannot run until that whole
+// stack unwinds, so every draw call the script's _draw() makes is guaranteed to already be in
+// the buffer by the time the flush fires. See modules/painter/memo.md.
 
 #ifndef PAINTER_2D_H
 #define PAINTER_2D_H
@@ -74,6 +84,14 @@ private:
 	Ref<PainterBrush> current_brush;
 	Transform2D current_transform;
 	Vector<Transform2D> transform_stack;
+
+	Vector<Point2> batch_points;
+	Vector<Color> batch_colors;
+	Vector<int> batch_indices;
+	bool batch_flush_scheduled;
+
+	void _queue(const PainterMesh &p_mesh, const Vector<Color> &p_colors);
+	void _flush_batch();
 
 	void _submit_fill(const PainterMesh &p_mesh);
 	void _submit_stroke(const PainterMesh &p_mesh, const Color &p_color);

@@ -1,8 +1,11 @@
 // CPU-side shape tessellation used by Painter2D. Ported from sdl-painter's Tessellator class
 // (https://github.com/yazilimperver/sdl-painter, MIT license) — see modules/painter/memo.md
 // for the origin commit and what was changed during the port (Godot Vector2/Color types
-// instead of sdl-painter's own Point/Vertex, Godot's Triangulate for concave fill instead of
-// a ported ear-clipper, "draw a disc at every joint/cap" instead of exact round-join arcs).
+// instead of sdl-painter's own Point/Vertex; Godot's Triangulate for concave fill instead of
+// a ported ear-clipper, with a duplicate-point pre-pass added in filled_polygon() to match
+// sdl-painter's RemoveDuplicatePoints; stroking delegates to Godot's own Clipper-backed
+// Geometry::offset_polyline_2d instead of a hand-rolled quad-per-segment tessellator — see
+// memo.md for why).
 //
 // Output is plain (points, triangle indices) so callers can submit it directly via
 // VisualServer::canvas_item_add_triangle_array, the same way scene/2d/line_2d.cpp does.
@@ -51,11 +54,6 @@ public:
 
 private:
 	static int _circle_segments(real_t p_radius);
-	static PainterMesh _triangle_fan(const Vector<Vector2> &p_points, bool p_include_center, const Vector2 &p_center);
-	static void _append_round_disc(PainterMesh &p_mesh, const Vector2 &p_center, real_t p_radius);
-	static void _append_segment_quad(PainterMesh &p_mesh, const Vector2 &p_a, const Vector2 &p_b, const Vector2 &p_normal);
-	static void _append_join(PainterMesh &p_mesh, const Vector2 &p_joint, const Vector2 &p_dir_in, const Vector2 &p_dir_out, real_t p_half_width, PainterPen::LineJoin p_join);
-	static void _append_cap(PainterMesh &p_mesh, const Vector2 &p_end, const Vector2 &p_dir_outward, real_t p_half_width, PainterPen::LineCap p_cap);
 };
 
 #endif // PAINTER_TESSELLATOR_H
