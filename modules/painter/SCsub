@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+
+Import("env")
+Import("env_modules")
+
+env_painter = env_modules.Clone()
+env_painter.Prepend(CPPPATH=["."])
+
+sources = Glob("*.cpp")
+
+# Compile as a static library
+lib = env_painter.Library("painter", sources)
+# Add the library as a dependency of the final executable
+env.Prepend(LIBS=[lib])
