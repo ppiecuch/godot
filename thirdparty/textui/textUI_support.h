@@ -120,12 +120,11 @@ const char *dir_getname(const dir_ffblk *fb);
 #define fnsplit path_split
 #define fnmerge path_merge
 
-/* file_stat() is the one Godot-backed file helper textUI.c calls directly
-** (via fnstatat(), from _findnext()'s S_ISDIR() check); implemented in
-** scene/debugconsole/textUI_support.cpp. The rest of the Godot file/event
-** bridge (TextUI_Feed*, GFILE, ...) is declared in
-** scene/debugconsole/textUI_integration.h -- textUI.c never calls it, so
-** it doesn't need to live in this vendor-facing header. */
+/* file_stat() (via fnstatat()) backs _findnext()'s S_ISDIR() check, itself built on plain
+** POSIX opendir()/readdir_r() (textUI.c) rather than any Godot API, so it's a plain stat()
+** wrapper here, not a Godot bridge -- unlike the real Godot file/event glue (TextUI_Feed*,
+** GFILE, ...) declared in scene/debugconsole/textUI_support.cpp, which textUI.c never calls
+** directly and so doesn't need to live in this vendor-facing header. */
 int file_stat(const char *path, struct stat *buf);
 #define fnstatat file_stat
 

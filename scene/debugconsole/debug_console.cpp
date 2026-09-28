@@ -32,13 +32,13 @@
 #include "console_gauge.h"
 #include "console_lcd.h"
 #include "console_raster.h"
+#include "debug_sysinfo.h"
 #include "figlet_font.h"
 
 #include "core/os/secondary_display.h"
 
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sstream>
@@ -49,15 +49,6 @@
 #include "core/os/file_access.h"
 #include "core/os/os.h"
 #include "core/version.h"
-#include "main/performance.h"
-#include "servers/visual_server.h"
-
-#if defined(UNIX_ENABLED) && !defined(NO_STATVFS)
-#include <sys/statvfs.h>
-#endif
-#if defined(__linux__) || defined(ANDROID_ENABLED)
-#include <dirent.h>
-#endif
 #include "scene/resources/mesh.h"
 #include "scene/resources/texture.h"
 
@@ -1746,321 +1737,16 @@ void ConsoleInstance::_render_log() {
 	}
 }
 
-// --- SYSINFO collectors -----------------------------------------------------------------
-//
-// Everything here is polled at `refresh_rate` (~5 Hz), so the cost budget per item is a
-// syscall or two. Anything that cannot change while the process runs -- the SoC name, the
-// GL strings, the thermal zone list -- is resolved once and cached in a function-local
-// static instead.
-
-namespace {
-
-#if defined(__linux__) || defined(ANDROID_ENABLED)
-
-// Lines of a /proc or /sys pseudo-file, empty when it cannot be read.
-//
-// These deliberately bypass FileAccess: on Android ACCESS_FILESYSTEM is served by
-// FileAccessFilesystemJAndroid, which routes through the Java storage API and cannot see
-// kernel pseudo-files at all. Their reported size is also 0, so only stdio streaming works.
-Vector<String> console_read_sys_file(const String &p_path, int p_max_lines = 4096) {
-	Vector<String> lines;
-	FILE *f = fopen(p_path.utf8().get_data(), "rb");
-	if (!f) {
-		return lines;
-	}
-	char buf[512];
-	while (lines.size() < p_max_lines && fgets(buf, sizeof(buf), f)) {
-		lines.push_back(String::utf8(buf).strip_edges());
-	}
-	fclose(f);
-	return lines;
-}
-
-String console_read_sys_line(const String &p_path) {
-	const Vector<String> lines = console_read_sys_file(p_path, 1);
-	return lines.empty() ? String() : lines[0];
-}
-
-#endif
-
-// First line of /proc/cpuinfo that names the part. Android drops "model name" on arm, so
-// "Hardware" and "Processor" are tried as well; empty when nothing matched.
-String console_cpu_model() {
-	static String cached;
-	static bool resolved = false;
-	if (resolved) {
-		return cached;
-	}
-	resolved = true;
-#if defined(__linux__) || defined(ANDROID_ENABLED)
-	const Vector<String> lines = console_read_sys_file("/proc/cpuinfo");
-	for (int i = 0; i < lines.size(); ++i) {
-		const String &line = lines[i];
-		const int colon = line.find(":");
-		if (colon < 0) {
-			continue;
-		}
-		const String key = line.substr(0, colon).strip_edges();
-		if (key == "Hardware" || key == "model name" || key == "Processor") {
-			cached = line.substr(colon + 1).strip_edges();
-			if (key == "Hardware") {
-				break; // the most specific of the three on Android
-			}
-		}
-	}
-#endif
-	return cached;
-}
-
-// Highest CPU/SoC die temperature in degrees Celsius, or -1 when unavailable. Qualcomm
-// parts expose a hundred zones, so the interesting ones are picked once by type.
-float console_cpu_temperature() {
-#if defined(__linux__) || defined(ANDROID_ENABLED)
-	static Vector<String> zones;
-	static bool resolved = false;
-	if (!resolved) {
-		resolved = true;
-		DIR *d = opendir("/sys/class/thermal");
-		if (d) {
-			while (struct dirent *ent = readdir(d)) {
-				const String name = String::utf8(ent->d_name);
-				if (!name.begins_with("thermal_zone")) {
-					continue;
-				}
-				const String base = "/sys/class/thermal/" + name;
-				const String type = console_read_sys_line(base + "/type").to_lower();
-				// "cpu*", "*-usr" (tsens), "soc" -- skip battery/charger/skin zones, which
-				// say nothing about how hard the chip is being pushed.
-				if (type.find("cpu") >= 0 || type.find("soc") >= 0) {
-					zones.push_back(base + "/temp");
-				}
-				if (zones.size() >= 8) {
-					break;
-				}
-			}
-			closedir(d);
-		}
-	}
-
-	float best = -1;
-	for (int i = 0; i < zones.size(); ++i) {
-		const String raw = console_read_sys_line(zones[i]);
-		if (raw.is_valid_integer()) {
-			// Millidegrees on every sane kernel, but a few report plain degrees.
-			const int64_t v = raw.to_int64();
-			const float c = v > 1000 ? v / 1000.0f : float(v);
-			best = MAX(best, c);
-		}
-	}
-	return best;
-#else
-	return -1;
-#endif
-}
-
-// MemAvailable / MemTotal in bytes; both zero when /proc/meminfo is not readable.
-void console_system_memory(uint64_t &r_avail, uint64_t &r_total) {
-	r_avail = 0;
-	r_total = 0;
-#if defined(__linux__) || defined(ANDROID_ENABLED)
-	const Vector<String> lines = console_read_sys_file("/proc/meminfo", 64);
-	for (int i = 0; i < lines.size() && (!r_avail || !r_total); ++i) {
-		const String &line = lines[i];
-		const int colon = line.find(":");
-		if (colon < 0) {
-			continue;
-		}
-		const String key = line.substr(0, colon).strip_edges();
-		if (key != "MemAvailable" && key != "MemTotal") {
-			continue;
-		}
-		// "MemTotal:       11534336 kB"
-		const String value = line.substr(colon + 1).strip_edges().split(" ")[0];
-		if (!value.is_valid_integer()) {
-			continue;
-		}
-		const uint64_t bytes = uint64_t(value.to_int64()) * 1024;
-		if (key == "MemAvailable") {
-			r_avail = bytes;
-		} else {
-			r_total = bytes;
-		}
-	}
-#endif
-}
-
-// Free bytes on the volume holding the user data dir, or 0 when it cannot be determined.
-uint64_t console_storage_free() {
-#if defined(UNIX_ENABLED) && !defined(NO_STATVFS)
-	const CharString path = OS::get_singleton()->get_user_data_dir().utf8();
-	struct statvfs st;
-	if (statvfs(path.get_data(), &st) == 0) {
-		return uint64_t(st.f_bavail) * uint64_t(st.f_frsize);
-	}
-#endif
-	return 0;
-}
-
-String console_power_line() {
-	OS *os = OS::get_singleton();
-	const int percent = os->get_power_percent_left();
-	if (percent < 0) {
-		return String();
-	}
-	String state;
-	switch (os->get_power_state()) {
-		case OS::POWERSTATE_CHARGING:
-			state = " chg";
-			break;
-		case OS::POWERSTATE_CHARGED:
-			state = " full";
-			break;
-		case OS::POWERSTATE_ON_BATTERY:
-			state = " bat";
-			break;
-		default:
-			break;
-	}
-	return itos(percent) + "%" + state;
-}
-
-// 85300 -> "85.3 K"; keeps wide counters inside one column on a 40-cell panel.
-String console_format_count(double p_value) {
-	if (p_value >= 1000000.0) {
-		return vformat("%.1f M", p_value / 1000000.0);
-	}
-	if (p_value >= 1000.0) {
-		return vformat("%.1f K", p_value / 1000.0);
-	}
-	return itos(int64_t(p_value));
-}
-
-double console_perf(Performance::Monitor p_monitor) {
-	const Performance *perf = Performance::get_singleton();
-	return perf ? perf->get_monitor(p_monitor) : 0;
-}
-
-} // namespace
-
 void ConsoleInstance::_render_sysinfo() {
-	OS *os = OS::get_singleton();
-	VisualServer *vs = VisualServer::get_singleton();
-	const int screen = os->get_current_screen();
-	const int width = console->get_console_size().width;
-
-	// A helper for the "name  value" rows; the label column is fixed so the values line up.
-	struct Row {
-		TextConsole *con;
-		void operator()(const char *p_label, const String &p_value, TextConsole::ColorIndex p_color = TextConsole::COLOR_DEFAULT) {
-			String label = String(" ") + p_label;
-			while (label.length() < 10) {
-				label += " ";
-			}
-			con->logl(label + p_value, p_color);
-		}
-	} row = { *console };
-
-	String version = VERSION_FULL_NAME;
-	if (String(VERSION_HASH).length() >= 7) {
-		version += " [" + String(VERSION_HASH).substr(0, 7) + "]";
-	}
-	console->logl(version, TextConsole::COLOR_WHITE);
-
-	// --- device ---------------------------------------------------------------------
-	String device = os->get_name();
-	if (!os->get_model_name().empty() && os->get_model_name() != "GenericDevice") {
-		device += " / " + os->get_model_name();
-	}
-	row("device", device);
-
-	String cpu = itos(os->get_processor_count()) + " cores";
-	const String cpu_model = console_cpu_model();
-	if (!cpu_model.empty()) {
-		cpu += "  " + cpu_model;
-	}
-	row("cpu", cpu);
-
-	const float temp = console_cpu_temperature();
-	String status;
-	if (temp >= 0) {
-		status = vformat("%.1f C", temp);
-	}
-	const String power = console_power_line();
-	if (!power.empty()) {
-		status += status.empty() ? power : "   batt " + power;
-	}
-	if (!status.empty()) {
-		// Warm silicon means the frame times below are already being throttled.
-		row("thermal", status, temp >= 80 ? TextConsole::COLOR_LIGHTRED : (temp >= 65 ? TextConsole::COLOR_YELLOW : TextConsole::COLOR_DEFAULT));
-	}
-
-	String gpu = vs ? vs->get_video_adapter_name() : String();
-	if (gpu.empty()) {
-		gpu = os->get_video_driver_name(os->get_current_video_driver());
+	// embed_debug_font is file-static to this translation unit (see its definition above), so
+	// the font name is resolved here rather than in debug_sysinfo.cpp.
+	const String font_name = embed_debug_font[console->get_font()].image;
+	Vector<SysInfoRow> rows = debug_sysinfo_collect(**console, fps_history, fps_history_capacity, watches.size(), font_name);
+	if (sysinfo_style == SYSINFO_STYLE_TEXTUI) {
+		debug_sysinfo_render_textui(**console, rows, "System Info", vformat("%d fps", Engine::get_singleton()->get_frames_per_second()));
 	} else {
-		gpu += " (" + String(os->get_video_driver_name(os->get_current_video_driver())) + ")";
+		debug_sysinfo_render_classic(**console, rows);
 	}
-	row("gpu", gpu);
-	row("locale", os->get_locale());
-
-	// --- displays -------------------------------------------------------------------
-	row("screen", vformat("%dx%d @ %d dpi", int(os->get_screen_size(screen).width), int(os->get_screen_size(screen).height), os->get_screen_dpi(screen)));
-	if (SecondaryDisplay *sd = SecondaryDisplay::get_singleton()) {
-		if (sd->is_available()) {
-			// The panel this console is most likely being read on.
-			row("panel", vformat("%dx%d @ %d dpi", sd->get_size().width, sd->get_size().height, sd->get_dpi()), TextConsole::COLOR_LIGHTCYAN);
-		}
-	}
-	row("console", vformat("%dx%d cells, %s, scale %d", console->get_console_size().width, console->get_console_size().height, embed_debug_font[console->get_font()].image, console->get_pixel_scale()));
-
-	// --- frame ----------------------------------------------------------------------
-	console->logl(String(BOX_SLR).repeat(MAX(1, width)), TextConsole::COLOR_DARKGRAY);
-
-	const float fps = console_perf(Performance::TIME_FPS);
-	row("fps", vformat("%d   frame %.1f ms   phys %.1f ms", int(fps), console_perf(Performance::TIME_PROCESS) * 1000.0, console_perf(Performance::TIME_PHYSICS_PROCESS) * 1000.0));
-
-	// Plot the fps history under the numbers: the instantaneous value says nothing about
-	// whether a stutter just happened. The range is pinned to 0..60 so the plot means the
-	// same thing frame to frame instead of auto-scaling to whatever the recent spread was.
-	fps_history.push_back(fps);
-	while (fps_history.size() > fps_history_capacity) {
-		fps_history.remove(0);
-	}
-	const int plot_width = MAX(8, MIN(width - 12, fps_history_capacity));
-	row("", graph(fps_history, plot_width, 0.0, 60.0), TextConsole::COLOR_LIGHTGREEN);
-	row("draws", vformat("%d   verts %s   objs %d", int(console_perf(Performance::RENDER_DRAW_CALLS_IN_FRAME)), console_format_count(console_perf(Performance::RENDER_VERTICES_IN_FRAME)), int(console_perf(Performance::RENDER_OBJECTS_IN_FRAME))));
-	row("changes", vformat("surf %d  mat %d  shader %d", int(console_perf(Performance::RENDER_SURFACE_CHANGES_IN_FRAME)), int(console_perf(Performance::RENDER_MATERIAL_CHANGES_IN_FRAME)), int(console_perf(Performance::RENDER_SHADER_CHANGES_IN_FRAME))));
-	row("vram", vformat("%s  (tex %s, vtx %s)", String::humanize_size((uint64_t)console_perf(Performance::RENDER_VIDEO_MEM_USED)), String::humanize_size((uint64_t)console_perf(Performance::RENDER_TEXTURE_MEM_USED)), String::humanize_size((uint64_t)console_perf(Performance::RENDER_VERTEX_MEM_USED))));
-
-	// --- objects & memory -----------------------------------------------------------
-	const int orphans = int(console_perf(Performance::OBJECT_ORPHAN_NODE_COUNT));
-	row("objects", vformat("%d  nodes %d  res %d", ObjectDB::get_object_count(), int(console_perf(Performance::OBJECT_NODE_COUNT)), int(console_perf(Performance::OBJECT_RESOURCE_COUNT))));
-	// Orphans are nodes that were never freed after being removed from the tree: the
-	// cheapest leak canary a running game has.
-	row("orphans", itos(orphans), orphans > 0 ? TextConsole::COLOR_YELLOW : TextConsole::COLOR_DARKGRAY);
-	row("mem", vformat("%s static (peak %s)", String::humanize_size(os->get_static_memory_usage()), String::humanize_size(os->get_static_memory_peak_usage())));
-	row("dynamic", vformat("%s (peak %s)", String::humanize_size((uint64_t)console_perf(Performance::MEMORY_DYNAMIC)), String::humanize_size((uint64_t)console_perf(Performance::MEMORY_DYNAMIC_MAX))));
-
-	uint64_t sys_avail = 0, sys_total = 0;
-	console_system_memory(sys_avail, sys_total);
-	if (sys_total) {
-		row("sysmem", vformat("%s free of %s", String::humanize_size(sys_avail), String::humanize_size(sys_total)),
-				sys_avail < (sys_total / 10) ? TextConsole::COLOR_LIGHTRED : TextConsole::COLOR_DEFAULT);
-	}
-	if (sys_total) {
-		const real_t used = real_t(sys_total - sys_avail) / real_t(sys_total);
-		row("", meter(used, MAX(8, MIN(width - 12, 24))),
-				used > 0.9 ? TextConsole::COLOR_LIGHTRED : TextConsole::COLOR_CYAN);
-	}
-	if (const uint64_t storage = console_storage_free()) {
-		row("storage", String::humanize_size(storage) + " free");
-	}
-
-	const double latency = console_perf(Performance::AUDIO_OUTPUT_LATENCY);
-	if (latency > 0) {
-		row("audio", vformat("%.1f ms latency", latency * 1000.0));
-	}
-	row("watches", itos(watches.size()), TextConsole::COLOR_DARKGRAY);
 }
 
 void ConsoleInstance::_render_props() {
@@ -2165,6 +1851,21 @@ bool ConsoleInstance::is_panel_touch_enabled() const {
 
 void ConsoleInstance::prev_page() {
 	switch_page(Page((page + PAGE_MAX - 1) % PAGE_MAX));
+}
+
+void ConsoleInstance::set_sysinfo_style(SysInfoStyle p_style) {
+	ERR_FAIL_INDEX(p_style, SYSINFO_STYLE_MAX);
+	if (sysinfo_style == p_style) {
+		return;
+	}
+	sysinfo_style = p_style;
+	if (page == PAGE_SYSINFO) {
+		_render();
+	}
+}
+
+ConsoleInstance::SysInfoStyle ConsoleInstance::get_sysinfo_style() const {
+	return sysinfo_style;
 }
 
 void ConsoleInstance::set_refresh_rate(real_t p_hz) {
@@ -2334,6 +2035,8 @@ void ConsoleInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_page"), &ConsoleInstance::get_page);
 	ClassDB::bind_method(D_METHOD("next_page"), &ConsoleInstance::next_page);
 	ClassDB::bind_method(D_METHOD("prev_page"), &ConsoleInstance::prev_page);
+	ClassDB::bind_method(D_METHOD("set_sysinfo_style", "style"), &ConsoleInstance::set_sysinfo_style);
+	ClassDB::bind_method(D_METHOD("get_sysinfo_style"), &ConsoleInstance::get_sysinfo_style);
 	ClassDB::bind_method(D_METHOD("scroll_log", "rows"), &ConsoleInstance::scroll_log);
 	ClassDB::bind_method(D_METHOD("scroll_log_to_end"), &ConsoleInstance::scroll_log_to_end);
 	ClassDB::bind_method(D_METHOD("get_log_scroll"), &ConsoleInstance::get_log_scroll);
@@ -2346,6 +2049,9 @@ void ConsoleInstance::_bind_methods() {
 	BIND_ENUM_CONSTANT(PAGE_LOG);
 	BIND_ENUM_CONSTANT(PAGE_SYSINFO);
 	BIND_ENUM_CONSTANT(PAGE_PROPS);
+
+	BIND_ENUM_CONSTANT(SYSINFO_STYLE_CLASSIC);
+	BIND_ENUM_CONSTANT(SYSINFO_STYLE_TEXTUI);
 
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::DOS_8x16, "DOS_8x16");
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::DOS_8x12, "DOS_8x12");
@@ -2492,6 +2198,15 @@ int DebugConsole::get_page() const {
 	_FORWARD(get_page(), ConsoleInstance::PAGE_LOG);
 }
 
+void DebugConsole::set_sysinfo_style(int p_style) {
+	ERR_FAIL_INDEX(p_style, ConsoleInstance::SYSINFO_STYLE_MAX);
+	_FORWARD_VOID(set_sysinfo_style(ConsoleInstance::SysInfoStyle(p_style)));
+}
+
+int DebugConsole::get_sysinfo_style() const {
+	_FORWARD(get_sysinfo_style(), ConsoleInstance::SYSINFO_STYLE_CLASSIC);
+}
+
 void DebugConsole::set_font(int p_font) {
 	ERR_FAIL_INDEX(p_font, TextConsole::DosFontCount);
 	_FORWARD_VOID(set_font(TextConsole::FontSize(p_font)));
@@ -2609,6 +2324,8 @@ void DebugConsole::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("switch_page", "page"), &DebugConsole::switch_page);
 	ClassDB::bind_method(D_METHOD("next_page"), &DebugConsole::next_page);
 	ClassDB::bind_method(D_METHOD("prev_page"), &DebugConsole::prev_page);
+	ClassDB::bind_method(D_METHOD("set_sysinfo_style", "style"), &DebugConsole::set_sysinfo_style);
+	ClassDB::bind_method(D_METHOD("get_sysinfo_style"), &DebugConsole::get_sysinfo_style);
 	ClassDB::bind_method(D_METHOD("scroll_log", "rows"), &DebugConsole::scroll_log);
 	ClassDB::bind_method(D_METHOD("scroll_log_to_end"), &DebugConsole::scroll_log_to_end);
 	ClassDB::bind_method(D_METHOD("get_log_scroll"), &DebugConsole::get_log_scroll);
@@ -2646,6 +2363,9 @@ void DebugConsole::_bind_methods() {
 	BIND_ENUM_CONSTANT_CUSTOM(ConsoleInstance::PAGE_LOG, "PAGE_LOG");
 	BIND_ENUM_CONSTANT_CUSTOM(ConsoleInstance::PAGE_SYSINFO, "PAGE_SYSINFO");
 	BIND_ENUM_CONSTANT_CUSTOM(ConsoleInstance::PAGE_PROPS, "PAGE_PROPS");
+
+	BIND_ENUM_CONSTANT_CUSTOM(ConsoleInstance::SYSINFO_STYLE_CLASSIC, "SYSINFO_STYLE_CLASSIC");
+	BIND_ENUM_CONSTANT_CUSTOM(ConsoleInstance::SYSINFO_STYLE_TEXTUI, "SYSINFO_STYLE_TEXTUI");
 
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::DOS_8x16, "DOS_8x16");
 	BIND_ENUM_CONSTANT_CUSTOM(TextConsole::DOS_8x12, "DOS_8x12");

@@ -228,6 +228,13 @@ public:
 		PAGE_MAX,
 	};
 
+	// How PAGE_SYSINFO is drawn; see debug_sysinfo.{h,cpp}. Both styles show the same data.
+	enum SysInfoStyle {
+		SYSINFO_STYLE_CLASSIC, // plain logl() lines, as before
+		SYSINFO_STYLE_TEXTUI, // thirdparty/textui window with a title bar and a status line
+		SYSINFO_STYLE_MAX,
+	};
+
 private:
 	// One rendered log line. A line holds several coloured runs, because inline markup
 	// ("plain [fg=red]red[/fg] plain") must stay on a single row.
@@ -256,6 +263,7 @@ private:
 	bool auto_font; // re-run console_auto_font() on resize; any explicit set_font() pins it
 
 	Page page;
+	SysInfoStyle sysinfo_style = SYSINFO_STYLE_CLASSIC;
 	Vector<LogLine> log_lines; // ring buffer, the source of truth for PAGE_LOG
 	Vector<LogSegment> pending; // segments of the line currently being assembled
 	int log_capacity;
@@ -376,6 +384,9 @@ public:
 	void next_page();
 	void prev_page();
 
+	void set_sysinfo_style(SysInfoStyle p_style);
+	SysInfoStyle get_sysinfo_style() const;
+
 	// Wrapped rows to hold back from the bottom of PAGE_LOG; 0 follows the newest line.
 	void scroll_log(int p_rows);
 	void scroll_log_to_end();
@@ -456,6 +467,9 @@ public:
 	void prev_page();
 	int get_page() const;
 
+	void set_sysinfo_style(int p_style);
+	int get_sysinfo_style() const;
+
 	void set_panel_touch_enabled(bool p_enabled);
 	bool is_panel_touch_enabled() const;
 
@@ -496,6 +510,7 @@ public:
 
 VARIANT_ENUM_CAST(TextConsole::ColorIndex);
 VARIANT_ENUM_CAST(ConsoleInstance::Page);
+VARIANT_ENUM_CAST(ConsoleInstance::SysInfoStyle);
 VARIANT_ENUM_CAST(TextConsole::FigFontFace);
 VARIANT_ENUM_CAST(TextConsole::FontSize);
 

@@ -2,6 +2,7 @@
 
 #include "textUI_support.h"
 
+#include <assert.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -388,3 +389,14 @@ int setdisk(int drive) {
 	return 0;
 }
 #endif /* ?!__TURBOC__ */
+
+/* _findnext() (textUI.c) is itself built on plain POSIX opendir()/readdir_r(), so this stays a
+** plain stat() passthrough rather than a Godot FileAccess bridge -- see the comment on the
+** fnstatat macro in textUI_support.h. */
+int file_stat(const char *path, struct stat *buf) {
+	return stat(path, buf);
+}
+
+void _dev_assert(BOOL cond) {
+	assert(cond);
+}

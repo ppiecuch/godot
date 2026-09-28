@@ -954,7 +954,7 @@ void PutComboListText(WINDOW wnd, UCOMMAND cmd, char *text)
 
 void *mypointer;
 static char FileSpec[15], SrchSpec[15], FileName[15];
-extern DBOX FileOpen, SaveAs;
+static DBOX FileOpen, SaveAs; /* internal linkage: avoids colliding with unrelated FileOpen symbols elsewhere in the Godot binary */
 extern DBOX Display;
 #ifdef INCLUDE_MULTI_WINDOWS
 extern DBOX Windows;
@@ -10127,7 +10127,7 @@ void BuildSystemMenu(WINDOW wnd)
 
 
 /* -------------- the File Open dialog box --------------- */
-DIALOGBOX(FileOpen)
+static DIALOGBOX(FileOpen)
     DB_TITLE("Open File", -1,-1,19,57)
     CONTROL(TEXT,    "File ~Name:",   3, 1, 1,10, ID_FILENAME)
     CONTROL(EDITBOX, NULL,           14, 1, 1,40, ID_FILENAME)
@@ -10144,7 +10144,7 @@ DIALOGBOX(FileOpen)
 ENDDB
 
 /* -------------- the Save As dialog box --------------- */
-DIALOGBOX(SaveAs)
+static DIALOGBOX(SaveAs)
     DB_TITLE("Save As", -1,-1,19,57)
     CONTROL(TEXT,    "File ~Name:",   3, 1, 1, 9, ID_FILENAME)
     CONTROL(EDITBOX, NULL,           13, 1, 1,40, ID_FILENAME)
