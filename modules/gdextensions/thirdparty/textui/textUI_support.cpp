@@ -19,27 +19,69 @@
 #endif
 
 /// BEGIN Host-system integration
+///
+/// Bug fix: these seven functions used to be permanently inert stubs
+/// (keyhit() always FALSE, getkey()/getshift() always 0, mousebuttons()/
+/// button_releases() always 0, get_mouseposition() always (0,0),
+/// resetmouse() a no-op) -- meaning no Godot host could ever have made a
+/// keystroke or a mouse click reach textUI.c's event loop through this
+/// backend, regardless of what fed it. They're now backed by the small
+/// event state below, fed by TextUI_FeedKey()/TextUI_SetShiftState()/
+/// TextUI_FeedMouseButton()/TextUI_FeedMousePosition() (declared in
+/// textUI_support.h) from a Godot Control/CanvasItem's own
+/// _gui_input()/_input() handler -- see textUI_support.h for the full
+/// contract each one expects.
+
+#define TEXTUI_KEY_QUEUE_SIZE 32
+
+static int _key_queue[TEXTUI_KEY_QUEUE_SIZE];
+static int _key_queue_head = 0;
+static int _key_queue_tail = 0;
+static int _key_queue_count = 0;
+
+static int _shift_state = 0;
 
 BOOL system_keyhit(void) {
-    return FALSE;
+    return _key_queue_count > 0 ? TRUE : FALSE;
 }
 
 int system_getkey(void) {
-    return 0;
+    if (_key_queue_count == 0)
+        return 0;
+    const int code = _key_queue[_key_queue_head];
+    _key_queue_head = (_key_queue_head + 1) % TEXTUI_KEY_QUEUE_SIZE;
+    _key_queue_count--;
+    return code;
 }
 
 int system_getshift(void) {
-    return 0;
+    return _shift_state;
 }
 
+void TextUI_SetShiftState(int shift_mask) {
+    _shift_state = shift_mask;
+}
+
+void TextUI_FeedKey(int code) {
+    if (_key_queue_count >= TEXTUI_KEY_QUEUE_SIZE)
+        return; // queue full: drop it, typing is far slower than this drains
+    _key_queue[_key_queue_tail] = code;
+    _key_queue_tail = (_key_queue_tail + 1) % TEXTUI_KEY_QUEUE_SIZE;
+    _key_queue_count++;
+}
+
+static int _mouse_button_mask = 0;   // bit0 = left held, bit1 = right held
+static int _mouse_release_flags = 0; // sticky until the next system_button_releases()
+static Point2 _pointer_position;
+
 void system_resetmouse(void) {
+    _mouse_button_mask = 0;
+    _mouse_release_flags = 0;
 }
 
 int system_mousebuttons(void) {
-    return 0;
+    return _mouse_button_mask;
 }
-
-static Point2 _pointer_position;
 
 void system_get_mouseposition(int *x, int *y) {
     *x = _pointer_position.x;
@@ -47,7 +89,22 @@ void system_get_mouseposition(int *x, int *y) {
 }
 
 int system_button_releases(void) {
-    return 0;
+    const int released = _mouse_release_flags;
+    _mouse_release_flags = 0;
+    return released;
+}
+
+void TextUI_FeedMouseButton(int button_mask, BOOL pressed) {
+    if (pressed) {
+        _mouse_button_mask |= button_mask;
+    } else {
+        _mouse_button_mask &= ~button_mask;
+        _mouse_release_flags |= button_mask;
+    }
+}
+
+void TextUI_FeedMousePosition(int x, int y) {
+    _pointer_position = Point2(x, y);
 }
 
 /// END Host-system integration

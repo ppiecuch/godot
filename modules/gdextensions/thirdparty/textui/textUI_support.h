@@ -6,6 +6,23 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 
+/* Bug fix: textUI.c (a plain C translation unit) calls the functions
+** declared below expecting plain C linkage/symbol names (e.g. the
+** exported symbol "_system_getkey"). Without this guard,
+** textUI_support.cpp (compiled as C++) mangles them instead (e.g.
+** "__Z13system_getkeyv"), so the two translation units silently disagree
+** on every symbol in this header -- confirmed with `nm` on the current
+** .o files: textUI.c.o references undefined "_system_getkey" while
+** textUI_support.cpp.o only exports the mangled "__Z13system_getkeyv".
+** The "textui" Godot module fails to link with "undefined symbol" for
+** every system_*()/file/dir helper the instant it's actually built
+** (is_enabled("textui")) -- presumably never caught because nothing has
+** linked this module yet. Mirrors the extern "C" guard textUI.h already
+** has. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef TRUE
 # define TRUE (1)
 #endif
@@ -128,8 +145,68 @@ int system_mousebuttons(void); /* return true if mouse buttons are pressed */
 void system_get_mouseposition(int *x, int *y); /* return mouse coordinates */
 int system_button_releases(void); /* return true if a mouse button has been released */
 
+/* ---------------------------------------------------------------------
+** Godot integration surface.
+**
+** The functions above are polled *from* textUI.c (keyhit()/getkey()/
+** getshift()/mousebuttons()/get_mouseposition()/button_releases(), see
+** textUI.c's "console.c"/"mouse.c" sections) every dispatch_message()
+** call. They read from the small event state kept in textUI_support.cpp,
+** which a Godot host (e.g. scene/debugconsole/'s ConsoleInstance, or any
+** other Control/CanvasItem) feeds by calling the functions below from its
+** own _gui_input()/_input() handler. Nothing in textUI.c/textUI.h needs
+** to know Godot exists; nothing here needs to know about WINDOW/MESSAGE.
+**
+** Shift-mask bits match RIGHTSHIFT/LEFTSHIFT/CTRLKEY/ALTKEY (textUI.h);
+** mouse masks match the bit0=left/bit1=right convention of
+** mousebuttons()/leftbutton()/rightbutton() (also textUI.h). Screen
+** coordinates are in character cells, matching PutWindowChar/
+** MouseWindow()'s (x,y), not pixels.
+** --------------------------------------------------------------------- */
+
+/* Sets the *live* modifier-key state (RIGHTSHIFT|LEFTSHIFT|CTRLKEY|ALTKEY),
+** queried back by system_getshift(). Call this every time a modifier key
+** (or a key combined with one) changes state -- in particular, on every
+** InputEventKey, not just on the modifier keys themselves, so a keystroke
+** queued by TextUI_FeedKey() right after this call is seen by textUI.c's
+** collect_events() with the correct shift state already in effect (it
+** polls getshift() and keyhit()/getkey() together, in that order, once
+** per dispatch_message() call). */
+void TextUI_SetShiftState(int shift_mask);
+
+/* Queues one keystroke for system_getkey()/system_keyhit(). `code` is
+** either a plain ASCII character (e.g. 'f') -- including for Alt+letter
+** combinations, exactly like a real keyboard/terminal driver would
+** report, relying on TextUI_SetShiftState()'s ALTKEY bit plus textUI.c's
+** own AltConvert() to recognize the shortcut -- or an extended/function
+** key code already in DFlat's own FKEY-offset encoding (see textUI.h's
+** HOME/UP/DN/DEL/F1../ALT_A.. macros), for keys with no ASCII
+** representation at all (arrows, function keys, Home/End, ...). Silently
+** drops the keystroke if the internal queue is full; real typing is far
+** slower than this queue drains. */
+void TextUI_FeedKey(int code);
+
+/* Reports a mouse button transition. `button_mask` is 1 for the left
+** button, 2 for the right button (matching mousebuttons()'s bit
+** layout); `pressed` is true on button-down, false on button-up. Button
+** state is level-tracked (system_mousebuttons() reports "currently
+** held"); releases are additionally latched until the next
+** system_button_releases() call, matching what collect_events() expects
+** (it polls button_releases() as a one-shot "was released since I last
+** asked" flag, separately from the held-state mask). */
+void TextUI_FeedMouseButton(int button_mask, BOOL pressed);
+
+/* Updates the mouse position returned by system_get_mouseposition(), in
+** character cells (not pixels) -- convert from the Control's local pixel
+** position using its cell size before calling this. */
+void TextUI_FeedMousePosition(int x, int y);
+
 #ifndef _MSC_VER
 # define stricmp strcasecmp
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif // TEXTUI_SUPPORT_H
