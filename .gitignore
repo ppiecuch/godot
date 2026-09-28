@@ -31,6 +31,11 @@ misc/hooks/pre-commit-custom-*
 ### Godot generated files ###
 #############################
 
+# Editor-generated scratch assets for any project opened in this fork (e.g.
+# ProcRockMesh::bake()'s Gravel/Mossy/Rock -> real-file texture conversion) —
+# per-project output, not something this repo itself should track.
+.generated/
+
 # Buildsystem
 bin/
 *.gen.*
