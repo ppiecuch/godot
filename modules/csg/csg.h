@@ -31,6 +31,7 @@
 #ifndef CSG_H
 #define CSG_H
 
+#include "core/color.h"
 #include "core/list.h"
 #include "core/map.h"
 #include "core/math/aabb.h"
@@ -48,6 +49,11 @@ struct CSGBrush {
 	struct Face {
 		Vector3 vertices[3];
 		Vector2 uvs[3];
+		// Per-vertex color, threaded through splitting/merging the same way uvs are (see
+		// interpolate_segment_color()/interpolate_triangle_color() in csg.cpp). Defaults to
+		// opaque white when a caller doesn't supply colors, matching the "no uv" default of
+		// Vector2() -- existing callers that never pass colors are unaffected.
+		Color colors[3];
 		AABB aabb;
 		bool smooth;
 		bool invert;
@@ -59,8 +65,9 @@ struct CSGBrush {
 
 	inline void _regen_face_aabbs();
 
-	// Create a brush from faces.
-	void build_from_faces(const PoolVector<Vector3> &p_vertices, const PoolVector<Vector2> &p_uvs, const PoolVector<bool> &p_smooth, const PoolVector<Ref<Material>> &p_materials, const PoolVector<bool> &p_invert_faces);
+	// Create a brush from faces. p_colors is optional (empty = opaque white for every vertex,
+	// same convention as p_uvs/p_smooth/etc. being sized 0 to mean "not provided").
+	void build_from_faces(const PoolVector<Vector3> &p_vertices, const PoolVector<Vector2> &p_uvs, const PoolVector<bool> &p_smooth, const PoolVector<Ref<Material>> &p_materials, const PoolVector<bool> &p_invert_faces, const PoolVector<Color> &p_colors = PoolVector<Color>());
 	void copy_from(const CSGBrush &p_brush, const Transform &p_xform);
 };
 
@@ -79,6 +86,7 @@ struct CSGBrushOperation {
 			bool inside;
 			int points[3];
 			Vector2 uvs[3];
+			Color colors[3];
 			bool smooth;
 			bool invert;
 			int material_idx;
@@ -149,7 +157,7 @@ struct CSGBrushOperation {
 		inline bool _bvh_inside(FaceBVH *facebvhptr, int p_max_depth, int p_bvh_first, int p_face_idx) const;
 		inline int _create_bvh(FaceBVH *facebvhptr, FaceBVH **facebvhptrptr, int p_from, int p_size, int p_depth, int &r_max_depth, int &r_max_alloc);
 
-		void add_face(const Vector3 p_points[3], const Vector2 p_uvs[3], bool p_smooth, bool p_invert, const Ref<Material> &p_material, bool p_from_b);
+		void add_face(const Vector3 p_points[3], const Vector2 p_uvs[3], const Color p_colors[3], bool p_smooth, bool p_invert, const Ref<Material> &p_material, bool p_from_b);
 		void mark_inside_faces();
 	};
 
@@ -157,6 +165,7 @@ struct CSGBrushOperation {
 		struct Vertex2D {
 			Vector2 point;
 			Vector2 uv;
+			Color color;
 		};
 
 		struct Face2D {

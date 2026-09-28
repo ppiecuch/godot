@@ -764,16 +764,62 @@ if not env["disable_3d"]:
         if env["tools"]:
             thirdparty_sources += [
                 "submodules/environment/proc_rocks/generators/shared/box_uv.cpp",
+                "submodules/environment/proc_rocks/generators/shared/plane_flatten.cpp",
                 "submodules/environment/proc_rocks/generators/shared/texture_gen.cpp",
                 "submodules/environment/proc_rocks/generators/rockgeneration/gen_rock.cpp",
                 "submodules/environment/proc_rocks/generators/rockgen/rockgen.cpp",
                 "submodules/environment/proc_rocks/generators/rockstudio/rock_studio.cpp",
                 "submodules/environment/proc_rocks/generators/procrockgen/procrockgen.cpp",
+                "submodules/environment/proc_rocks/generators/rockcluster/rockcluster.cpp",
+                "submodules/environment/proc_rocks/generators/rockcluster/rockcluster_cells_data.gen.cpp",
             ]
         # Kept unconditional: proc_rocks.cpp includes these generator headers
         # (declaration-only, no thirdparty deps) even when the .cpp's above aren't
         # linked in, since the switch that calls into them is compiled out too.
         env_module.Prepend(CPPPATH=["submodules/environment/proc_rocks/generators"])
+        if env["tools"]:
+            # rockcluster.cpp's own real CSG boolean union (merging overlapping
+            # scattered "cell" meshes -- see that file and its memo.md for why:
+            # Godot's own modules/csg CSGBrushOperation was tried first and found
+            # unreliable on this generator's complex faceted geometry) needs
+            # Manifold, not modules/csg -- vendored here rather than reusing an
+            # engine-wide thirdparty/ location since this fork's own convention
+            # (unlike upstream Godot 4, which vendors it under modules/csg/) keeps
+            # every thirdparty library under its owning module. Same isolated-clone
+            # pattern as gumbo below (own CPPDEFINES, warnings disabled) so
+            # MANIFOLD_PAR doesn't leak into unrelated gdextensions sources. File
+            # list and MANIFOLD_PAR=-1 (serial/no-parallel-backend mode) match
+            # Godot 4's own modules/csg/SCsub exactly (fetched directly from
+            # github.com/godotengine/godot, commit 11235e6b8ebea2dbed8aec4285685aafd3d95667,
+            # the same version pinned in modules/gdextensions/thirdparty/manifold's
+            # own vendored copy) -- a known-good, already-shipping configuration.
+            manifold_dir = "thirdparty/manifold/"
+            manifold_sources = [
+                "src/boolean_result.cpp",
+                "src/boolean3.cpp",
+                "src/constructors.cpp",
+                "src/csg_tree.cpp",
+                "src/edge_op.cpp",
+                "src/execution_impl.cpp",
+                "src/face_op.cpp",
+                "src/impl.cpp",
+                "src/manifold.cpp",
+                "src/minkowski.cpp",
+                "src/polygon.cpp",
+                "src/properties.cpp",
+                "src/quickhull.cpp",
+                "src/sdf.cpp",
+                "src/smoothing.cpp",
+                "src/sort.cpp",
+                "src/subdivision.cpp",
+                "src/tree2d.cpp",
+            ]
+            manifold_sources = [manifold_dir + f for f in manifold_sources]
+            env_module.Prepend(CPPPATH=[manifold_dir + "include"])
+            env_manifold = env_module.Clone()
+            env_manifold.Append(CPPDEFINES=[("MANIFOLD_PAR", -1)])
+            env_manifold.disable_warnings()
+            env_manifold.add_source_files(env.modules_sources, manifold_sources)
 
 ignore = []
 if env["platform"] == "3ds" or env["platform"] == "psp":

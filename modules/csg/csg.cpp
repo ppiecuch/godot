@@ -84,6 +84,54 @@ inline static Vector2 interpolate_triangle_uv(const Vector2 p_vertices[3], const
 	return p_uvs[0] * u + p_uvs[1] * v + p_uvs[2] * w;
 }
 
+// Per-vertex color counterparts of interpolate_segment_uv()/interpolate_triangle_uv() above --
+// same position-based interpolation weights, applied to Color instead of Vector2, so a new
+// vertex created by splitting a face during a boolean op gets a color consistent with its
+// position rather than an arbitrary default.
+inline static Color interpolate_segment_color(const Vector2 p_segement_points[2], const Color p_colors[2], const Vector2 &p_interpolation_point) {
+	float segment_length = (p_segement_points[1] - p_segement_points[0]).length();
+	if (segment_length < CMP_EPSILON) {
+		return p_colors[0];
+	}
+
+	float distance = (p_interpolation_point - p_segement_points[0]).length();
+	float fraction = distance / segment_length;
+
+	return p_colors[0].linear_interpolate(p_colors[1], fraction);
+}
+
+inline static Color interpolate_triangle_color(const Vector2 p_vertices[3], const Color p_colors[3], const Vector2 &p_interpolation_point) {
+	if (p_interpolation_point.distance_squared_to(p_vertices[0]) < CMP_EPSILON2) {
+		return p_colors[0];
+	}
+	if (p_interpolation_point.distance_squared_to(p_vertices[1]) < CMP_EPSILON2) {
+		return p_colors[1];
+	}
+	if (p_interpolation_point.distance_squared_to(p_vertices[2]) < CMP_EPSILON2) {
+		return p_colors[2];
+	}
+
+	Vector2 edge1 = p_vertices[1] - p_vertices[0];
+	Vector2 edge2 = p_vertices[2] - p_vertices[0];
+	Vector2 interpolation = p_interpolation_point - p_vertices[0];
+
+	float edge1_on_edge1 = edge1.dot(edge1);
+	float edge1_on_edge2 = edge1.dot(edge2);
+	float edge2_on_edge2 = edge2.dot(edge2);
+	float inter_on_edge1 = interpolation.dot(edge1);
+	float inter_on_edge2 = interpolation.dot(edge2);
+	float scale = (edge1_on_edge1 * edge2_on_edge2 - edge1_on_edge2 * edge1_on_edge2);
+	if (scale == 0) {
+		return p_colors[0];
+	}
+
+	float v = (edge2_on_edge2 * inter_on_edge1 - edge1_on_edge2 * inter_on_edge2) / scale;
+	float w = (edge1_on_edge1 * inter_on_edge2 - edge1_on_edge2 * inter_on_edge1) / scale;
+	float u = 1.0f - v - w;
+
+	return p_colors[0] * u + p_colors[1] * v + p_colors[2] * w;
+}
+
 static inline bool ray_intersects_triangle(const Vector3 &p_from, const Vector3 &p_dir, const Vector3 p_vertices[3], float p_tolerance, Vector3 &r_intersection_point) {
 	Vector3 edge1 = p_vertices[1] - p_vertices[0];
 	Vector3 edge2 = p_vertices[2] - p_vertices[0];
@@ -194,7 +242,7 @@ void CSGBrush::_regen_face_aabbs() {
 	}
 }
 
-void CSGBrush::build_from_faces(const PoolVector<Vector3> &p_vertices, const PoolVector<Vector2> &p_uvs, const PoolVector<bool> &p_smooth, const PoolVector<Ref<Material>> &p_materials, const PoolVector<bool> &p_invert_faces) {
+void CSGBrush::build_from_faces(const PoolVector<Vector3> &p_vertices, const PoolVector<Vector2> &p_uvs, const PoolVector<bool> &p_smooth, const PoolVector<Ref<Material>> &p_materials, const PoolVector<bool> &p_invert_faces, const PoolVector<Color> &p_colors) {
 	faces.clear();
 
 	int vc = p_vertices.size();
@@ -210,6 +258,8 @@ void CSGBrush::build_from_faces(const PoolVector<Vector3> &p_vertices, const Poo
 	PoolVector<Ref<Material>>::Read rm = p_materials.read();
 	int ic = p_invert_faces.size();
 	PoolVector<bool>::Read ri = p_invert_faces.read();
+	int cc = p_colors.size();
+	PoolVector<Color>::Read rc = p_colors.read();
 
 	Map<Ref<Material>, int> material_map;
 
@@ -225,6 +275,16 @@ void CSGBrush::build_from_faces(const PoolVector<Vector3> &p_vertices, const Poo
 			f.uvs[0] = ruv[i * 3 + 0];
 			f.uvs[1] = ruv[i * 3 + 1];
 			f.uvs[2] = ruv[i * 3 + 2];
+		}
+
+		if (cc == vc) {
+			f.colors[0] = rc[i * 3 + 0];
+			f.colors[1] = rc[i * 3 + 1];
+			f.colors[2] = rc[i * 3 + 2];
+		} else {
+			f.colors[0] = Color(1, 1, 1, 1);
+			f.colors[1] = Color(1, 1, 1, 1);
+			f.colors[2] = Color(1, 1, 1, 1);
 		}
 
 		if (sc == vc / 3) {
@@ -254,6 +314,19 @@ void CSGBrush::build_from_faces(const PoolVector<Vector3> &p_vertices, const Poo
 			} else {
 				f.material = -1;
 			}
+		} else {
+			// Unlike smooth/invert above, this branch was previously missing --
+			// f.material was left uninitialized when p_materials didn't match the
+			// face count (e.g. an empty PoolVector, a valid way to say "no
+			// materials" per this function's own convention for uvs/smooth/etc.).
+			// Downstream, merge_brushes() uses f.material != -1 to decide whether
+			// to index into this brush's own (potentially empty) materials list --
+			// an uninitialized non--1 value reads as a real material index into
+			// that list, which is a real out-of-bounds crash, not just a cosmetic
+			// default. Found via RockCluster's CSG union (which legitimately
+			// builds brushes with no materials at all): reproducibly crashed
+			// inside merge_brushes on the very first real union.
+			f.material = -1;
 		}
 	}
 
@@ -306,11 +379,13 @@ void CSGBrushOperation::merge_brushes(Operation p_operation, const CSGBrush &p_b
 		} else {
 			Vector3 points[3];
 			Vector2 uvs[3];
+			Color colors[3];
 			for (int j = 0; j < 3; j++) {
 				points[j] = p_brush_a.faces[i].vertices[j];
 				uvs[j] = p_brush_a.faces[i].uvs[j];
+				colors[j] = p_brush_a.faces[i].colors[j];
 			}
-			mesh_merge.add_face(points, uvs, p_brush_a.faces[i].smooth, p_brush_a.faces[i].invert, material, false);
+			mesh_merge.add_face(points, uvs, colors, p_brush_a.faces[i].smooth, p_brush_a.faces[i].invert, material, false);
 		}
 	}
 
@@ -325,11 +400,13 @@ void CSGBrushOperation::merge_brushes(Operation p_operation, const CSGBrush &p_b
 		} else {
 			Vector3 points[3];
 			Vector2 uvs[3];
+			Color colors[3];
 			for (int j = 0; j < 3; j++) {
 				points[j] = p_brush_b.faces[i].vertices[j];
 				uvs[j] = p_brush_b.faces[i].uvs[j];
+				colors[j] = p_brush_b.faces[i].colors[j];
 			}
-			mesh_merge.add_face(points, uvs, p_brush_b.faces[i].smooth, p_brush_b.faces[i].invert, material, true);
+			mesh_merge.add_face(points, uvs, colors, p_brush_b.faces[i].smooth, p_brush_b.faces[i].invert, material, true);
 		}
 	}
 
@@ -362,6 +439,7 @@ void CSGBrushOperation::merge_brushes(Operation p_operation, const CSGBrush &p_b
 				for (int j = 0; j < 3; j++) {
 					r_merged_brush.faces.write[outside_count].vertices[j] = mesh_merge.points[mesh_merge.faces[i].points[j]];
 					r_merged_brush.faces.write[outside_count].uvs[j] = mesh_merge.faces[i].uvs[j];
+					r_merged_brush.faces.write[outside_count].colors[j] = mesh_merge.faces[i].colors[j];
 				}
 
 				r_merged_brush.faces.write[outside_count].smooth = mesh_merge.faces[i].smooth;
@@ -396,6 +474,7 @@ void CSGBrushOperation::merge_brushes(Operation p_operation, const CSGBrush &p_b
 				for (int j = 0; j < 3; j++) {
 					r_merged_brush.faces.write[inside_count].vertices[j] = mesh_merge.points[mesh_merge.faces[i].points[j]];
 					r_merged_brush.faces.write[inside_count].uvs[j] = mesh_merge.faces[i].uvs[j];
+					r_merged_brush.faces.write[inside_count].colors[j] = mesh_merge.faces[i].colors[j];
 				}
 
 				r_merged_brush.faces.write[inside_count].smooth = mesh_merge.faces[i].smooth;
@@ -436,12 +515,14 @@ void CSGBrushOperation::merge_brushes(Operation p_operation, const CSGBrush &p_b
 				for (int j = 0; j < 3; j++) {
 					r_merged_brush.faces.write[face_count].vertices[j] = mesh_merge.points[mesh_merge.faces[i].points[j]];
 					r_merged_brush.faces.write[face_count].uvs[j] = mesh_merge.faces[i].uvs[j];
+					r_merged_brush.faces.write[face_count].colors[j] = mesh_merge.faces[i].colors[j];
 				}
 
 				if (mesh_merge.faces[i].from_b) {
 					//invert facing of insides of B
 					SWAP(r_merged_brush.faces.write[face_count].vertices[1], r_merged_brush.faces.write[face_count].vertices[2]);
 					SWAP(r_merged_brush.faces.write[face_count].uvs[1], r_merged_brush.faces.write[face_count].uvs[2]);
+					SWAP(r_merged_brush.faces.write[face_count].colors[1], r_merged_brush.faces.write[face_count].colors[2]);
 				}
 
 				r_merged_brush.faces.write[face_count].smooth = mesh_merge.faces[i].smooth;
@@ -729,7 +810,7 @@ void CSGBrushOperation::MeshMerge::mark_inside_faces() {
 	}
 }
 
-void CSGBrushOperation::MeshMerge::add_face(const Vector3 p_points[3], const Vector2 p_uvs[3], bool p_smooth, bool p_invert, const Ref<Material> &p_material, bool p_from_b) {
+void CSGBrushOperation::MeshMerge::add_face(const Vector3 p_points[3], const Vector2 p_uvs[3], const Color p_colors[3], bool p_smooth, bool p_invert, const Ref<Material> &p_material, bool p_from_b) {
 	int indices[3];
 	for (int i = 0; i < 3; i++) {
 		VertexKey vk;
@@ -772,6 +853,7 @@ void CSGBrushOperation::MeshMerge::add_face(const Vector3 p_points[3], const Vec
 	for (int k = 0; k < 3; k++) {
 		face.points[k] = indices[k];
 		face.uvs[k] = p_uvs[k];
+		face.colors[k] = p_colors[k];
 	}
 
 	faces.push_back(face);
@@ -1035,6 +1117,10 @@ void CSGBrushOperation::Build2DFaces::_find_edge_intersections(const Vector2 p_s
 				face_vertices[face_edge_idx].uv,
 				face_vertices[(face_edge_idx + 1) % 3].uv
 			};
+			Color edge_colors[2] = {
+				face_vertices[face_edge_idx].color,
+				face_vertices[(face_edge_idx + 1) % 3].color
+			};
 			Vector2 intersection_point;
 
 			// First check if the ends of the segment are on the edge.
@@ -1064,6 +1150,7 @@ void CSGBrushOperation::Build2DFaces::_find_edge_intersections(const Vector2 p_s
 				Vertex2D new_vertex;
 				new_vertex.point = intersection_point;
 				new_vertex.uv = interpolate_segment_uv(edge_points, edge_uvs, intersection_point);
+				new_vertex.color = interpolate_segment_color(edge_points, edge_colors, intersection_point);
 				int new_vertex_idx = _add_vertex(new_vertex);
 				int opposite_vertex_idx = face.vertex_idx[(face_edge_idx + 2) % 3];
 				_add_vertex_idx_sorted(r_segment_indices, new_vertex_idx);
@@ -1124,6 +1211,11 @@ int CSGBrushOperation::Build2DFaces::_insert_point(const Vector2 &p_point) {
 			face_vertices[1].uv,
 			face_vertices[2].uv
 		};
+		Color colors[3] = {
+			face_vertices[0].color,
+			face_vertices[1].color,
+			face_vertices[2].color
+		};
 
 		// Skip degenerate triangles.
 		if (is_triangle_degenerate(points, vertex_snap2)) {
@@ -1148,6 +1240,10 @@ int CSGBrushOperation::Build2DFaces::_insert_point(const Vector2 &p_point) {
 				uvs[face_edge_idx],
 				uvs[(face_edge_idx + 1) % 3]
 			};
+			Color edge_colors[2] = {
+				colors[face_edge_idx],
+				colors[(face_edge_idx + 1) % 3]
+			};
 
 			Vector2 closest_point = Geometry::get_closest_point_to_segment_2d(p_point, edge_points);
 			if ((closest_point - p_point).length_squared() < vertex_snap2) {
@@ -1157,6 +1253,7 @@ int CSGBrushOperation::Build2DFaces::_insert_point(const Vector2 &p_point) {
 				Vertex2D new_vertex;
 				new_vertex.point = p_point;
 				new_vertex.uv = interpolate_segment_uv(edge_points, edge_uvs, p_point);
+				new_vertex.color = interpolate_segment_color(edge_points, edge_colors, p_point);
 				new_vertex_idx = _add_vertex(new_vertex);
 				int opposite_vertex_idx = face.vertex_idx[(face_edge_idx + 2) % 3];
 
@@ -1205,6 +1302,7 @@ int CSGBrushOperation::Build2DFaces::_insert_point(const Vector2 &p_point) {
 			Vertex2D new_vertex;
 			new_vertex.point = p_point;
 			new_vertex.uv = interpolate_triangle_uv(points, uvs, p_point);
+			new_vertex.color = interpolate_triangle_color(points, colors, p_point);
 			new_vertex_idx = _add_vertex(new_vertex);
 
 			// Create three new faces around this point and remove this face.
@@ -1315,13 +1413,15 @@ void CSGBrushOperation::Build2DFaces::addFacesToMesh(MeshMerge &r_mesh_merge, bo
 		// Convert 2D vertex points to 3D.
 		Vector3 points_3D[3];
 		Vector2 uvs[3];
+		Color colors[3];
 		for (int i = 0; i < 3; ++i) {
 			Vector3 point_2D(fv[i].point.x, fv[i].point.y, 0);
 			points_3D[i] = to_3D.xform(point_2D);
 			uvs[i] = fv[i].uv;
+			colors[i] = fv[i].color;
 		}
 
-		r_mesh_merge.add_face(points_3D, uvs, p_smooth, p_invert, p_material, p_from_b);
+		r_mesh_merge.add_face(points_3D, uvs, colors, p_smooth, p_invert, p_material, p_from_b);
 	}
 }
 
@@ -1348,6 +1448,7 @@ CSGBrushOperation::Build2DFaces::Build2DFaces(const CSGBrush &p_brush, int p_fac
 		vertex.point.x = point_2D.x;
 		vertex.point.y = point_2D.y;
 		vertex.uv = p_brush.faces[p_face_idx].uvs[i];
+		vertex.color = p_brush.faces[p_face_idx].colors[i];
 		vertices.push_back(vertex);
 		face.vertex_idx[i] = i;
 	}
