@@ -232,7 +232,6 @@ modules = [
     "swsurface",
     "synthbenchmark",
     # T
-    "textui",
     "thorvg",
     "threadpool",
     "tileengine",
@@ -315,13 +314,6 @@ if env["tools"]:
             + Glob("thirdparty/qmap/aa2map/**/*.c")
         )
         modules += ["gqmaps"]
-
-if is_enabled("textui"):
-    thirdparty_sources += [
-        "thirdparty/textui/textUI.c",
-        "thirdparty/textui/textUI_edit.c",
-        "thirdparty/textui/textUI_support.cpp",
-    ]
 
 if is_enabled("anttweakbar"):
     thirdparty_sources += ["thirdparty/anttweakbar/AntTweakBar.cpp"]

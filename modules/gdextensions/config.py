@@ -105,7 +105,6 @@ def configure(env):
         # ui and gui extensions
         "glitehtml",
         "turbobadger",
-        "textui",
         "ofxdatgui",
         "anttweakbar",
         # particles extensions

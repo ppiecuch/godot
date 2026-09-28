@@ -7,3 +7,10 @@ Import("env")
 if env["inapp_console"]:
     env.add_source_files(env.scene_sources, "*.cpp")
     env.add_source_files(env.scene_sources, "*.c")
+
+    # Vendored text-mode UI toolkit lives in #thirdparty/textui (console_lcd.cpp ports
+    # its LCDBOX widget); textUI_integration.h/textUI_support.cpp above are the
+    # Godot-specific glue bridging its event loop and file I/O to Godot input/FileAccess.
+    env.add_source_files(env.scene_sources, "#thirdparty/textui/textUI.c")
+    env.add_source_files(env.scene_sources, "#thirdparty/textui/textUI_edit.c")
+    env.add_source_files(env.scene_sources, "#thirdparty/textui/textUI_support.c")
