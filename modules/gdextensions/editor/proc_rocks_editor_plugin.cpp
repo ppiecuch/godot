@@ -32,6 +32,7 @@
 
 #include "proc_rocks_editor_plugin.h"
 
+#include "core/image.h"
 #include "core/io/resource_loader.h"
 #include "core/io/resource_saver.h"
 #include "core/os/dir_access.h"
@@ -41,7 +42,10 @@
 #include "proc_rocks_baked_textures.h"
 #include "scene/3d/light.h"
 #include "scene/gui/viewport_container.h"
+#include "scene/resources/environment.h"
 #include "scene/resources/material.h"
+#include "scene/resources/primitive_meshes.h"
+#include "scene/resources/surface_tool.h"
 #include "scene/resources/world.h"
 
 namespace {
@@ -109,11 +113,34 @@ void ProcRockDialog::_notification(int p_what) {
 			}
 			camera_orbit_angle += get_process_delta_time() * 0.3;
 			real_t dist = 3.0;
+			// Orbit around the mesh's own AABB center rather than a hardcoded world
+			// origin -- flatten_base_offset (and RockCluster's own always-at-y=0
+			// clip+cap) can shift the visible geometry well off-center vertically, and
+			// orbiting a fixed point above/below the actual mesh made the floor grid
+			// barely visible in frame at most angles ("bottom of the rock seems...
+			// perpendicular to grid floor" -- really just poor framing, not a
+			// geometry bug: see proc_rocks memo.md item 32).
+			//
+			// The flatten_base cap being visible at all from above (at any elevation) WAS a
+			// real defect -- clip_and_cap()'s cap-fan winding, fixed separately (see
+			// generators/shared/plane_flatten.cpp and memo.md's "Bugs Fixed"). This steeper
+			// elevation (was ~27°, i.e. +1.5) is a separate, additional UX improvement on
+			// top of that fix, per the user's own suggestion ("I should look at the rock
+			// from above") -- a properly grounded rock's underside shouldn't be a normal
+			// part of the view anyway, cap-winding bug or not.
+			AABB aabb = preview_mesh_instance->get_aabb();
+			Vector3 center = aabb.has_no_area() ? Vector3() : aabb.position + aabb.size * 0.5;
 			preview_camera->set_translation(Vector3(
-					Math::sin(camera_orbit_angle) * dist,
-					1.5,
-					Math::cos(camera_orbit_angle) * dist));
-			preview_camera->look_at(Vector3(0, 0, 0), Vector3(0, 1, 0));
+					center.x + Math::sin(camera_orbit_angle) * dist,
+					center.y + 3.5,
+					center.z + Math::cos(camera_orbit_angle) * dist));
+			preview_camera->look_at(center, Vector3(0, 1, 0));
+		} break;
+		case NOTIFICATION_POPUP_HIDE: {
+			// Persist across editor sessions -- same "dialog_bounds" project-metadata
+			// mechanism the engine's own CreateDialog/EditorHelpSearch use for exactly
+			// this. Restored in ProcRockEditorPlugin::_open_dialog().
+			EditorSettings::get_singleton()->set_project_metadata("dialog_bounds", "proc_rock", get_rect());
 		} break;
 	}
 }
@@ -188,11 +215,11 @@ void ProcRockDialog::_on_preset_selected(int p_idx) {
 }
 
 // ProcRockMesh's own texture_source property (see proc_rocks.h, applies to every
-// generator) now drives real per-surface materials — this dock no longer needs its
-// own separate "Demo Texture" picker; the property shows up automatically in
-// properties_inspector below. When texture_source is None (or nothing generated
-// yet), fall back to a plain cosmetic preview material rather than showing Godot's
-// flat engine default, matching this dock's original default look.
+// generator, Gravel/Mossy/Rock included — applied entirely in memory) drives real
+// per-surface materials, so this dock needs no demo-texture-specific handling here:
+// when texture_source is None (or nothing generated yet), fall back to a plain
+// cosmetic preview material rather than showing Godot's flat engine default, matching
+// this dock's original look.
 void ProcRockDialog::_update_preview_material() {
 	if (rock_mesh->get_surface_count() > 0 && rock_mesh->surface_get_material(0).is_valid()) {
 		preview_mesh_instance->set_material_override(Ref<Material>());
@@ -203,15 +230,35 @@ void ProcRockDialog::_update_preview_material() {
 
 void ProcRockDialog::_update_preview() {
 	preview_mesh_instance->set_mesh(rock_mesh);
+	_update_grid_position();
+}
+
+// Keep the floor grid just below the mesh's own lowest point rather than fixed at a
+// hardcoded height -- see the constructor's comment above the grid's construction for
+// why a fixed y=0 visibly intersected methods 0-3's default geometry. Called both after
+// a full regenerate (_update_preview()) and after a direct property edit (e.g.
+// flatten_base_offset itself), since the latter mutates rock_mesh in place without
+// going through _update_preview().
+void ProcRockDialog::_update_grid_position() {
+	AABB aabb = preview_mesh_instance->get_aabb();
+	real_t grid_y = aabb.has_no_area() ? 0.0 : aabb.position.y - 0.05;
+	Transform t = grid_instance->get_transform();
+	t.origin.y = grid_y;
+	grid_instance->set_transform(t);
+	Transform ft = floor_instance->get_transform();
+	ft.origin.y = grid_y;
+	floor_instance->set_transform(ft);
 }
 
 void ProcRockDialog::_on_property_edited(const StringName &p_prop) {
 	// The mesh geometry/material itself updates in place — preview_mesh_instance
 	// holds the same rock_mesh Ref, and _rebuild() (triggered by the inspector's own
 	// _set() call, via ProcRockMesh's existing auto_refresh handling) mutates it
-	// directly. Only the preview's material_override (see _update_preview_material())
-	// and the vertex/surface count label can go stale after a direct property edit.
+	// directly. Only the preview's material_override (see _update_preview_material()),
+	// the floor grid's position, and the vertex/surface count label can go stale after
+	// a direct property edit.
 	_update_preview_material();
+	_update_grid_position();
 	_update_info();
 }
 
@@ -267,6 +314,22 @@ ProcRockDialog::ProcRockDialog() {
 
 	Ref<World> world;
 	world.instance();
+	// A bare World has no Environment, so this Viewport had zero ambient light — any
+	// surface not directly facing the single DirectionalLight rendered pure black,
+	// reading as an inverted-normals bug even though the generated geometry's winding
+	// is independently verified correct. Ambient here is deliberately fairly high
+	// (0.4) — a camera-aligned key light (tried and reverted, see below) proved that
+	// *removing* the angled shadowing removes the shape-reading contrast entirely, so
+	// the balance that actually works is: keep the key light off-axis for real facet
+	// contrast, and raise the ambient floor so its shadow side doesn't read as a big
+	// dark hole, rather than flattening the light itself.
+	Ref<Environment> env;
+	env.instance();
+	env->set_background(Environment::BG_COLOR);
+	env->set_bg_color(Color(0.2, 0.2, 0.24));
+	env->set_ambient_light_color(Color(1, 1, 1));
+	env->set_ambient_light_energy(0.4);
+	world->set_environment(env);
 	preview_viewport->set_world(world);
 
 	preview_camera = memnew(Camera);
@@ -276,18 +339,122 @@ ProcRockDialog::ProcRockDialog() {
 	preview_camera->look_at(Vector3(0, 0, 0), Vector3(0, 1, 0));
 	preview_camera->set_current(true);
 
+	// Both lights are children of the VIEWPORT (world space), not the camera. This used
+	// to be the other way around (a camera-attached "headlamp" rig) specifically to avoid
+	// the rock's lit/unlit regions appearing to rotate with the rock as the view orbits.
+	// That reasoning predates the floor grid (see below): with a camera-attached light,
+	// the rock's shading pattern never changes as the camera orbits around it (always lit
+	// from the same relative angle, like a flashlight strapped to the viewer's own head),
+	// while the grid -- correctly fixed in world space -- visibly pans/turns as the camera
+	// moves. That mismatch (object's shading looks static; the floor visibly rotates) is
+	// exactly what one user report described as "I have even feeling that they rotate in
+	// different sides", plus a bright, contrast-washed near-camera patch that looked like
+	// a flat, wrongly-oriented cap ("flat area in front of me... perpendicular to floor")
+	// -- the headlamp always lighting roughly the same camera-facing region into an
+	// overexposed patch, regardless of true orbit angle. Switched to world-space so the
+	// rock's own shading changes naturally as the camera orbits, agreeing with the grid's
+	// motion instead of contradicting it — see memo.md's "Bugs Fixed" for the investigation.
+	//
+	// Key light: off-axis (not aimed straight down the camera's forward direction) for
+	// real facet contrast — a camera-aligned key was tried and rejected early on (see
+	// memo.md) since it collapses the tonal range into one flat, textureless gray (the
+	// textbook "on-camera flashlight" problem: no shadow means no perceptible shape).
+	// Being world-space now (not just off-axis) means the shadow side genuinely rotates
+	// into view as the camera orbits, rather than staying fixed relative to the viewer.
+	// Casts a real shadow (see the solid floor quad below) -- the single most direct,
+	// unambiguous cue that an object rests ON a surface, which no amount of camera
+	// framing or grid-position math can substitute for.
 	DirectionalLight *light = memnew(DirectionalLight);
-	light->set_rotation_degrees(Vector3(-45, 30, 0));
+	light->set_rotation_degrees(Vector3(-35, 30, 0));
+	light->set_param(Light::PARAM_ENERGY, 1.2);
+	light->set_shadow(true);
 	preview_viewport->add_child(light);
+
+	// Fill light: dimmer, cooler, offset to a different angle than the key — fills in
+	// some of the key light's shadow side so it isn't uniformly flat, without directly
+	// opposing the key (which would cancel out the contrast this whole setup is for).
+	DirectionalLight *fill_light = memnew(DirectionalLight);
+	fill_light->set_rotation_degrees(Vector3(25, -40, 0));
+	fill_light->set_color(Color(0.8, 0.85, 1.0));
+	fill_light->set_param(Light::PARAM_ENERGY, 0.5);
+	preview_viewport->add_child(fill_light);
 
 	preview_mesh_instance = memnew(MeshInstance);
 	default_preview_material.instance();
 	default_preview_material->set_albedo(Color(0.7, 0.65, 0.6));
 	default_preview_material->set_roughness(0.8);
+	default_preview_material->set_cull_mode(SpatialMaterial::CULL_BACK); // explicit, not relying on the class default
 	preview_viewport->add_child(preview_mesh_instance);
 	// _update_preview_material() (called from generate(), including the initial
 	// generate() in ProcRockEditorPlugin::_open_dialog()) applies default_preview_material
 	// as a fallback only when texture_source hasn't produced a real surface material.
+
+	// Subtle ground-plane grid. Added because the preview's slow automatic orbit (see
+	// NOTIFICATION_PROCESS below) gives no other fixed reference: without a horizon,
+	// an asymmetric rock viewed from a middling angle gives no visual cue for which
+	// side is "up," so a viewer can't always tell top from bottom at a glance. Kept
+	// intentionally faint (unshaded, close in value to the dock's own background
+	// color) so it reads as a spatial reference without competing with the rock
+	// itself for attention.
+	//
+	// Y position is NOT fixed at 0 -- it's repositioned in _update_preview() to sit
+	// just below the current mesh's own AABB every time the mesh regenerates.
+	// A fixed y=0 plane looked like it was "inside" the rock (bug report: "I see
+	// grid inside the rock"), because it is: methods 0-3's `flatten_base_offset`
+	// defaults to -0.3 and their unflattened geometry already spans roughly y in
+	// [-1, 1], so y=0 sits well inside the solid volume, not below it. RockCluster
+	// (method 4) cells are clipped+capped at y=0 specifically, so for that one
+	// generator y=0 does coincide with the true base -- but relying on that only for
+	// method 4 while every other method silently intersects would be worse than a
+	// single generic rule that always sits below whatever mesh is actually loaded.
+	{
+		SurfaceTool st;
+		st.begin(Mesh::PRIMITIVE_LINES);
+		const real_t extent = 3.0;
+		const real_t step = 0.5;
+		int line_count = (int)Math::round(extent / step);
+		for (int i = -line_count; i <= line_count; i++) {
+			real_t coord = i * step;
+			st.add_vertex(Vector3(coord, 0, -extent));
+			st.add_vertex(Vector3(coord, 0, extent));
+			st.add_vertex(Vector3(-extent, 0, coord));
+			st.add_vertex(Vector3(extent, 0, coord));
+		}
+		Ref<ArrayMesh> grid_mesh = st.commit();
+
+		grid_instance = memnew(MeshInstance);
+		grid_instance->set_mesh(grid_mesh);
+
+		Ref<SpatialMaterial> grid_material;
+		grid_material.instance();
+		grid_material->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+		// Deliberately close in value to the viewport's own background (0.2,0.2,0.24,
+		// set above) -- opaque rather than alpha-blended, so it's always faint without
+		// depending on draw order against the rock mesh.
+		grid_material->set_albedo(Color(0.32, 0.32, 0.37));
+		grid_instance->set_material_override(grid_material);
+		preview_viewport->add_child(grid_instance);
+
+		// Solid, shadow-receiving floor beneath the grid lines. The grid alone gives an
+		// orientation reference, but a wireframe can't show the one cue that actually
+		// reads as "this object rests on this surface": a cast shadow. FLAG_UNSHADED
+		// (used for the grid lines above, deliberately, to keep them a constant faint
+		// value regardless of lighting) also means a material can never receive a
+		// shadow at all -- this quad uses a normal shaded, matte material instead, kept
+		// close to the background color so it's still unobtrusive when unshadowed.
+		Ref<PlaneMesh> floor_mesh;
+		floor_mesh.instance();
+		floor_mesh->set_size(Size2(extent * 2, extent * 2));
+		floor_instance = memnew(MeshInstance);
+		floor_instance->set_mesh(floor_mesh);
+		Ref<SpatialMaterial> floor_material;
+		floor_material.instance();
+		floor_material->set_albedo(Color(0.22, 0.22, 0.26));
+		floor_material->set_roughness(1.0);
+		floor_material->set_metallic(0.0);
+		floor_instance->set_material_override(floor_material);
+		preview_viewport->add_child(floor_instance);
+	}
 
 	ViewportContainer *viewport_container = memnew(ViewportContainer);
 	viewport_container->set_stretch(true);
@@ -308,6 +475,7 @@ ProcRockDialog::ProcRockDialog() {
 	generator_option->add_item("IcoRock", 1);
 	generator_option->add_item("RockStudio", 2);
 	generator_option->add_item("ProcRock", 3);
+	generator_option->add_item("RockCluster", 4);
 	generator_option->set_h_size_flags(SIZE_EXPAND_FILL);
 	generator_option->connect("item_selected", this, "_on_generator_changed");
 	top_bar->add_child(generator_option);
@@ -469,7 +637,15 @@ void ProcRockEditorPlugin::_bind_methods() {
 }
 
 void ProcRockEditorPlugin::_open_dialog(Variant p_ud) {
-	dialog->popup_centered(Size2(950, 600));
+	// Restore the size/position saved on last close (see ProcRockDialog::_notification()'s
+	// NOTIFICATION_POPUP_HIDE), falling back to the original fixed default the first time
+	// the dock is ever opened in a given project.
+	Rect2 saved_bounds = EditorSettings::get_singleton()->get_project_metadata("dialog_bounds", "proc_rock", Rect2());
+	if (saved_bounds != Rect2()) {
+		dialog->popup(saved_bounds);
+	} else {
+		dialog->popup_centered(Size2(950, 600));
+	}
 	// Generate initial rock on first open
 	dialog->generate();
 }

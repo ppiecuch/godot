@@ -40,9 +40,9 @@
 
 class GenRock {
 	bool m_PostInitialize = true;
+	bool m_Smoothed = false;
 	real_t m_Width, m_Height, m_Depth;
-	real_t m_MinRandAngle, m_MaxRandAngle, m_MaxOffsetPercent, m_MaxRandShift;
-	Vector2 m_PrevAngles = Vector2(0, 0);
+	real_t m_MaxOffsetPercent, m_MaxRandShift;
 	uint32_t m_MaxPlaneVerts, m_MinPlaneVerts, m_MaxPlanes;
 	uint32_t m_Steps;
 
@@ -108,8 +108,11 @@ public:
 	void SetRadiusDepth(real_t depth) { m_Depth = depth; }
 	void SetRadiusHeight(real_t height) { m_Height = height; }
 
-	void SetRandAngleMax(real_t angle) { m_MaxRandAngle = angle; }
-	void SetRandAngleMin(real_t angle) { m_MinRandAngle = angle; }
+	// Cut-plane direction is now a uniform-random unit vector generated internally in
+	// BuildRock() -- no angle-range setter needed (the old SetRandAngleMin/Max()-fed
+	// spherical-angle parametrization was buggy: dead-code angle accumulation, degrees
+	// used directly as radians, and only 10 discrete integer directions at the default
+	// range — see memo.md's "Bugs Fixed").
 	void SetRandOffsetPercent(real_t percent) { m_MaxOffsetPercent = percent; }
 	void SetRandShift(real_t shift) { m_MaxRandShift = shift; }
 
@@ -118,6 +121,14 @@ public:
 	void SetMaxPlanes(uint32_t planes) { m_MaxPlanes = planes; }
 
 	void SetSteps(uint32_t steps) { m_Steps = steps; }
+
+	// false (default): flat/low-poly shading (per-face normals via
+	// rock_studio_make_low_poly()) so BuildRock()'s flattened facets actually read as
+	// facets. true: the smooth per-vertex normals BuildNormals() always computes
+	// internally, which visually rounds off low-poly geometry — see gen_rock.cpp's
+	// _update() and memo.md's "Bugs Fixed" for why this mattered as much as the
+	// BuildRock() math itself.
+	void SetSmoothed(bool p_smoothed) { m_Smoothed = p_smoothed; }
 
 	Ref<ArrayMesh> GenerateMesh() {
 		_update();

@@ -34,6 +34,7 @@
 #include "core/color.h"
 #include "core/dictionary.h"
 #include "scene/main/timer.h"
+#include "scene/resources/curve.h"
 #include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
 
@@ -50,11 +51,12 @@ class ProcRockMesh : public ArrayMesh {
 	struct {
 		Vector3 dimensions;
 		uint32_t steps;
-		Vector2 rand_angle_range;
 		real_t rand_offset_percent;
 		real_t rand_shift;
 		Vector2i plane_verts_range;
 		uint32_t max_planes;
+		bool smoothed;
+		int randseed;
 	} rockgeneration;
 
 	struct {
@@ -97,6 +99,29 @@ class ProcRockMesh : public ArrayMesh {
 
 	Ref<SpatialMaterial> _pipeline_material;
 
+	// Method 4: RockCluster — see memo.md's "Method 4: RockCluster" for the
+	// algorithm writeup.
+	struct {
+		int style; // 0=Boulder, 1=Sharp, 2=Crystal
+		int randseed;
+		// Boulder/Sharp only
+		int density;
+		real_t radius;
+		real_t asymmetry;
+		real_t wave;
+		real_t decentralize;
+		real_t scale_local;
+		Ref<Curve> scale_by_distance;
+		real_t tallness, flatness, wideness;
+		real_t rotation, rotation_local, rotation_rnd;
+		// Crystal only (shares `density` above)
+		real_t crystal_scale; // flat size multiplier — Crystal has no other absolute-scale control
+		real_t scale_by_angle;
+		real_t scale_random_offset;
+		real_t scale_bias;
+		real_t bloom;
+	} rockcluster;
+
 	// Generic texture-source selection, applying to every generator (0-3) — unlike
 	// `pipeline` above, which is Method-3 (ProcRock)-only. See memo.md's "Texture
 	// generation" section: Method 3 keeps `pipeline.generate_textures` as its own
@@ -122,6 +147,12 @@ class ProcRockMesh : public ArrayMesh {
 		String file_albedo, file_normal, file_roughness, file_metalness, file_ambient_occlusion;
 	} texture;
 
+	// GRAVEL/MOSSY/ROCK apply their baked demo pack entirely in memory (same as
+	// GENERATED) — see _apply_texture_source()'s TOOLS_ENABLED-gated case. A real file
+	// only gets written out at bake() time (see bake()'s comment for why: writing one
+	// during live editing and immediately trying to ResourceLoader::load() it back
+	// fails, since a freshly-written file hasn't been through the editor's import
+	// pipeline yet).
 	enum TextureSource {
 		TEXTURE_SOURCE_NONE,
 		TEXTURE_SOURCE_GENERATED,
@@ -133,6 +164,17 @@ class ProcRockMesh : public ArrayMesh {
 
 	bool auto_refresh;
 	int method;
+
+	// Generic cross-generator "flatten base" cut — applies to methods 0-3 (RockGen,
+	// IcoRock, RockStudio, ProcRock), each of which normally produces a free-floating
+	// blob with no flat side. Not applied to method 4 (RockCluster): it already clip+caps
+	// its Boulder/Sharp cells individually for the same terrain-sitting purpose (see
+	// memo.md's "Bugs Fixed" #24) — running this generic single-plane cut on RockCluster's
+	// already-multi-piece combined mesh would hit the same "several disjoint
+	// cross-sections fanned into one shared cap" failure that #24 specifically fixed by
+	// clipping per-cell instead.
+	bool flatten_base_enabled;
+	real_t flatten_base_offset;
 
 	bool _dirty;
 	void _rebuild();
@@ -198,6 +240,10 @@ public:
 	real_t get_rockgeneration_depth() const;
 	void set_rockgeneration_max_planes(uint32_t p_planes);
 	uint32_t get_rockgeneration_max_planes() const;
+	void set_rockgeneration_smoothed(bool p_smoothed);
+	bool get_rockgeneration_smoothed() const;
+	void set_rockgeneration_randseed(int p_randseed);
+	int get_rockgeneration_randseed() const;
 
 	// Gen. method 3 — RockStudio (convex hull)
 	void set_rockstudio_rock_type(int p_type);
@@ -265,6 +311,55 @@ public:
 	void set_pipeline_preset(int p_preset);
 
 	Ref<SpatialMaterial> get_pipeline_material() const { return _pipeline_material; }
+
+	// Gen. method 5 — RockCluster (scatter/combine cell meshes)
+	void set_rockcluster_style(int p_style);
+	int get_rockcluster_style() const;
+	void set_rockcluster_randseed(int p_seed);
+	int get_rockcluster_randseed() const;
+	void set_rockcluster_density(int p_val);
+	int get_rockcluster_density() const;
+	void set_rockcluster_radius(real_t p_val);
+	real_t get_rockcluster_radius() const;
+	void set_rockcluster_asymmetry(real_t p_val);
+	real_t get_rockcluster_asymmetry() const;
+	void set_rockcluster_wave(real_t p_val);
+	real_t get_rockcluster_wave() const;
+	void set_rockcluster_decentralize(real_t p_val);
+	real_t get_rockcluster_decentralize() const;
+	void set_rockcluster_scale_local(real_t p_val);
+	real_t get_rockcluster_scale_local() const;
+	void set_rockcluster_scale_by_distance(const Ref<Curve> &p_val);
+	Ref<Curve> get_rockcluster_scale_by_distance() const;
+	void set_rockcluster_tallness(real_t p_val);
+	real_t get_rockcluster_tallness() const;
+	void set_rockcluster_flatness(real_t p_val);
+	real_t get_rockcluster_flatness() const;
+	void set_rockcluster_wideness(real_t p_val);
+	real_t get_rockcluster_wideness() const;
+	void set_rockcluster_rotation(real_t p_val);
+	real_t get_rockcluster_rotation() const;
+	void set_rockcluster_rotation_local(real_t p_val);
+	real_t get_rockcluster_rotation_local() const;
+	void set_rockcluster_rotation_rnd(real_t p_val);
+	real_t get_rockcluster_rotation_rnd() const;
+	void set_rockcluster_crystal_scale(real_t p_val);
+	real_t get_rockcluster_crystal_scale() const;
+	void set_rockcluster_scale_by_angle(real_t p_val);
+	real_t get_rockcluster_scale_by_angle() const;
+	void set_rockcluster_scale_random_offset(real_t p_val);
+	real_t get_rockcluster_scale_random_offset() const;
+	void set_rockcluster_scale_bias(real_t p_val);
+	real_t get_rockcluster_scale_bias() const;
+	void set_rockcluster_bloom(real_t p_val);
+	real_t get_rockcluster_bloom() const;
+
+	// Generic "flatten base" cut — applies to methods 0-3 only, see the field comments
+	// above.
+	void set_flatten_base_enabled(bool p_val);
+	bool get_flatten_base_enabled() const;
+	void set_flatten_base_offset(real_t p_val);
+	real_t get_flatten_base_offset() const;
 
 	// Generic texture source — applies to every generator (0-3), see the `texture`
 	// struct/TextureSource enum above.

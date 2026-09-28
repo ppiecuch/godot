@@ -31,6 +31,7 @@
 #include "procrockgen.h"
 
 #include "../shared/box_uv.h"
+#include "../shared/plane_flatten.h"
 #include "../shared/rock_header.h"
 #include "../shared/texture_gen.h"
 
@@ -941,123 +942,10 @@ bool rock_pipeline_json_is_valid(const Dictionary &p_pipeline_json) {
 
 namespace {
 
-Vector<Vector3> compute_smooth_normals(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices) {
-	Vector<Vector3> normals;
-	normals.resize(p_vertices.size());
-	for (int i = 0; i < normals.size(); i++) {
-		normals.write[i] = Vector3();
-	}
-	for (int i = 0; i + 2 < p_indices.size(); i += 3) {
-		int i0 = p_indices[i], i1 = p_indices[i + 1], i2 = p_indices[i + 2];
-		Vector3 n = ComputeNormal(p_vertices[i0], p_vertices[i1], p_vertices[i2]);
-		normals.write[i0] += n;
-		normals.write[i1] += n;
-		normals.write[i2] += n;
-	}
-	for (int i = 0; i < normals.size(); i++) {
-		Vector3 n = normals[i];
-		normals.write[i] = n.length_squared() > CMP_EPSILON ? n.normalized() : Vector3(0, 1, 0);
-	}
-	return normals;
-}
-
-struct ClippedMesh {
-	Vector<Vector3> vertices;
-	Vector<int> indices;
-};
-
-// Clips an indexed triangle mesh against a plane (keeping the side the plane's normal
-// points away from) and caps the exposed cross-section with a triangle fan ordered by
-// angle around its centroid. This assumes a single, star-shaped cross-section, which
-// holds for cutting a lightly-displaced icosphere with one plane.
-ClippedMesh clip_and_cap(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices, const Plane &p_plane) {
-	ClippedMesh out;
-	Vector<Vector3> cap_points;
-	const real_t on_plane_epsilon = real_t(CMP_EPSILON) * 100;
-
-	for (int i = 0; i + 2 < p_indices.size(); i += 3) {
-		Vector<Vector3> tri;
-		tri.push_back(p_vertices[p_indices[i]]);
-		tri.push_back(p_vertices[p_indices[i + 1]]);
-		tri.push_back(p_vertices[p_indices[i + 2]]);
-
-		Vector<Vector3> clipped = Geometry::clip_polygon(tri, p_plane);
-		if (clipped.size() < 3) {
-			continue;
-		}
-
-		int base = out.vertices.size();
-		for (int v = 0; v < clipped.size(); v++) {
-			out.vertices.push_back(clipped[v]);
-			if (Math::abs(p_plane.distance_to(clipped[v])) <= on_plane_epsilon) {
-				cap_points.push_back(clipped[v]);
-			}
-		}
-		for (int v = 1; v + 1 < clipped.size(); v++) {
-			out.indices.push_back(base);
-			out.indices.push_back(base + v);
-			out.indices.push_back(base + v + 1);
-		}
-	}
-
-	if (cap_points.size() >= 3) {
-		Vector3 centroid;
-		for (int i = 0; i < cap_points.size(); i++) {
-			centroid += cap_points[i];
-		}
-		centroid /= cap_points.size();
-
-		Vector3 normal = p_plane.normal;
-		Vector3 up = Math::abs(normal.dot(Vector3(0, 1, 0))) < 0.99 ? Vector3(0, 1, 0) : Vector3(1, 0, 0);
-		Vector3 tangent = up.cross(normal).normalized();
-		Vector3 bitangent = normal.cross(tangent);
-
-		Vector<real_t> angles;
-		angles.resize(cap_points.size());
-		for (int i = 0; i < cap_points.size(); i++) {
-			Vector3 d = cap_points[i] - centroid;
-			angles.write[i] = Math::atan2(d.dot(bitangent), d.dot(tangent));
-		}
-
-		Vector<int> order;
-		order.resize(cap_points.size());
-		for (int i = 0; i < order.size(); i++) {
-			order.write[i] = i;
-		}
-		for (int i = 1; i < order.size(); i++) {
-			int key = order[i];
-			real_t key_angle = angles[key];
-			int j = i - 1;
-			while (j >= 0 && angles[order[j]] > key_angle) {
-				order.write[j + 1] = order[j];
-				j--;
-			}
-			order.write[j + 1] = key;
-		}
-
-		int base = out.vertices.size();
-		for (int i = 0; i < order.size(); i++) {
-			out.vertices.push_back(cap_points[order[i]]);
-		}
-		for (int i = 1; i + 1 < order.size(); i++) {
-			int a = base, b = base + i, c = base + i + 1;
-			// Orient outward (towards the removed material) regardless of the fan's
-			// natural winding, using the same cross(P2-P0,P1-P0) convention as ComputeNormal.
-			Vector3 n = ComputeNormal(out.vertices[a], out.vertices[b], out.vertices[c]);
-			if (n.dot(p_plane.normal) < 0) {
-				out.indices.push_back(a);
-				out.indices.push_back(c);
-				out.indices.push_back(b);
-			} else {
-				out.indices.push_back(a);
-				out.indices.push_back(b);
-				out.indices.push_back(c);
-			}
-		}
-	}
-
-	return out;
-}
+// clip_and_cap()/ClippedMesh/compute_smooth_normals() moved to
+// generators/shared/plane_flatten.h/.cpp (see #include above) so the generic
+// cross-generator "flatten_base" property (proc_rocks.cpp) can reuse them too --
+// pipeline_cutplane_* below is still the only caller within this file.
 
 Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int> &p_indices, bool p_smoothed);
 
@@ -1202,6 +1090,19 @@ Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int>
 	}
 
 	if (p_smoothed) {
+		// A previous fix here flipped p_indices, reasoning that the `else` (flat) branch
+		// below flips for an "unrelated reason" (matching rock_studio_make_low_poly()'s
+		// flat-normal computation convention) and ended up correctly wound as a side
+		// effect. That reasoning conflates a NORMAL attribute used only for shading with
+		// the actual vertex winding order, which is the only thing that determines
+		// backface culling -- rock_studio_make_low_poly() doesn't touch winding at all, it
+		// only computes a (shading-only) flat normal from whatever order it's handed. Both
+		// this branch's old flip and the flat branch's own analogous flip were validated
+		// against a test using the naive (p1-p0).cross(p2-p0) convention -- the opposite of
+		// ComputeNormal(), Godot's actual, CubeMesh-verified front-face convention (see
+		// memo.md's "Bugs Fixed"). Re-checked with an assumption-free synthetic-distant-
+		// camera test: MakeIcosphere()'s own p_indices order is already correctly wound;
+		// the flip made it backwards. Use p_indices directly.
 		Vector<Vector3> normals = compute_smooth_normals(p_vertices, p_indices);
 
 		bool unwrapped = false;
@@ -1234,21 +1135,16 @@ Array _finalize_mesh_arrays(const Vector<Vector3> &p_vertices, const Vector<int>
 			mesh_arrays[VS::ARRAY_INDEX] = p_indices;
 		}
 	} else {
-		// rock_studio_make_low_poly() derives its flat normal via cross(v1-v0, v2-v0),
-		// the opposite winding convention from ComputeNormal()'s cross(v2-v0, v1-v0) used
-		// above — flip winding here so the flat-shaded result faces outward too.
-		Vector<int> flipped_indices;
-		flipped_indices.resize(p_indices.size());
-		for (int i = 0; i + 2 < p_indices.size(); i += 3) {
-			flipped_indices.write[i] = p_indices[i];
-			flipped_indices.write[i + 1] = p_indices[i + 2];
-			flipped_indices.write[i + 2] = p_indices[i + 1];
-		}
-
+		// A previous fix here flipped p_indices for the same (invalid) reason as the
+		// p_smoothed branch above: rock_studio_make_low_poly()'s flat-normal computation
+		// is a shading-only concern with no effect on backface culling. Re-checked with an
+		// assumption-free synthetic-distant-camera test (see memo.md's "Bugs Fixed"):
+		// MakeIcosphere()'s own p_indices order is already correctly wound; the flip made
+		// this branch backwards too. Use p_indices directly.
 		Array arrays;
 		arrays.resize(VS::ARRAY_MAX);
 		arrays[VS::ARRAY_VERTEX] = p_vertices;
-		arrays[VS::ARRAY_INDEX] = flipped_indices;
+		arrays[VS::ARRAY_INDEX] = p_indices;
 
 		Ref<ArrayMesh> temp;
 		temp.instance();

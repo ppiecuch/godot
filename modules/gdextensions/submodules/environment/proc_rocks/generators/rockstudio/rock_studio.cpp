@@ -143,6 +143,15 @@ Ref<ArrayMesh> rock_studio_create_mesh(const Vector<Vector3> &p_points) {
 			int i2 = face.indices[j + 1];
 
 			int base = vertices.size();
+			// A previous fix here swapped the last two vertices (i0,i2,i1) on the theory
+			// that QuickHull's own Face::indices order was backwards. That "fix" was
+			// validated only against a test using the naive (p1-p0).cross(p2-p0) winding
+			// convention -- the OPPOSITE of ComputeNormal(), Godot's actual, CubeMesh-
+			// verified front-face convention (see memo.md's "Bugs Fixed"). Re-checked with
+			// an assumption-free synthetic-distant-camera test (no naive/centroid heuristic
+			// at all): the swapped order was genuinely backwards by the real convention
+			// (2/12 front-facing near-camera triangles). QuickHull's own i0,i1,i2 order is
+			// the correct one; leave it unswapped.
 			vertices.push_back(mesh_data.vertices[i0]);
 			vertices.push_back(mesh_data.vertices[i1]);
 			vertices.push_back(mesh_data.vertices[i2]);

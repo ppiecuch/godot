@@ -97,32 +97,34 @@ void GenRock::BuildIco() {
 
 // Convert icosphere into 'rock'
 void GenRock::BuildRock() {
+	// Influence radius for each plane's falloff: how far (in world units) from a plane's
+	// own contact point its flattening effect reaches. Reuses the same formula Expand()
+	// computes one function down -- a direct, correct stand-in for what the original
+	// (buggy) antipodal-point "diameter" computation was trying to approximate; see
+	// memo.md's "Bugs Fixed" for why that computation never actually measured the
+	// ellipsoid's diameter.
+	const real_t averageRadius = (m_Width + m_Height + m_Depth) / 3.0;
+
 	// Flatten by 'planes'
 	for (uint32_t plane = 0; plane < m_MaxPlanes; plane++) {
-		// Determine position of plane by angle on sphere
-		Vector3 originPlane, radiusPlane;
-		m_PrevAngles.x = m_PrevAngles.x + m_MinRandAngle / 180.0 * Math_PI;
-		m_PrevAngles.y = m_PrevAngles.y + m_MinRandAngle / 180.0 * Math_PI;
+		// Random point on the unit sphere -- rejection sampling avoids the corner-bias a
+		// naive (theta, phi) parametrization would have, and needs no degree/radian
+		// conversion (unlike the angle-based approach this replaces).
+		Vector3 unitDir;
+		do {
+			unitDir = Vector3(
+					Math::randf() * 2.0 - 1.0,
+					Math::randf() * 2.0 - 1.0,
+					Math::randf() * 2.0 - 1.0);
+		} while (unitDir.length_squared() < 0.0001 || unitDir.length_squared() > 1.0);
+		unitDir.normalize();
 
-		m_PrevAngles.x = Math::rand() % (int(m_MaxRandAngle) - int(m_MinRandAngle)) + int(m_MinRandAngle);
-		m_PrevAngles.y = Math::rand() % (int(m_MaxRandAngle) - int(m_MinRandAngle)) + int(m_MinRandAngle);
-
-		// Origin plane
-		originPlane.x = m_Width * Math::cos(m_PrevAngles.x) * Math::cos(m_PrevAngles.y);
-		originPlane.y = m_Height * Math::cos(m_PrevAngles.x) * Math::sin(m_PrevAngles.y);
-		originPlane.z = m_Depth * Math::sin(m_PrevAngles.x);
-
-		radiusPlane.x = m_Width * Math::cos(m_PrevAngles.x + Math_PI) * Math::cos(m_PrevAngles.y + Math_PI);
-		radiusPlane.y = m_Height * Math::cos(m_PrevAngles.x + Math_PI) * Math::sin(m_PrevAngles.y + Math_PI);
-		radiusPlane.z = m_Depth * Math::sin(m_PrevAngles.x + Math_PI);
-
-		// Create plane
-		const real_t offset = Math::rand() % int(m_MaxOffsetPercent);
-		auto origin = originPlane;
-		origin *= (100.0 - offset) / 100.0;
-		originPlane = origin;
-		auto normal = origin.normalized();
-		auto normalPlane = normal;
+		// Plane origin: a point on the mesh's own ellipsoid surface in that direction,
+		// pulled inward by up to m_MaxOffsetPercent% toward the center -- same "how deep
+		// can a cut reach" knob as before, unchanged.
+		const real_t offset = Math::rand() % MAX(1, int(m_MaxOffsetPercent));
+		Vector3 originPlane = unitDir * Vector3(m_Width, m_Height, m_Depth) * ((100.0 - offset) / 100.0);
+		Vector3 normal = unitDir;
 
 		// Flatten vertices onto plane
 		for (uint32_t i = 0; i < m_NumVertices; i++) {
@@ -130,24 +132,24 @@ void GenRock::BuildRock() {
 			auto vertice = m_VecGeom[i];
 			auto point = vertice.Position;
 			auto vecP = point - originPlane;
-			auto dot = vec3_dot(vecP, normal);
-			if (dot < 0) { // dont proceed this one if dot is negative == more then 90 degree
+			auto dist = vec3_dot(vecP, normal); // signed distance above the plane
+			if (dist < 0) { // dont proceed this one if dist is negative == more then 90 degree
 				continue;
 			}
 			// Project on plane
-			const auto vectorFromPoint = vecP;
-
-			const auto dist = vectorFromPoint.x * normalPlane.x + vectorFromPoint.y * normalPlane.y + vectorFromPoint.z * normalPlane.z;
 			const auto projectedPoint = point - dist * normal;
 
-			// Create new vertice, make curved
+			// Falloff: 1 at the plane's own contact point (pulls the vertex all the way
+			// onto the plane), fading to 0 at the influence radius (vertex untouched) --
+			// unlike the previous strength formula, this only ever pulls the vertex
+			// *toward* the plane, never past it, so it produces a real flat facet instead
+			// of a smooth outward bump.
 			const auto distToCenter = LengthBetweenPoints(projectedPoint, originPlane);
-			const auto diameter = LengthBetweenPoints(Vector3(0, 0, 0), radiusPlane) / 2.0;
-			const auto strength = (1.0 / diameter) * distToCenter - 1.0;
+			const auto falloff = CLAMP(1.0 - distToCenter / averageRadius, 0.0, 1.0);
 
 			// Update vertice
-			m_VecGeom.Position[i] = point - (dist / 2.0) * normal * strength;
-			m_VecGeom.Normal[i] = normalPlane;
+			m_VecGeom.Position[i] = point - falloff * dist * normal;
+			m_VecGeom.Normal[i] = normal;
 		}
 	}
 }
@@ -196,8 +198,7 @@ void GenRock::CorrectUV() {
 	uint32_t countExtraVerts = 0;
 	Set<uint32_t> duplicatesIdx;
 	for (int i = 0; i < m_NumIndices; i += 3) {
-// Data
-#pragma region data
+		// Data
 		const auto &idx0 = m_VecIndices[i % m_NumIndices];
 		const auto &idx1 = m_VecIndices[(i + 1) % m_NumIndices];
 		const auto &idx2 = m_VecIndices[(i + 2) % m_NumIndices];
@@ -211,8 +212,8 @@ void GenRock::CorrectUV() {
 		Vector3 tex2 = Vector3(v2.TexCoord.x, v2.TexCoord.y, 0);
 
 		Vector3 texNormal = vec3_cross(tex1 - tex0, tex2 - tex0);
-// Check uv to determine if new triangles are needed
-#pragma endregion
+
+		// Check uv to determine if new triangles are needed
 
 		// Sides
 		if (texNormal.z > 0) {
@@ -326,20 +327,51 @@ void GenRock::_update() {
 		ERR_FAIL_COND(!m_VecGeom.valid(m_NumVertices));
 		ERR_FAIL_COND(m_VecIndices.size() != m_NumIndices);
 
-		Array a;
-		a.resize(VS::ARRAY_MAX);
-		a[VS::ARRAY_VERTEX] = (Vector<Vector3>)m_VecGeom.Position;
-		a[VS::ARRAY_NORMAL] = (Vector<Vector3>)m_VecGeom.Normal;
-		// CorrectUV() above already computes a real per-vertex UV unwrap — it was just
-		// never copied into the output array, so texture_source materials on this
-		// generator always sampled UV (0,0) everywhere. (m_VecGeom.Tangent from
-		// BuildTangents() is a plain Vector3, not Godot's 4-component tangent+handedness
-		// format, so it's not usable here directly — proc_rocks.cpp's ensure_tangents()
-		// generates a correctly-formatted tangent from this UV instead.)
-		a[VS::ARRAY_TEX_UV] = (Vector<Vector2>)m_VecGeom.TexCoord;
-		a[VS::ARRAY_INDEX] = (Vector<int>)m_VecIndices;
+		if (m_Smoothed) {
+			Array a;
+			a.resize(VS::ARRAY_MAX);
+			a[VS::ARRAY_VERTEX] = (Vector<Vector3>)m_VecGeom.Position;
+			a[VS::ARRAY_NORMAL] = (Vector<Vector3>)m_VecGeom.Normal;
+			// CorrectUV() above already computes a real per-vertex UV unwrap — it was just
+			// never copied into the output array, so texture_source materials on this
+			// generator always sampled UV (0,0) everywhere. (m_VecGeom.Tangent from
+			// BuildTangents() is a plain Vector3, not Godot's 4-component tangent+handedness
+			// format, so it's not usable here directly — proc_rocks.cpp's ensure_tangents()
+			// generates a correctly-formatted tangent from this UV instead.)
+			a[VS::ARRAY_TEX_UV] = (Vector<Vector2>)m_VecGeom.TexCoord;
+			a[VS::ARRAY_INDEX] = (Vector<int>)m_VecIndices;
 
-		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);
+			mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);
+		} else {
+			// Flat/low-poly shading: smooth per-vertex normals (BuildNormals() above)
+			// visually disguise BuildRock()'s flattened facets as a rounded surface --
+			// same reasoning as Method 3's own smooth/flat choice
+			// (generators/procrockgen/procrockgen.cpp). Reuses the same shared helpers
+			// that path already uses. A previous version of this code flipped the index
+			// order here, reasoning that rock_studio_make_low_poly()'s flat-normal
+			// computation (a naive cross(v1-v0,v2-v0), used only for LIGHTING) being the
+			// opposite convention from this file's own ComputeNormal() meant the WINDING
+			// needed flipping too -- but the stored normal attribute has no effect on
+			// backface culling at all; only the actual vertex winding order does, and
+			// rock_studio_make_low_poly() preserves whatever winding it's given unchanged.
+			// Re-checked with an assumption-free synthetic-distant-camera test (see
+			// memo.md's "Bugs Fixed"): m_VecIndices as produced by BuildIco()/BuildRock()
+			// is already correctly wound; the flip made it backwards. Use it directly.
+			Array temp_arrays;
+			temp_arrays.resize(VS::ARRAY_MAX);
+			temp_arrays[VS::ARRAY_VERTEX] = (Vector<Vector3>)m_VecGeom.Position;
+			temp_arrays[VS::ARRAY_INDEX] = (Vector<int>)m_VecIndices;
+
+			Ref<ArrayMesh> temp;
+			temp.instance();
+			temp->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, temp_arrays);
+
+			Ref<ArrayMesh> low_poly = rock_studio_make_low_poly(temp);
+			if (low_poly.is_valid() && low_poly->get_surface_count() > 0) {
+				rock_studio_box_uv(low_poly);
+				mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, low_poly->surface_get_arrays(0));
+			}
+		}
 		m_PostInitialize = false;
 
 		print_verbose("Rock updated");

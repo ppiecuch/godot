@@ -233,7 +233,7 @@ void Recurse(PoolVector3Array &result, const Point &a, const Point &b, const Poi
 			}
 
 			Recurse(result, a, d, e, profondeur - 1, true);
-			Recurse(result, d, e, f, profondeur - 1);
+			Recurse(result, d, f, e, profondeur - 1);
 			Recurse(result, d, b, f, profondeur - 1);
 			Recurse(result, e, f, c, profondeur - 1);
 		} else {
@@ -261,12 +261,21 @@ void Recurse(PoolVector3Array &result, const Point &a, const Point &b, const Poi
 				PutPoint(f);
 			}
 			Recurse(result, a, d, e, profondeur - 1);
-			Recurse(result, d, e, f, profondeur - 1);
+			Recurse(result, d, f, e, profondeur - 1);
 			Recurse(result, d, b, f, profondeur - 1);
 			Recurse(result, e, f, c, profondeur - 1);
 		}
 	} else {
-		InstancieTriangle(result, a, b, c);
+		// Every leaf triangle in the mesh is emitted here, from every one of the 20 root
+		// icosahedron faces and every recursive subdivision -- a single global winding flip
+		// at this one call site is the correct, sufficient place to fix RockGen's own
+		// mesh-wide winding, verified directly with an unperturbed depth=0 icosahedron
+		// (every one of the 20 root faces measured uniformly "inward" via
+		// ComputeNormal(tri).dot(tri_centroid) before this fix -- a real, mesh-wide defect,
+		// not a scattered/partial one -- see memo.md's "Bugs Fixed"). Swapping b/c here
+		// reverses every triangle's winding regardless of which root face or recursion
+		// depth it descended from.
+		InstancieTriangle(result, a, c, b);
 	}
 }
 
@@ -297,11 +306,17 @@ Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoo
 
 	PoolVector3Array result;
 
-	Recurse(result, Point(0, 0, 1), Point(-36, 60, 1), Point(+36, 60, 1), MaxProf, true);
-	Recurse(result, Point(72, 0, 1), Point(+36, 60, 1), Point(108, 60, 1), MaxProf, true);
-	Recurse(result, Point(144, 0, 1), Point(108, 60, 1), Point(180, 60, 1), MaxProf, true);
-	Recurse(result, Point(-72, 0, 1), Point(-108, 60, 1), Point(-36, 60, 1), MaxProf, true);
-	Recurse(result, Point(-144, 0, 1), Point(-180, 60, 1), Point(-108, 60, 1), MaxProf, true);
+	// Root icosahedron faces: vertex order must give an outward-facing (a,b,c) winding
+	// for backface culling to keep the triangle. Verified numerically per-triangle
+	// (Polar2Cart + cross product dot outward-centroid); the north cap, two of the
+	// middle-band-b triangles and three of the south cap were listed with b/c swapped
+	// relative to their correctly-wound neighbors — this alone dropped exactly half the
+	// mesh, independent of the fractal winding-parity bug fixed in Recurse() above.
+	Recurse(result, Point(0, 0, 1), Point(+36, 60, 1), Point(-36, 60, 1), MaxProf, true);
+	Recurse(result, Point(72, 0, 1), Point(108, 60, 1), Point(+36, 60, 1), MaxProf, true);
+	Recurse(result, Point(144, 0, 1), Point(180, 60, 1), Point(108, 60, 1), MaxProf, true);
+	Recurse(result, Point(-72, 0, 1), Point(-36, 60, 1), Point(-108, 60, 1), MaxProf, true);
+	Recurse(result, Point(-144, 0, 1), Point(-108, 60, 1), Point(-180, 60, 1), MaxProf, true);
 
 	Recurse(result, Point(0, 120, 1), Point(-36, 60, 1), Point(+36, 60, 1), MaxProf);
 	Recurse(result, Point(72, 120, 1), Point(+36, 60, 1), Point(108, 60, 1), MaxProf);
@@ -309,17 +324,17 @@ Array rock_gen(int depth = 3, int randseed = 0, real_t smoothness = 1, bool smoo
 	Recurse(result, Point(-72, 120, 1), Point(-108, 60, 1), Point(-36, 60, 1), MaxProf);
 	Recurse(result, Point(-144, 120, 1), Point(-180, 60, 1), Point(-108, 60, 1), MaxProf);
 
-	Recurse(result, Point(36, 60, 1), Point(0, 120, 1), Point(72, 120, 1), MaxProf);
-	Recurse(result, Point(108, 60, 1), Point(72, 120, 1), Point(144, 120, 1), MaxProf);
+	Recurse(result, Point(36, 60, 1), Point(72, 120, 1), Point(0, 120, 1), MaxProf);
+	Recurse(result, Point(108, 60, 1), Point(144, 120, 1), Point(72, 120, 1), MaxProf);
 	Recurse(result, Point(-180, 60, 1), Point(-144, 120, 1), Point(-216, 120, 1), MaxProf);
 	Recurse(result, Point(-36, 60, 1), Point(0, 120, 1), Point(-72, 120, 1), MaxProf);
 	Recurse(result, Point(-108, 60, 1), Point(-72, 120, 1), Point(-144, 120, 1), MaxProf);
 
 	Recurse(result, Point(36, 180, 1), Point(0, 120, 1), Point(72, 120, 1), MaxProf, true);
 	Recurse(result, Point(108, 180, 1), Point(72, 120, 1), Point(144, 120, 1), MaxProf, true);
-	Recurse(result, Point(-180, 180, 1), Point(-144, 120, 1), Point(-216, 120, 1), MaxProf, true);
-	Recurse(result, Point(-36, 180, 1), Point(0, 120, 1), Point(-72, 120, 1), MaxProf, true);
-	Recurse(result, Point(-108, 180, 1), Point(-72, 120, 1), Point(-144, 120, 1), MaxProf, true);
+	Recurse(result, Point(-180, 180, 1), Point(-216, 120, 1), Point(-144, 120, 1), MaxProf, true);
+	Recurse(result, Point(-36, 180, 1), Point(-72, 120, 1), Point(0, 120, 1), MaxProf, true);
+	Recurse(result, Point(-108, 180, 1), Point(-144, 120, 1), Point(-72, 120, 1), MaxProf, true);
 
 	// Free lookup table
 	if (PointTable) {

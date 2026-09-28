@@ -58,6 +58,8 @@ class ProcRockDialog : public WindowDialog {
 	// 3D preview
 	Viewport *preview_viewport;
 	MeshInstance *preview_mesh_instance;
+	MeshInstance *grid_instance;
+	MeshInstance *floor_instance;
 	Camera *preview_camera;
 	Ref<SpatialMaterial> default_preview_material;
 	real_t camera_orbit_angle;
@@ -98,6 +100,7 @@ class ProcRockDialog : public WindowDialog {
 	void _on_property_edited(const StringName &p_prop);
 	void _update_preview_material();
 	void _update_preview();
+	void _update_grid_position();
 	void _update_info();
 
 protected:
