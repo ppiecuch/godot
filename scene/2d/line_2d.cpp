@@ -32,6 +32,12 @@
 // ----------
 // * https://github.com/godotengine/godot/pull/79182/files
 
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "line_2d.h"
 #include "line_builder.h"
 
@@ -502,3 +508,108 @@ void Line2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_curve_changed"), &Line2D::_curve_changed);
 	ClassDB::bind_method(D_METHOD("_texture_changed"), &Line2D::_texture_changed);
 }
+
+// -- Tests --
+// Property-level only: Line2D::_draw() needs a live canvas item (get_canvas_item()),
+// so these never attach the node to a scene tree or trigger NOTIFICATION_DRAW.
+
+#ifdef DOCTEST
+
+TEST_CASE("[Line2D] default property values") {
+	Line2D *line = memnew(Line2D);
+
+	CHECK(line->get_point_count() == 0);
+	CHECK(line->is_closed() == false);
+	CHECK(line->get_width() == doctest::Approx(10.0));
+	CHECK(line->get_default_color() == Color(0.4, 0.5, 1));
+	CHECK(line->get_joint_mode() == Line2D::LINE_JOINT_SHARP);
+	CHECK(line->get_begin_cap_mode() == Line2D::LINE_CAP_NONE);
+	CHECK(line->get_end_cap_mode() == Line2D::LINE_CAP_NONE);
+	CHECK(line->get_texture_mode() == Line2D::LINE_TEXTURE_NONE);
+	CHECK(line->get_sharp_limit() == doctest::Approx(2.0));
+	CHECK(line->get_round_precision() == 8);
+	CHECK(line->get_antialiased() == false);
+
+	memdelete(line);
+}
+
+TEST_CASE("[Line2D] set_width clamps negative values to zero") {
+	Line2D *line = memnew(Line2D);
+
+	line->set_width(42.0);
+	CHECK(line->get_width() == doctest::Approx(42.0));
+
+	line->set_width(-5.0);
+	CHECK(line->get_width() == doctest::Approx(0.0));
+
+	memdelete(line);
+}
+
+TEST_CASE("[Line2D] set_sharp_limit clamps negative values to zero") {
+	Line2D *line = memnew(Line2D);
+
+	line->set_sharp_limit(-1.0);
+	CHECK(line->get_sharp_limit() == doctest::Approx(0.0));
+
+	line->set_sharp_limit(3.5);
+	CHECK(line->get_sharp_limit() == doctest::Approx(3.5));
+
+	memdelete(line);
+}
+
+TEST_CASE("[Line2D] set_round_precision clamps to at least one") {
+	Line2D *line = memnew(Line2D);
+
+	line->set_round_precision(0);
+	CHECK(line->get_round_precision() == 1);
+
+	line->set_round_precision(-10);
+	CHECK(line->get_round_precision() == 1);
+
+	line->set_round_precision(16);
+	CHECK(line->get_round_precision() == 16);
+
+	memdelete(line);
+}
+
+TEST_CASE("[Line2D] point list editing") {
+	Line2D *line = memnew(Line2D);
+
+	line->add_point(Vector2(0, 0));
+	line->add_point(Vector2(10, 0));
+	line->add_point(Vector2(20, 0));
+	REQUIRE(line->get_point_count() == 3);
+	CHECK(line->get_point_position(1) == Vector2(10, 0));
+
+	// Explicit insertion index rather than appending.
+	line->add_point(Vector2(5, 5), 1);
+	REQUIRE(line->get_point_count() == 4);
+	CHECK(line->get_point_position(1) == Vector2(5, 5));
+	CHECK(line->get_point_position(2) == Vector2(10, 0));
+
+	line->set_point_position(0, Vector2(-1, -1));
+	CHECK(line->get_point_position(0) == Vector2(-1, -1));
+
+	line->remove_point(0);
+	REQUIRE(line->get_point_count() == 3);
+	CHECK(line->get_point_position(0) == Vector2(5, 5));
+
+	line->clear_points();
+	CHECK(line->get_point_count() == 0);
+
+	memdelete(line);
+}
+
+TEST_CASE("[Line2D] set_closed toggles is_closed") {
+	Line2D *line = memnew(Line2D);
+
+	CHECK(line->is_closed() == false);
+	line->set_closed(true);
+	CHECK(line->is_closed() == true);
+	line->set_closed(false);
+	CHECK(line->is_closed() == false);
+
+	memdelete(line);
+}
+
+#endif // DOCTEST

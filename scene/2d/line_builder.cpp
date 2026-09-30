@@ -28,9 +28,17 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "line_builder.h"
+#ifdef DOCTEST
+#include "doctest/doctest.h"
+#else
+#define DOCTEST_CONFIG_DISABLE
+#endif
+
 #include "core/math/geometry.h"
 #include "core/math/math_defs.h"
+#include "core/math/math_funcs.h"
+#include "line_builder.h"
+#include "scene/resources/curve.h"
 
 //----------------------------------------------------------------------------
 // Util
@@ -117,8 +125,6 @@ void LineBuilder::build() {
 	Vector2 pos1 = points[1];
 	Vector2 f0 = (pos1 - pos0).normalized();
 	Vector2 u0 = f0.orthogonal();
-	Vector2 pos_up0 = pos0;
-	Vector2 pos_down0 = pos0;
 
 	Color color0;
 	Color color1;
@@ -132,6 +138,11 @@ void LineBuilder::build() {
 		width_factor = curve->sample_baked(0);
 		modified_hw = hw * width_factor;
 	}
+
+	// The strip's starting edge must already be offset to either side of pos0;
+	// leaving it collapsed on pos0 produced a degenerate first quad/cap.
+	Vector2 pos_up0 = pos0 + u0 * modified_hw;
+	Vector2 pos_down0 = pos0 - u0 * modified_hw;
 	if (distance_required) {
 		// Calculate the total distance.
 		for (int i = 1; i < point_count; ++i) {
@@ -342,7 +353,10 @@ void LineBuilder::build() {
 		}
 
 		// End the "fake pass" in the closed line case before the drawing subroutine.
+		// Seed the strip with the wrap joint's corner (just computed above) so the
+		// first real quad connects to it instead of to stale/unset indices.
 		if (i == -1) {
+			strip_begin(pos_up0, pos_down0, color0, uvx0);
 			continue;
 		}
 
@@ -722,3 +736,419 @@ void LineBuilder::new_arc(Vector2 center, Vector2 vbegin, float angle_delta, Col
 		indices.push_back(vi + 1);
 	}
 }
+
+// -- Tests --
+
+#ifdef DOCTEST
+
+namespace {
+
+bool has_nan_or_inf(const Vector<Vector2> &p_vectors) {
+	for (int i = 0; i < p_vectors.size(); ++i) {
+		if (Math::is_nan(p_vectors[i].x) || Math::is_nan(p_vectors[i].y) ||
+				Math::is_inf(p_vectors[i].x) || Math::is_inf(p_vectors[i].y)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool has_nan_or_inf(const Vector<Color> &p_colors) {
+	for (int i = 0; i < p_colors.size(); ++i) {
+		const Color &c = p_colors[i];
+		if (Math::is_nan(c.r) || Math::is_nan(c.g) || Math::is_nan(c.b) || Math::is_nan(c.a) ||
+				Math::is_inf(c.r) || Math::is_inf(c.g) || Math::is_inf(c.b) || Math::is_inf(c.a)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Distance from `p_vertex` to the closest of the two given polyline points,
+// used to check that a strip vertex sits at (roughly) half-width from the centerline.
+float min_distance_to(const Vector2 &p_vertex, const Vector2 &p_a, const Vector2 &p_b) {
+	return MIN(p_vertex.distance_to(p_a), p_vertex.distance_to(p_b));
+}
+
+int count_degenerate_triangles(const Vector<int> &p_indices, const Vector<Vector2> &p_vertices) {
+	int count = 0;
+	for (int i = 0; i + 2 < p_indices.size(); i += 3) {
+		const Vector2 &a = p_vertices[p_indices[i]];
+		const Vector2 &b = p_vertices[p_indices[i + 1]];
+		const Vector2 &c = p_vertices[p_indices[i + 2]];
+		const real_t area2 = Math::abs((b - a).cross(c - a));
+		if (area2 <= CMP_EPSILON) {
+			count++;
+		}
+	}
+	return count;
+}
+
+} // namespace
+
+TEST_CASE("[LineBuilder] build() with fewer than 2 points clears the output") {
+	LineBuilder lb;
+	lb.width = 10;
+
+	// Pre-fill the output arrays to make sure build() actually clears them
+	// rather than just leaving them untouched.
+	lb.vertices.push_back(Vector2());
+	lb.colors.push_back(Color());
+	lb.indices.push_back(0);
+	lb.uvs.push_back(Vector2());
+
+	SUBCASE("zero points") {
+		lb.build();
+	}
+	SUBCASE("one point") {
+		lb.points.push_back(Vector2(1, 2));
+		lb.build();
+	}
+
+	CHECK(lb.vertices.size() == 0);
+	CHECK(lb.colors.size() == 0);
+	CHECK(lb.indices.size() == 0);
+	CHECK(lb.uvs.size() == 0);
+}
+
+TEST_CASE("[LineBuilder] straight open line with no texture, no cap") {
+	LineBuilder lb;
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(100, 0));
+	lb.width = 10;
+	lb.texture_mode = Line2D::LINE_TEXTURE_NONE;
+	lb.begin_cap_mode = Line2D::LINE_CAP_NONE;
+	lb.end_cap_mode = Line2D::LINE_CAP_NONE;
+	lb.build();
+
+	const float hw = 5.f;
+
+	REQUIRE(lb.vertices.size() == 4);
+	CHECK(lb.indices.size() == 6);
+	CHECK(lb.uvs.size() == 0);
+	// A single flat color for the whole primitive rather than one per vertex.
+	CHECK(lb.colors.size() == 1);
+
+	const Vector2 f0 = Vector2(1, 0);
+	for (int i = 0; i < lb.vertices.size(); ++i) {
+		const Vector2 &v = lb.vertices[i];
+		const Vector2 &nearest = (v.distance_to(Vector2(0, 0)) < v.distance_to(Vector2(100, 0))) ? Vector2(0, 0) : Vector2(100, 0);
+		const Vector2 offset = v - nearest;
+		CHECK(offset.length() == doctest::Approx(hw).epsilon(0.001));
+		// The offset must be perpendicular to the line direction (no leftover
+		// tangential component), i.e. the strip's starting edge is a proper
+		// perpendicular edge and not collapsed onto the centerline point.
+		CHECK(offset.dot(f0) == doctest::Approx(0.f).epsilon(0.001));
+	}
+	CHECK_FALSE(has_nan_or_inf(lb.vertices));
+}
+
+TEST_CASE("[LineBuilder] gradient assigns per-vertex colors matching the endpoints") {
+	Gradient *grad = memnew(Gradient); // Default: black at 0, white at 1.
+
+	LineBuilder lb;
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(100, 0));
+	lb.width = 10;
+	lb.gradient = grad;
+	lb.build();
+
+	REQUIRE(lb.vertices.size() == 4);
+	REQUIRE(lb.colors.size() == 4);
+	CHECK(lb.colors[0] == Color(0, 0, 0, 1));
+	CHECK(lb.colors[1] == Color(0, 0, 0, 1));
+	CHECK(lb.colors[2] == Color(1, 1, 1, 1));
+	CHECK(lb.colors[3] == Color(1, 1, 1, 1));
+
+	memdelete(grad);
+}
+
+TEST_CASE("[LineBuilder] width curve tapers the half-width along the line") {
+	Curve *curve = memnew(Curve);
+	curve->add_point(Vector2(0, 1.0));
+	curve->add_point(Vector2(1, 0.2));
+
+	LineBuilder lb;
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(100, 0));
+	lb.width = 10;
+	lb.curve = curve;
+	lb.build();
+
+	REQUIRE(lb.vertices.size() == 4);
+	// First two vertices (start edge) should be offset by hw * curve(0) == 5.
+	CHECK(min_distance_to(lb.vertices[0], Vector2(0, 0), Vector2(100, 0)) == doctest::Approx(5.0).epsilon(0.02));
+	CHECK(min_distance_to(lb.vertices[1], Vector2(0, 0), Vector2(100, 0)) == doctest::Approx(5.0).epsilon(0.02));
+	// Last two vertices (end edge) should be offset by hw * curve(1) == 1.
+	CHECK(min_distance_to(lb.vertices[2], Vector2(0, 0), Vector2(100, 0)) == doctest::Approx(1.0).epsilon(0.02));
+	CHECK(min_distance_to(lb.vertices[3], Vector2(0, 0), Vector2(100, 0)) == doctest::Approx(1.0).epsilon(0.02));
+
+	memdelete(curve);
+}
+
+TEST_CASE("[LineBuilder] begin/end box caps extend the endpoints along the tangent") {
+	auto build_with_caps = [](Line2D::LineCapMode p_begin, Line2D::LineCapMode p_end) {
+		LineBuilder lb;
+		lb.points.push_back(Vector2(0, 0));
+		lb.points.push_back(Vector2(100, 0));
+		lb.width = 10;
+		lb.begin_cap_mode = p_begin;
+		lb.end_cap_mode = p_end;
+		lb.build();
+		return lb;
+	};
+
+	LineBuilder no_cap = build_with_caps(Line2D::LINE_CAP_NONE, Line2D::LINE_CAP_NONE);
+	LineBuilder box_cap = build_with_caps(Line2D::LINE_CAP_BOX, Line2D::LINE_CAP_BOX);
+
+	REQUIRE(no_cap.vertices.size() == 4);
+	REQUIRE(box_cap.vertices.size() == 4);
+
+	const Vector2 f0 = Vector2(1, 0);
+	const float hw = 5.f;
+
+	// The begin edge (vertices 0/1) must be pushed back by hw along -f0
+	// compared to the uncapped version, while staying hw away perpendicularly.
+	for (int i = 0; i < 2; ++i) {
+		const Vector2 delta = box_cap.vertices[i] - no_cap.vertices[i];
+		CHECK(delta.dot(f0) == doctest::Approx(-hw).epsilon(0.01));
+	}
+	// The end edge (vertices 2/3) must be pushed forward by hw along +f0.
+	for (int i = 2; i < 4; ++i) {
+		const Vector2 delta = box_cap.vertices[i] - no_cap.vertices[i];
+		CHECK(delta.dot(f0) == doctest::Approx(hw).epsilon(0.01));
+	}
+}
+
+TEST_CASE("[LineBuilder] round begin cap adds an arc fan sized by round_precision") {
+	auto build_with_round_cap = [](int p_round_precision) {
+		LineBuilder lb;
+		lb.points.push_back(Vector2(0, 0));
+		lb.points.push_back(Vector2(100, 0));
+		lb.width = 10;
+		lb.begin_cap_mode = Line2D::LINE_CAP_ROUND;
+		lb.end_cap_mode = Line2D::LINE_CAP_NONE;
+		lb.round_precision = p_round_precision;
+		lb.build();
+		return lb;
+	};
+
+	LineBuilder lb8 = build_with_round_cap(8);
+	// Strip alone would be 4 vertices / 6 indices; the arc fan adds one center
+	// vertex plus (round_precision + 1) rim vertices, and round_precision triangles.
+	CHECK(lb8.vertices.size() == 4 + (8 + 2));
+	CHECK(lb8.indices.size() == 6 + 8 * 3);
+	CHECK_FALSE(has_nan_or_inf(lb8.vertices));
+
+	LineBuilder lb4 = build_with_round_cap(4);
+	LineBuilder lb16 = build_with_round_cap(16);
+	CHECK(lb4.vertices.size() < lb16.vertices.size());
+	CHECK(lb4.indices.size() < lb16.indices.size());
+}
+
+TEST_CASE("[LineBuilder] joint modes at a right-angle corner") {
+	auto build_with_joint = [](Line2D::LineJointMode p_mode) {
+		LineBuilder lb;
+		lb.points.push_back(Vector2(0, 0));
+		lb.points.push_back(Vector2(100, 0));
+		lb.points.push_back(Vector2(100, 100));
+		lb.width = 10;
+		lb.joint_mode = p_mode;
+		lb.build();
+		return lb;
+	};
+
+	LineBuilder sharp = build_with_joint(Line2D::LINE_JOINT_SHARP);
+	LineBuilder bevel = build_with_joint(Line2D::LINE_JOINT_BEVEL);
+	LineBuilder round = build_with_joint(Line2D::LINE_JOINT_ROUND);
+
+	const float hw = 5.f;
+	const Vector2 p0(0, 0), p1(100, 0), p2(100, 100);
+
+	for (const LineBuilder *lb : { &sharp, &bevel, &round }) {
+		CHECK_FALSE(has_nan_or_inf(lb->vertices));
+		REQUIRE(lb->indices.size() % 3 == 0);
+		REQUIRE(lb->indices.size() > 0);
+		// Every emitted vertex must stay close to the polyline: none of the
+		// joint strategies should be able to fling a corner vertex far away.
+		for (int i = 0; i < lb->vertices.size(); ++i) {
+			const Vector2 &v = lb->vertices[i];
+			float best = MIN(v.distance_to(p0), MIN(v.distance_to(p1), v.distance_to(p2)));
+			CHECK(best <= hw * 3.f);
+		}
+		// All index references must land inside the vertex buffer.
+		for (int i = 0; i < lb->indices.size(); ++i) {
+			CHECK(lb->indices[i] >= 0);
+			CHECK(lb->indices[i] < lb->vertices.size());
+		}
+	}
+
+	// ROUND approximates the same corner as BEVEL with more, smaller triangles.
+	CHECK(round.indices.size() >= bevel.indices.size());
+}
+
+TEST_CASE("[LineBuilder] sharp_limit falls back to bevel instead of producing a runaway miter") {
+	LineBuilder lb;
+	// A near-reversal: the polyline almost folds back onto itself at (100, 0),
+	// which would normally produce an extremely long sharp miter.
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(100, 0));
+	lb.points.push_back(Vector2(0, 1));
+	lb.width = 10;
+	lb.joint_mode = Line2D::LINE_JOINT_SHARP;
+	lb.sharp_limit = 2.f;
+	lb.build();
+
+	CHECK_FALSE(has_nan_or_inf(lb.vertices));
+
+	// Every vertex must stay close to its source polyline point; none of them
+	// should have been pulled out to the (unbounded) miter tip.
+	const float hw = 5.f;
+	for (int i = 0; i < lb.vertices.size(); ++i) {
+		const Vector2 &v = lb.vertices[i];
+		float best = 1e30f;
+		best = MIN(best, v.distance_to(Vector2(0, 0)));
+		best = MIN(best, v.distance_to(Vector2(100, 0)));
+		best = MIN(best, v.distance_to(Vector2(0, 1)));
+		CHECK(best < hw * 3.f);
+	}
+}
+
+TEST_CASE("[LineBuilder] closed polyline produces a seamless ring with no degenerate triangles") {
+	LineBuilder lb;
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(100, 0));
+	lb.points.push_back(Vector2(100, 100));
+	lb.points.push_back(Vector2(0, 100));
+	lb.width = 10;
+	lb.closed = true;
+	lb.joint_mode = Line2D::LINE_JOINT_SHARP;
+	lb.build();
+
+	REQUIRE(lb.indices.size() % 3 == 0);
+	REQUIRE(lb.indices.size() > 0);
+	CHECK_FALSE(has_nan_or_inf(lb.vertices));
+
+	// The wrap-around seam must connect to real geometry, not to stale/unset
+	// indices, so no triangle in the ring should have (near) zero area.
+	CHECK(count_degenerate_triangles(lb.indices, lb.vertices) == 0);
+
+	// Begin/end cap settings must be ignored entirely for a closed polyline
+	// (caps only make sense for the two loose ends of an open line).
+	LineBuilder with_caps_requested;
+	with_caps_requested.points = lb.points;
+	with_caps_requested.width = 10;
+	with_caps_requested.closed = true;
+	with_caps_requested.joint_mode = Line2D::LINE_JOINT_SHARP;
+	with_caps_requested.begin_cap_mode = Line2D::LINE_CAP_ROUND;
+	with_caps_requested.end_cap_mode = Line2D::LINE_CAP_ROUND;
+	with_caps_requested.build();
+	CHECK(lb.vertices.size() == with_caps_requested.vertices.size());
+	CHECK(lb.indices.size() == with_caps_requested.indices.size());
+}
+
+TEST_CASE("[LineBuilder] stretch texture spans the whole line from 0 to 1") {
+	LineBuilder lb;
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(100, 0));
+	lb.width = 10;
+	lb.texture_mode = Line2D::LINE_TEXTURE_STRETCH;
+	lb.build();
+
+	REQUIRE(lb.uvs.size() == 4);
+	CHECK(lb.uvs[0].x == doctest::Approx(0.f));
+	CHECK(lb.uvs[1].x == doctest::Approx(0.f));
+	CHECK(lb.uvs[2].x == doctest::Approx(1.f));
+	CHECK(lb.uvs[3].x == doctest::Approx(1.f));
+}
+
+TEST_CASE("[LineBuilder] tile texture without an atlas region grows unbounded") {
+	LineBuilder lb;
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(1000, 0));
+	lb.width = 10;
+	lb.texture_mode = Line2D::LINE_TEXTURE_TILE;
+	lb.tile_aspect = 1.f;
+	// tile_region left at the default full rect => _repeat_segment is false,
+	// so the atlas-safe slicing in strip_add_quad must never trigger.
+	lb.build();
+
+	REQUIRE(lb.vertices.size() == 4);
+	REQUIRE(lb.uvs.size() == 4);
+	CHECK(lb.uvs[2].x == doctest::Approx(100.f)); // distance / (width * aspect)
+	CHECK(lb.uvs[3].x == doctest::Approx(100.f));
+}
+
+TEST_CASE("[LineBuilder] tile texture with an atlas sub-region stays inside the region bounds") {
+	LineBuilder lb;
+	lb.points.push_back(Vector2(0, 0));
+	lb.points.push_back(Vector2(35, 0));
+	lb.width = 10;
+	lb.texture_mode = Line2D::LINE_TEXTURE_TILE;
+	lb.tile_aspect = 1.f;
+	// Mimics Line2D::_draw()'s AtlasTexture handling: a proper sub-rect of the
+	// atlas, not the full [0,1]x[0,1] rect, so _repeat_segment kicks in.
+	lb.tile_region = Rect2(0.25, 0.5, 0.25, 0.25);
+	lb.build();
+
+	REQUIRE(lb.uvs.size() > 0);
+	CHECK_FALSE(has_nan_or_inf(lb.uvs));
+
+	// The raw (pre-atlas) uvx for this line is 35/(10*1) == 3.5, i.e. it spans
+	// more than 3 tile repeats. Without per-tile slicing, uvs would run past
+	// the atlas sub-region and sample neighboring frames; every emitted UV
+	// must instead stay clamped inside the region.
+	const float eps = 0.0001f;
+	for (int i = 0; i < lb.uvs.size(); ++i) {
+		CHECK(lb.uvs[i].x >= lb.tile_region.position.x - eps);
+		CHECK(lb.uvs[i].x <= lb.tile_region.position.x + lb.tile_region.size.x + eps);
+		CHECK(lb.uvs[i].y >= lb.tile_region.position.y - eps);
+		CHECK(lb.uvs[i].y <= lb.tile_region.position.y + lb.tile_region.size.y + eps);
+	}
+
+	// Compare against the same line without an atlas region: slicing must
+	// have actually inserted extra geometry rather than being a no-op.
+	LineBuilder no_atlas;
+	no_atlas.points = lb.points;
+	no_atlas.width = lb.width;
+	no_atlas.texture_mode = Line2D::LINE_TEXTURE_TILE;
+	no_atlas.tile_aspect = 1.f;
+	no_atlas.build();
+	CHECK(lb.vertices.size() > no_atlas.vertices.size());
+}
+
+TEST_CASE("[LineBuilder] coincident points do not produce NaN/Inf output") {
+	Gradient *grad = memnew(Gradient);
+
+	auto build_degenerate = [&](bool p_three_points) {
+		LineBuilder lb;
+		lb.points.push_back(Vector2(50, 50));
+		lb.points.push_back(Vector2(50, 50));
+		if (p_three_points) {
+			lb.points.push_back(Vector2(50, 50));
+		}
+		lb.width = 10;
+		lb.gradient = grad;
+		lb.texture_mode = Line2D::LINE_TEXTURE_TILE;
+		lb.tile_region = Rect2(0.25, 0.5, 0.25, 0.25);
+		lb.build();
+		return lb;
+	};
+
+	SUBCASE("two coincident points") {
+		LineBuilder lb = build_degenerate(false);
+		CHECK_FALSE(has_nan_or_inf(lb.vertices));
+		CHECK_FALSE(has_nan_or_inf(lb.colors));
+		CHECK_FALSE(has_nan_or_inf(lb.uvs));
+	}
+	SUBCASE("three coincident points") {
+		LineBuilder lb = build_degenerate(true);
+		CHECK_FALSE(has_nan_or_inf(lb.vertices));
+		CHECK_FALSE(has_nan_or_inf(lb.colors));
+		CHECK_FALSE(has_nan_or_inf(lb.uvs));
+	}
+
+	memdelete(grad);
+}
+
+#endif // DOCTEST
